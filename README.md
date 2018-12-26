@@ -3,7 +3,7 @@
 # ST-Retrieval
 The retrieval component of AIDT
 
-![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)
+
 
 ## Overview
 ST-Retrieval proposes a meta-search approach that automates the process of retrieving software technologies for a specific design or development need. This approach, called ST-Retrieval, is based on the extraction, filtering and aggregation of software technologies returned by various existing search engines. 

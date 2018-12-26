@@ -1,0 +1,562 @@
+<!doctype html>
+<html>
+ <head prefix="og: http://ogp.me/ns#"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link type="application/atom+xml" rel="alternative" href="https://blog.sentry.io/feed.xml" title="Sentry Blog"> 
+  <meta property="twitter:card" content="summary_large_image"> 
+  <meta property="twitter:creator" content="@getsentry"> 
+  <meta property="twitter:title" content="How to write bulletproof function wrappers in JavaScript"> 
+  <meta property="twitter:site" content="https://blog.sentry.io/2016/02/03/wrap-javascript-functions"> 
+  <meta property="twitter:description" content="In our client JavaScript SDK – Raven.js – we make use of a lot of function wrapping. We even provide a utility API method, Raven.wrap, that automatically wra..."> 
+  <meta property="twitter:image:src" content="https://blog.sentry.io/assets/og-c8c71a88e4051215113d93558c0126378f11ab3ee38858fe1fe74a042b6e5a8a.png?27920175615"> 
+  <meta property="twitter:image:width" content="1200"> 
+  <meta property="twitter:image:height" content="630"> 
+  <meta property="og:type" content="website"> 
+  <meta property="og:site_name" content="Sentry Blog"> 
+  <meta property="og:description" content="In our client JavaScript SDK – Raven.js – we make use of a lot of function wrapping. We even provide a utility API method, Raven.wrap, that automatically wra..."> 
+  <meta property="og:url" content="https://blog.sentry.io/2016/02/03/wrap-javascript-functions"> 
+  <meta property="og:title" content="How to write bulletproof function wrappers in JavaScript"> 
+  <meta property="og:image:url" content="https://blog.sentry.io/assets/og-c8c71a88e4051215113d93558c0126378f11ab3ee38858fe1fe74a042b6e5a8a.png?27920175615"> 
+  <meta property="og:image:type" content="image/jpeg"> 
+  <meta property="og:image:width" content="1200"> 
+  <meta property="og:image:height" content="630"> 
+  <link href="https://blog.sentry.io/assets/favicon-9d9dbcc614d52b0e88787b03b400b5bf6c6467d6837a19d394f9e8b8d98bee4b.ico" rel="icon" type="image/png"> 
+  <link type="text/css" rel="stylesheet" href="/assets/screen-dc92391bc995b9b8946a3dd24a5338e229e6b5c440fa40df72d81bb3dffa67be.css"> 
+  <title>How to write bulletproof function wrappers in JavaScript</title> 
+  <script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "BlogPosting",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://blog.sentry.io/2016/02/03/wrap-javascript-functions"
+  },
+  "headline": "How to write bulletproof function wrappers in JavaScript",
+  "image": {
+    "@type": "ImageObject",
+    "url": "https://blog.sentry.io/assets/og-c8c71a88e4051215113d93558c0126378f11ab3ee38858fe1fe74a042b6e5a8a.png",
+    "width": 1200,
+    "height": 630
+  },
+  "datePublished": "2016-02-03",
+  "author": {
+    "@type": "Person",
+    "name": "Ben Vinegar"
+  },
+   "publisher": {
+    "@type": "Organization",
+    "name": "Sentry",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://blog.sentry.io/assets/google-publisher-logo-536850a59f9e1cd2fbf73f5aba4494482926c0fdd2b3c7605c1f744585881284.png",
+      "width": 228,
+      "height": 60
+    }
+  },
+  "description": "In our client JavaScript SDK – Raven.js – we make use of a lot of function wrapping. We even provide a utility API method, Raven.wrap, that automatically wraps a function in try/catch and passes any caught errors to Raven.captureException, Raven’s primary error reporting function.
+
+"
+}
+</script> 
+ </head> 
+ <body> 
+  <header id="header" class="dark-background " role="banner"> 
+   <nav class="navbar" role="navigation"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-lg-10 col-lg-offset-1"> 
+       <div class="navbar-header"> 
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-menu" aria-expanded="false"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+        <a href="https://sentry.io/welcome" title="Sentry error monitoring" class="navbar-brand header-logo">
+         <svg aria-hidden="true" class="icon icon-sentry-logo" role="icon" width="72" height="16" viewbox="0 0 72 16" version="1.1"> 
+          <path d="M44.54,10.27L39.19,3.34H37.85v9.27h1.34V5.49l5.49,7.12h1.19V3.34H44.54v6.93ZM31.07,8.55h4.78V7.36H31.07V4.59h5.4V3.34H29.73v9.27h6.83V11.41H31.07V8.55ZM25.48,7.36c-1.86-.43-2.39-0.81-2.39-1.67s0.67-1.29,1.72-1.29a4.46,4.46,0,0,1,2.58.91l0.72-1a5.18,5.18,0,0,0-3.3-1.1c-1.81,0-3.1,1.1-3.1,2.63s1.1,2.24,3.06,2.72c1.77,0.38,2.29.76,2.29,1.62s-0.72,1.39-1.86,1.39a4.56,4.56,0,0,1-3-1.19l-0.81,1a5.75,5.75,0,0,0,3.77,1.39c2,0,3.25-1.05,3.25-2.72C28.44,8.64,27.58,7.88,25.48,7.36Zm44.94-4L67.65,7.69,64.88,3.34H63.26l3.68,5.59v3.68h1.39V8.88L72,3.34H70.42ZM47,4.59h3v8h1.39v-8h3V3.34H47V4.59ZM60.87,9A2.72,2.72,0,0,0,63,6.21c0-1.77-1.29-2.87-3.39-2.87H55.52v9.27h1.39V9.27h2.34l2.34,3.34h1.62L60.68,9.07Zm-4-.91V4.54h2.58c1.34,0,2.15.62,2.15,1.77a1.84,1.84,0,0,1-2.1,1.77H56.91ZM10.38,0.81A1.57,1.57,0,0,0,8.95,0,1.57,1.57,0,0,0,7.52.81L5.18,4.87,5.8,5.21A11.44,11.44,0,0,1,10,9.41a11.35,11.35,0,0,1,1.53,5.06H9.86a10.25,10.25,0,0,0-1.29-4.25A9.47,9.47,0,0,0,4.94,6.59L4.32,6.26l-2.2,3.82,0.62,0.33a5.65,5.65,0,0,1,2.72,4.06H1.69a0.3,0.3,0,0,1-.24-0.14,0.29,0.29,0,0,1,0-.29L2.5,12.23a3.67,3.67,0,0,0-1.19-.67L0.26,13.37a1.8,1.8,0,0,0,0,1.77A1.57,1.57,0,0,0,1.64,16H6.85V15.28a7.25,7.25,0,0,0-.91-3.44A6.89,6.89,0,0,0,4,9.7L4.84,8.26A8.27,8.27,0,0,1,7.37,11a8.35,8.35,0,0,1,1.15,4.25V16h4.39V15.28a12.79,12.79,0,0,0-1.72-6.45A12.48,12.48,0,0,0,7,4.49L8.71,1.58a0.33,0.33,0,0,1,.24-0.14,0.23,0.23,0,0,1,.24.14L16.5,14.19a0.29,0.29,0,0,1-.24.43H14.54a13.4,13.4,0,0,1,0,1.39h1.72a1.57,1.57,0,0,0,1.43-.81,1.73,1.73,0,0,0,0-1.67Z" /> 
+         </svg> </a> 
+       </div> 
+       <div class="collapse navbar-collapse" id="navbar-menu"> 
+        <ul class="nav navbar-nav" itemscope itemtype="http://www.schema.org/SiteNavigationElement"> 
+         <li class="dropdown dropdown-hover features-dropdown"> <a href="#" id="features-dropdown-aria" class="fade-link" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"> Product <span class="caret"></span> </a> 
+          <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="features-dropdown-aria"> 
+           <li itemprop="name"><a href="https://sentry.io/features/" itemprop="url">Overview</a></li> 
+           <li itemprop="name"><a href="https://sentry.io/features/stacktrace/" itemprop="url"><span class="p-l-1">Stack Traces</span></a></li> 
+           <li itemprop="name"><a href="https://sentry.io/features/context/" itemprop="url"><span class="p-l-1">Context</span></a></li> 
+           <li itemprop="name"><a href="https://sentry.io/features/breadcrumbs/" itemprop="url"><span class="p-l-1">Breadcrumbs</span></a></li> 
+           <li itemprop="name"><a href="https://sentry.io/features/releases/" itemprop="url"><span class="p-l-1">Releases</span></a></li> 
+           <li itemprop="name"><a href="https://sentry.io/platforms/" itemprop="url">Platforms</a> </li>
+           <li itemprop="name"><a href="https://sentry.io/integrations/" itemprop="url">Integrations</a> </li>
+          </ul> </li> 
+         <li itemprop="name"> <a href="https://sentry.io/pricing/" class="fade-link" itemprop="url">Pricing</a> </li> 
+         <li itemprop="name"> <a href="https://docs.sentry.io" class="fade-link" itemprop="url">Docs</a> </li> 
+         <li itemprop="name"> <a href="https://sentry.io/auth/login/" class="fade-link" itemprop="url">Sign in</a> </li> 
+         <li class="hidden-xs" itemprop="name"> <span class="navbar-cta-adjust"><a href="https://sentry.io/signup/" class="btn btn-sm btn-primary" role="button">Get started</a> </span> 
+          <meta name="url" content="https://sentry.io/signup/"> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </nav> 
+  </header> 
+  <div class="hazy-background p-y-half lined blog-navigation"> 
+   <nav class="navbar m-b-0" role="navigation"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-lg-10 col-lg-offset-1"> 
+       <div class="navbar-header"> 
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#blog-menu" aria-expanded="false"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+        <span class="breadcrumb family-mono color-purple-medium"> <a href="https://blog.sentry.io">Blog</a> </span> 
+       </div> 
+       <div class="collapse navbar-collapse" id="blog-menu"> 
+        <ul class="nav navbar-nav" itemscope itemtype="http://www.schema.org/SiteNavigationElement"> 
+         <li itemprop="name"> <a href="/archive" itemprop="url"> Archive </a> </li> 
+         <li itemprop="name"> <a href="https://twitter.com/getsentry" itemprop="url"> 
+           <svg aria-hidden="true" class="icon icon-twitter-logo" role="icon" width="16" height="16" viewbox="0 0 16 16" version="1.1"> 
+            <path d="M16,3a6.56,6.56,0,0,1-1.89.52,3.29,3.29,0,0,0,1.44-1.82,6.57,6.57,0,0,1-2.08.8,3.3,3.3,0,0,0-5.59,3A9.32,9.32,0,0,1,1.11,2.1a3.32,3.32,0,0,0,1,4.38A3.27,3.27,0,0,1,.64,6.07,3.32,3.32,0,0,0,3.28,9.33a3.32,3.32,0,0,1-1.48.06,3.29,3.29,0,0,0,3.07,2.28A6.66,6.66,0,0,1,0,13a9.48,9.48,0,0,0,10.71-.39,9.61,9.61,0,0,0,3.65-7.9A6.67,6.67,0,0,0,16,3C15.41,3.3,15.56,3.7,16,3Z" /> 
+           </svg> <span class="visible-xs-inline">Twitter</span> </a> </li> 
+         <li itemprop="name"> <a href="https://blog.sentry.io/feed.xml" itemprop="url"> 
+           <svg aria-hidden="true" class="icon icon-rss-logo" role="icon" width="16" height="16" viewbox="0 0 16 16" version="1.1"> 
+            <path d="M14.63 9.54A15.94 15.94 0 0 0 11.3 4.7a16 16 0 0 0-4.84-3.34A15.77 15.77 0 0 0 .76 0a.7.7 0 0 0-.5.2.7.7 0 0 0-.26.53v1.62a.72.72 0 0 0 .2.5.68.68 0 0 0 .48.22 12.74 12.74 0 0 1 4.64 1.16 12.93 12.93 0 0 1 3.82 2.63 12.93 12.93 0 0 1 2.63 3.82 12.53 12.53 0 0 1 1.15 4.64.68.68 0 0 0 .22.48.73.73 0 0 0 .5.2h1.63a.67.67 0 0 0 .52-.23.68.68 0 0 0 .2-.53 15.78 15.78 0 0 0-1.37-5.7zM7.2 8.8a9.8 9.8 0 0 0-2.94-2.07 10.24 10.24 0 0 0-3.48-.9H.73a.66.66 0 0 0-.5.17.68.68 0 0 0-.23.55v1.53a.7.7 0 0 0 .2.5.73.73 0 0 0 .46.22 7 7 0 0 1 4.45 2.1 7 7 0 0 1 2.1 4.44.72.72 0 0 0 .72.66h1.53a.68.68 0 0 0 .54-.24.67.67 0 0 0 .18-.54 10.18 10.18 0 0 0-.9-3.48A10 10 0 0 0 7.2 8.8zm-5 2.84a2.1 2.1 0 0 0-1.54.63A2.1 2.1 0 0 0 0 13.82a2.08 2.08 0 0 0 .64 1.54 2.08 2.08 0 0 0 1.54.64 2.1 2.1 0 0 0 1.55-.64 2.1 2.1 0 0 0 .63-1.54 2.15 2.15 0 0 0-2.18-2.18z" /> 
+           </svg> <span class="visible-xs-inline">RSS</span> </a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </nav> 
+  </div> 
+  <div class="lined"> 
+   <div class="container p-y-3"> 
+    <div class="row"> 
+     <main role="main" class="col-lg-10 col-lg-offset-1"> 
+      <article class="post white-background m-b-3"> 
+       <header class="m-b-3 text-center"> 
+        <h1 class="m-t-0 m-b-half"> <a href="/2016/02/03/wrap-javascript-functions" rel="bookmark">How to write bulletproof function wrappers in JavaScript</a> </h1> 
+        <p class="post-meta m-y-0"><small><span class="family-mono"> <span class="author"> <span class="avatar"> <img src="/assets/authors/ben-vinegar-ffde37f71e1ea845c5bb4e716e8a6ea9facea8d786714454fed8a0dadf902d44.jpg" alt="Avatar for Ben Vinegar" aria-hidden width="48" height="48"> </span> <a href="https://twitter.com/bentlegen"> Ben Vinegar</a></span> </span> <span class="color-purple-medium family-mono">/ <time>February 3, 2016</time></span> <span class="family-mono">/ <a href="/tag/javascript/">JavaScript</a></span> </small></p> 
+       </header> 
+       <div class="post-content trim-vertical-whitespace"> 
+        <div class="jumbo m-y-2"> 
+         <img src="/img/post-images/js-wrappers/scripters.jpg" alt="Header image for How to write bulletproof function wrappers in JavaScript" class="img-jumbo drop-shadow" aria-hidden="true"> 
+        </div> 
+        <p>In our <a href="https://github.com/getsentry/raven-js">client JavaScript SDK</a> – Raven.js – we make use of a lot of function wrapping. We even provide <a href="https://docs.sentry.io/hosted/clients/javascript/usage/#context-wrap">a utility API method</a>, <code class="highlighter-rouge">Raven.wrap</code>, that automatically wraps a function in try/catch and passes any caught errors to <code class="highlighter-rouge">Raven.captureException</code>, Raven’s primary error reporting function.</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">wrappedFunc</span> <span class="o">=</span> <span class="nx">Raven</span><span class="p">.</span><span class="nx">wrap</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="nx">foo</span><span class="p">();</span> <span class="c1">// ReferenceError: foo is not defined</span>
+<span class="p">});</span>
+<span class="nx">wrappedFunc</span><span class="p">();</span> <span class="c1">// catches error, reports to Sentry</span></code></pre>
+        </figure> 
+        <p>Over the years I’ve written a lot of function wrappers. They’re handy, powerful tools that belong in the JavaScript programmer’s toolbox. And if there’s one thing I’ve learned, it’s that wrapping a function in JavaScript is trickier than it looks.</p> 
+        <p>In this article, we’ll learn how function wrappers are useful, how they’re written, and how they should be written. But first…</p> 
+        <h1 id="why-use-function-wrappers">Why use function wrappers?</h1> 
+        <p>A “function wrapper” is a function whose purpose is to call a second, “wrapped” function, with some minor amount of additional computation. Function wrapping is a common practice in JavaScript (and most other languages), with many practical uses:</p> 
+        <h2 id="binding-this"><strong>Binding <code class="highlighter-rouge">this</code></strong></h2> 
+        <p>You’re probably familiar with <code class="highlighter-rouge">Function.prototype.bind</code>, which returns a function that, when called, has its <code class="highlighter-rouge">this</code> keyword set to the provided value:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">whosThis</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">whosThis</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'me'</span><span class="p">);</span> <span class="c1">// =&gt; 'me'</span>
+
+<span class="kd">var</span> <span class="nx">boundWhosThis</span> <span class="o">=</span> <span class="nx">whosThis</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="s1">'them'</span><span class="p">);</span>
+
+<span class="nx">boundWhosThis</span><span class="p">();</span> <span class="c1">// =&gt; 'them'</span>
+<span class="nx">boundWhosThis</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'us'</span><span class="p">);</span> <span class="c1">// =&gt; 'them' (cannot override `this`)</span></code></pre>
+        </figure> 
+        <p>You can think of <code class="highlighter-rouge">bind</code> as producing a function wrapper whose purpose is to call the original function, with a small additional quirk: it permanently changes the value of <code class="highlighter-rouge">this</code>.</p> 
+        <p>We can do the same thing manually, without <code class="highlighter-rouge">bind</code>, but instead using a closure:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">them</span> <span class="o">=</span> <span class="s1">'them'</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">boundWhosThis</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="nx">whosThis</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">them</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="nx">boundWhosThis</span><span class="p">();</span> <span class="c1">// 'them'</span>
+<span class="nx">boundWhosThis</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'us'</span><span class="p">);</span> <span class="c1">// =&gt; 'them' (cannot override `this`)</span></code></pre>
+        </figure> 
+        <p>If you’ve spent a good amount of time writing browser-based JavaScript applications, you know how important it can be to manage the value of <code class="highlighter-rouge">this</code> across different functional scopes. Function wrappers produced by <code class="highlighter-rouge">Function.prototype.bind</code> are a handy, commonly-used tool.</p> 
+        <h2 id="profiling"><strong>Profiling</strong></h2> 
+        <p>A function wrapper can be used to transparently record the duration of a function invocation. This can be helpful when profiling the performance of your application.</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">profile</span><span class="p">(</span><span class="nx">func</span><span class="p">,</span> <span class="nx">funcName</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">start</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(),</span>
+      <span class="nx">returnVal</span> <span class="o">=</span> <span class="nx">func</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="kr">arguments</span><span class="p">),</span>
+      <span class="nx">end</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(),</span>
+      <span class="nx">duration</span> <span class="o">=</span> <span class="nx">stop</span><span class="p">.</span><span class="nx">getTime</span><span class="p">()</span> <span class="o">-</span> <span class="nx">start</span><span class="p">.</span><span class="nx">getTime</span><span class="p">();</span>
+
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">`</span><span class="p">${</span><span class="nx">funcName</span><span class="p">}</span><span class="s2"> took </span><span class="p">${</span><span class="nx">duration</span><span class="p">}</span><span class="s2"> ms to execute`</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nx">returnVal</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">profiledMax</span> <span class="o">=</span> <span class="nx">profile</span><span class="p">(</span><span class="nb">Math</span><span class="p">.</span><span class="nx">max</span><span class="p">,</span> <span class="s1">'Math.max'</span><span class="p">);</span>
+<span class="nx">profiledMax</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nb">Math</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+<span class="c1">// =&gt; "Math.max took 2 ms to execute"</span></code></pre>
+        </figure> 
+        <p>Note that this example only times the duration of synchronous code. If the wrapped function triggers an asynchronous callback (e.g. via <code class="highlighter-rouge">setTimeout</code>), any time spent in that callback will not be captured.</p> 
+        <h2 id="mixins"><strong>Mixins</strong></h2> 
+        <p>Mixin patterns in JavaScript are often used to augment a prototype method by wrapping it with additional behavior.</p> 
+        <p>In the example below, the <code class="highlighter-rouge">makeRoyalMixin</code> function changes an object by wrapping that object’s <code class="highlighter-rouge">getName</code> prototype method with a function that changes its output:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">User</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">User</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getName</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kd">function</span> <span class="nx">makeRoyalMixin</span><span class="p">(</span><span class="nx">klass</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">oldGetName</span> <span class="o">=</span> <span class="nx">klass</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getName</span><span class="p">;</span>
+  <span class="kd">var</span> <span class="nx">designation</span> <span class="o">=</span> <span class="nx">ordinal</span><span class="p">((</span><span class="nb">Math</span><span class="p">.</span><span class="nx">random</span><span class="p">()</span> <span class="o">%</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// '1st', '3rd', '9th', etc</span>
+
+  <span class="nx">klass</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">getName</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="c1">// the wrapper</span>
+    <span class="k">return</span> <span class="nx">oldGetName</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">)</span> <span class="o">+</span> <span class="s1">' the '</span> <span class="o">+</span> <span class="nx">designation</span><span class="p">;</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="kd">var</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">User</span><span class="p">(</span><span class="s1">'Janey Smith'</span><span class="p">);</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">getName</span><span class="p">();</span> <span class="c1">// =&gt; "Janey Smith'</span>
+
+<span class="nx">makeRoyalMixin</span><span class="p">(</span><span class="nx">User</span><span class="p">);</span>
+<span class="nx">user</span><span class="p">.</span><span class="nx">getName</span><span class="p">();</span> <span class="c1">// =&gt; "Janey Smith the 7th"</span></code></pre>
+        </figure> 
+        <h2 id="but-wait-theres-more"><strong>But wait, there’s more</strong></h2> 
+        <p>Profiling and Mixins are just two simple examples. Here’s a few other useful applications:</p> 
+        <ul> 
+         <li><strong>Code coverage</strong> – use function wrappers to detect if a function has been invoked during the execution of an application</li> 
+         <li><strong>Hiding complexity</strong> – use function wrappers to provide a simpler API than the underlying code</li> 
+         <li><strong>Cross-platform code</strong> – function wrappers are often used to smooth-out minor incompatibilities between an API on different platforms</li> 
+         <li><strong>Partial applications</strong> – use a function wrapper to fix specific arguments to that function’s invocation</li> 
+         <li><strong>Safely handling errors</strong> – our very first example, using function wrappers to transparently try/catch errors</li> 
+        </ul> 
+        <h1 id="writing-bulletproof-function-wrappers">Writing bulletproof function wrappers</h1> 
+        <p>Okay, we now know what function wrappers are, and how they’re commonly used. Now it’s time to write one. And not just any function wrapper – a wrapper that can wrap any conceivable function, invoked every which way, without breaking anything.</p> 
+        <h2 id="use-apply-and-arguments">Use apply and arguments</h2> 
+        <p>Let’s say you want to wrap a known function, like <code class="highlighter-rouge">XMLHttpRequest.prototype.open</code>. You look up the signature of <code class="highlighter-rouge">open</code> on MDN, and learn that it has 5 arguments: <code class="highlighter-rouge">method</code>, <code class="highlighter-rouge">url</code>, <code class="highlighter-rouge">async</code>, <code class="highlighter-rouge">user</code>, and <code class="highlighter-rouge">password</code>. You write a wrapper for this function, passing the 5 declared arguments to the original function using <code class="highlighter-rouge">call</code>.</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">origOpen</span> <span class="o">=</span> <span class="nx">XMLHttpRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">open</span><span class="p">;</span>
+<span class="nx">XMLHttpRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">open</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="k">async</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">password</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// rewrite URLs containing '/foo/' to '/bar/'</span>
+  <span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\/</span><span class="sr">foo</span><span class="se">\/</span><span class="sr">/</span><span class="p">,</span> <span class="s1">'/bar/'</span><span class="p">)</span>
+  <span class="k">return</span> <span class="nx">origOpen</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="k">async</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">password</span><span class="p">);</span>
+<span class="p">};</span></code></pre>
+        </figure> 
+        <p>But there’s a problem with this implementation. It’s subtle, but <em>you have changed the behavior of calling <code class="highlighter-rouge">open</code>.</em></p> 
+        <p>Remember that <code class="highlighter-rouge">open</code> takes an optional number of arguments. At minimum, it can accept just <code class="highlighter-rouge">method</code> and <code class="highlighter-rouge">url</code>. Or it can accept <code class="highlighter-rouge">method</code>, <code class="highlighter-rouge">url</code>, and <code class="highlighter-rouge">async</code>. Or it can accept all 5:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">xhr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+<span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">,</span> <span class="s1">'/example'</span><span class="p">);</span>
+<span class="c1">// or</span>
+<span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">,</span> <span class="s1">'/example'</span><span class="p">,</span> <span class="kc">false</span><span class="p">);</span> <span class="c1">// synchronous request</span>
+<span class="c1">// or</span>
+<span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'GET'</span><span class="p">,</span> <span class="s1">'/example'</span><span class="p">,</span> <span class="kc">true</span><span class="p">,</span> <span class="s1">'zerocool'</span><span class="p">,</span> <span class="s1">'hacktheplanet'</span><span class="p">);</span> <span class="c1">// async w/ HTTP auth</span></code></pre>
+        </figure> 
+        <p>It turns out that in some JavaScript engines, the native <code class="highlighter-rouge">open</code> implementation actually inspects the number of arguments passed.</p> 
+        <p>Consider this hypothetical native implementation:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// pretend native open implementation</span>
+<span class="nx">XMLHttpRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">open</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="k">async</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">password</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="kr">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_simpleRequest</span><span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="k">async</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="kr">arguments</span><span class="p">.</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">5</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_httpAuthRequest</span><span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">,</span> <span class="k">async</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">password</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span></code></pre>
+        </figure> 
+        <p>In the function wrapper we wrote, we have changed the value of <code class="highlighter-rouge">arguments.length</code> as passed to the original <code class="highlighter-rouge">open</code> method. By doing <code class="highlighter-rouge">.call(this, method, url, async, user, password)</code>, we have guaranteed that <code class="highlighter-rouge">arguments.length</code> <strong>will always be 5</strong>, regardless of how many arguments were passed to the wrapper.</p> 
+        <p>In the hypothetical native implementation above, this means the <code class="highlighter-rouge">_simpleRequest</code> code path will never be reached; it always calls <code class="highlighter-rouge">_httpAuthRequest</code>, because <code class="highlighter-rouge">arguments.length</code> is always 5.</p> 
+        <p><strong>The solution</strong>: always pass an array of arguments to the wrapped function, matching the length of the arguments provided to the wrapper. If you need to edit one of the values, make a copy of the <code class="highlighter-rouge">arguments</code> object, edit the affected value, and pass the copy.</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">origOpen</span> <span class="o">=</span> <span class="nx">XMLHttpRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">open</span><span class="p">;</span>
+<span class="nx">XMLHttpRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">open</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">method</span><span class="p">,</span> <span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// copy arguments</span>
+  <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="p">[].</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="kr">arguments</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+  <span class="c1">// rewrite URLs containing '/foo/' to '/bar/'</span>
+  <span class="nx">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\/</span><span class="sr">foo</span><span class="se">\/</span><span class="sr">/</span><span class="p">,</span> <span class="s1">'/bar/'</span><span class="p">)</span>
+
+  <span class="c1">// arguments.length will always be same</span>
+  <span class="k">return</span> <span class="nx">origOpen</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">args</span><span class="p">);</span>
+<span class="p">};</span></code></pre>
+        </figure> 
+        <p>Note that in the example above, we’ve changed from declaring 5 parameters (method, url, async, user, password) to just 2 (method and url). Why?</p> 
+        <h2 id="preserve-arity">Preserve arity</h2> 
+        <p>Like arrays and strings, function objects actually have a <code class="highlighter-rouge">length</code> property. This property reports the <strong>arity</strong> of a function – the number of declared parameters in its function signature.</p> 
+        <p>For example, in the code sample below, <code class="highlighter-rouge">foo</code> function has an arity of 3, and <code class="highlighter-rouge">bar</code> has an arity of 0 (no formal parameters):</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">foo</span> <span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">,</span> <span class="nx">c</span><span class="p">)</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="nx">foo</span><span class="p">.</span><span class="nx">length</span> <span class="c1">// =&gt; 3</span>
+
+<span class="kd">function</span> <span class="nx">bar</span> <span class="p">()</span> <span class="p">{</span>
+<span class="p">}</span>
+<span class="nx">bar</span><span class="p">.</span><span class="nx">length</span> <span class="c1">// =&gt; 0</span></code></pre>
+        </figure> 
+        <p>Back to <code class="highlighter-rouge">XMLHttpRequest.prototype.open</code>. Despite the documented number of variables being 5, the reported arity via the <code class="highlighter-rouge">length</code> property is actually 2:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="nx">origOpen</span><span class="p">.</span><span class="nx">length</span> <span class="c1">// =&gt; 2 (the original open function)</span>
+<span class="nx">XMLHttpRequest</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">open</span><span class="p">.</span><span class="nx">length</span> <span class="c1">// =&gt; 2 (our wrapper)</span></code></pre>
+        </figure> 
+        <p>You might be wondering – why does this matter? Well, just as we saw earlier that some code branches differently because of <code class="highlighter-rouge">arguments.length</code>, there is code out there that <em>branches differently depending on the number of parameters declared in a function</em>. If, in wrapping a function, we change its arity, we risk changing the behavior of code that inspects that function’s <code class="highlighter-rouge">length</code> property.</p> 
+        <h3 id="mocha-test-functions-and-the-impact-of-arity">Mocha test functions and the impact of arity</h3> 
+        <p>Consider for a moment, Mocha, a popular JavaScript testing framework.</p> 
+        <p>In Mocha, you declare a test function using the <code class="highlighter-rouge">it</code> function, which accepts both a descriptive string (what the test does) and the test function as arguments.</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="nx">it</span><span class="p">(</span><span class="s1">'should work as expected'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  <span class="nx">assert</span><span class="p">.</span><span class="nx">equals</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="p">});</span></code></pre>
+        </figure> 
+        <p>Mocha also allows you to declare an asynchronous test function. In this version, the test function itself must declare a <code class="highlighter-rouge">done</code> parameter, which will be passed a callback function to be invoked when the test function has finished. If an exception was thrown during the execution of the test function, the <code class="highlighter-rouge">done</code> callback accepts an Error object as an argument.</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="nx">it</span><span class="p">(</span><span class="s1">'should work as expected, asynchronously'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">setTimeout</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="k">try</span> <span class="p">{</span>
+      <span class="nx">assert</span><span class="p">.</span><span class="nx">equals</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span> <span class="c1">// pass assertion failure to `done`</span>
+    <span class="p">}</span>
+    <span class="nx">done</span><span class="p">();</span> <span class="c1">// for some reason 1 does not equal 0, call `done` - panic and freak out</span>
+  <span class="p">},</span> <span class="mi">1000</span><span class="p">);</span>
+<span class="p">});</span></code></pre>
+        </figure> 
+        <p>Mocha is a pretty popular testing library, and it’s likely that many of you are familiar with its synchronous vs asynchronous test API. What you may not know, however, is that Mocha decides whether a test function is asynchronous by inspecting that test function’s <code class="highlighter-rouge">length</code> property.</p> 
+        <p>Here’s the relevant bit from [Mocha’s source code:</p> 
+        <figure class="highlight">
+         <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">Runnable</span><span class="p">(</span><span class="nx">title</span><span class="p">,</span> <span class="nx">fn</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">title</span> <span class="o">=</span> <span class="nx">title</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">fn</span> <span class="o">=</span> <span class="nx">fn</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="k">async</span> <span class="o">=</span> <span class="nx">fn</span> <span class="o">&amp;&amp;</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="c1">// &lt;-- RIGHT HERE</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">sync</span> <span class="o">=</span> <span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="k">async</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_timeout</span> <span class="o">=</span> <span class="mi">2000</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_slow</span> <span class="o">=</span> <span class="mi">75</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_enableTimeouts</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">timedOut</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_trace</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">'done() called multiple times'</span><span class="p">);</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_retries</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_currentRetry</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span></code></pre>
+        </figure> 
+        <p>Let’s say that you wrap a test function that is passed to Mocha’s test runner via <code class="highlighter-rouge">it</code>. If in wrapping that test function, you simply pass arguments and don’t redeclare the <code class="highlighter-rouge">done</code> variable, you will reduce its arity to 0 and Mocha will not consider the test function to be asynchronous. This will cause you serious grief as you try to figure out why the heck your test function doesn’t work anymore.</p> 
+        <p>The purpose of showing you this Mocha code is to demonstrate that, yes, there is code out there that inspects the <code class="highlighter-rouge">length</code> property of a function, and a failure to preserve arity when wrapping a function could result in broken code. So whenever you can, redeclare your wrapped variables and preserve arity.</p> 
+        <h2 id="do-i-really-need-to-do-all-this">Do I really need to do all this?</h2> 
+        <p>I’ll admit –&nbsp;a lot of the examples in this blog post are rare. It’s not often that you will encounter code that behaves differently depending on <code class="highlighter-rouge">arguments.length</code> or <code class="highlighter-rouge">Function.length</code>. When writing function wrappers that operate on your <strong>own, known functions</strong>, it is unlikely that you will encounter such behavior.</p> 
+        <p>But, if you’re a library author, or writing 3rd-party scripts that operate in an unknown environment, or want to really futureproof your code –&nbsp;it couldn’t hurt to safeguard against problematic behavior by using the techniques above when writing function wrappers.</p> 
+        <p>Hopefully, with the skills you’ve learned today, you’ll know when and where to practice safe function wrapping. Good luck.</p> 
+        <p>Whether you want to <a href="https://sentry.io/for/ember/">debug Ember</a>, do <a href="https://sentry.io/for/react/">React error</a> tracking, or handle an obscure <a href="https://sentry.io/for/angular/">Angular exception</a>, we’ll be working hard to provide the best possible experience for you and your team with Sentry!</p> 
+       </div> 
+       <aside> 
+        <div class="text-center m-t-3 outline border-radius text-center"> 
+         <div class="hazy-background p-a-2 text-center lined-bottom"> 
+          <small class="family-mono">Want to stop hoping users will report bugs?</small> 
+          <a href="https://sentry.io/welcome/?utm_source=blog&amp;utm_medium=post_cta&amp;utm_campaign=How+to+write+bulletproof+function+wrappers+in+JavaScript" class="btn m-l-1" role="button">Start using Sentry</a> 
+         </div> 
+         <div class="p-a-2"> 
+          <strong class="m-r-half m-r-xs-0">Share this post:</strong> 
+          <div class="clearfix visible-xs-block"></div> 
+          <a href="https://twitter.com/intent/tweet?text=How to write bulletproof function wrappers in JavaScript%20https://blog.sentry.io/2016/02/03/wrap-javascript-functions&amp;rl=https://blog.sentry.io/2016/02/03/wrap-javascript-functions&amp;via=getsentry&amp;related=getsentry" rel="nofollow" target="_blank" title="Share on Twitter" class="btn btn-sm">Twitter</a> 
+          <a href="https://facebook.com/sharer.php?u=https://blog.sentry.io/2016/02/03/wrap-javascript-functions" rel="nofollow" target="_blank" title="Share on Facebook" class="btn btn-sm m-x-half">Facebook</a> 
+          <a href="http://news.ycombinator.com/submitlink?u=https://blog.sentry.io/2016/02/03/wrap-javascript-functions&amp;t=How to write bulletproof function wrappers in JavaScript" rel="nofollow" target="_blank" title="Share on Hacker News" class="btn btn-sm">Hacker News</a> 
+          <hr class="shortie m-y-2"> 
+          <div class="trim-vertical-whitespace color-purple-medium"> 
+           <p> <small>Sentry provides open source error tracking that shows you every crash in your stack as it happens, with the details needed to prioritize, identify, reproduce, and fix each issue. It also gives you information your support team can use to reach out to and help those affected and tools that let users send you feedback for peace of mind.</small> </p> 
+           <p> <small>Each month we process <strong>billions of exceptions</strong> from the most popular products on the internet.</small> </p> 
+          </div> 
+         </div> 
+        </div> 
+       </aside> 
+      </article> 
+      <aside class="post-thumbnail-list"> 
+       <h1 class="text-center family-mono text-size-24">Additional Reading</h1> 
+       <div class="row post-thumbnail-list"> 
+        <article class="col-xs-6 col-md-3 m-b-1"> 
+         <a href="/2017/10/04/improve-android-debugging"> 
+          <div class="ratio-16x9 outline border-radius drop-shadow"> 
+           <img src="/img/post-images/improve-android-debugging/android-og.png
+" alt="Thumbnail for Three Steps to Quickly Improve Your Android Debugging Process" class="border-radius drop-shadow" aria-hidden="true"> 
+          </div> <h2 class="p-y-1 m-y-0 text-center ">Three Steps to Quickly Improve Your Android Debugging Process</h2> </a> 
+        </article> 
+        <article class="col-xs-6 col-md-3 m-b-1"> 
+         <a href="/2017/10/03/Welcome-Jan-Auer"> 
+          <div class="ratio-16x9 outline border-radius drop-shadow"> 
+           <img src="/img/post-images/welcome-jan-auer/jan-auer-og.jpg
+" alt="Thumbnail for Welcome Jan Michael Auer" class="border-radius drop-shadow" aria-hidden="true"> 
+          </div> <h2 class="p-y-1 m-y-0 text-center ">Welcome Jan Michael Auer</h2> </a> 
+        </article> 
+        <div class="clearfix hidden-md hidden-lg"></div> 
+        <article class="col-xs-6 col-md-3 m-b-1"> 
+         <a href="/2017/09/28/react-16-error-boundaries"> 
+          <div class="ratio-16x9 outline border-radius drop-shadow"> 
+           <img src="/img/post-images/react-16-error-boundaries/example.png
+" alt="Thumbnail for React 16 Error Boundaries" class="border-radius drop-shadow" aria-hidden="true"> 
+          </div> <h2 class="p-y-1 m-y-0 text-center ">React 16 Error Boundaries</h2> </a> 
+        </article> 
+        <article class="col-xs-6 col-md-3 m-b-1"> 
+         <a href="/2017/09/26/welcome-richard-huffaker"> 
+          <div class="ratio-16x9 outline border-radius drop-shadow"> 
+           <img src="/img/post-images/welcome-richard/richard-og.jpg
+" alt="Thumbnail for Welcome Richard Huffaker" class="border-radius drop-shadow" aria-hidden="true"> 
+          </div> <h2 class="p-y-1 m-y-0 text-center ">Welcome Richard Huffaker</h2> </a> 
+        </article> 
+        <div class="clearfix hidden-md hidden-lg"></div> 
+        <div class="clearfix hidden-sx hidden-sm"></div> 
+       </div> 
+      </aside> 
+     </main> 
+    </div> 
+   </div> 
+  </div> 
+  <footer id="footer" class="dark-background fade-links p-t-3 p-b-2 text-size-16"> 
+   <div class="container"> 
+    <div class="row"> 
+     <div class="col-xs-6 col-md-8 col-lg-6"> 
+      <div class="row"> 
+       <div class="col-md-4 m-b-2 m-b-md-0 m-b-lg-0"> 
+        <h4 class="m-t-0 color-white text-size-16">Product</h4> 
+        <ul class="list-unstyled"> 
+         <li> <a href="https://sentry.io/features">Features</a> </li> 
+         <li> <a href="https://sentry.io/pricing">Pricing</a> </li> 
+         <li> <a href="https://docs.sentry.io">Documentation</a> </li> 
+         <li> <a href="https://sentry.io/integrations">Integrations</a> </li> 
+         <li> <a href="https://status.sentry.io">Status</a> </li> 
+        </ul> 
+       </div> 
+       <div class="col-md-4 m-b-2 m-b-md-0 m-b-lg-0"> 
+        <h4 class="m-t-0 color-white text-size-16">Company</h4> 
+        <ul class="list-unstyled"> 
+         <li> <a href="https://sentry.io/about">About Us</a> </li> 
+         <li> <a href="https://sentry.io/jobs">Jobs</a> </li> 
+         <li> <a href="https://sentry.io/branding">Branding</a> </li> 
+         <li> <a href="https://sentry.io/customers">Customers</a> </li> 
+         <li> <a href="https://forge.sentry.io">Forge by Sentry</a> </li> 
+        </ul> 
+       </div> 
+       <div class="col-md-4 m-b-2 m-b-md-0 m-b-lg-0"> 
+        <h4 class="m-t-0 color-white text-size-16">Resources</h4> 
+        <ul class="list-unstyled"> 
+         <li> <a href="/">Blog</a> </li> 
+         <li> <a href="https://sentry.io/security">Security</a> </li> 
+         <li> <a href="https://sentry.io/privacy">Privacy</a> </li> 
+         <li> <a href="https://sentry.io/terms/">Terms</a> </li> 
+         <li> <a href="https://sentry.io/contact/support/">Support</a> </li> 
+         <li> <a href="https://sentry.io/vs/logging/">Sentry vs Logging</a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+     <div class="col-xs-6 col-md-4 col-lg-6"> 
+      <h4 class="m-t-0 color-white text-size-16">Platforms</h4> 
+      <ul class="list-unstyled row"> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/javascript" title="JavaScript Error Tracking">JavaScript</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/csharp" title=".NET Error Tracking">.NET</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/python" title="Python Error Tracking">Python</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/android" title="Android Error Tracking">Android</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/php" title="PHP Error Tracking">PHP</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/django" title="Django Error Tracking">Django</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/java" title="Java Error Tracking">Java</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/flask" title="Flask Error Tracking">Flask</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/ruby" title="Ruby Error Tracking">Ruby</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/laravel" title="Laravel Error Tracking">Laravel</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/cocoa" title="iOS Error Tracking">iOS</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/rails" title="Rails Error Tracking">Rails</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/node" title="Node Error Tracking">Node</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/react" title="React Error Tracking">React</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/for/go" title="Go Error Tracking">Go</a> </li> 
+       <li class="col-md-6 col-lg-4"> <a href="https://sentry.io/platforms" title="Platforms">All Platforms</a> </li> 
+      </ul> 
+     </div> 
+    </div> 
+    <hr class="m-y-2"> 
+    <div class="row"> 
+     <div class="col-xs-12"> 
+      <ul class="list-unstyled social-logos"> 
+       <li class="m-r-2"> <a href="https://twitter.com/getsentry"> 
+         <svg aria-hidden="true" class="icon icon-twitter-logo" role="icon" width="16" height="16" viewbox="0 0 16 16" version="1.1"> 
+          <path d="M16,3a6.56,6.56,0,0,1-1.89.52,3.29,3.29,0,0,0,1.44-1.82,6.57,6.57,0,0,1-2.08.8,3.3,3.3,0,0,0-5.59,3A9.32,9.32,0,0,1,1.11,2.1a3.32,3.32,0,0,0,1,4.38A3.27,3.27,0,0,1,.64,6.07,3.32,3.32,0,0,0,3.28,9.33a3.32,3.32,0,0,1-1.48.06,3.29,3.29,0,0,0,3.07,2.28A6.66,6.66,0,0,1,0,13a9.48,9.48,0,0,0,10.71-.39,9.61,9.61,0,0,0,3.65-7.9A6.67,6.67,0,0,0,16,3C15.41,3.3,15.56,3.7,16,3Z" /> 
+         </svg> Twitter </a> </li> 
+       <li class="m-r-2"> <a href="https://github.com/getsentry"> 
+         <svg aria-hidden="true" class="icon icon-github-logo" role="icon" width="16" height="16" viewbox="0 0 16 16" version="1.1"> 
+          <path d="M8,0.2A8,8,0,0,0,5.47,15.79,0.4,0.4,0,0,0,6,15.4c0-.19,0-0.69,0-1.36C3.78,14.53,3.31,13,3.31,13a2.12,2.12,0,0,0-.89-1.17c-0.73-.5.05-0.49,0.05-0.49a1.68,1.68,0,0,1,1.23.82A1.7,1.7,0,0,0,6,12.8a1.71,1.71,0,0,1,.51-1.07c-1.78-.2-3.64-0.89-3.64-4a3.09,3.09,0,0,1,.82-2.15A2.88,2.88,0,0,1,3.8,3.52S4.47,3.3,6,4.34a7.58,7.58,0,0,1,4,0c1.53-1,2.2-.82,2.2-0.82a2.87,2.87,0,0,1,.08,2.12,3.09,3.09,0,0,1,.82,2.15c0,3.07-1.87,3.75-3.65,3.95A1.91,1.91,0,0,1,10,13.21c0,1.07,0,1.93,0,2.19a0.4,0.4,0,0,0,.55.38A8,8,0,0,0,8,.2Z" /> 
+         </svg> GitHub </a> </li> 
+       <li> <a href="https://dribbble.com/sentry"> 
+         <svg aria-hidden="true" class="icon icon-dribble-logo" role="icon" width="16" height="16" viewbox="0 0 16 16" version="1.1"> 
+          <path d="M8,16a8,8,0,1,1,8-8A8,8,0,0,1,8,16Zm6.75-6.9a10,10,0,0,0-4.26-.29,29.49,29.49,0,0,1,1.33,4.87A6.84,6.84,0,0,0,14.75,9.1ZM10.67,14.3A28.41,28.41,0,0,0,9.21,9.12,9.38,9.38,0,0,0,3.81,13.4,6.86,6.86,0,0,0,10.67,14.3ZM2.92,12.58A10.75,10.75,0,0,1,8.75,8C8.58,7.6,8.39,7.21,8.19,6.83a25.21,25.21,0,0,1-7,1A6.77,6.77,0,0,0,2.92,12.58Zm-1.61-6a25.49,25.49,0,0,0,6.32-.83,43.6,43.6,0,0,0-2.53-4A6.86,6.86,0,0,0,1.31,6.61ZM6.4,1.37a36.47,36.47,0,0,1,2.55,4A7.72,7.72,0,0,0,12.53,2.9,6.79,6.79,0,0,0,6.4,1.37Zm6.89,2.32A9.1,9.1,0,0,1,9.47,6.38c0.16,0.33.44,0.89,0.6,1.34a16,16,0,0,1,4.76.22A6.8,6.8,0,0,0,13.29,3.69Z" /> 
+         </svg> Dribbble </a> </li> 
+      </ul> 
+     </div> 
+    </div> 
+    <div class="row"> 
+     <div class="col-xs-9 copyright" role="contentinfo">
+       © 2017 • Sentry is a registered trademark of Functional Software, Inc. 
+     </div> 
+    </div> 
+   </div> 
+   <a class="brand-flag p-l-1 p-r-2 p-y-1" title="Sentry error monitoring" href="/">
+    <svg aria-hidden="true" class="icon icon-sentry-logo" role="icon" width="72" height="16" viewbox="0 0 72 16" version="1.1"> 
+     <path d="M44.54,10.27L39.19,3.34H37.85v9.27h1.34V5.49l5.49,7.12h1.19V3.34H44.54v6.93ZM31.07,8.55h4.78V7.36H31.07V4.59h5.4V3.34H29.73v9.27h6.83V11.41H31.07V8.55ZM25.48,7.36c-1.86-.43-2.39-0.81-2.39-1.67s0.67-1.29,1.72-1.29a4.46,4.46,0,0,1,2.58.91l0.72-1a5.18,5.18,0,0,0-3.3-1.1c-1.81,0-3.1,1.1-3.1,2.63s1.1,2.24,3.06,2.72c1.77,0.38,2.29.76,2.29,1.62s-0.72,1.39-1.86,1.39a4.56,4.56,0,0,1-3-1.19l-0.81,1a5.75,5.75,0,0,0,3.77,1.39c2,0,3.25-1.05,3.25-2.72C28.44,8.64,27.58,7.88,25.48,7.36Zm44.94-4L67.65,7.69,64.88,3.34H63.26l3.68,5.59v3.68h1.39V8.88L72,3.34H70.42ZM47,4.59h3v8h1.39v-8h3V3.34H47V4.59ZM60.87,9A2.72,2.72,0,0,0,63,6.21c0-1.77-1.29-2.87-3.39-2.87H55.52v9.27h1.39V9.27h2.34l2.34,3.34h1.62L60.68,9.07Zm-4-.91V4.54h2.58c1.34,0,2.15.62,2.15,1.77a1.84,1.84,0,0,1-2.1,1.77H56.91ZM10.38,0.81A1.57,1.57,0,0,0,8.95,0,1.57,1.57,0,0,0,7.52.81L5.18,4.87,5.8,5.21A11.44,11.44,0,0,1,10,9.41a11.35,11.35,0,0,1,1.53,5.06H9.86a10.25,10.25,0,0,0-1.29-4.25A9.47,9.47,0,0,0,4.94,6.59L4.32,6.26l-2.2,3.82,0.62,0.33a5.65,5.65,0,0,1,2.72,4.06H1.69a0.3,0.3,0,0,1-.24-0.14,0.29,0.29,0,0,1,0-.29L2.5,12.23a3.67,3.67,0,0,0-1.19-.67L0.26,13.37a1.8,1.8,0,0,0,0,1.77A1.57,1.57,0,0,0,1.64,16H6.85V15.28a7.25,7.25,0,0,0-.91-3.44A6.89,6.89,0,0,0,4,9.7L4.84,8.26A8.27,8.27,0,0,1,7.37,11a8.35,8.35,0,0,1,1.15,4.25V16h4.39V15.28a12.79,12.79,0,0,0-1.72-6.45A12.48,12.48,0,0,0,7,4.49L8.71,1.58a0.33,0.33,0,0,1,.24-0.14,0.23,0.23,0,0,1,.24.14L16.5,14.19a0.29,0.29,0,0,1-.24.43H14.54a13.4,13.4,0,0,1,0,1.39h1.72a1.57,1.57,0,0,0,1.43-.81,1.73,1.73,0,0,0,0-1.67Z" /> 
+    </svg> </a> 
+  </footer> 
+  <script type="text/javascript" src="/assets/script-444be48ac97323c07074231767fd1c95cf6bca72a1ecb0026358e296348dd7d3.js"></script> 
+  <span class="banner privacy-shield-banner p-t-1 hidden"> 
+   <div class="container"> 
+    <div class="row"> 
+     <div class="col-sm-10 text-left m-b-1">
+       This website uses cookies to provide you a more personalized experience. To find out more, see our 
+      <a href="/privacy/">Privacy Policy</a>. 
+     </div> 
+     <div class="col-sm-2 m-b-1"> 
+      <button class="btn btn-block btn-invert">Accept</button> 
+     </div> 
+    </div> 
+   </div> </span> 
+  <!-- Twitter universal website tag code --> 
+  <script src="https://platform.twitter.com/oct.js" type="text/javascript" async defer></script> 
+  <script type="text/javascript">window.twttr && twttr.conversion.trackPid('nuue0', { tw_sale_amount: 0, tw_order_quantity: 0 });</script> 
+  <noscript> 
+   <img height="1" width="1" style="display:none;" alt="" src="https://analytics.twitter.com/i/adsct?txn_id=nuue0&amp;p_id=Twitter&amp;tw_sale_amount=0&amp;tw_order_quantity=0"> 
+   <img height="1" width="1" style="display:none;" alt="" src="https://t.co/i/adsct?txn_id=nuue0&amp;p_id=Twitter&amp;tw_sale_amount=0&amp;tw_order_quantity=0"> 
+  </noscript> 
+  <!-- End Twitter universal website tag code --> 
+  <script type="text/javascript">
+  adroll_adv_id = "MLWCNCFTMJGD7GPDGE6RVT";
+  adroll_pix_id = "7M3QZV2OWJGMBAGSKP2TG5";
+  !function(){var e=function(){if(document.readyState&&!/loaded|complete/.test(document.readyState))return void setTimeout(e,10);if(!window.__adroll_loaded)return __adroll_loaded=!0,void setTimeout(e,50);var t=document.createElement("script"),d="https://s.adroll.com";t.setAttribute("async","true"),t.setAttribute("defer","true"),t.type="text/javascript",t.src=d+"/j/roundtrip.js",((document.getElementsByTagName("head")||[null])[0]||document.getElementsByTagName("script")[0].parentNode).appendChild(t)};window.addEventListener?window.addEventListener("load",e,!1):window.attachEvent("onload",e)}();
+</script> 
+  <script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-30327640-3', 'auto', {'allowLinker': true});
+ga('require', 'linker');
+ga('linker:autoLink', ['docs.sentry.io', 'sentry.io']);
+ga('send', 'pageview');
+</script> 
+  <script async defer src="https://ssl.google-analytics.com/analytics.js"></script> 
+  <script type="text/javascript">
+  !function(e){function n(o){if(t[o])return t[o].exports;var r=t[o]={exports:{},id:o,loaded:!1};return e[o].call(r.exports,r,r.exports,n),r.loaded=!0,r.exports}var t={};return n.m=e,n.c=t,n.p="",n(0)}([function(e,n,t){"use strict";var o=t(1),r="",i=function(){var e=(new Date).getTime();window.performance&&"function"==typeof window.performance.now&&(e+=performance.now());var n="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(n){var t=(e+16*Math.random())%16|0;return e=Math.floor(e/16),("x"==n?t:3&t|8).toString(16)});return n},a=Object.assign||function(e){if(void 0===e||null===e)throw new TypeError("Cannot convert undefined or null to object");for(var n=Object(e),t=1;t<arguments.length;t++){var o=arguments[t];if(void 0!==o&&null!==o)for(var r in o)o.hasOwnProperty(r)&&(n[r]=o[r])}return n},c=function(){var e=location.hostname.split(".");if(e.length>2){e.shift()}var n=e.join(".");return n},u=function(){var e=(0,o.get)("anonId");return e||(e=i(),(0,o.set)("anonId",e,{domain:c()})),e},f=function(){return{url:window.location.href,path:window.location.pathname,referrer:document.referrer,title:document.title,context_user_agent:navigator.userAgent,sent_at:Date.now().toString()}},s=function(e){var n=(0,o.get)("gsID"),t=u(),r={user_id:n,anonymous_id:t};a(r,f(),e);var i=new XMLHttpRequest;i.open("POST",window.ra.endpoint+"/page/"),i.send(JSON.stringify(r))},d=function(e){(0,o.set)("gsID",e,{domain:c()})};window.ra={page:s,endpoint:r,identify:d}},function(e,n,t){var o,r;!function(i){var a=!1;if(o=i,r="function"==typeof o?o.call(n,t,n,e):o,!(void 0!==r&&(e.exports=r)),a=!0,e.exports=i(),a=!0,!a){var c=window.Cookies,u=window.Cookies=i();u.noConflict=function(){return window.Cookies=c,u}}}(function(){function e(){for(var e=0,n={};e<arguments.length;e++){var t=arguments[e];for(var o in t)n[o]=t[o]}return n}function n(t){function o(n,r,i){var a;if("undefined"!=typeof document){if(arguments.length>1){if(i=e({path:"/"},o.defaults,i),"number"==typeof i.expires){var c=new Date;c.setMilliseconds(c.getMilliseconds()+864e5*i.expires),i.expires=c}try{a=JSON.stringify(r),/^[\{\[]/.test(a)&&(r=a)}catch(e){}return r=t.write?t.write(r,n):encodeURIComponent(String(r)).replace(/%(23|24|26|2B|3A|3C|3E|3D|2F|3F|40|5B|5D|5E|60|7B|7D|7C)/g,decodeURIComponent),n=encodeURIComponent(String(n)),n=n.replace(/%(23|24|26|2B|5E|60|7C)/g,decodeURIComponent),n=n.replace(/[\(\)]/g,escape),document.cookie=[n,"=",r,i.expires?"; expires="+i.expires.toUTCString():"",i.path?"; path="+i.path:"",i.domain?"; domain="+i.domain:"",i.secure?"; secure":""].join("")}n||(a={});for(var u=document.cookie?document.cookie.split("; "):[],f=/(%[0-9A-Z]{2})+/g,s=0;s<u.length;s++){var d=u[s].split("="),p=d.slice(1).join("=");'"'===p.charAt(0)&&(p=p.slice(1,-1));try{var l=d[0].replace(f,decodeURIComponent);if(p=t.read?t.read(p,l):t(p,l)||p.replace(f,decodeURIComponent),this.json)try{p=JSON.parse(p)}catch(e){}if(n===l){a=p;break}n||(a[l]=p)}catch(e){}}return a}}return o.set=o,o.get=function(e){return o.call(o,e)},o.getJSON=function(){return o.apply({json:!0},[].slice.call(arguments))},o.defaults={},o.remove=function(n,t){o(n,"",e(t,{expires:-1}))},o.withConverter=n,o}return n(function(){})})}]);
+  window.ra.endpoint='https://reload.getsentry.net'
+
+if (document.location.host == "localhost:4000") {
+  var API = "http://dev.getsentry.net:8000/blog/api"
+} else {
+  var API = "https://sentry.io/blog/api"
+}
+$.ajax({
+  type: 'GET',
+  url: API + '/user/',
+  crossDomain: true,
+  xhrFields: {
+    withCredentials: true
+  },
+  success: function(resp) {
+    if (resp.isAuthenticated) {
+      window.ra.identify(resp.id);
+    }
+    window.ra.page();
+  },
+  error: function() {
+    console.error('Failed to load user data from Sentry');
+    window.ra.page();
+  }
+})
+
+</script> 
+  <script type="text/javascript" id="hs-script-loader" async defer data-src="//js.hs-scripts.com/3344477.js" class="js-privacy-shield-deferred"></script>   
+ </body>
+</html>

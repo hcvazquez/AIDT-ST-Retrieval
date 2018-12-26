@@ -1,0 +1,442 @@
+<html>
+ <head> 
+  <meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252"> 
+  <meta NAME="Generator" CONTENT="Microsoft FrontPage 6.0"> 
+  <title>SVM-Light Support Vector Machine</title> 
+  <meta NAME="Version" CONTENT="8.0.3514"> 
+  <meta NAME="Date" CONTENT="11/26/96"> 
+  <meta NAME="Template" CONTENT="C:\Programme\Microsoft Office\Office\HTML.DOT"> 
+ </head> 
+ <body link="#0000ff" vlink="#800080" bgcolor="#ffffff"> 
+  <table cellspacing="0" border="0" cellpadding="5"> 
+   <tbody>
+    <tr>
+     <td width="14%" valign="top"> <h2><a target="_top" href="http://www-ai.cs.uni-dortmund.de/"><img height="81" src="http://www.joachims.org/images/eier_graybg.gif" width="100" border="0"></a></h2></td> 
+     <td width="75%" valign="top"> <h1 align="center">SVM<i><sup>light</sup> </i></h1><h1 align="center">Support Vector Machine</h1> <p align="center">Author: <a target="_top" href="http://www.joachims.org/">Thorsten Joachims</a> &lt;<a href="mailto:thorsten@joachims.org">thorsten@joachims.org</a>&gt; <br> <a target="_top" href="http://www.cornell.edu/">Cornell University</a> <br> <a target="_top" href="http://www.cs.cornell.edu/">Department of Computer Science</a> </p> <p align="center">Developed at: <br> <a target="_top" href="http://www.uni-dortmund.de/">University of Dortmund</a>, <a target="_top" href="http://www.informatik.uni-dortmund.de/">Informatik</a>, <a target="_top" href="http://www-ai.informatik.uni-dortmund.de/">AI-Unit</a> <br> <a target="_top" href="http://www.sfb475.uni-dortmund.de/">Collaborative Research Center on 'Complexity Reduction in Multivariate Data' (SFB475)</a> </p> <p align="center">Version: 6.02 <br> Date: 14.08.2008</p></td> 
+     <td width="11%" valign="top"> <h2><img SRC="http://www.joachims.org/images/culogo_125.gif" WIDTH="80" HEIGHT="80"></h2></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h2>Overview</h2> 
+  <p>SVM<i><sup>light</sup></i> is an implementation of Support Vector Machines (SVMs) in C. The main features of the program are the following: </p> 
+  <ul> 
+   <li>fast optimization algorithm 
+    <ul> 
+     <li>working set selection based on steepest feasible descent </li>
+     <li>"shrinking" heuristic </li>
+     <li>caching of kernel evaluations </li>
+     <li>use of folding in the linear case </li>
+    </ul> </li>
+   <li>solves classification and regression problems. For multivariate and structured outputs use <a href="svm_struct.html">SVM<i><sup>struct</sup></i></a>. </li>
+   <li>solves ranking problems (e. g. learning retrieval functions in <a href="http://striver.joachims.org/"><i>STRIVER</i></a> search engine). </li>
+   <li>computes XiAlpha-estimates of the error rate, the precision, and the recall </li>
+   <li>efficiently computes Leave-One-Out estimates of the error rate, the precision, and the recall </li>
+   <li>includes algorithm for approximately training large transductive SVMs (TSVMs) (see also <a href="http://sgt.joachims.org">Spectral Graph Transducer</a>) </li>
+   <li>can train SVMs with cost models and example dependent costs </li>
+   <li>allows restarts from specified vector of dual variables </li>
+   <li>handles many thousands of support vectors </li>
+   <li>handles several hundred-thousands of training examples </li>
+   <li>supports standard kernel functions and lets you define your own </li>
+   <li>uses sparse vector representation </li>
+  </ul> 
+  <p><img border="0" src="../images/new.gif" width="32" height="16"> <a href="http://machine-learning-course.joachims.org/">Machine Learning Course</a>: If you would like to learn more about Machine Learning, you can find videos, slides, and readings of the course I teach at Cornell <a href="http://machine-learning-course.joachims.org/">here</a>.</p> 
+  <p><img border="0" src="../images/new.gif" width="32" height="16"> <a href="svm_struct.html">SVM<i><sup>struct</sup></i></a>: SVM learning for multivariate and structured outputs like trees, sequences, and sets (available <a href="svm_struct.html">here</a>).</p> 
+  <p><img border="0" src="../images/new.gif" width="32" height="16"> <a href="svm_perf.html">SVM<sup><i>perf</i></sup></a>: New training algorithm for linear classification SVMs that can be much faster than SVM<sup><i>light</i></sup> for large datasets. It also lets you directly optimize multivariate performance measures like F1-Score, ROC-Area, and the Precision/Recall Break-Even Point. (available <a href="svm_perf.html">here</a>).</p> 
+  <p><img border="0" src="../images/new.gif" width="32" height="16"> <a href="svm_rank.html">SVM<sup><i>rank</i></sup></a>: New algorithm for training Ranking SVMs that is much faster than SVM<sup><i>light</i></sup> in '-z p' mode. (available <a href="svm_rank.html">here</a>).</p> 
+  <h2>Description</h2> 
+  <p>SVM<i><sup>light</sup></i> is an implementation of Vapnik's Support Vector Machine [<a href="#References">Vapnik, 1995</a>] for the problem of pattern recognition, for the problem of regression, and for the problem of learning a ranking function. The optimization algorithms used in SVM<i><sup>light</sup></i>&nbsp;are described in [<a href="#References">Joachims, 2002a</a> ]. [<a href="#References">Joachims, 1999a</a>]. The algorithm has scalable memory requirements and can handle problems with many thousands of support vectors efficiently. </p> 
+  <p>The software also provides methods for assessing the generalization performance efficiently. It includes two efficient estimation methods for both error rate and precision/recall. XiAlpha-estimates [<a href="#References">Joachims, 2002a</a>, <a href="#References">Joachims, 2000b</a>] can be computed at essentially no computational expense, but they are conservatively biased. Almost unbiased estimates provides leave-one-out testing. SVM<i><sup>light</sup></i> exploits that the results of most leave-one-outs (often more than 99%) are predetermined and need not be computed [<a href="#References">Joachims, 2002a</a>].</p> 
+  <p>New in this version is an algorithm for learning ranking functions [<a href="#References">Joachims, 2002c</a>]. The goal is to learn a function from preference examples, so that it orders a new set of objects as accurately as possible. Such ranking problems naturally occur in applications like search engines and recommender systems.</p> 
+  <p>Futhermore, this version includes an algorithm for training large-scale transductive SVMs. The algorithm proceeds by solving a sequence of optimization problems lower-bounding the solution using a form of local search. A detailed description of the algorithm can be found in [<a href="#References">Joachims, 1999c</a>]. A similar transductive learner, which can be thought of as a transductive version of k-Nearest Neighbor is the <a href="http://sgt.joachims.org">Spectral Graph Transducer</a>. </p> 
+  <p>SVM<i><sup>light</sup></i> can also train SVMs with cost models (see [<a href="#References">Morik et al., 1999</a>]).</p> 
+  <p>The code has been used on a large range of problems, including text classification [<a href="#References">Joachims, 1999c</a>][<a href="#References">Joachims, 1998a</a>], image recognition tasks, bioinformatics and medical applications. Many tasks have the property of sparse instance vectors. This implementation makes use of this property which leads to a very compact and efficient representation.</p> 
+  <h2>Source Code and Binaries</h2> 
+  <p>The program is free for scientific use. Please contact me, if you are planning to use the software for commercial purposes. The software must not be further distributed without prior permission of the author. If you use SVM<i><sup>light</sup></i> in your scientific work, please cite as </p> 
+  <ul> 
+   <li>T. Joachims, Making large-Scale SVM Learning Practical. Advances in Kernel Methods - Support Vector Learning, B. Schölkopf and C. Burges and A. Smola (ed.), MIT-Press, 1999. <br> [<a target="_top" href="http://www.joachims.org/publications/joachims_99a.pdf">PDF</a>] [<a target="_top" href="http://www.joachims.org/publications/joachims_99a.ps.gz">Postscript (gz)</a>] [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</li> 
+  </ul> 
+  <p>I would also appreciate, if you sent me (a link to) your papers so that I can learn about your research. The implementation was developed on Solaris 2.5 with gcc, but compiles also on SunOS 3.1.4, Solaris 2.7, Linux, IRIX, Windows NT, and Powermac (after small modifications, see <a href="svm_light_faq.html">FAQ</a>). The source code is available at the following location: </p>
+  <dir> 
+   <p><a href="http://download.joachims.org/svm_light/current/svm_light.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light.tar.gz</a></p>
+  </dir> 
+  <p>If you just want the binaries, you can download them for the following systems:</p> 
+  <ul> 
+   <li>Linux (32-bit): <a href="http://download.joachims.org/svm_light/current/svm_light_linux32.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light_linux32.tar.gz</a></li> 
+   <li>Linux (64-bit): <a href="http://download.joachims.org/svm_light/current/svm_light_linux64.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light_linux64.tar.gz</a></li> 
+   <li>Windows (32-bit): <a href="http://download.joachims.org/svm_light/current/svm_light_windows32.zip" target="_top">http://download.joachims.org/svm_light/current/svm_light_windows32.zip</a> </li>
+   <li>Windows (64-bit): <a href="http://download.joachims.org/svm_light/current/svm_light_windows64.zip" target="_top">http://download.joachims.org/svm_light/current/svm_light_windows64.zip</a> </li>
+   <li>Cygwin (32-bit): <a href="http://download.joachims.org/svm_light/current/svm_light_cygwin.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light_cygwin.tar.gz</a> </li>
+   <li>Mac OS X (old): <a href="http://download.joachims.org/svm_light/current/svm_light_osx.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light_osx.tar.gz</a></li> 
+   <li>Mac OS X (new): <a href="http://download.joachims.org/svm_light/current/svm_light_osx.8.4_i7.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light_osx.8.4_i7.tar.gz</a></li> 
+   <li>Solaris: <a href="http://download.joachims.org/svm_light/current/svm_light_solaris.tar.gz" target="_top">http://download.joachims.org/svm_light/current/svm_light_solaris.tar.gz</a> </li>
+  </ul> 
+  <p><a href="mailto:thorsten@joachims.org">Please send me email</a> and let me know that you got svm-light. I will put you on my mailing list to inform you about new versions and bug-fixes. SVM<i><sup>light</sup></i> comes with a quadratic programming tool for solving small intermediate quadratic programming problems. It is based on the method of Hildreth and D'Espo and solves small quadratic programs very efficiently. Nevertheless, if for some reason you want to use another solver, the new version still comes with an interface to PR_LOQO. The <a target="_top" href="http://www.first.gmd.de/~smola/">PR_LOQO optimizer</a> was written by <a target="_top" href="http://www.first.gmd.de/~smola/">A. Smola</a>. It can be requested from <a target="_top" href="http://www.kernel-machines.org/code/prloqo.tar.gz">http://www.kernel-machines.org/code/prloqo.tar.gz</a>. </p> 
+  <h2>Installation</h2> 
+  <p>To install SVM<i><sup>light</sup></i> you need to download <tt>svm_light.tar.gz</tt>. Create a new directory:</p> 
+  <dir> 
+   <tt><p>mkdir svm_light</p></tt> 
+  </dir> 
+  <p>Move <tt>svm_light.tar.gz</tt> to this directory and unpack it with </p> 
+  <dir> 
+   <tt><p>gunzip -c svm_light.tar.gz | tar xvf -</p></tt> 
+  </dir> 
+  <p>Now execute </p> 
+  <dir> 
+   <tt><p>make or make all</p></tt> 
+  </dir> 
+  <p>which compiles the system and creates the two executables </p> 
+  <dir> 
+   <tt>svm_learn (learning module)</tt>
+   <br> 
+   <tt>svm_classify (classification module)</tt> 
+  </dir> 
+  <p>If you do not want to use the built-in optimizer but PR_LOQO instead, create a subdirectory in the svm_light directory with </p> 
+  <dir> 
+   <tt><p>mkdir pr_loqo</p></tt> 
+  </dir> 
+  <p>and copy the files <tt>pr_loqo.c</tt> and <tt>pr_loqo.h</tt> in there. Now execute </p> 
+  <dir> 
+   <tt><p>make svm_learn_loqo</p></tt> 
+  </dir> 
+  <p>If the system does not compile properly, check this <a href="svm_light_faq.html">FAQ</a>.</p> 
+  <h2>How to use</h2> 
+  <p>This section explains how to use the SVM<i><sup>light</sup></i> software. A good introduction to the theory of SVMs is Chris Burges' <a target="_top" href="http://www.kernel-machines.org/papers/Burges98.ps.gz">tutorial</a>. </p> 
+  <p>SVM<i><sup>light</sup></i> consists of a learning module (<tt>svm_learn</tt>) and a classification module (<tt>svm_classify</tt>). The classification module can be used to apply the learned model to new examples. See also the examples below for how to use <tt>svm_learn</tt> and <tt>svm_classify</tt>. </p> 
+  <tt></tt>
+  <p><tt>svm_learn</tt> is called with the following parameters:</p> 
+  <dir> 
+   <tt><p>svm_learn [options] example_file model_file</p></tt> 
+  </dir> 
+  <p>Available options are: </p> 
+  <dir> 
+   <pre>General options:
+         -?          - this help
+         -v [0..3]   - verbosity level (default 1)
+Learning options:
+         -z {c,r,p}  - select between classification (c), regression (r), and 
+                       preference ranking (p) (see [<a href="#References">Joachims, 2002c</a>])
+                       (default classification)          
+         -c float    - C: trade-off between training error
+                       and margin (default [avg. x*x]^-1)
+         -w [0..]    - epsilon width of tube for regression
+                       (default 0.1)
+         -j float    - Cost: cost-factor, by which training errors on
+                       positive examples outweight errors on negative
+                       examples (default 1) (see [<a href="#References">Morik et al., 1999</a>])
+         -b [0,1]    - use biased hyperplane (i.e. x*w+b0) instead
+                       of unbiased hyperplane (i.e. x*w0) (default 1)
+         -i [0,1]    - remove inconsistent training examples
+                       and retrain (default 0)
+Performance estimation options:
+         -x [0,1]    - compute leave-one-out estimates (default 0)
+                       (see [5])
+         -o ]0..2]   - value of rho for XiAlpha-estimator and for pruning
+                       leave-one-out computation (default 1.0) 
+                       (see [<a href="#References">Joachims, 2002a</a>])
+         -k [0..100] - search depth for extended XiAlpha-estimator
+                       (default 0)
+Transduction options (see [<a href="#References">Joachims, 1999c</a>], [<a href="#References">Joachims, 2002a</a>]):
+         -p [0..1]   - fraction of unlabeled examples to be classified
+                       into the positive class (default is the ratio of
+                       positive and negative examples in the training data)
+Kernel options:
+         -t int      - type of kernel function:
+                        0: linear (default)
+                        1: polynomial (s a*b+c)^d
+                        2: radial basis function exp(-gamma ||a-b||^2)
+                        3: sigmoid tanh(s a*b + c)
+                        4: user defined kernel from kernel.h
+         -d int      - parameter d in polynomial kernel
+         -g float    - parameter gamma in rbf kernel
+         -s float    - parameter s in sigmoid/poly kernel
+         -r float    - parameter c in sigmoid/poly kernel
+         -u string   - parameter of user defined kernel
+Optimization options (see [<a href="#References">Joachims, 1999a</a>], [<a href="#References">Joachims, 2002a</a>]):
+         -q [2..]    - maximum size of QP-subproblems (default 10)
+         -n [2..q]   - number of new variables entering the working set
+                       in each iteration (default n = q). Set n&lt;q to prevent
+                       zig-zagging.
+         -m [5..]    - size of cache for kernel evaluations in MB (default 40)
+                       The larger the faster...
+         -e float    - eps: Allow that error for termination criterion
+                       [y [w*x+b] - 1] = eps (default 0.001) 
+         -h [5..]    - number of iterations a variable needs to be
+                       optimal before considered for shrinking (default 100) 
+         -f [0,1]    - do final optimality check for variables removed by
+                       shrinking. Although this test is usually positive, there
+                       is no guarantee that the optimum was found if the test is
+                       omitted. (default 1) 
+         -y string   -&gt; if option is given, reads alphas from file with given
+                        and uses them as starting point. (default 'disabled')
+         -# int      -&gt; terminate optimization, if no progress after this
+                        number of iterations. (default 100000)
+Output options: 
+         -l char     - file to write predicted labels of unlabeled examples 
+                       into after transductive learning 
+         -a char     - write all alphas to this file after learning (in the 
+                       same order as in the training set)</pre>
+  </dir> 
+  <p>A more detailed description of the parameters and how they link to the respective algorithms is given in the appendix of [<a href="#References">Joachims, 2002a</a>]. </p> 
+  <p>The input file <tt>example_file</tt> contains the training examples. The first lines may contain comments and are ignored if they start with #. Each of the following lines represents one training example and is of the following format: </p> 
+  <dir> 
+   <tt>&lt;line&gt; .=. &lt;target&gt; &lt;feature&gt;:&lt;value&gt; &lt;feature&gt;:&lt;value&gt; ... &lt;feature&gt;:&lt;value&gt; # &lt;info&gt;</tt>
+   <br> 
+   <tt>&lt;target&gt; .=. +1 | -1 | 0 | &lt;float&gt;</tt>&nbsp;
+   <br> 
+   <tt>&lt;feature&gt; .=. &lt;integer&gt; | "qid"</tt>
+   <br> 
+   <tt>&lt;value&gt; .=. &lt;float&gt;</tt>
+   <br> 
+   <tt>&lt;info&gt; .=. &lt;string&gt;</tt> 
+  </dir> 
+  <p>The target value and each of the feature/value pairs are separated by a space character. Feature/value pairs MUST be ordered by increasing feature number. Features with value zero can be skipped. The string <tt>&lt;info&gt;</tt> can be used to pass additional information to the kernel (e.g. non feature vector data). Check the <a href="svm_light_faq.html">FAQ</a> for more details on how to implement your own kernel.</p> 
+  <p>In classification mode, the target value denotes the class of the example. +1 as the target value marks a positive example, -1 a negative example respectively. So, for example, the line </p> 
+  <blockquote> 
+   <p><tt>-1 1:0.43 3:0.12 9284:0.2 # abcdef</tt> </p> 
+  </blockquote> 
+  <p>specifies a negative example for which feature number 1 has the value 0.43, feature number 3 has the value 0.12, feature number 9284 has the value 0.2, and all the other features have value 0. In addition, the string <tt>abcdef</tt> is stored with the vector, which can serve as a way of providing additional information for user defined kernels. A class label of 0 indicates that this example should be classified using transduction. The predictions for the examples classified by transduction are written to the file specified through the -l option. The order of the predictions is the same as in the training data. </p> 
+  <p>In regression mode, the &lt;target&gt; contains the real-valued target value.</p> 
+  <p>In ranking mode [<a href="#References">Joachims, 2002c</a>], the target value is used to generated pairwise preference constraints (see <a href="http://striver.joachims.org">STRIVER</a>). A preference constraint is included for all pairs of examples in the <tt>example_file</tt>, for which the target value differs. The special feature "qid" can be used to restrict the generation of constraints. Two examples are considered for a pairwise preference constraint only, if the value of "qid" is the same. For example, given the <tt>example_file</tt></p> 
+  <blockquote dir="ltr" style="MARGIN-RIGHT: 0px"> 
+   <p><tt>3&nbsp;qid:1 1:0.53 2:0.12<br> 2&nbsp;qid:1 1:0.13 2:0.1<br> 7 qid:2 1:0.87 2:0.12 </tt></p> 
+  </blockquote> 
+  <p>a preference constraint is included only for the first and the second example (ie. the first should be ranked higher than the second), but not with the third example, since it has a different "qid". NOTE: <a href="svm_rank.html">SVM<sup><i>rank</i></sup></a> is a new algorithm for training Ranking SVMs that is much faster than SVM<sup><i>light</i></sup> in '-z p' mode (available <a href="svm_rank.html">here</a>).</p> 
+  <p>In all modes, the result of <tt>svm_learn</tt> is the model which is learned from the training data in <tt>example_file</tt>. The model is written to <tt>model_file</tt>. To make predictions on test examples, <tt>svm_classify</tt> reads this file. <tt>svm_classify</tt> is called with the following parameters: </p> 
+  <dir> 
+   <tt><p>svm_classify [options] example_file model_file output_file</p></tt> 
+  </dir> 
+  <p>Available options are: </p> 
+  <blockquote> 
+   <pre>
+-h         Help. 
+-v [0..3]  Verbosity level (default 2).
+-f [0,1]   0: old output format of V1.0
+           1: output the value of decision function (default)</pre> 
+  </blockquote> 
+  <p>The test examples in <tt>example_file</tt> are given in the same format as the training examples (possibly with 0 as class label). For all test examples in <tt>example_file</tt> the predicted values are written to <tt>output_file</tt>. There is one line per test example in <tt>output_file</tt> containing the value of the decision function on that example. For classification, the sign of this value determines the predicted class. For regression, it is the predicted value itself, and for ranking the value can be used to order the test examples. The test example file has the same format as the one for <tt>svm_learn</tt>. Again, <tt>&lt;class&gt;</tt> can have the value zero indicating unknown. </p> 
+  <p>If you want to find out more, try this <a href="svm_light_faq.html">FAQ</a>. </p> 
+  <h2>Getting started: some Example Problems</h2> 
+  <h3>Inductive SVM</h3> 
+  <p>You will find an example text classification problem at </p> 
+  <dir> 
+   <p><a href="http://download.joachims.org/svm_light/examples/example1.tar.gz" target="_top">http://download.joachims.org/svm_light/examples/example1.tar.gz</a></p> 
+  </dir> 
+  <p>Download this file into your svm_light directory and unpack it with </p> 
+  <dir> 
+   <tt><p>gunzip -c example1.tar.gz | tar xvf -</p></tt> 
+  </dir> 
+  <p>This will create a subdirectory <tt>example1</tt>. Documents are represented as feature vectors. Each feature corresponds to a word stem (9947 features). The task is to learn which <a target="_top" href="http://www.daviddlewis.com/resources/testcollections/reuters21578/">Reuters articles</a> are about "corporate acquisitions". There are 1000 positive and 1000 negative examples in the file <tt>train.dat</tt>. The file <tt>test.dat</tt> contains 600 test examples. The feature numbers correspond to the line numbers in the file <tt>words</tt>. To run the example, execute the commands: </p> 
+  <dir> 
+   <tt></tt>
+   <p><tt>svm_learn example1/train.dat example1/model<br></tt> <tt>svm_classify example1/test.dat example1/model example1/predictions</tt></p> 
+  </dir> 
+  <p>The accuracy on the test set is printed to stdout. </p> 
+  <h3>Transductive SVM</h3> 
+  <p>To try out the transductive learner, you can use the following dataset (see also <a href="http://sgt.joachims.org">Spectral Graph Transducer</a>). I compiled it from the same Reuters articles as used in the example for the inductive SVM. The dataset consists of only 10 training examples (5 positive and 5 negative) and the same 600 test examples as above. You find it at </p> 
+  <dir> 
+   <p><a href="http://download.joachims.org/svm_light/examples/example2.tar.gz" target="_top">http://download.joachims.org/svm_light/examples/example2.tar.gz</a></p> 
+  </dir> 
+  <p>Download this file into your svm_light directory and unpack it with </p> 
+  <dir> 
+   <tt><p>gunzip -c example2.tar.gz | tar xvf -</p></tt> 
+  </dir> 
+  <p>This will create a subdirectory <tt>example2</tt>. To run the example, execute the commands: </p> 
+  <dir> 
+   <p><tt>svm_learn example2/train_transduction.dat example2/model</tt> <br> <tt>svm_classify example2/test.dat example2/model example2/predictions</tt></p> 
+  </dir> 
+  <p>The classification module is called only to get the accuracy printed. The transductive learner is invoked automatically, since <tt>train_transduction.dat </tt>contains unlabeled examples (i. e. the 600 test examples). You can compare the results to those of the inductive SVM by running: </p> 
+  <blockquote> 
+   <tt>svm_learn example2/train_induction.dat example2/model</tt> 
+   <br> 
+   <tt>svm_classify example2/test.dat example2/model example2/predictions</tt> 
+  </blockquote> 
+  <p>The file <tt>train_induction.dat</tt> contains the same 10 (labeled) training examples as <tt>train_transduction.dat</tt>. </p> 
+  <h3> Ranking SVM</h3> 
+  <p>For the ranking SVM [<a href="#References">Joachims, 2002c</a>], I created a toy example. It consists of only 12 training examples in 3 groups and 4 test examples. You find it at </p> 
+  <dir> 
+   <p><a href="http://download.joachims.org/svm_light/examples/example3.tar.gz" target="_top">http://download.joachims.org/svm_light/examples/example3.tar.gz</a></p> 
+  </dir> 
+  <p>Download this file into your svm_light directory and unpack it with </p> 
+  <dir> 
+   <tt><p>gunzip -c example3.tar.gz | tar xvf -</p></tt> 
+  </dir> 
+  <p>This will create a subdirectory <tt>example3</tt>. To run the example, execute the commands: </p> 
+  <dir> 
+   <p><tt>svm_learn -z p example3/train.dat example3/model</tt> <br> <tt>svm_classify example3/test.dat example3/model example3/predictions</tt></p> 
+  </dir> 
+  <p>The output in the predictions file can be used to rank the test examples. If you do so, you will see that it predicts the correct ranking. The values in the predictions file do not have a meaning in an absolute sense. They are only used for ordering. </p>
+  <p>It can also be interesting to&nbsp;look at the "training error" of the ranking SVM. The equivalent of training error for a ranking SVM is the number of training pairs that are misordered by the learned model. To find those pairs, one can apply the model to the training file: </p> 
+  <blockquote dir="ltr" style="MARGIN-RIGHT: 0px">
+   <p> <tt> svm_classify example3/train.dat example3/model example3/predictions.train </tt></p>
+  </blockquote> 
+  <p>Again, the predictions file shows the ordering implied by the model. The model ranks all training examples correctly. </p>
+  <p>Note that ranks are comparable only between examples with the same qid. Note also that the target value (first value in each line of the data files) is only used to define the order of the examples. Its absolute value does not matter, as long as the ordering relative to the other examples with the same qid remains the same.</p> 
+  <p>NOTE: <a href="svm_rank.html">SVM<sup><i>rank</i></sup></a> is a new algorithm for training Ranking SVMs that is much faster than SVM<sup><i>light</i></sup> in '-z p' mode (available <a href="svm_rank.html">here</a>).</p> 
+  <h2>Questions and Bug Reports</h2> 
+  <p>If you find bugs or you have problems with the code you cannot solve by yourself, please contact me via <a href="mailto:thorsten@joachims.org">email</a>. </p> 
+  <h2>Disclaimer</h2> 
+  <p>This software is free only for non-commercial use. It must not be distributed without prior permission of the author. The author is not responsible for implications from the use of this software. </p> 
+  <h2>History</h2> 
+  <h4>V6.01 - V6.02</h4> 
+  <ul> 
+   <li>Fixed a floating point precision issue that might occur on 64bit AMD and Intel processors for datasets with extremely many features. </li>
+   <li>Updated makefile to add the ability for compiling SVM-light into a shared-object library that gives external code easy access to learning and classification functions.</li>
+   <li>Source code for <a href="./old/svm_light_v6.01.html">SVM<sup><i>light</i></sup> V6.01</a></li>
+  </ul> 
+  <h4>V6.00 - V6.01</h4> 
+  <ul> 
+   <li>Small bug fixes in HIDEO optimizer. </li>
+  </ul> 
+  <h4>V5.00 - V6.00</h4> 
+  <ul> 
+   <li>Allows restarts from a particular vector of dual variables (option y). </li>
+   <li>Time out for exceeding number of iterations without progress (option #). </li>
+   <li>Allows the use of Kernels for learning ranking functions. </li>
+   <li>Support for non-vectorial data like strings. </li>
+   <li>Improved robustness and convergence especially for regression problems. </li>
+   <li>Cleaned up code, which makes it easier to integrate it into other programs. </li>
+   <li>Interface to SVM<i><sup>struct</sup></i>. </li>
+   <li>Source code for <a href="./old/svm_light_v5.00.html">SVM<i><sup>light</sup></i> V5.00</a></li> 
+  </ul> 
+  <h4>V4.00 - V5.00</h4> 
+  <ul> 
+   <li>Can now solve ranking problems in addition to classification and regression. </li>
+   <li>Fixed bug in kernel cache that could lead to segmentation fault on some platforms. </li>
+   <li>Fixed bug in transductive SVM that was introduced in version V4.00. </li>
+   <li>Improved robustness.</li> 
+   <li>Source code for <a href="./old/svm_light_v4.00.html">SVM<i><sup>light</sup></i> V4.00</a></li> 
+  </ul> 
+  <h4>V3.50 - V4.00</h4> 
+  <ul> 
+   <li>Can now solve regression problems in addition to classification. </li>
+   <li>Bug fixes and improved numerical stability. </li> 
+   <li>Source code for <a href="./old/svm_light_v3.50.html">SVM<i><sup>light</sup></i> V3.50</a></li> 
+  </ul> 
+  <h4>V3.02 - V3.50</h4> 
+  <ul> 
+   <li>Computes XiAlpha estimates of the error rate, the precision, and the recall. </li>
+   <li>Efficiently computes Leave-One-Out estimates of the error rate, the precision, and the recall. </li>
+   <li>Improved Hildreth and D'Espo optimizer especially for low-dimensional data sets. </li>
+   <li>Easier to link into other C and C++ code. Easier compilation under Windows. </li>
+   <li>Faster classification of new examples for linear SVMs. </li> 
+  </ul> 
+  <h4>V3.01 - V3.02</h4> 
+  <ul> 
+   <li>Now examples can be read in correctly on SGIs. </li> 
+  </ul> 
+  <h4>V3.00 - V3.01</h4> 
+  <ul> 
+   <li>Fixed convergence bug for Hildreth and D'Espo solver. </li> 
+  </ul> 
+  <h4>V2.01 - V3.00</h4> 
+  <ul> 
+   <li>Training algorithm for transductive Support Vector Machines. </li>
+   <li>Integrated core QP-solver based on the method of Hildreth and D'Espo. </li>
+   <li>Uses folding in the linear case, which speeds up linear SVM training by an order of magnitude. </li>
+   <li>Allows linear cost models. </li>
+   <li>Faster in general. </li> 
+  </ul> 
+  <h4>V2.00 - V2.01</h4> 
+  <ul> 
+   <li>Improved interface to PR_LOQO </li>
+   <li>Source code for <a href="http://www-ai.cs.uni-dortmund.de/SOFTWARE/SVM_LIGHT/svm_light_v2.01.eng.html">SVM<i><sup>light</sup></i> V2.01</a> </li> 
+  </ul> 
+  <h4>V1.00 - V2.00</h4> 
+  <ul> 
+   <li>Learning is much faster especially for large training sets. </li>
+   <li>Working set selection based on steepest feasible descent. </li>
+   <li>"Shrinking" heuristic. </li>
+   <li>Improved caching. </li>
+   <li>New solver for intermediate QPs. </li>
+   <li>Lets you set the size of the cache in MB. </li>
+   <li>Simplified output format of svm_classify. </li>
+   <li>Data files may contain comments. </li> 
+  </ul> 
+  <h4>V0.91 - V1.00</h4> 
+  <ul> 
+   <li>Learning is more than 4 times faster. </li>
+   <li>Smarter caching and optimization. </li>
+   <li>You can define your own kernel function. </li>
+   <li>Lets you set the size of the cache. </li>
+   <li>VCdim is now estimated based on the radius of the support vectors. </li>
+   <li>The classification module is more memory efficient. </li>
+   <li>The f2c library is available from <a href="ftp://ftp-ai.cs.uni-dortmund.de/pub/Users/thorsten/svm_light/f2c/">here</a>. </li>
+   <li>Adaptive precision tuning makes optimization more robust. </li>
+   <li>Includes some small bug fixes and is more robust. </li>
+   <li>Source code for <a href="http://www-ai.cs.uni-dortmund.de/SOFTWARE/SVM_LIGHT/svm_light_v1.00.eng.html">SVM<i><sup>light</sup></i> V1.00</a> </li> 
+  </ul> 
+  <h4>V0.9 - V0.91</h4> 
+  <ul> 
+   <li>Fixed bug which appears for very small C. Optimization did not converge. </li> 
+  </ul> 
+  <h2>Extensions and Additions</h2> 
+  <ul> 
+   <li><a target="_top" href="http://search.cpan.org/~kwilliams/Algorithm-SVMLight/lib/Algorithm/SVMLight.pm">PERL Interface</a>: a PERL interface to SVM<i><sup>light</sup></i> written by <a target="_top" href="mailto:kwilliams@cpan.org">Ken Williams</a> </li> 
+   <li><a target="_top" href="http://www.cis.TUGraz.at/igi/aschwaig/software.html">Matlab Interface</a>: a MATLAB interface to SVM<i><sup>light</sup></i> written by <a target="_top" href="http://www.cis.TUGraz.at/igi/aschwaig/index.html">Anton Schwaighofer</a> (for <a href="http://svmlight.joachims.org/old/svm_light_v4.00.html">SVM<i><sup>light</sup> </i> V4.00</a>) </li> 
+   <li><a target="_top" href="http://sourceforge.net/projects/mex-svm/">Matlab Interface</a>: a MATLAB MEX-interface to SVM<i><sup>light</sup></i> written by <a target="_top" href="http://www.ship.edu/~thb/">Tom Briggs</a></li> 
+   <li><a target="_top" href="http://daoudclarke.github.com/pysvmlight/">Python Interface</a>: Python interface for SVM<sup><i>light</i></sup> written by <a href="http://daoudclarke.github.com/">Daoud Clarke</a>.</li> 
+   <li><a target="_top" href="http://bitbucket.org/wcauchois/pysvmlight">Python Interface</a>: Python binding for SVM<sup><i>light</i></sup> written by <a href="http://www.cs.washington.edu/homes/wcauchoi/">Bill Cauchois</a>.</li> 
+   <li><a target="_top" href="http://en205.tumblr.com/post/37954553/svmlight-with-python">Python Interface</a>: interface to call SVM<sup><i>light</i></sup> executables from Python, written by Clint Burfoot.</li> 
+   <li><a target="_top" href="https://github.com/hammady/svmlightcli">Ruby Interface</a>: interface to call SVM<sup><i>light</i></sup> from Ruby, written by <a href="http://vbosch.heroku.com/">Hossam Hammady</a>.</li> 
+   <li><a target="_top" href="https://github.com/vbosch/MachineLearning">Ruby Interface</a>: interface to call SVM<sup><i>light</i></sup> from Ruby, written by <a href="http://vbosch.heroku.com/">Vicente Bosch</a>.</li> 
+   <li><a target="_top" href="https://github.com/camilo/svmredlight">Ruby Interface</a>: interface to call SVM<sup><i>light</i></sup> from Ruby, written by <a href="http://camilolopez.com/">Camilo Lopez</a>.</li> 
+   <li><a target="_top" href="http://code.google.com/p/net-svmlight/">.NET Interface</a>: .NET wrapper for SVM<sup><i>light</i></sup>, written by <a target="_top" href="http://www.cs.umbc.edu/~krishna3/">Krishnamurthy Koduvayur Viswanathan</a>.</li> 
+   <li><a target="_top" href="http://mihagrcar.org/svmlightlib/">DLL Interface</a>: a DLL that makes it easier to integrate SVM<sup><i>light</i></sup> functions into other code written by <a target="_top" href="http://mihagrcar.org/">Miha Grcar</a>.</li> 
+   <li><a target="_top" href="http://www.mpi-inf.mpg.de/~mtb/">Java Interface</a>: JNI JAVA interface for SVM<sup><i>light</i></sup>, written by Martin Theobald (for <a href="old/svm_light_v6.01.html">SVM<sup><i>light</i></sup> V6.01</a>) </li> 
+   <li> <a target="_top" href="http://www.aifb.uni-karlsruhe.de/WBS/sbl/software/jnikernel/">JNI Kernel</a>: JAVA interface for SVM<sup><i>light</i></sup>, including access to kernel functions implemented in Java, written by Stephan Bloehdorn (for <a href="old/svm_light_v6.01.html">SVM<sup><i>light</i></sup> V6.01</a>) </li> 
+   <li> <a target="_top" href="http://www-cad.eecs.berkeley.edu/~hwawen/research/projects/jsvm/doc/manual/index.html">jSVM</a>: a JAVA interface to SVM<i><sup>light</sup></i> written by <a target="_top" href="http://www-cad.eecs.berkeley.edu/~hwawen/">Heloise Hwawen Hse</a> (for <a href="http://www-ai.cs.uni-dortmund.de/SOFTWARE/SVM_LIGHT/svm_light_v2.01.eng.html">SVM<i><sup>light</sup></i> V2.01</a> / <a href="http://download.joachims.org/svm_light/v2.01/svm_light.tar.gz">source code</a>) </li> 
+   <li><a target="_top" href="http://ai-nlp.info.uniroma2.it/moschitti/">Tree Kernels</a>: kernel for classifying trees with SVM<sup><i>light</i></sup> written by <a target="_top" href="http://ai-nlp.info.uniroma2.it/moschitti/">Alessandro Moschitti</a> </li> 
+   <li><a target="_top" href="http://www.dsi.unifi.it/neural/src/svm-Dlight/">SVM-Dlight</a>: allows implementing kernels for non-vectorial data more easily. Written by <a target="_top" href="http://www.dsi.unifi.it/~paolo/">Paolo Frasconi</a> (for <a href="old/svm_light_v6.01.html">SVM<sup><i>light</i></sup> V6.01</a>) </li> 
+   <li>A <a target="_top" href="http://sourceforge.net/project/showfiles.php?group_id=16036">special version of SVM<i><sup>light</sup> </i></a>is integrated into the virtual file system <a href="http://witme.sourceforge.net/libferris.web/">libferris</a> by Ben Martin </li> 
+   <li><a target="_top" href="http://www.soarcorp.com/svm_light_data_helper.jsp">LightDataAgent</a>: tool to translate comma/tab-delimited data into SVM<sup><i>light</i></sup> format, written by Ophir Gottlieb</li> 
+   <li> <a target="_top" href="http://links.cse.msu.edu:8000/members/matt_gerber/index.php/Software#SVM-Light_server_mode_classification_module">SVM-Classify TCP/IP Server</a>: a server version of svm_classify that let's you classify examples over a TCP/IP port, written by <a target="_top" href="http://www.cse.msu.edu/~csega/w/Matt_Gerber">Matthew Gerber</a> (for <a href="old/svm_light_v6.01.html">SVM<sup><i>light</i></sup> V6.01</a>) </li> 
+  </ul> 
+  <a name="References"></a>
+  <h2>References</h2> 
+  <table cellspacing="0" border="0" cellpadding="5"> 
+   <tbody>
+    <tr>
+     <td width="34%" valign="top"> <p>[Joachims, 2002a]</p></td> 
+     <td width="66%" valign="top"> <p>Thorsten Joachims, <a href="http://textclassification.joachims.org"><i>Learning to Classify Text Using Support Vector Machines</i></a>. Dissertation, Kluwer, 2002.<br> [<a href="http://search.barnesandnoble.com/booksearch/isbninquiry.asp?isbn=079237679X">B&amp;N</a>] [<a href="http://www.amazon.com/exec/obidos/ASIN/079237679X">Amazon</a>] [<a href="http://www.wkap.nl/prod/b/0-7923-7679-X">Kluwer</a>] [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>] </p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> [Joachims, 2002c]</td> 
+     <td width="66%" valign="top"> <span lang="EN-GB" style="mso-ansi-language: EN-GB">T. Joachims, <i>Optimizing Search Engines Using Clickthrough Data</i>, Proceedings of the ACM Conference on Knowledge Discovery and Data Mining (KDD), ACM, 2002.<br> </span><a href="http://www.joachims.org/publications/joachims_02c.ps.gz"><span lang="EN-GB" style="mso-ansi-language: EN-GB">Online [Postscript]</span></a><span lang="EN-GB" style="mso-ansi-language: EN-GB"> &nbsp;</span><a href="http://www.joachims.org/publications/joachims_02c.pdf"><span lang="EN-GB" style="mso-ansi-language: EN-GB">[PDF]</span></a><span lang="EN-GB" style="mso-ansi-language: EN-GB"> &nbsp;</span>[<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Klinkenberg, Joachims, 2000a]</p></td> 
+     <td width="66%" valign="top"> <p>R. Klinkenberg and T. Joachims, <i>Detecting Concept Drift with Support Vector Machines</i>. Proceedings of the Seventeenth International Conference on Machine Learning (ICML), Morgan Kaufmann, 2000. <br> <a target="_top" href="http://www.joachims.org/publications/klinkenberg_joachims_2000a.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/klinkenberg_joachims_2000a.pdf.gz">[PDF (gz)]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Joachims, 2000b]</p></td> 
+     <td width="66%" valign="top"> <p>T. Joachims, <i>Estimating the Generalization Performance of a SVM Efficiently</i>. Proceedings of the International Conference on Machine Learning, Morgan Kaufman, 2000. <br> <a target="_top" href="http://www.joachims.org/publications/joachims_00a.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/joachims_00a.pdf">[PDF]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Joachims, 1999a]</p></td> 
+     <td width="66%" valign="top"> <p>T. Joachims, 11 in: <i>Making large-Scale SVM Learning Practical</i>. Advances in Kernel Methods - Support Vector Learning, B. Schölkopf and C. Burges and A. Smola (ed.), MIT Press, 1999. <br> <a target="_top" href="http://www.joachims.org/publications/joachims_99a.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/joachims_99a.pdf">[PDF]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Joachims, 1999c]</p></td> 
+     <td width="66%" valign="top"> <p>Thorsten Joachims, <i>Transductive Inference for Text Classification using Support Vector Machines</i>. International Conference on Machine Learning (ICML), 1999. <br> <a target="_top" href="http://www.joachims.org/publications/joachims_99c.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/joachims_99c.pdf">[PDF]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Morik et al., 1999a]</p></td> 
+     <td width="66%" valign="top"> <p>K. Morik, P. Brockhausen, and T. Joachims, <i>Combining statistical learning with a knowledge-based approach - A case study in intensive care monitoring</i>. Proc. 16th Int'l Conf. on Machine Learning (ICML-99), 1999. <br> <a target="_top" href="http://www.joachims.org/publications/morik_etal_99a.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/morik_etal_99a.pdf">[PDF]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Joachims, 1998a]</p></td> 
+     <td width="66%" valign="top"> <p>T. Joachims, <i>Text Categorization with Support Vector Machines: Learning with Many Relevant Features</i>. Proceedings of the European Conference on Machine Learning, Springer, 1998. <br> <a target="_top" href="http://www.joachims.org/publications/joachims_98a.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/joachims_98a.pdf">[PDF]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Joachims, 1998c]</p></td> 
+     <td width="66%" valign="top"> <p>Thorsten Joachims, <i>Making Large-Scale SVM Learning Practical</i>. LS8-Report, 24, Universität Dortmund, LS VIII-Report, 1998. <br> <a target="_top" href="http://www.joachims.org/publications/joachims_98c.ps.gz">[Postscript (gz)]</a> <a target="_top" href="http://www.joachims.org/publications/joachims_98c.pdf">[PDF]</a> [<a href="http://www.joachims.org/publications/joachims.bib">BibTeX</a>]</p></td> 
+    </tr> 
+    <tr>
+     <td width="34%" valign="top"> <p>[Vapnik, 1995a]</p></td> 
+     <td width="66%" valign="top"> <p>Vladimir N. Vapnik, <i>The Nature of Statistical Learning Theory</i>. Springer, 1995.</p></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <p>Last modified May 29, 2017 by <a target="_top" href="http://www.joachims.org/">Thorsten Joachims</a> &lt;<a href="mailto:thorsten@joachims.org">thorsten@joachims.org</a>&gt;</p>  
+ </body>
+</html>

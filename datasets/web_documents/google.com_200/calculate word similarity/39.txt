@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>
+    
+      Latent Semantic Analysis (LSA) for Text Classification Tutorial · Chris McCormick
+    
+  </title> 
+  <link rel="stylesheet" href="/styles.css"> 
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-precomposed.png"> 
+  <link rel="shortcut icon" href="/public/favicon.ico"> 
+  <link rel="alternate" type="application/atom+xml" title="Chris McCormick" href="/atom.xml"> 
+  <!-- Adding support for MathJax --> 
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script> 
+ </head> 
+ <body> 
+  <div class="container content"> 
+   <header class="masthead"> 
+    <h3 class="masthead-title"> <a href="/" title="Home">Chris McCormick</a> 
+     <!-- Display the About, Archive, etc. pages in the header ---> &nbsp;&nbsp;&nbsp;<small><a href="/about/">About</a></small> &nbsp;&nbsp;&nbsp;<small><a href="/tutorials/">Tutorials</a></small> &nbsp;&nbsp;&nbsp;<small><a href="/archive/">Archive</a></small> </h3> 
+    <!-- I could use this to include the tag line, but it looks cluttered...
+        <h3 class="masthead-title">
+             <small>Machine Learning Tutorials and Insights</small>
+        </h3>
+        -----> 
+   </header> 
+   <main> 
+    <article class="post"> 
+     <h1 class="post-title">Latent Semantic Analysis (LSA) for Text Classification Tutorial</h1> 
+     <time datetime="2016-03-25T23:00:00-07:00" class="post-date">25 Mar 2016</time> 
+     <div class="message">
+       In this post I'll provide a tutorial of Latent Semantic Analysis as well as some Python example code that shows the technique in action. 
+     </div> 
+     <h2 id="why-lsa">Why LSA?</h2> 
+     <p>Latent Semantic Analysis is a technique for creating a vector representation of a document. Having a vector representation of a document gives you a way to compare documents for their similarity by calculating the distance between the vectors. This in turn means you can do handy things like classifying documents to determine which of a set of known topics they most likely belong to.</p> 
+     <p>Classification implies you have some known topics that you want to group documents into, and that you have some labelled training data. If you want to identify natural groupings of the documents without any labelled data, you can use clustering (see my post on clustering with LSA <a href="https://chrisjmccormick.wordpress.com/2015/08/05/document-clustering-example-in-scikit-learn/">here</a>).</p> 
+     <h2 id="tf-idf">tf-idf</h2> 
+     <p>The first step in LSA is actually a separate algorithm that you may already be familiar with. It’s called <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf" title="tf-idf on Wikipedia">term frequency-inverse document frequency</a>, or tf-idf for short.</p> 
+     <p>tf-idf is pretty simple and I won’t go into it here, but the gist of it is that each position in the vector corresponds to a different word, and you represent a document by counting the number of times each word appears. Additionally, you normalize each of the word counts by the frequency of that word in your overall document collection, to give less frequent terms more weight.</p> 
+     <p>There’s some thorough material on tf-idf in the Stanford NLP course available on YouTube <a href="https://www.youtube.com/watch?v=5Gz3Hp217Io&amp;index=80&amp;list=PL6397E4B26D00A269" title="Stanford NLP course on YouTube">here</a>–specifically, check out the lectures 19-1 to 19-7. Or if you prefer some (dense) reading, you can check out the tf-idf chapter of the Stanford NLP textbook <a href="http://nlp.stanford.edu/IR-book/html/htmledition/scoring-term-weighting-and-the-vector-space-model-1.html" title="Stanford NLP textbook">here</a>.</p> 
+     <h2 id="lsa">LSA</h2> 
+     <p><a href="https://en.wikipedia.org/wiki/Latent_semantic_analysis" title="LSA on Wikipedia">Latent Semantic Analysis</a> takes tf-idf one step further.</p> 
+     <div class="message">
+       Side note: "Latent Semantic Analysis (LSA)" and "Latent Semantic Indexing (LSI)" are the same thing, with the latter name being used sometimes when referring specifically to indexing a collection of documents for search ("Information Retrieval"). 
+     </div> 
+     <p>LSA is quite simple, you just use SVD to perform dimensionality reduction on the tf-idf vectors–that’s really all there is to it!</p> 
+     <div class="message">
+       If you're unfamiliar with dimensionality reduction, this topic was covered well in the Machine Learning course on Coursera. You can also find the lecture on YouTube 
+      <a href="https://www.youtube.com/watch?v=N5ynBdHqnGU">here</a>. 
+     </div> 
+     <p>You might think to do this even if you had never heard of “LSA”–the tf-idf vectors tend to be long and unwieldy since they have one component for every word in the vocabulary. For instance, in my example Python code, these vectors have 10,000 components. So dimensionality reduction makes them more manageable for further operations like clustering or classification.</p> 
+     <p>However, the SVD step does more than just reduce the computational load–you are trading a large number of features for a smaller set of <em>better</em> features.</p> 
+     <p>What makes the LSA features better? I think the challenging thing with interpereting LSA is that you can talk about the behaviors that it is theoretically capable of doing, but ultimately what it <em>does</em> is dictated by the mathematical operations of SVD.</p> 
+     <p>For example. A linear combination of terms is <em>capable</em> of handling pysnonyms: if you assign the words “car” and “automobile” the same weight, then they will contribute equally to the resulting LSA component, and it doesn’t matter which term the author uses.</p> 
+     <p>You can find a little more discussion of the interpretation of LSA <a href="https://en.wikipedia.org/wiki/Latent_semantic_analysis#Rank_lowering">here</a>. Also, the Python code associated with this post performs some inspection of the LSA results to try to gain some intuition.</p> 
+     <h2 id="lsa-python-code">LSA Python Code</h2> 
+     <div class="message">
+       Note: If you're less interested in learning LSA and just want to use it, you might consider checking out the nice 
+      <a href="https://radimrehurek.com/gensim/">gensim</a> package in Python, it's built specifically for working with topic-modeling techniques like LSA. 
+     </div> 
+     <p>I implemented an example of document classification with LSA in Python using scikit-learn. My code is available on GitHub, you can either visit the project page <a href="https://github.com/chrisjmccormick/LSA_Classification" title="LSA_Classification project page">here</a>, or download the source <a href="https://github.com/chrisjmccormick/LSA_Classification/archive/master.zip" title="LSA_Classification direct download">directly</a>.</p> 
+     <p>scikit-learn already includes a <a href="http://scikit-learn.org/stable/auto_examples/applications/plot_out_of_core_classification.html" title="scikit-learn document classification example">document classification example</a>. However, that example uses plain tf-idf rather than LSA, and is geared towards demonstrating batch training on large datasets. Still, I borrowed code from that example for things like retrieving the Reuters dataset.</p> 
+     <p>I wanted to put the emphasis on the feature extraction and not the classifier, so I used simple <a href="http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html">k-nn classification</a> with k = 5 (majority wins).</p> 
+     <h2 id="inspecting-lsa">Inspecting LSA</h2> 
+     <p>A little background on this Reuters dataset. These are news articles that were sent over the Reuters newswire in 1987. The dataset contains about 100 categories such as ‘mergers and acquisitions’, ‘interset rates’, ‘wheat’, ‘silver’ etc. Articles can be assigned multiple categories. The distribution of articles among categories is highly non-uniform; for example, the ‘earnings’ category contains 2,709 articles. And 75 of the categories contain less than 10 docs each!</p> 
+     <p>Armed with that background, let’s see what LSA is learning from the dataset.</p> 
+     <p>You can look at component 0 of the SVD matrix, and look at the terms which are given the highest weight by this component.</p> 
+     <p><img src="http://mccormickml.com/assets/Reuters_LSA_comp0_top10terms.png" alt="Top 10 Terms in Component 0"></p> 
+     <p>These terms are all very common to articles in the “earnings” category, which seem to be very terse. Here are some of the abbreviations used:</p> 
+     <ul> 
+      <li>vs - “versus”</li> 
+      <li>cts - “cents”</li> 
+      <li>mln - “million”</li> 
+      <li>shr - “share”</li> 
+      <li>dlrs - “dollars”</li> 
+     </ul> 
+     <p>Here’s an example earnings article from the dataset to give you some context:</p> 
+     <figure class="highlight">
+      <pre><code class="language-text" data-lang="text">COBANCO INC CBCO&gt; YEAR NET
+
+Shr 34 cts vs 1.19 dlrs Net 807,000 vs 2,858,000 Assets 510.2 mln vs 479.7 mln Deposits 472.3 mln vs 440.3 mln Loans 299.2 mln vs 327.2 mln Note: 4th qtr not available. Year includes 1985 extraordinary gain from tax carry forward of 132,000 dlrs, or five cts per shr. Reuter</code></pre>
+     </figure> 
+     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+     <!-- Responsive Unit - End of Post, Colorful --> 
+     <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-9176681289361741" data-ad-slot="8514028518" data-ad-format="auto"></ins> 
+     <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> 
+     <div id="disqus_thread"></div> 
+     <script>
+  
+      var disqus_config = function () {
+          this.page.url = "http://mccormickml.com/2016/03/25/lsa-for-text-classification-tutorial/"
+          this.page.identifier = "/2016/03/25/lsa-for-text-classification-tutorial/"
+      };
+      
+      var disqus_shortname = 'mccormickml';
+      // var disqus_developer = 1; // Comment out when the site is live
+      var disqus_title      = 'Latent Semantic Analysis (LSA) for Text Classification Tutorial';
+      
+      (function() {  // DON'T EDIT BELOW THIS LINE
+          var d = document, s = d.createElement('script');
+          
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';        
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+      })();
+  </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+     </noscript> 
+    </article> 
+    <aside class="related"> 
+     <h3>Related posts</h3> 
+     <ul class="related-posts"> 
+      <li> <a href="/2017/09/08/knn-benchmarks-part-1/"> k-NN Benchmarks Part I - Wikipedia <small><time datetime="2017-09-08T08:00:00-07:00">08 Sep 2017</time></small> </a> </li> 
+      <li> <a href="/2017/02/22/concept-search-on-wikipedia/"> Concept Search on Wikipedia <small><time datetime="2017-02-22T07:00:00-08:00">22 Feb 2017</time></small> </a> </li> 
+      <li> <a href="/2017/02/01/getting-started-with-mlpack/"> Getting Started with mlpack <small><time datetime="2017-02-01T07:00:00-08:00">01 Feb 2017</time></small> </a> </li> 
+     </ul> 
+    </aside> 
+   </main> 
+   <footer class="footer"> 
+    <small> © <time datetime="2017-09-11T16:56:18-07:00">2017</time>. All rights reserved. </small> 
+   </footer> 
+  </div> 
+  <script>
+       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+       ga('create', 'UA-76624103-1', 'auto');
+       ga('send', 'pageview');
+     </script>   
+ </body>
+</html>

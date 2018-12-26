@@ -1,0 +1,365 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Everything Is Fast For Small n</title> 
+  <meta name="description" content=""> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="google-site-verification" content="sl0m9SU_4V0JcvjWlOX4dUFBR6VS2P4tlxjJMo0gphU"> 
+  <script src="/cdn-cgi/apps/head/SYM5cnEAeGsP9NDCaVwd5sK2KK4.js"></script>
+  <link rel="shortcut icon" href="/favicon.ico"> 
+  <link rel="apple-touch-icon" href="/assets/images/codinghorror-app-icon.png?v=8484615664"> 
+  <link rel="stylesheet" type="text/css" href="/assets/css/screen.css?v=8484615664"> 
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700"> 
+  <link rel="alternate" type="application/rss+xml" title="Coding Horror" href="http://feeds.feedburner.com/codinghorror"> 
+  <script src="https://code.jquery.com/jquery-2.2.3.min.js" async></script> 
+  <script src="/assets/js/video-resize.js?v=8484615664" async></script> 
+ </head> 
+ <body class="post-template"> 
+  <header class="site-head"> 
+   <div class="site-head-content"> 
+    <a class="blog-logo" href="https://blog.codinghorror.com"><img src="/assets/images/codinghorror-app-icon.png?v=8484615664" alt="Coding Horror Logo" width="158" height="158"></a> 
+    <h1 class="blog-title"><a href="https://blog.codinghorror.com">Coding Horror</a></h1> 
+    <h2 class="blog-description">programming and human factors</h2> 
+    <div class="site-search"> 
+     <script>
+                  (function() {
+                    var gcse = document.createElement('script');
+                    gcse.type = 'text/javascript';
+                    gcse.async = true;
+                    gcse.src = 'https://www.google.com/cse/cse.js?cx=016956275695630057531:lqveu9tah7y';
+                    var s = document.getElementsByTagName('script')[0];
+                    s.parentNode.insertBefore(gcse, s);
+                  })();
+                </script> 
+     <gcse:search></gcse:search> 
+    </div> 
+   </div> 
+  </header> 
+  <div class="wrap clearfix"> 
+   <div class="clearfix"></div> 
+   <main class="content" role="main"> 
+    <article class="post"> 
+     <span class="post-meta"><time datetime="2007-09-19">19 Sep 2007</time> </span> 
+     <h1 class="post-title">Everything Is Fast For Small n</h1> 
+     <section class="post-content"> 
+      <div class="kg-card-markdown">
+       <p>Let's say you're about to deploy an application. Said app has been heavily tested by your development team, who have all been infected by unit testing fever. It's also been vetted by your QA group, who spent months spelunking into every crevice of the app. You even had a beta test period with <em>real live users</em>, who dutifully filed bugs and put the application through its paces before finally signing off on the thing.</p> 
+       <p>Your application is useful and popular. Your users love it. Your users love you. But over the next week, something curious happens. As people use the application, it gets progressively slower and slower. Soon, the complaints start filtering in. Within a few weeks, the app is well-neigh unusable due to all the insufferable delays it subjects users to – and <a href="http://www.codinghorror.com/blog/archives/000882.html">your users turn on you</a>.</p> 
+       <p>Raise your hand if this has ever happened to a project you've worked on. If I had a buck for every time I've personally seen this, I'd have enough for a nice lunch date. Developers test with tiny toy data sets, assume all is well, and then find out the hard way that <strong>everything is fast for small n.</strong></p> 
+       <p>I remember a client-side Javascript sort routine we implemented in a rich intranet web app circa 2002. It worked great on our small test datasets, but when we deployed it to production, we were astonished to find that sorting a measly hundred items could take upwards of <em>5 seconds</em> on a user's desktop machine. <a href="http://www.codinghorror.com/blog/archives/000509.html">JavaScript isn't known for its speed</a>, but what the heck?</p> 
+       <p>Well, guess which <a href="http://en.wikipedia.org/wiki/Sort_algorithm">sort algorithm</a> we used?</p> 
+       <p><a href="http://www.epaperpress.com/sortsearch/"><img class="at-xid-6a0120a85dcdae970b0120a86da63e970b" src="/content/images/uploads/2007/09/6a0120a85dcdae970b0120a86da63e970b-pi.gif" border="0" alt="animation of sorting algorithms" width="327" height="124"></a></p> 
+       <p>InsertSort is <strong>n<sup>2</sup></strong> (worst case), ShellSort is <strong>n<sup>3/2</sup></strong>, and QuickSort is <strong>n log n</strong>. But we <a href="http://en.wikipedia.org/wiki/Sorting_algorithm#List_of_sorting_algorithms">could have done worse</a> – we could have picked Bubble Sort, which is n<sup>2</sup> even in the <em>best</em> case.</p> 
+       <p>Friends, do not do this. <strong>Test your applications with large data sets</strong>, at least large enough to cover your most optimistic usage projections over the next year. Otherwise, you may be sorry. And your users definitely <em>will</em> be sorry.</p> 
+       <p>Big O notation is one of those things that's easier seen than explained. But it's a fundamental building block of computer science.</p> 
+       <blockquote>
+        <strong><a href="http://www.nist.gov/dads/HTML/bigOnotation.html">Big O notation</a></strong>: A theoretical measure of the execution of an 
+        <a href="http://www.nist.gov/dads/HTML/algorithm.html">algorithm</a>, usually the time or memory needed, given the problem size n, which is usually the number of items. Informally, saying some equation f(n) = O(g(n)) means it is less than some constant multiple of g(n). The notation is read, "f of n is big oh of g of n".
+       </blockquote> 
+       <p>Developers rely on data structures and databases that have favorable big O notation performance baked in, without thinking much about it. But if you stray from those well-worn paths, <strong>you can be in a world of performance pain – and much sooner than you could have possibly imagined.</strong> The importance of big O notation is best illustrated in this graph from <a href="http://www.amazon.com/exec/obidos/ASIN/0201657880/codihorr-20">Programming Pearls</a>:</p> 
+       <p><img class="at-xid-6a0120a85dcdae970b0120a85dda32970b" src="/content/images/uploads/2007/09/6a0120a85dcdae970b0120a85dda32970b-pi.png" alt="runtime on TRS-80 vs. Dec Alpha" width="600" height="330"></p> 
+       <p>The <a href="http://en.wikipedia.org/wiki/TRS-80">TRS-80</a> algorithm is <strong>48n</strong>, and the <a href="http://en.wikipedia.org/wiki/DEC_Alpha">DEC Alpha</a> algorithm is <strong>n<sup>3</sup></strong>.</p> 
+       <p>When n is 10, they're within a second of each other. But when n grows to 100,000, <strong>the modern DEC Alpha takes a month to do what a prehistoric TRS-80 can accomplish in <em>a few hours</em></strong>. Having a big O notation bottleneck in your app is a one-way ticket in the performance wayback machine to 1997 – or worse. Much worse.</p> 
+       <p>There are friendly names for the common big O notations; saying "n squared" is equivalent to saying "quadratic":</p> 
+       <table cellspacing="0" cellpadding="4" width="450"> 
+        <tbody> 
+         <tr> 
+          <td><strong>notation</strong></td> 
+          <td><strong>friendly name</strong></td> 
+         </tr> 
+         <tr> 
+          <td>O(1)</td> 
+          <td><a title="Constant" href="http://en.wikipedia.org/wiki/Constant">constant</a></td> 
+         </tr> 
+         <tr> 
+          <td>O(log <em>n</em>)</td> 
+          <td><a title="Logarithmic" href="http://en.wikipedia.org/wiki/Logarithmic">logarithmic</a></td> 
+         </tr> 
+         <tr> 
+          <td>O([log <em>n</em>]<sup>c</sup>)</td> 
+          <td><a title="Polylogarithmic" href="http://en.wikipedia.org/wiki/Polylogarithmic">polylogarithmic</a></td> 
+         </tr> 
+         <tr> 
+          <td>O(<em>n</em>)</td> 
+          <td><a title="Linear" href="http://en.wikipedia.org/wiki/Linear">linear</a></td> 
+         </tr> 
+         <tr> 
+          <td>O(<em>n</em> log <em>n</em>)</td> 
+          <td>sometimes called "<a title="Linearithmic" href="http://en.wikipedia.org/wiki/Linearithmic">linearithmic</a>" or "supralinear"</td> 
+         </tr> 
+         <tr> 
+          <td>O(<em>n</em><sup>2</sup>)</td> 
+          <td><a title="Quadratic" href="http://en.wikipedia.org/wiki/Quadratic">quadratic</a></td> 
+         </tr> 
+         <tr> 
+          <td>O(<em>n</em><sup><em>c</em></sup>)</td> 
+          <td><a title="Polynomial" href="http://en.wikipedia.org/wiki/Polynomial">polynomial</a>, sometimes "<a title="Geometric progression" href="http://en.wikipedia.org/wiki/Geometric_progression">geometric</a>"</td> 
+         </tr> 
+         <tr> 
+          <td>O(<em>c</em><sup><em>n</em></sup>)</td> 
+          <td><a title="Exponential" href="http://en.wikipedia.org/wiki/Exponential">exponential</a></td> 
+         </tr> 
+         <tr> 
+          <td>O(<em>n!</em>)</td> 
+          <td><a title="Factorial" href="http://en.wikipedia.org/wiki/Factorial">factorial</a></td> 
+         </tr> 
+        </tbody> 
+       </table> 
+       <p><a href="http://www.epaperpress.com/sortsearch/tim.html">Tom Niemann</a> has handy charts that compare the growth rates of common algorithms, which I've adapted here:</p> 
+       <table cellspacing="0" cellpadding="3" width="700"> 
+        <tbody> 
+         <tr> 
+          <td style="background-color: #efefef;" width="100" align="right"><strong> n</strong></td> 
+          <td width="100" align="right"><strong> lg <em>n</em></strong></td> 
+          <td width="100" align="right"><strong> <em>n</em><sup>7/6</sup></strong></td> 
+          <td style="width: 103px;" align="right"><strong> <em>n</em> lg <em>n</em></strong></td> 
+          <td width="100" align="right"><strong> <em>n</em><sup>2</sup></strong></td> 
+          <td width="100" align="right"><strong>7/6<sup><em>n</em></sup> </strong></td> 
+          <td width="100" align="right"><strong><em>n!</em></strong></td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">1</td> 
+          <td>0</td> 
+          <td>1</td> 
+          <td style="width: 103px;">0</td> 
+          <td>1</td> 
+          <td>1</td> 
+          <td>1</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">16</td> 
+          <td>4</td> 
+          <td>25</td> 
+          <td style="width: 103px;">64</td> 
+          <td>256</td> 
+          <td>12</td> 
+          <td>20.9 trillion</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;" height="26">256</td> 
+          <td height="26">8</td> 
+          <td height="26">645</td> 
+          <td style="width: 103px;" height="26">2,048</td> 
+          <td height="26">65,536</td> 
+          <td height="26">137 quadrillion</td> 
+          <td height="26">-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">4,096</td> 
+          <td>12</td> 
+          <td>16,384</td> 
+          <td style="width: 103px;">49,152</td> 
+          <td>16,777,216</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">65,536</td> 
+          <td>16</td> 
+          <td>416,128</td> 
+          <td style="width: 103px;">1,048,565</td> 
+          <td>4,294,967,296</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">1,048,476</td> 
+          <td>20</td> 
+          <td>10,567,808</td> 
+          <td style="width: 103px;">20,969,520</td> 
+          <td>1.09 trillion</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">16,775,616</td> 
+          <td>24</td> 
+          <td>268,405,589</td> 
+          <td style="width: 103px;">402,614,784</td> 
+          <td>281.4 trillion</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+        </tbody> 
+       </table> 
+       <p>Here are sample execution times, assuming one unit of execution is equal to one millisecond of CPU time. That's probably far too much on today's CPUs, but you get the idea:</p> 
+       <table cellspacing="0" cellpadding="3" width="700"> 
+        <tbody> 
+         <tr> 
+          <td style="background-color: #efefef;" width="100" align="right"><strong> n</strong></td> 
+          <td width="100" align="right"><strong> lg <em>n</em></strong></td> 
+          <td width="100" align="right"><strong> <em>n</em><sup>7/6</sup></strong></td> 
+          <td width="100" align="right"><strong> <em>n</em> lg <em>n</em></strong></td> 
+          <td width="100" align="right"><strong> <em>n</em><sup>2</sup></strong></td> 
+          <td width="100" align="right"><strong>7/6<sup><em>n</em></sup> </strong></td> 
+          <td width="100" align="right"><strong><em>n!</em></strong></td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">1</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">16</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&lt;1 sec</td> 
+          <td>&nbsp;663 years</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;" height="26">256</td> 
+          <td height="26">&lt;1 sec</td> 
+          <td height="26">&lt;1 sec</td> 
+          <td height="26">2 sec</td> 
+          <td height="26">65 sec</td> 
+          <td height="26">4.3 mlln yrs</td> 
+          <td height="26">-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">4,096</td> 
+          <td>&lt;1 sec</td> 
+          <td>16 sec</td> 
+          <td>49 sec</td> 
+          <td>4.6 hr</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">65,536</td> 
+          <td>&lt;1 sec</td> 
+          <td>7 min</td> 
+          <td>17 min</td> 
+          <td>50 days</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">1,048,476</td> 
+          <td>&lt;1 sec</td> 
+          <td>3 hr</td> 
+          <td>6 hr</td> 
+          <td>35 years</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+         <tr align="right"> 
+          <td style="background-color: #efefef;">16,775,616</td> 
+          <td>&lt;1 sec</td> 
+          <td>3 days</td> 
+          <td>4.6 days</td> 
+          <td>8,923 years</td> 
+          <td>-</td> 
+          <td>-</td> 
+         </tr> 
+        </tbody> 
+       </table> 
+       <p>Notice how quickly we get into trouble as the number of items (n) increases. Unless you've chosen data structures that offer ideal near-logarithmic performance across the board, by the time you get to 4,096 items you're talking about some <em>serious</em> CPU time. Beyond that, I used <strong>dash as shorthand for "forever"</strong>. That's how bad it can get.</p> 
+       <p>Everything is fast for small n. Don't fall into this trap. It's an easy enough mistake to make. Modern apps are incredibly complex, with dozens of dependencies. Neglect to index one little field in your database and you're suddenly back in TRS-80 land. The only way to truly know if you've accidentally slipped an algorithmic big O bottleneck into your app somewhere is to <strong>test it with a reasonably large volume of data.</strong></p> 
+      </div> 
+     </section> 
+     <aside class="read-next"> 
+      <div class="left"> 
+       <div class="read-next-label">
+        Next
+       </div> 
+       <h3 class="read-next-title"><a href="/on-expos-flip3d-and-switcher/">On Expose, Flip3D, and Switcher</a></h3> 
+      </div> 
+      <div class="right"> 
+       <div class="read-next-label">
+        Previous
+       </div> 
+       <h3 class="read-next-title"><a href="/lazyweb-calling/">Lazyweb Calling</a></h3> 
+      </div> 
+     </aside> 
+     <footer class="post-footer"> 
+      <section class="author"> 
+       <h4>Written by Jeff Atwood</h4> 
+       <p>Indoor enthusiast. Co-founder of Stack Overflow and Discourse. Disclaimer: I have no idea what I'm talking about. Find me here: <a href="http://twitter.com/codinghorror">http://twitter.com/codinghorror</a></p> 
+      </section> 
+     </footer> 
+    </article> 
+    <div id="discourse-comments"></div> 
+    <script type="text/javascript">
+      var discourseUrl = "https://discourse.codinghorror.com/",
+          discourseEmbedUrl = 'https://blog.codinghorror.com/everything-is-fast-for-small-n/';
+
+      (function() {
+        var d = document.createElement('script'); d.type = 'text/javascript'; d.async = true;
+          d.src = discourseUrl + 'javascripts/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(d);
+      })();
+    </script> 
+   </main> 
+   <aside class="sidebar"> 
+    <div id="welovecodinghorror-block"> 
+     <span> <span class="block-wrap"> <a href="http://www.cppdepend.com/" class="block-img" target="_blank"><img src="/content/images/2017/08/advimage.png" width="140" height="140" alt="" border="0" max-width="140px"></a> <a href="http://www.cppdepend.com/" class="block-text" target="_blank">Understand and deliver High C/C++ Code Quality. Quality Gates, Technical Debt, Code Query Language. Easy to set up and to use.</a> </span> </span> 
+    </div> 
+    <script async type="text/javascript" src="//cdn.carbonads.com/carbon.js?zoneid=1673&amp;serve=C6AILKT&amp;placement=blogcodinghorrorcom" id="_carbonads_js"></script> 
+    <div id="hireme" class="hireme codinghorror" style="min-height: 220px; margin-bottom: 15px;"></div> 
+    <script>
+    setTimeout(function () {
+        var a = document.createElement("script");
+        var b = document.getElementsByTagName('script')[0];
+        a.src = "//clc.stackoverflow.com/j/p?d=hireme";
+        a.async = true; 
+        a.type = "text/javascript"; 
+        b.parentNode.insertBefore(a, b);
+    }, 5);
+</script> 
+    <div class="welovecodinghorror" style="margin-bottom:15px">
+      [ad] Enjoy the blog? Read 
+     <b><a href="https://www.hyperink.com/Effective-Programming-More-Than-Writing-Code-b1559">Effective Programming: More than Writing Code</a></b> and 
+     <b><a href="https://www.hyperink.com/How-To-Stop-Sucking-And-Be-Awesome-Instead-b9A74B5CBA6">How to Stop Sucking and Be Awesome Instead</a></b> on your Kindle, iPad, Nook, or as a PDF. 
+    </div> 
+    <h3>Resources</h3> 
+    <ul> 
+     <li><a href="/about-me/">About Me</a></li> 
+     <li><a href="https://www.discourse.org/">discourse.org</a></li> 
+     <li><a href="https://stackexchange.com/">stackexchange.com</a></li> 
+     <li><a href="http://commonmark.org/help/">Learn Markdown</a></li> 
+     <li><a href="/recommended-reading-for-developers/">Recommended Reading</a></li> 
+    </ul> 
+    <ul> 
+     <li><a href="https://feeds.feedburner.com/codinghorror" class="icon-feed">&nbsp;Subscribe in a reader</a></li> 
+     <li><a href="https://feedburner.google.com/fb/a/mailverify?uri=codinghorror&amp;loc=en_US" class="icon-email">&nbsp;Subscribe via email</a></li> 
+    </ul> 
+    <p>Coding Horror has been continuously published since 2004</p> 
+    <footer class="site-footer"> 
+     <section class="copyright">
+      Copyright 
+      <a rel="author" href="https://en.wikipedia.org/wiki/Jeff_Atwood">Jeff Atwood</a> © 2017
+      <br> Logo image © 1993 Steven C. McConnell 
+      <br> Proudly published with 
+      <a class="icon-ghost" href="http://ghost.org">Ghost</a>
+     </section> 
+    </footer>
+   </aside> 
+  </div> 
+  <script>
+        document.write(unescape("%3Cscript src='https://sb.scorecardresearch.com/beacon.js'%3E%3C/script%3E"));
+    </script> 
+  <script>
+        COMSCORE.beacon({
+        c1: 2,
+        c2: "6035669",
+        c3: "",
+        c4: "http://www.codinghorror.com/blog/",
+        c5: "",
+        c6: "",
+        c15: ""
+        });
+    </script> 
+  <noscript> 
+   <img src="//b.scorecardresearch.com/b?c1=2&amp;c2=6035669&amp;c3=&amp;c4=http%3A%2F%2Fwww.codinghorror.com%2Fblog%2F&amp;c5=&amp;c6=&amp;c15=&amp;cv=1.3&amp;cj=1" style="display:none" width="0" height="0" alt=""> 
+  </noscript>   
+ </body>
+</html>

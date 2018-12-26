@@ -1,0 +1,1022 @@
+<!doctype html>
+<!--[if IE 8]>
+<html class="ie8" lang="en-US">
+<![endif]-->
+<!--[if !(IE 8) ]><!-->
+<html lang="en-US">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Scrape website data with the new R package rvest (+ a postscript on interacting with web pages with RSelenium) | Technical Tidbits From Spatial Analysis &amp; Data Science</title> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://zevross.com/blog/xmlrpc.php"> 
+  <link rel="dns-prefetch" href="//s0.wp.com"> 
+  <link rel="dns-prefetch" href="//s.gravatar.com"> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Technical Tidbits From Spatial Analysis &amp; Data Science » Feed" href="http://zevross.com/blog/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Technical Tidbits From Spatial Analysis &amp; Data Science » Comments Feed" href="http://zevross.com/blog/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Technical Tidbits From Spatial Analysis &amp; Data Science » Scrape website data with the new R package rvest (+ a postscript on interacting with web pages with RSelenium) Comments Feed" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/feed/"> 
+  <script type="text/javascript">window._wpemojiSettings={"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.2.1\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.2.1\/svg\/","svgExt":".svg","source":{"concatemoji":"http:\/\/zevross.com\/blog\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.7.6"}};!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),!(j.toDataURL().length<3e3)&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57331,65039,8205,55356,57096),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57331,55356,57096),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55357,56425,55356,57341,8205,55357,56507),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55357,56425,55356,57341,55357,56507),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);</script> 
+  <style type="text/css">img.wp-smiley,img.emoji{display:inline!important;border:none!important;box-shadow:none!important;height:1em!important;width:1em!important;margin:0 .07em!important;vertical-align:-.1em!important;background:none!important;padding:0!important}</style> 
+  <link rel="stylesheet" id="graphy-fonts-css" href="//fonts.googleapis.com/css?family=Lora%3A400%2C400italic%2C700%2C700italic%7CBitter%3A400&amp;subset=latin%2Clatin-ext" type="text/css" media="all"> 
+  <link rel="stylesheet" id="graphy-genericons-css" href="http://zevross.com/blog/wp-content/themes/graphy/genericons/genericons.css?ver=3.0.3" type="text/css" media="all"> 
+  <link rel="stylesheet" id="graphy-style-css" href="http://zevross.com/blog/wp-content/themes/graphy/style.css?ver=4.7.6" type="text/css" media="all"> 
+  <link rel="stylesheet" id="jetpack_css-css" href="http://zevross.com/blog/wp-content/plugins/jetpack/css/jetpack.css?ver=5.0" type="text/css" media="all"> 
+  <!-- This site uses the Google Analytics by MonsterInsights plugin v6.2.0 - Using Analytics tracking - https://www.monsterinsights.com/ --> 
+  <script type="text/javascript" data-cfasync="false">function __gaTrackerIsOptedOut(){return document.cookie.indexOf(disableStr+'=true')>-1;}
+var disableStr='ga-disable-UA-34021094-1';if(__gaTrackerIsOptedOut()){window[disableStr]=true;}
+function __gaTrackerOptout(){document.cookie=disableStr+'=true; expires=Thu, 31 Dec 2099 23:59:59 UTC; path=/';window[disableStr]=true;}
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','__gaTracker');__gaTracker('create','UA-34021094-1','auto');__gaTracker('set','forceSSL',true);__gaTracker('send','pageview');</script> 
+  <!-- / Google Analytics by MonsterInsights --> 
+  <script type="text/javascript">//<![CDATA[
+var monsterinsights_frontend={"js_events_tracking":"true","is_debug_mode":"false","download_extensions":"doc,exe,js,pdf,ppt,tgz,zip,xls","inbound_paths":"","home_url":"http:\/\/zevross.com\/blog","track_download_as":"event","internal_label":"int","hash_tracking":"false"};
+//]]></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/plugins/google-analytics-for-wordpress/assets/js/frontend.min.js?ver=6.2.0"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <link rel="https://api.w.org/" href="http://zevross.com/blog/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://zevross.com/blog/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://zevross.com/blog/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Map and analyze raster data in R" href="http://zevross.com/blog/2015/03/30/map-and-analyze-raster-data-in-r/"> 
+  <link rel="next" title="Overlap joins in R: a speed comparison with packages sqldf and data.table" href="http://zevross.com/blog/2015/07/09/overlap-joins-in-r-a-speed-comparison-with-packages-sqldf-and-data-table-3/"> 
+  <meta name="generator" content="WordPress 4.7.6"> 
+  <link rel="canonical" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/"> 
+  <link rel="shortlink" href="http://wp.me/p4tuX4-kB"> 
+  <link rel="alternate" type="application/json+oembed" href="http://zevross.com/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fzevross.com%2Fblog%2F2015%2F05%2F19%2Fscrape-website-data-with-the-new-r-package-rvest%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="http://zevross.com/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fzevross.com%2Fblog%2F2015%2F05%2F19%2Fscrape-website-data-with-the-new-r-package-rvest%2F&amp;format=xml"> 
+  <link rel="dns-prefetch" href="//v0.wordpress.com"> 
+  <style type="text/css">.site-logo{margin-top:px;padding-bottom:px}.entry-content a,.entry-summary a,.comment-content a,.comment-respond a,.navigation a,.comment-navigation a,.current-menu-item>a{color:#000}a:hover{color:#b85051}</style> 
+  <style type="text/css">.recentcomments a{display:inline!important;padding:0!important;margin:0!important}</style> 
+  <!-- Dynamic Widgets by QURL - http://www.qurl.nl //--> 
+  <!-- Jetpack Open Graph Tags --> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Scrape website data with the new R package rvest (+ a postscript on interacting with web pages with RSelenium)"> 
+  <meta property="og:url" content="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/"> 
+  <meta property="og:description" content="Copying tables or lists from a website is not only a painful and dull activity but it's error prone and not easily reproducible. Thankfully there are packages in Python and R to automate the p…"> 
+  <meta property="article:published_time" content="2015-05-20T00:43:30+00:00"> 
+  <meta property="article:modified_time" content="2016-09-23T13:40:14+00:00"> 
+  <meta property="og:site_name" content="Technical Tidbits From Spatial Analysis &amp; Data Science"> 
+  <meta property="og:image" content="http://zevross.com/blog/wp-content/uploads/2015/05/names.png"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta name="twitter:card" content="summary"> 
+  <link rel="icon" href="http://zevross.com/blog/wp-content/uploads/2017/02/cropped-favicon-96x96-32x32.png" sizes="32x32"> 
+  <link rel="icon" href="http://zevross.com/blog/wp-content/uploads/2017/02/cropped-favicon-96x96-192x192.png" sizes="192x192"> 
+  <link rel="apple-touch-icon-precomposed" href="http://zevross.com/blog/wp-content/uploads/2017/02/cropped-favicon-96x96-180x180.png"> 
+  <meta name="msapplication-TileImage" content="http://zevross.com/blog/wp-content/uploads/2017/02/cropped-favicon-96x96-270x270.png"> 
+  <link rel="stylesheet" type="text/css" id="wp-custom-css" href="http://zevross.com/blog/?custom-css=c1e4945649"> 
+ </head> 
+ <body class="post-template-default single single-post postid-1277 single-format-standard has-sidebar footer-0 has-avatars"> 
+  <div id="page" class="hfeed site"> 
+   <header id="masthead" class="site-header" role="banner" style="display:none;"> 
+    <div class="site-branding"> 
+     <div class="site-logo">
+      <a href="http://zevross.com/blog/" rel="home"><script pagespeed_no_defer="">//<![CDATA[
+(function(){var g=this,h=function(b,d){var a=b.split("."),c=g;a[0]in c||!c.execScript||c.execScript("var "+a[0]);for(var e;a.length&&(e=a.shift());)a.length||void 0===d?c[e]?c=c[e]:c=c[e]={}:c[e]=d};var l=function(b){var d=b.length;if(0<d){for(var a=Array(d),c=0;c<d;c++)a[c]=b[c];return a}return[]};var m=function(b){var d=window;if(d.addEventListener)d.addEventListener("load",b,!1);else if(d.attachEvent)d.attachEvent("onload",b);else{var a=d.onload;d.onload=function(){b.call(this);a&&a.call(this)}}};var n,p=function(b,d,a,c,e){this.f=b;this.h=d;this.i=a;this.c=e;this.e={height:window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight,width:window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth};this.g=c;this.b={};this.a=[];this.d={}},q=function(b,d){var a,c,e=d.getAttribute("pagespeed_url_hash");if(a=e&&!(e in b.d))if(0>=d.offsetWidth&&0>=d.offsetHeight)a=!1;else{c=d.getBoundingClientRect();var f=document.body;a=c.top+("pageYOffset"in window?window.pageYOffset:(document.documentElement||f.parentNode||f).scrollTop);c=c.left+("pageXOffset"in window?window.pageXOffset:(document.documentElement||f.parentNode||f).scrollLeft);f=a.toString()+","+c;b.b.hasOwnProperty(f)?a=!1:(b.b[f]=!0,a=a<=b.e.height&&c<=b.e.width)}a&&(b.a.push(e),b.d[e]=!0)};p.prototype.checkImageForCriticality=function(b){b.getBoundingClientRect&&q(this,b)};h("pagespeed.CriticalImages.checkImageForCriticality",function(b){n.checkImageForCriticality(b)});h("pagespeed.CriticalImages.checkCriticalImages",function(){r(n)});var r=function(b){b.b={};for(var d=["IMG","INPUT"],a=[],c=0;c<d.length;++c)a=a.concat(l(document.getElementsByTagName(d[c])));if(0!=a.length&&a[0].getBoundingClientRect){for(c=0;d=a[c];++c)q(b,d);a="oh="+b.i;b.c&&(a+="&n="+b.c);if(d=0!=b.a.length)for(a+="&ci="+encodeURIComponent(b.a[0]),c=1;c<b.a.length;++c){var e=","+encodeURIComponent(b.a[c]);131072>=a.length+e.length&&(a+=e)}b.g&&(e="&rd="+encodeURIComponent(JSON.stringify(s())),131072>=a.length+e.length&&(a+=e),d=!0);t=a;if(d){c=b.f;b=b.h;var f;if(window.XMLHttpRequest)f=new XMLHttpRequest;else if(window.ActiveXObject)try{f=new ActiveXObject("Msxml2.XMLHTTP")}catch(k){try{f=new ActiveXObject("Microsoft.XMLHTTP")}catch(u){}}f&&(f.open("POST",c+(-1==c.indexOf("?")?"?":"&")+"url="+encodeURIComponent(b)),f.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),f.send(a))}}},s=function(){var b={},d=document.getElementsByTagName("IMG");if(0==d.length)return{};var a=d[0];if(!("naturalWidth"in a&&"naturalHeight"in a))return{};for(var c=0;a=d[c];++c){var e=a.getAttribute("pagespeed_url_hash");e&&(!(e in b)&&0<a.width&&0<a.height&&0<a.naturalWidth&&0<a.naturalHeight||e in b&&a.width>=b[e].k&&a.height>=b[e].j)&&(b[e]={rw:a.width,rh:a.height,ow:a.naturalWidth,oh:a.naturalHeight})}return b},t="";h("pagespeed.CriticalImages.getBeaconData",function(){return t});h("pagespeed.CriticalImages.Run",function(b,d,a,c,e,f){var k=new p(b,d,a,e,f);n=k;c&&m(function(){window.setTimeout(function(){r(k)},0)})});})();pagespeed.CriticalImages.Run('/mod_pagespeed_beacon','http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/','YddRYU7ik1',true,false,'l74kbrEA4f0');
+//]]></script><img alt="" src="http://zevross.com/blog/wp-content/uploads/2014/04/logo_etched1.png" pagespeed_url_hash="4168552954" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+     </div> 
+     <h1 class="site-title"><a href="http://zevross.com/blog/" rel="home">Technical Tidbits From Spatial Analysis &amp; Data Science</a></h1> 
+    </div> 
+    <div class="main-navigation-wrapper"> 
+     <nav id="site-navigation" class="main-navigation" role="navigation"> 
+      <h1 class="menu-toggle">Menu</h1> 
+      <a class="skip-link screen-reader-text" href="#content">Skip to content</a> 
+      <div class="menu-menu-1-container">
+       <ul id="menu-menu-1" class="menu">
+        <li id="menu-item-1802" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-1802"><a href="http://zevross.com/blog/">Home</a></li> 
+        <li id="menu-item-1803" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1803"><a href="http://zevross.com/blog/up-and-running-with-r/">Intro R workshop</a></li> 
+        <li id="menu-item-1805" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1805"><a href="http://zevross.com/blog/spatial-r-workshop/">Spatial R workshop</a></li> 
+        <li id="menu-item-2029" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-2029"><a href="http://zevross.com/blog/machine-learning-r-workshop/">Machine Learning R workshop</a></li> 
+       </ul>
+      </div> 
+     </nav>
+     <!-- #site-navigation --> 
+    </div> 
+    <div id="content" class="site-content"> 
+    </div>
+   </header>
+   <!-- #masthead --> 
+   <header class="navbar--top" role="banner">
+    <div class="navbar--top_wrapper">
+     <a href="//www.zevross.com" alt="ZevRoss Know Your Data" class="navbar__logo__link"></a> 
+     <a href="javascript:void(0)" id="js-navbar--top_mobile-toggle" class="navbar--top_mobile-toggle" alt="expand nav menu">
+      <svg height="48" viewbox="0 0 24 24" width="48" xmlns="http://www.w3.org/2000/svg">
+       <path d="M0 0h24v24H0z" fill="none"></path>
+       <path id="navbar--hamburger" fill="#b2b3B1" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+      </svg></a>
+     <nav class="navbar_nav" role="navigation">
+      <ul id="js-navbar-top-menu" class="navbar-top-menu">
+       <!-- simple nav links loop here -->
+       <li class="nav_link"><a href="//www.zevross.com">Home</a></li>
+       <!-- simple nav links loop here -->
+       <li class="nav_link"><a href="//www.zevross.com/research/">Research</a></li>
+       <!-- simple nav links loop here -->
+       <li class="nav_link"><a href="//www.zevross.com/news/">News</a></li>
+       <!-- simple nav links loop here -->
+       <li class="nav_link"><a href="//www.zevross.com/about/">About Us</a></li>
+       <!-- simple nav links loop here -->
+       <li class="nav_link--isactive nav_link"><a href="//www.zevross.com/blog/">Tech Blog</a></li>
+       <!-- simple nav links loop here -->
+       <li class="nav_link"><a href="//www.zevross.com/data-services/">Data Services</a></li>
+       <!-- simple nav links loop here -->
+       <li class="nav_link"><a href="//www.zevross.com/training/">Training</a></li>
+      </ul>
+     </nav>
+    </div>
+   </header> 
+   <div class="banner banner--subpages" style="background-image:url(/blog/wp-content/uploads/2017/06/xbanner-54ef07817a.png.pagespeed.ic_.X11ZVfI2mt.jpg.png)"></div> 
+   <div id="primary" class="content-area"> 
+    <main id="main" class="site-main" role="main"> 
+     <article id="post-1277" class="post-1277 post type-post status-publish format-standard hentry category-r"> 
+      <header class="entry-header"> 
+       <h1 class="entry-title">Scrape website data with the new R package <code>rvest</code> (+ a postscript on interacting with web pages with <code>RSelenium</code>)</h1> 
+       <div class="entry-meta"> 
+        <span class="posted-on">Posted on <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/" rel="bookmark"><time class="entry-date published" datetime="2015-05-19T20:43:30+00:00">May 19, 2015</time></a> </span> 
+        <span class="byline">by <span class="author vcard"> <a class="url fn n" href="http://zevross.com/blog/author/hollie/">hollie@zevross.com</a> </span> </span> 
+        <span class="comments-link">· <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comments">17 Comments</a></span> 
+       </div>
+       <!-- .entry-meta --> 
+      </header>
+      <!-- .entry-header --> 
+      <div class="entry-content"> 
+       <p>Copying tables or lists from a website is not only a painful and dull activity but it's error prone and not easily reproducible. Thankfully there are packages in Python and R to automate the process. In a <a href="http://zevross.com/blog/2014/05/16/using-the-python-library-beautifulsoup-to-extract-data-from-a-webpage-applied-to-world-cup-rankings/">previous post</a> we described using Python's Beautiful Soup to extract information from web pages. In this post we take advantage of a new R package called <code>rvest</code> to extract addresses from an online list. We then use <code>ggmap</code> to geocode those addresses and create a Leaflet map with the <code>leaflet</code> package. In the interest of coding local, we opted to use, as the example, data on wineries and breweries here in the Finger Lakes region of New York.</p> 
+       <div id="TOC"> 
+        <ul> 
+         <li><a href="#postscript">Skip to the postscript about RSelenium (and navigating websites in R)</a> </li> 
+        </ul> 
+        <h2>0) Load the libraries</h2> 
+        <p>In this example we will take advantage of several nice packages, most of which are available on R's main website (CRAN). The one exception is the <code>leaflet</code> package that you'll need to install from GitHub. Instructions are <a href="https://rstudio.github.io/leaflet/">here</a>. Note that this is the <code>leaflet</code> package, not the <code>leafletR</code> package which we <a href="http://zevross.com/blog/2014/04/11/using-r-to-quickly-create-an-interactive-online-map-using-the-leafletr-package/">highlighted previously</a>.</p> 
+        <p>If you want a little background on <code>dplyr</code> you can read <a href="http://zevross.com/blog/2015/01/13/a-new-data-processing-workflow-for-r-dplyr-magrittr-tidyr-ggplot2/">this post</a> and we have some details on <code>ggmap</code> <a href="http://zevross.com/blog/2014/03/19/geocoding-with-rs-ggmap-package/">here</a>.</p> 
+        <pre><code class="r">#devtools::install_github("rstudio/leaflet")
+library(dplyr)
+library(rvest)
+library(ggmap)
+library(leaflet)
+library(RColorBrewer)
+</code></pre> 
+        <h2>1) Parse the entire website</h2> 
+        <p>The <a href="http://www.visitithaca.com/">Visit Ithaca</a> website has a <a href="http://www.visitithaca.com/attractions/wineries.html">nice list</a> of wineries and breweries from which we can extract addresses. </p> 
+        <p>With <code>rvest</code> the first step is simply to parse the entire website and this can be done easily with the <code>html</code> function.</p> 
+        <pre><code class="r"># URL for the Visit Ithaca website, wineries page
+url&lt;-html("http://www.visitithaca.com/attractions/wineries.html")
+</code></pre> 
+        <h2>2) Find and extract the pieces of the website you need</h2> 
+        <p>Probably the single biggest challenge when extracting data from a website is determining which pieces of the HTML code you want to extract. A web page tends to be a convoluted set of nested objects (together, they are known as the Documennt Object Model or DOM for short) and you need to identify what part of the DOM you need.</p> 
+        <p>In order to do this, you will need to examine the web page guts using your browser's developer tools. To open the developer tools if you're using Chrome or Firefox click F12 (Cmd + Opt + I for Mac) or for Safari you would use Command-Option-I. From this point forward I'll be using Chrome. Note that the author of the package, Hadley Wickham recommends using <a href="http://selectorgadget.com/">selectorgadget.com</a>, a Chrome extension, to help identify the web page elements you need. And he recommends <a href="http://flukeout.github.io/">this page</a> for learning more about selectors.</p> 
+        <p>Note that to follow along, you may want to browse to the <a href="http://www.visitithaca.com/attractions/wineries.html" target="new">wineries page</a> that the example uses.</p> 
+        <p>When you click on F12 in Chrome you'll see something like what's below. You should pay particular attention to the element selector which is circled in red and you should make sure that you're looking at the Elements tab.</p> 
+        <p><a href="http://zevross.com/blog/wp-content/uploads/2015/05/developer_tools1.png"><img src="http://zevross.com/blog/wp-content/uploads/2015/05/developer_tools1.png" alt="developer_tools" class="aligncenter size-full" pagespeed_url_hash="757579823" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a></p> 
+        <p>Just by looking at the page you can intuit that the winery names might be a different element in the DOM (they have a different location, different font etc on the main page). Since the names and addresses are slightly separated we will extract the set of names separately from the set of addresses starting with the names.</p> 
+        <h3>Extract the names</h3> 
+        <p>To pick out the names, scroll down to the list of wineries and use the element selector in the developer tools to click on one of the winery names on the main page. When you inspect this element you'll see that the winery name is embedded in a hyperlink tag (<code>&lt;a href...</code>) and it has a class of <code>indSearchListingTitle</code>. NOTE: the selector has changed since we originally published this post. Since the names are the only elements on the page with this class, we can use a simple selector based on class alone to extract the names. </p> 
+        <p><a href="http://zevross.com/blog/wp-content/uploads/2015/05/names.png"><img src="http://zevross.com/blog/wp-content/uploads/2015/05/names.png" alt="name" class="aligncenter size-full" pagespeed_url_hash="3340012606" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a></p> 
+        <p>The function <code>html_nodes</code> pulls out the entire node from the DOM and then the function <code>html_text</code> allows us to limit to the text within the node. Note the use of the pipe <code>%&gt;%</code> which essentially passes the results of <code>html_nodes</code> to <code>html_text</code>. For more information on pipes you can read more <a href="http://zevross.com/blog/2015/01/13/a-new-data-processing-workflow-for-r-dplyr-magrittr-tidyr-ggplot2/">here</a>.</p> 
+        <pre><code class="r"># Pull out the names of the wineries and breweries
+# Find the name of the selector (which has
+# changed since the tutorial was first written)
+selector_name&lt;-".indSearchListingTitle"
+
+fnames&lt;-html_nodes(x = url, css = selector_name) %&gt;%
+  html_text()
+
+head(fnames)
+## [1] "Varick Winery &amp; Vineyard"                       
+## [2] "Ithaca Beer Company"                            
+## [3] "Bellwether Hard Cider / Bellwether Wine Cellars"
+## [4] "Lakeshore Winery"                               
+## [5] "Knapp Winery &amp; Vineyard Restaurant"             
+## [6] "Goose Watch Winery"
+</code></pre> 
+        <h3>Extract the addresses</h3> 
+        <p>The address is a little trickier. Using the select tool in the development tools you'll see that all the right hand side material is within a container (a <code>&lt;div&gt;</code>) with the class of <code>results_summary_item_details</code>. But if you were to use this selector alone you would get all the material including the description, phone number etc. More than we want. If you look more closely at this example, you'll see that the winery-specific material is listed in a three column table (first column is the image, second is blank space and third is the address info etc). So we can add a second part of the selector to grab the third column and, finally, we don't want the whole third column but rather just the first piece in between the first set of <code>&lt;strong&gt;</code> tags. Altogether:</p> 
+        <ul> 
+         <li> <p><strong>In words</strong>: Select the material in the sections with a class of <code>.results_summary_item_detals</code> but limit to the third column and, more specifically, the material between the first set of <code>strong</code> tags in the third column</p> </li> 
+         <li> <p>In <strong>CSS selector code</strong>: <code>.results_summary_item_details td:nth-child(3) strong:first-child</code></p> </li> 
+        </ul> 
+        <pre><code class="r">
+# Pull out the addresses of the wineries and breweries
+selector_address&lt;-".indSearchListingMetaContainer div:nth-child(2) div:nth-child(1) .indMetaInfoWrapper"
+
+faddress&lt;-html_nodes(url, selector_address) %&gt;%
+    html_text()
+
+head(faddress)
+## [1] "on the Cayuga Lake Wine Trail5102 Rt. 89, Romulus, NY 14541"                         
+## [2] "122 Ithaca Beer Drive Ithaca, NY 14850"                                              
+## [3] "on the Cayuga Lake Wine Trail9070 Rt. 89, Trumansburg, NY 14886"                     
+## [4] "5132 Rt. 89, Romulus, NY 14541"                                                      
+## [5] "on the Cayuga Lake Wine Trail2770 County Rd. 128, (Ernsberger Rd.) Romulus, NY 14541"
+## [6] "on the Cayuga Lake Wine Trail5480 Rt. 89, Romulus, NY 14541"
+</code></pre> 
+        <h3>Minor cleanup</h3> 
+        <p>The code on this website is a little inconsistent – sometimes the winery name is first and sometimes it's preceded by something like “on the Cayuga Lake Wine Trail” so let's do a little final cleanup.</p> 
+        <pre><code class="r">to_remove&lt;-paste(c("\n", "^\\s+|\\s+$", "on the Cayuga Lake Wine Trail, ",
+"Cayuga Lake Wine Trail, ", "on the Cayuga Wine Trail, ", 
+"on the Finger Lakes Beer Trail, "), collapse="|")
+
+faddress&lt;-gsub(to_remove, "", faddress)
+
+head(faddress)
+## [1] "5102 Rt. 89, Romulus, NY 14541"                         
+## [2] "122 Ithaca Beer Drive Ithaca, NY 14850"                 
+## [3] "9070 Rt. 89, Trumansburg, NY 14886"                     
+## [4] "5132 Rt. 89, Romulus, NY 14541"                         
+## [5] "2770 County Rd. 128, (Ernsberger Rd.) Romulus, NY 14541"
+## [6] "5480 Rt. 89, Romulus, NY 14541"
+</code></pre> 
+        <p>Now we have the names and addresses and we're ready for geocoding.</p> 
+        <p><a name="geocode"></a> </p> 
+        <h2>3) Use ggmap to geocode the addresses</h2> 
+        <h3>Geocode</h3> 
+        <p>The package <code>ggmap</code> has a nice geocode function that we'll use to extract coordinates. For more detail checkout <a href="http://zevross.com/blog/2014/03/19/geocoding-with-rs-ggmap-package/">this post</a>.</p> 
+        <pre><code class="r"># Using output="latlona" includes the address that was geocoded
+geocodes&lt;-geocode(faddress, output="latlona")
+
+head(geocodes)
+##         lon      lat                                      address
+## 1 -76.77388 42.78128     5102 new york 89, romulus, ny 14541, usa
+## 2 -76.53506 42.41655 122 ithaca beer drive, ithaca, ny 14850, usa
+## 3 -76.67176 42.58552  9070 new york 89, interlaken, ny 14847, usa
+## 4 -76.77593 42.77588     5132 new york 89, romulus, ny 14541, usa
+## 5 -76.79253 42.76668      ernsberger road, romulus, ny 14541, usa
+## 6 -76.77504 42.75862     5480 new york 89, romulus, ny 14541, usa
+</code></pre> 
+        <p>[<strong>Note 5/26/2015</strong>] A commenter (see below) asks if this approach may not be allowed given Google’s Terms of Service (the map is not being shown with a Google Map). I agree that this is questionable so you may want to use an alternative. One good alternative is Yahoo PlaceFinder which does not appear to put a similar restriction on geocode results. Luckily, there is a mini <a href="https://github.com/trestletech/rydn">R package</a> for this created by <a href="https://twitter.com/TrestleJeff">Jeff Allen</a>. You would install the package from GitHub — and you will need to get a key and secret code from Yahoo (the help on the package page will guide you) — code for doing the geocoding is below.</p> 
+        <p>I did experiment with more open source geocoders like the function in this <a href="http://stackoverflow.com/questions/28680992/geocode-batch-addresses-in-r-with-open-mapquestapi">stackoverflow</a> discussion which uses MapQuest but I found that the results were not good. My test case was the Varick Winery address (5102 NY-89, Romulus, NY 14541) which Google can find but many other geocoders could not. Yahoo does find it. For geocoder comparisons see <a href="https://docs.google.com/spreadsheet/ccc?key=0AidEWya_p6XFdGw1RmZ6TjB1ajZxVk81d2pISDMzVUE&amp;usp=sharing#gid=0">this spreadsheet</a> which is referred to in <a href="http://gis.stackexchange.com/questions/62374/geocoding-api-comparison">this GIS stackexchange post</a>.</p> 
+        <pre><code class="r"># code using Yahoo instead of Google
+devtools::install_github("trestletech/rydn")
+addresses&lt;-lapply(faddress, function(x){
+  tmp&lt;-find_place(x, commercial=FALSE, 
+             key="GET A KEY",
+             secret="GET SECRET CODE")
+  # this is the lazy way to do this, in a few cases more than one result is
+  # provided and I have not looked into the details so I'm picking the first
+  tmp&lt;-tmp[1 ,c("quality",  "latitude", "longitude", "radius")]
+  
+})
+geocodes&lt;-do.call("rbind", addresses) %&gt;%
+  rename(lat=latitude, lon=longitude) %&gt;%
+  mutate(address=faddress)
+</code></pre> 
+        <h3>Cleanup</h3> 
+        <p>The results come back as lower case so we will convert to proper case. We also want to categorize into winery vs brewery/cidery/other and do some additional minor cleaning. We’re taking advantage of the package <code>dplyr</code> to help us with the cleaning (<code>mutate</code>, <code>filter</code>, <code>select</code> are all verbs in this package)</p> 
+        <pre><code class="r"># FUNCTION from help for chartr 
+capwords&lt;-function(s, strict = FALSE) {
+  cap&lt;-function(s) paste(toupper(substring(s, 1, 1)),
+        {s&lt;-substring(s, 2); if(strict) tolower(s) else s},
+        sep = "", collapse = " " )
+    sapply(strsplit(s, split = " "),
+        cap, USE.NAMES = !is.null(names(s)))
+}
+# ---------------------------------------
+
+
+full&lt;-mutate(geocodes, name=fnames) %&gt;%
+  mutate(category=ifelse(grepl("Winery", name), 1, 2)) %&gt;%
+  mutate(addressUse=gsub("Ny", "NY", capwords(gsub(", usa", "", address)))) %&gt;%
+  mutate(street=sapply(strsplit(addressUse, ","), "[[", 1)) %&gt;%
+  mutate(city=sapply(strsplit(addressUse, ","), "[[", 2)) %&gt;%
+  filter(!grepl('Interlaken|Ithaca|Aurora|Seneca Falls', street)) %&gt;%
+  select(name, street, city, category, lat, lon)
+
+head(full)
+##                                              name           street
+## 1                        Varick Winery &amp; Vineyard 5102 New York 89
+## 2 Bellwether Hard Cider / Bellwether Wine Cellars 9070 New York 89
+## 3                                Lakeshore Winery 5132 New York 89
+## 4              Knapp Winery &amp; Vineyard Restaurant  Ernsberger Road
+## 5                              Goose Watch Winery 5480 New York 89
+## 6                     Cayuga Ridge Estates Winery 6800 New York 89
+##          city category      lat       lon
+## 1     Romulus        1 42.78128 -76.77388
+## 2  Interlaken        2 42.58552 -76.67176
+## 3     Romulus        1 42.77588 -76.77593
+## 4     Romulus        1 42.76668 -76.79253
+## 5     Romulus        1 42.75862 -76.77504
+## 6        Ovid        1 42.69610 -76.74304
+</code></pre> 
+        <h2>4) Map the data!</h2> 
+        <p>We're making use of RStudio's <code>leaflet</code> package to create the map.</p> 
+        <pre><code class="r">
+# Assign colors for our 3 categories
+cols&lt;-colorFactor(c("#3F9A82", "#A1CD4D", "#2D4565"), domain = full$category)
+
+
+# Create the popup information with inline css styling
+popInfo&lt;-paste("&lt;h4 style='border-bottom: thin dotted #43464C;
+    padding-bottom:4px; margin-bottom:4px;
+    font-family: Tahoma, Geneva, sans-serif;
+    color:#43464C;'&gt;", full$name, "&lt;/h4&gt;
+    &lt;span style='color:#9197A6;'&gt;", full$street, "&lt;br&gt;",
+    paste(full$city, ", NY", sep=""), "&lt;/span&gt;", sep="")
+
+
+# Create the final map color-coded by type!
+leaflet(data=full, height="650px", width="100%") %&gt;%
+    addCircles(lat = ~ lat, lng = ~ lon, color = ~cols(category), weight=2, opacity=1,
+        fillOpacity=0.6, radius=500, popup = popInfo) %&gt;%
+    addTiles("http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png") %&gt;%
+    setView(-76.63, 42.685, zoom=10) %&gt;% addLegend(
+  position = 'bottomright',
+  colors = cols(1:2),
+  labels = c("Winery", "Brewery, Cidery, Other"), opacity = 1
+)
+</code></pre> 
+        <p><iframe src="http://zevross.com/web_production/blogposts/rvest_leaflet/rvest_leaflet.html" width="700" height="675" scrolling="no" style="border: 2px solid #111111;"></iframe></p> 
+        <p>And there we have it!</p> 
+        <p>* Last updated September 21, 2016 to address changes in the wine trail website we use in the example. Thanks to Eric Hopkins for alerting us to the issue and providing the updated code.</p> 
+        <h2 id="postscript">Postscript — sites with forms and buttons</h2> 
+        <p>Not all the sites you work with will have a clean list or table available on a single page. There are a variety of different options for dealing with pages with buttons, pull downs and related elements. One particularly useful package in this setting (and one that we’re using on a project right now) is <code>RSelenium</code>. We plan to add a blog post about RSelenium but for the time being I will give a <strong>sneak peek of preliminary</strong> code with no significant details except to say that RSelenium can be used to mimic actual browser use.</p> 
+        <p>The code below opens a browser, goes to a web page, clicks on the “search” button and then scrapes a table of data and then clicks to the next page.</p> 
+        <pre class="r"><code># Sneak preview of code for interacting with a web page with RSelenium
+# a proper blog post with explanation will follow.
+
+library(RSelenium)
+# make sure you have the server
+checkForServer()
+
+# use default server 
+startServer()
+remDr&lt;-remoteDriver$new()
+
+
+# send request to server
+url&lt;-"https://programs.iowadnr.gov/animalfeedingoperations/FacilitySearch.aspx?Page=0"
+remDr$open(silent = TRUE) #opens a browser
+remDr$navigate(url)
+
+
+# identify search button and click
+searchID&lt;-'//*[@id="ctl00_foPageContent_SearchButton"]'
+webElem&lt;-remDr$findElement(value = searchID)
+webElem$clickElement()
+
+# identify the table
+tableID&lt;-'//*[@id="ctl00_foPageContent_Panel1"]/div[2]/table'
+webElem&lt;-remDr$findElement(value = tableID)
+
+doc&lt;-htmlParse(remDr$getPageSource()[[1]])
+
+tabledat&lt;-readHTMLTable(doc)[[17]]
+tabledat[,]&lt;-lapply(tabledat[,],
+    function(x) gsub("Ã?Â", "", as.character(x)))
+tabledat&lt;-tabledat[-nrow(tabledat),-1]
+# go to next page
+nextID&lt;-'//*[@id="ctl00_foPageContent_FacilitySearchRepeater_ctl11_PagePlus1"]'
+webElem&lt;-remDr$findElement(value = nextID)
+webElem$clickElement()</code></pre> 
+       </div>
+       <!-- .entry-content --> 
+       <footer class="entry-meta entry-footer"> 
+        <span class="cat-links"> Posted in <a href="http://zevross.com/blog/category/r/" rel="category tag">R</a> </span> 
+       </footer>
+       <!-- .entry-meta --> 
+      </div>
+     </article>
+     <!-- #post-## --> 
+     <nav class="navigation post-navigation" role="navigation"> 
+      <div class="nav-links"> 
+       <div class="nav-previous">
+        <h2>Previous post</h2>
+        <a href="http://zevross.com/blog/2015/03/30/map-and-analyze-raster-data-in-r/" rel="prev">Map and analyze raster data in R</a>
+       </div> 
+       <div class="nav-next">
+        <h2>Next post</h2>
+        <a href="http://zevross.com/blog/2015/07/09/overlap-joins-in-r-a-speed-comparison-with-packages-sqldf-and-data-table-3/" rel="next">Overlap joins in R: a speed comparison with packages <code>sqldf</code> and <code>data.table</code></a>
+       </div> 
+      </div>
+      <!-- .nav-links --> 
+     </nav>
+     <!-- .navigation --> 
+     <div id="comments" class="comments-area"> 
+      <h2 class="comments-title"> 17 responses </h2> 
+      <ol class="comment-list"> 
+       <li id="comment-1538" class="comment even thread-even depth-1 parent"> 
+        <article id="div-comment-1538" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/d7eca32dde0cb4b49252f7b0df753243?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/d7eca32dde0cb4b49252f7b0df753243?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="22147349" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">Tung</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-1538"> <time datetime="2015-05-21T13:37:18+00:00"> May 21, 2015 at 1:37 pm </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>Great tutorial once again! Thanks Zev!</p> 
+          <p>I used your tutorial for one test case. I had error when trying to extract the table from the website. R returned the error: “html_tag(x) == “table” is not TRUE”. Do you know any workaround solution when the table doesn’t have tags? Thanks!</p> 
+          <p>My code:</p> 
+          <p>library(rvest)<br> # Webpage URL<br> theurl &lt;- "<a href="http://www.usbr.gov/pn-bin/yak/webarccsv.pl?station=AMRW&amp;year=2015&amp;month=5&amp;day=1&amp;year=2015&amp;month=5&amp;day=13&amp;pcode=AF&amp;pcode=QD&amp;pcode=QU&amp;quot" rel="nofollow">http://www.usbr.gov/pn-bin/yak/webarccsv.pl?station=AMRW&amp;year=2015&amp;month=5&amp;day=1&amp;year=2015&amp;month=5&amp;day=13&amp;pcode=AF&amp;pcode=QD&amp;pcode=QU&amp;quot</a>;<br> # Get data<br> url &lt;- html(theurl)<br> data &lt;- html_nodes(url, "p+ pre")<br> # Extract table data only (DATE, AF, QD, &amp; QU columns)<br> table_data &lt;- html_table(data)</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=1538#respond" onclick="return addComment.moveForm( &quot;div-comment-1538&quot;, &quot;1538&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Tung">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> 
+        <ul class="children"> 
+         <li id="comment-1539" class="comment byuser comment-author-zevzevross-com odd alt depth-2 parent"> 
+          <article id="div-comment-1539" class="comment-body"> 
+           <footer class="comment-meta"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="2094340799" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+             <b class="fn">zev@zevross.com</b> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author --> 
+            <div class="comment-metadata"> 
+             <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-1539"> <time datetime="2015-05-21T15:42:55+00:00"> May 21, 2015 at 3:42 pm </time> </a> 
+            </div>
+            <!-- .comment-metadata --> 
+           </footer>
+           <!-- .comment-meta --> 
+           <div class="comment-content"> 
+            <p>Even though the data you’re trying to get looks like a table it’s not a table (the HTML code would need table, tr, td etc). Change the <code>html_table</code> to <code>html_text</code> and then parse into a table using something like <code>unlist(strsplit( table_data, "\\\r\\\n"))</code> followed by another <code>strsplit</code>. There’s probably a better way to parse into a table.</p> 
+           </div>
+           <!-- .comment-content --> 
+           <div class="reply">
+            <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=1539#respond" onclick="return addComment.moveForm( &quot;div-comment-1539&quot;, &quot;1539&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to zev@zevross.com">Reply</a>
+           </div> 
+          </article>
+          <!-- .comment-body --> 
+          <ul class="children"> 
+           <li id="comment-1585" class="comment even depth-3"> 
+            <article id="div-comment-1585" class="comment-body"> 
+             <footer class="comment-meta"> 
+              <div class="comment-author vcard"> 
+               <img alt="" src="http://1.gravatar.com/avatar/d7eca32dde0cb4b49252f7b0df753243?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/d7eca32dde0cb4b49252f7b0df753243?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="22147349" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+               <b class="fn">Tung</b> 
+               <span class="says">says:</span> 
+              </div>
+              <!-- .comment-author --> 
+              <div class="comment-metadata"> 
+               <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-1585"> <time datetime="2015-06-01T14:25:53+00:00"> June 1, 2015 at 2:25 pm </time> </a> 
+              </div>
+              <!-- .comment-metadata --> 
+             </footer>
+             <!-- .comment-meta --> 
+             <div class="comment-content"> 
+              <p>Thanks Zev! data_text works for me</p> 
+             </div>
+             <!-- .comment-content --> 
+             <div class="reply">
+              <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=1585#respond" onclick="return addComment.moveForm( &quot;div-comment-1585&quot;, &quot;1585&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Tung">Reply</a>
+             </div> 
+            </article>
+            <!-- .comment-body --> </li>
+           <!-- #comment-## --> 
+          </ul>
+          <!-- .children --> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-1541" class="comment odd alt thread-odd thread-alt depth-1"> 
+        <article id="div-comment-1541" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://0.gravatar.com/avatar/9b04c43b664b6ec6168954ed9db7ae0d?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/9b04c43b664b6ec6168954ed9db7ae0d?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="3455982695" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn"><a href="http://01241.com" rel="external nofollow" class="url">steiger</a></b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-1541"> <time datetime="2015-05-22T17:59:11+00:00"> May 22, 2015 at 5:59 pm </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>Complicated solution. Use a texteditor and use find/replace.</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=1541#respond" onclick="return addComment.moveForm( &quot;div-comment-1541&quot;, &quot;1541&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to steiger">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-1544" class="comment even thread-even depth-1 parent"> 
+        <article id="div-comment-1544" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/7ccdce18bfa6ef1cffaad7a912e82f30?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/7ccdce18bfa6ef1cffaad7a912e82f30?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="3810223791" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">Patrick</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-1544"> <time datetime="2015-05-24T12:59:18+00:00"> May 24, 2015 at 12:59 pm </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>What a great tutorial! I am new to GIS and the more functionality I see with R, the more excited I get.<br> I do have a question regarding the use of ggmap and specifically the geocode function. From what I have read geocode uses the Google API which has certain restrictions on what you can use it for. I am getting the impression that you can only use the data with a corresponding Google map and that there are limitations in storing of the data.<br> From the Google terms of service<br> (b) No Pre-Fetching, Caching, or Storage of Content.<br> (h) No Use of Content without a Google Map<br> It seems that this would disallow the use of this service in a academic or health services research setting (where there might not be a publishable map on the internet and the storage of the geocodes for reproducibility is necessary). Is there a way around this or would public health researchers have to use a different service?</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=1544#respond" onclick="return addComment.moveForm( &quot;div-comment-1544&quot;, &quot;1544&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Patrick">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> 
+        <ul class="children"> 
+         <li id="comment-1549" class="comment byuser comment-author-zevzevross-com odd alt depth-2 parent"> 
+          <article id="div-comment-1549" class="comment-body"> 
+           <footer class="comment-meta"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="2094340799" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+             <b class="fn">zev@zevross.com</b> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author --> 
+            <div class="comment-metadata"> 
+             <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-1549"> <time datetime="2015-05-26T12:44:51+00:00"> May 26, 2015 at 12:44 pm </time> </a> 
+            </div>
+            <!-- .comment-metadata --> 
+           </footer>
+           <!-- .comment-meta --> 
+           <div class="comment-content"> 
+            <p>Thanks for pointing this out and good point. I updated the post above and included code for geocoding with Yahoo!</p> 
+           </div>
+           <!-- .comment-content --> 
+           <div class="reply">
+            <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=1549#respond" onclick="return addComment.moveForm( &quot;div-comment-1549&quot;, &quot;1549&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to zev@zevross.com">Reply</a>
+           </div> 
+          </article>
+          <!-- .comment-body --> 
+          <ul class="children"> 
+           <li id="comment-7889" class="comment even depth-3 parent"> 
+            <article id="div-comment-7889" class="comment-body"> 
+             <footer class="comment-meta"> 
+              <div class="comment-author vcard"> 
+               <img alt="" src="http://1.gravatar.com/avatar/7ab0c911d66918be7da89186e3061689?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/7ab0c911d66918be7da89186e3061689?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="3270895186" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+               <b class="fn"><a href="https://mytinyshinys.shinyapps.io/dashboard" rel="external nofollow" class="url">Andrew Clark</a></b> 
+               <span class="says">says:</span> 
+              </div>
+              <!-- .comment-author --> 
+              <div class="comment-metadata"> 
+               <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-7889"> <time datetime="2015-10-26T23:25:30+00:00"> October 26, 2015 at 11:25 pm </time> </a> 
+              </div>
+              <!-- .comment-metadata --> 
+             </footer>
+             <!-- .comment-meta --> 
+             <div class="comment-content"> 
+              <p>The latest version of ggmap does geocoding via the Data Science Toolkit as default (though Google is still an optuion). This gets round the licensing issues and also appears very quick. I think there may be the precision issues that you alluded to above on occasion</p> 
+             </div>
+             <!-- .comment-content --> 
+             <div class="reply">
+              <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=7889#respond" onclick="return addComment.moveForm( &quot;div-comment-7889&quot;, &quot;7889&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Andrew Clark">Reply</a>
+             </div> 
+            </article>
+            <!-- .comment-body --> 
+            <ul class="children"> 
+             <li id="comment-7918" class="comment byuser comment-author-zevzevross-com odd alt depth-4"> 
+              <article id="div-comment-7918" class="comment-body"> 
+               <footer class="comment-meta"> 
+                <div class="comment-author vcard"> 
+                 <img alt="" src="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="2094340799" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+                 <b class="fn">zev@zevross.com</b> 
+                 <span class="says">says:</span> 
+                </div>
+                <!-- .comment-author --> 
+                <div class="comment-metadata"> 
+                 <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-7918"> <time datetime="2015-10-27T08:42:50+00:00"> October 27, 2015 at 8:42 am </time> </a> 
+                </div>
+                <!-- .comment-metadata --> 
+               </footer>
+               <!-- .comment-meta --> 
+               <div class="comment-content"> 
+                <p>Thanks for the input!</p> 
+               </div>
+               <!-- .comment-content --> 
+               <div class="reply">
+                <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=7918#respond" onclick="return addComment.moveForm( &quot;div-comment-7918&quot;, &quot;7918&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to zev@zevross.com">Reply</a>
+               </div> 
+              </article>
+              <!-- .comment-body --> </li>
+             <!-- #comment-## --> 
+            </ul>
+            <!-- .children --> </li>
+           <!-- #comment-## --> 
+          </ul>
+          <!-- .children --> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-2687" class="comment even thread-odd thread-alt depth-1 parent"> 
+        <article id="div-comment-2687" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/d7da30795341c942f92c4db292e851de?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/d7da30795341c942f92c4db292e851de?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="3241204380" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">scott R</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-2687"> <time datetime="2015-09-17T20:58:55+00:00"> September 17, 2015 at 8:58 pm </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>This is a great package and I am able to pull the data as advertised, but I’m trying to extract an attribute from the div.</p> 
+          <p>i.e. </p> 
+          <p>any clues how to get just the id ? thx</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=2687#respond" onclick="return addComment.moveForm( &quot;div-comment-2687&quot;, &quot;2687&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to scott R">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> 
+        <ul class="children"> 
+         <li id="comment-2711" class="comment byuser comment-author-zevzevross-com odd alt depth-2 parent"> 
+          <article id="div-comment-2711" class="comment-body"> 
+           <footer class="comment-meta"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="2094340799" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+             <b class="fn">zev@zevross.com</b> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author --> 
+            <div class="comment-metadata"> 
+             <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-2711"> <time datetime="2015-09-18T09:25:00+00:00"> September 18, 2015 at 9:25 am </time> </a> 
+            </div>
+            <!-- .comment-metadata --> 
+           </footer>
+           <!-- .comment-meta --> 
+           <div class="comment-content"> 
+            <p>Have you looked at <code>html_attr()</code>? If you’re still having trouble open a stackoverflow question and send me the link.</p> 
+           </div>
+           <!-- .comment-content --> 
+           <div class="reply">
+            <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=2711#respond" onclick="return addComment.moveForm( &quot;div-comment-2711&quot;, &quot;2711&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to zev@zevross.com">Reply</a>
+           </div> 
+          </article>
+          <!-- .comment-body --> 
+          <ul class="children"> 
+           <li id="comment-20117" class="comment even depth-3"> 
+            <article id="div-comment-20117" class="comment-body"> 
+             <footer class="comment-meta"> 
+              <div class="comment-author vcard"> 
+               <img alt="" src="http://1.gravatar.com/avatar/d7da30795341c942f92c4db292e851de?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/d7da30795341c942f92c4db292e851de?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="3241204380" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+               <b class="fn">Scott Robinett</b> 
+               <span class="says">says:</span> 
+              </div>
+              <!-- .comment-author --> 
+              <div class="comment-metadata"> 
+               <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-20117"> <time datetime="2016-10-11T17:46:08+00:00"> October 11, 2016 at 5:46 pm </time> </a> 
+              </div>
+              <!-- .comment-metadata --> 
+             </footer>
+             <!-- .comment-meta --> 
+             <div class="comment-content"> 
+              <p>know this is a year late, but thanks. Came back to go over this tutorial again.</p> 
+             </div>
+             <!-- .comment-content --> 
+             <div class="reply">
+              <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=20117#respond" onclick="return addComment.moveForm( &quot;div-comment-20117&quot;, &quot;20117&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Scott Robinett">Reply</a>
+             </div> 
+            </article>
+            <!-- .comment-body --> </li>
+           <!-- #comment-## --> 
+          </ul>
+          <!-- .children --> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-10115" class="comment odd alt thread-even depth-1 parent"> 
+        <article id="div-comment-10115" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/abba2a8137973c5f0f35c18965579182?s=84&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/abba2a8137973c5f0f35c18965579182?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="3150819470" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">kateryna</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-10115"> <time datetime="2015-12-11T06:50:46+00:00"> December 11, 2015 at 6:50 am </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>Thanks a lot for the tutorial, it s really really useful and understandable also for newbies ?<br> two quick questions?</p> 
+          <p>– how to delay a bit this command?<br> tableID&lt;-'//*[@id="ctl00_foPageContent_Panel1"]/div[2]/table'<br> webElem&lt;-remDr$findElement(value = tableID)</p> 
+          <p>If the server is not quick enough to load the page after clicking search, the command will result in a mistake, because the table is not there yet. I am using Sys.sleep(10), which is however arbitrary. </p> 
+          <p>– What do the numbers in parenthesis mean? I guess 17 stands for table 17, what about the 1?<br> doc&lt;-htmlParse(remDr$getPageSource()[[1]])<br> tabledat&lt;-readHTMLTable(doc)[[17]]</p> 
+          <p>Thanks!</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=10115#respond" onclick="return addComment.moveForm( &quot;div-comment-10115&quot;, &quot;10115&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to kateryna">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> 
+        <ul class="children"> 
+         <li id="comment-10121" class="comment byuser comment-author-zevzevross-com even depth-2"> 
+          <article id="div-comment-10121" class="comment-body"> 
+           <footer class="comment-meta"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="2094340799" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+             <b class="fn">zev@zevross.com</b> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author --> 
+            <div class="comment-metadata"> 
+             <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-10121"> <time datetime="2015-12-11T11:50:23+00:00"> December 11, 2015 at 11:50 am </time> </a> 
+            </div>
+            <!-- .comment-metadata --> 
+           </footer>
+           <!-- .comment-meta --> 
+           <div class="comment-content"> 
+            <p>I don’t know of a way other than Sys.sleep() to get around this — this is what we have used. In the code you mention the [[1]] refers to the base html tag. And yes, the [[17]] refers to the table number.</p> 
+           </div>
+           <!-- .comment-content --> 
+           <div class="reply">
+            <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=10121#respond" onclick="return addComment.moveForm( &quot;div-comment-10121&quot;, &quot;10121&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to zev@zevross.com">Reply</a>
+           </div> 
+          </article>
+          <!-- .comment-body --> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-11552" class="comment odd alt thread-odd thread-alt depth-1 parent"> 
+        <article id="div-comment-11552" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://2.gravatar.com/avatar/818e92b29d9d72dca920437e09e05a25?s=84&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/818e92b29d9d72dca920437e09e05a25?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="636580317" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">Cara Daneel</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-11552"> <time datetime="2016-01-13T09:20:16+00:00"> January 13, 2016 at 9:20 am </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>Hi, thank you very much for this well written aid. I have been using rvest for a project but now understand more about it.<br> Can you use rvest and rselenium in the same code? What would that look like?<br> I.e. I have a code which is successfully using rvest to scrape TripAdvisor reviews for a worldwide study on ecosystem use. However, I am only able to scrape a partial review as it stops where the ‘more’ button is inserted to cut review. I have been told I have to interact with javascript (and RSelenium) to pull up the entire review. Is this a simple addition into my current rvest-using code? Do you know anyone who could advise me on the specifics as I am moderately new to this.</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=11552#respond" onclick="return addComment.moveForm( &quot;div-comment-11552&quot;, &quot;11552&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Cara Daneel">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> 
+        <ul class="children"> 
+         <li id="comment-11553" class="comment byuser comment-author-zevzevross-com even depth-2"> 
+          <article id="div-comment-11553" class="comment-body"> 
+           <footer class="comment-meta"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=84&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/cfea0c1fe6597b9476081cd041128fc9?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="2094340799" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+             <b class="fn">zev@zevross.com</b> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author --> 
+            <div class="comment-metadata"> 
+             <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-11553"> <time datetime="2016-01-13T09:50:30+00:00"> January 13, 2016 at 9:50 am </time> </a> 
+            </div>
+            <!-- .comment-metadata --> 
+           </footer>
+           <!-- .comment-meta --> 
+           <div class="comment-content"> 
+            <p>You can definitely use both but they do different things in different ways. Your best bet would to carve out a very specific, reproducible example of what you want to do and post it to stackoverflow, you can then send me the link (zev@zevross.com).</p> 
+           </div>
+           <!-- .comment-content --> 
+           <div class="reply">
+            <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=11553#respond" onclick="return addComment.moveForm( &quot;div-comment-11553&quot;, &quot;11553&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to zev@zevross.com">Reply</a>
+           </div> 
+          </article>
+          <!-- .comment-body --> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-26375" class="comment odd alt thread-even depth-1"> 
+        <article id="div-comment-26375" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://2.gravatar.com/avatar/5b7389b8f36203e065992e6c92e8fa6b?s=84&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/5b7389b8f36203e065992e6c92e8fa6b?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="4273828969" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">Geoffrey Fell</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-26375"> <time datetime="2017-02-01T13:09:44+00:00"> February 1, 2017 at 1:09 pm </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>First of all great intro.<br> One thing I noticed is that the “table structure” for the addresses no longer is uniform among wineries. Dills Run Winery has no associated image so its reaching for the address in a non-existant spot.</p> 
+          <p>Do you have an easy remedy for persnickety layouts like this?</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=26375#respond" onclick="return addComment.moveForm( &quot;div-comment-26375&quot;, &quot;26375&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Geoffrey Fell">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> </li>
+       <!-- #comment-## --> 
+       <li id="comment-30658" class="comment even thread-odd thread-alt depth-1"> 
+        <article id="div-comment-30658" class="comment-body"> 
+         <footer class="comment-meta"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://2.gravatar.com/avatar/e2ae8dde2127cb053067bc862adf48f6?s=84&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/e2ae8dde2127cb053067bc862adf48f6?s=168&amp;d=mm&amp;r=g 2x" class="avatar avatar-84 photo" height="84" width="84" pagespeed_url_hash="1541262864" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"> 
+           <b class="fn">Vivek Jain</b> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author --> 
+          <div class="comment-metadata"> 
+           <a href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#comment-30658"> <time datetime="2017-05-30T09:25:38+00:00"> May 30, 2017 at 9:25 am </time> </a> 
+          </div>
+          <!-- .comment-metadata --> 
+         </footer>
+         <!-- .comment-meta --> 
+         <div class="comment-content"> 
+          <p>I have used above steps to read a field in html page but it is not working.<br> Page URL: <a href="http://www.msn.com/en-in/entertainment/tv/highly-educated-tv-stars/ss-AAiMCyB?li=AAgfYGb" rel="nofollow">http://www.msn.com/en-in/entertainment/tv/highly-educated-tv-stars/ss-AAiMCyB?li=AAgfYGb</a></p> 
+          <p>When we open the page URL and press ctrl+U and search for “pagetotalCount” it is present inside a tag. I have used html_node to read the source but not able to get the result.</p> 
+          <p>library(rvest)<br> library(RCurl)<br> library(XML)<br> library(magrittr)<br> library(rjson)</p> 
+          <p>doc&lt;- read_html("<a href="http://www.msn.com/en-in/entertainment/tv/highly-educated-tv-stars/ss-AAiMCyB?li=AAgfYGb" rel="nofollow">http://www.msn.com/en-in/entertainment/tv/highly-educated-tv-stars/ss-AAiMCyB?li=AAgfYGb</a><br> ")<br> selector_name&lt;- ".slide-metadata"<br> yyy% html_text()</p> 
+          <p>I am getting an empty output.</p> 
+          <p>Could you please have a look into it.</p> 
+         </div>
+         <!-- .comment-content --> 
+         <div class="reply">
+          <a rel="nofollow" class="comment-reply-link" href="http://zevross.com/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/?replytocom=30658#respond" onclick="return addComment.moveForm( &quot;div-comment-30658&quot;, &quot;30658&quot;, &quot;respond&quot;, &quot;1277&quot; )" aria-label="Reply to Vivek Jain">Reply</a>
+         </div> 
+        </article>
+        <!-- .comment-body --> </li>
+       <!-- #comment-## --> 
+      </ol>
+      <!-- .comment-list --> 
+      <div id="respond" class="comment-respond"> 
+       <h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/blog/2015/05/19/scrape-website-data-with-the-new-r-package-rvest/#respond" style="display:none;">Cancel reply</a></small></h3> 
+       <form action="http://zevross.com/blog/wp-comments-post.php" method="post" id="commentform" class="comment-form" novalidate> 
+        <p class="comment-notes"><span id="email-notes">Your email address will not be published.</span> Required fields are marked <span class="required">*</span></p>
+        <p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required></textarea></p>
+        <p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" maxlength="245" aria-required="true" required></p> 
+        <p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" type="email" value="" size="30" maxlength="100" aria-describedby="email-notes" aria-required="true" required></p> 
+        <p class="comment-form-url"><label for="url">Website</label> <input id="url" name="url" type="url" value="" size="30" maxlength="200"></p> 
+        <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="1277" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"> </p>
+        <p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="369a5d023f"></p>
+        <p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="104"></p> 
+       </form> 
+      </div>
+      <!-- #respond --> 
+     </div>
+     <!-- #comments --> 
+    </main>
+    <!-- #main --> 
+   </div>
+   <!-- #primary --> 
+   <div id="secondary" class="widget-area sidebar-area" role="complementary"> 
+    <aside id="text-2" class="widget widget_text"> 
+     <div class="textwidget">
+      <span style="color:#44586c;font-family: Lora, Georgia, serif">This is the home for posts on the more technical aspects of our work. For detail on our projects, clients, examples and more visit:</span>
+      <br>
+      <br> 
+      <a href="http://www.zevross.com">ZevRoss Spatial Analysis</a>
+     </div> 
+    </aside>
+    <aside id="search-2" class="widget widget_search">
+     <form role="search" method="get" class="search-form" action="http://zevross.com/blog/"> 
+      <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s"> </label> 
+      <input type="submit" class="search-submit" value="Search"> 
+     </form>
+    </aside>
+    <aside id="twitter_timeline-3" class="widget widget_twitter_timeline">
+     <a class="twitter-timeline" data-width="350" data-height="400" data-theme="light" data-link-color="#f96e5b" data-border-color="#e8e8e8" data-tweet-limit="3" data-lang="EN" data-partner="jetpack" data-widget-id="448484988552364032">My Tweets</a>
+    </aside>
+    <aside id="categories-2" class="widget widget_categories">
+     <h1 class="widget-title">Categories</h1> 
+     <ul> 
+      <li class="cat-item cat-item-10"><a href="http://zevross.com/blog/category/d3/">D3</a> </li> 
+      <li class="cat-item cat-item-9"><a href="http://zevross.com/blog/category/data-visualization/">Data Visualization</a> </li> 
+      <li class="cat-item cat-item-15"><a href="http://zevross.com/blog/category/database/">Database</a> </li> 
+      <li class="cat-item cat-item-5"><a href="http://zevross.com/blog/category/gdal/">GDAL</a> </li> 
+      <li class="cat-item cat-item-16"><a href="http://zevross.com/blog/category/ggplot2/">ggplot2</a> </li> 
+      <li class="cat-item cat-item-14"><a href="http://zevross.com/blog/category/gismaps/">GIS/Maps</a> </li> 
+      <li class="cat-item cat-item-17"><a href="http://zevross.com/blog/category/javascript/">JavaScript</a> </li> 
+      <li class="cat-item cat-item-12"><a href="http://zevross.com/blog/category/leafletjs/">LeafletJS</a> </li> 
+      <li class="cat-item cat-item-20"><a href="http://zevross.com/blog/category/markdown/">Markdown</a> </li> 
+      <li class="cat-item cat-item-8"><a href="http://zevross.com/blog/category/postgis/">PostGIS</a> </li> 
+      <li class="cat-item cat-item-7"><a href="http://zevross.com/blog/category/postgresql/">PostgreSQL</a> </li> 
+      <li class="cat-item cat-item-4"><a href="http://zevross.com/blog/category/python/">Python</a> </li> 
+      <li class="cat-item cat-item-2"><a href="http://zevross.com/blog/category/r/">R</a> </li> 
+      <li class="cat-item cat-item-11"><a href="http://zevross.com/blog/category/regular-expressions/">Regular Expressions</a> </li> 
+      <li class="cat-item cat-item-18"><a href="http://zevross.com/blog/category/shiny/">Shiny</a> </li> 
+      <li class="cat-item cat-item-3"><a href="http://zevross.com/blog/category/spatial/">Spatial</a> </li> 
+      <li class="cat-item cat-item-1"><a href="http://zevross.com/blog/category/uncategorized/">Uncategorized</a> </li> 
+      <li class="cat-item cat-item-6"><a href="http://zevross.com/blog/category/web-development/">Web Development</a> </li> 
+      <li class="cat-item cat-item-13"><a href="http://zevross.com/blog/category/web-mapping/">Web Mapping</a> </li> 
+     </ul> 
+    </aside>
+    <aside id="recent-comments-2" class="widget widget_recent_comments">
+     <h1 class="widget-title">Recent Comments</h1>
+     <ul id="recentcomments">
+      <li class="recentcomments"><span class="comment-author-link">Igor Hut</span> on <a href="http://zevross.com/blog/2016/04/19/r-powered-web-applications-with-shiny-a-tutorial-and-cheat-sheet-with-40-example-apps/#comment-32795">R powered web applications with Shiny (a tutorial and cheat sheet with 40 example apps)</a></li>
+      <li class="recentcomments"><span class="comment-author-link">bmwil3</span> on <a href="http://zevross.com/blog/2014/08/04/beautiful-plotting-in-r-a-ggplot2-cheatsheet-3/#comment-32631">Beautiful plotting in R: A <code>ggplot2</code> cheatsheet</a></li>
+      <li class="recentcomments"><span class="comment-author-link"><a href="http://spatial.usc.edu/" rel="external nofollow" class="url">Andrew</a></span> on <a href="http://zevross.com/blog/2015/02/12/using-r-to-download-and-parse-json-an-example-using-data-from-an-open-data-portal/#comment-32217">Using R to download and parse JSON: an example using data from an open data portal</a></li>
+      <li class="recentcomments"><span class="comment-author-link">Jayanta</span> on <a href="http://zevross.com/blog/2016/04/19/r-powered-web-applications-with-shiny-a-tutorial-and-cheat-sheet-with-40-example-apps/#comment-32210">R powered web applications with Shiny (a tutorial and cheat sheet with 40 example apps)</a></li>
+      <li class="recentcomments"><span class="comment-author-link">Jen</span> on <a href="http://zevross.com/blog/up-and-running-with-r/#comment-32035">Intro R workshop</a></li>
+     </ul>
+    </aside> 
+   </div>
+   <!-- #secondary --> 
+  </div>
+  <!-- #content --> 
+  <footer id="colophon" class="site-footer" role="contentinfo" style="width: 212px;float: left;margin-right: 7%;"> 
+   <div class="site-info"> 
+    <div class="site-copyright">
+     © 2017 
+     <a href="http://zevross.com/blog/" rel="home">Technical Tidbits From Spatial Analysis &amp; Data Science</a>
+    </div> 
+    <div class="site-credit">
+     Powered by 
+     <a href="http://wordpress.org/">WordPress</a> &amp; 
+     <a href="http://themegraphy.com/">Themegraphy</a>
+    </div> 
+   </div>
+   <!-- .site-info --> 
+  </footer>
+  <!-- #colophon --> 
+  <!-- #page --> 
+  <div style="clear:both;"></div> 
+  <footer class="footer--page">
+   <div class="footer__inner">
+    <div class="footer__content--right highlight" itemscope itemtype="http://schema.org/Person">
+     <div class="footer__contact">
+      <span class="footer__contact__name" itemprop="name">ZevRoss Spatial <br> Analysis</span>
+      <div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">
+       <span itemprop="streetAddress">120 N Aurora St, Suite 3A</span>
+       <br>
+       <span itemprop="addressLocality">Ithaca</span>, 
+       <span itemprop="addressRegion">NY</span> 
+       <span itemprop="postalCode">14850</span>
+       <br>
+       <span itemprop="phoneNumber">607-277-0004</span>
+       <br>
+       <br>
+       <a class="footer__contact__email" href="mailto:info@zevross.com" itemprop="email">info@zevross.com</a>
+      </div>
+     </div>
+    </div>
+   </div>
+  </footer> 
+  <div style="display:none"> 
+   <div class="grofile-hash-map-d7eca32dde0cb4b49252f7b0df753243"> 
+   </div> 
+   <div class="grofile-hash-map-cfea0c1fe6597b9476081cd041128fc9"> 
+   </div> 
+   <div class="grofile-hash-map-9b04c43b664b6ec6168954ed9db7ae0d"> 
+   </div> 
+   <div class="grofile-hash-map-7ccdce18bfa6ef1cffaad7a912e82f30"> 
+   </div> 
+   <div class="grofile-hash-map-7ab0c911d66918be7da89186e3061689"> 
+   </div> 
+   <div class="grofile-hash-map-d7da30795341c942f92c4db292e851de"> 
+   </div> 
+   <div class="grofile-hash-map-abba2a8137973c5f0f35c18965579182"> 
+   </div> 
+   <div class="grofile-hash-map-818e92b29d9d72dca920437e09e05a25"> 
+   </div> 
+   <div class="grofile-hash-map-5b7389b8f36203e065992e6c92e8fa6b"> 
+   </div> 
+   <div class="grofile-hash-map-e2ae8dde2127cb053067bc862adf48f6"> 
+   </div> 
+  </div> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/plugins/akismet/_inc/form.js?ver=3.3.2"></script> 
+  <link rel="stylesheet" id="hljstheme-css" href="http://zevross.com/blog/wp-content/plugins/wp-code-highlightjs/styles/hybrid.css?ver=0.5.10" type="text/css" media="all"> 
+  <script type="text/javascript" src="https://s0.wp.com/wp-content/js/devicepx-jetpack.js?ver=201740"></script> 
+  <script type="text/javascript" src="http://s.gravatar.com/js/gprofiles.js?ver=2017Octaa"></script> 
+  <script type="text/javascript">//<![CDATA[
+var WPGroHo={"my_hash":""};
+//]]></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/plugins/jetpack/modules/wpgroho.js?ver=4.7.6"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/themes/graphy/js/navigation.js?ver=20140207"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/themes/graphy/js/skip-link-focus-fix.js?ver=20130115"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-includes/js/comment-reply.min.js?ver=4.7.6"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/plugins/jetpack/_inc/twitter-timeline.js?ver=4.0.0"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-includes/js/wp-embed.min.js?ver=4.7.6"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/plugins/wp-code-highlightjs/highlight.common.pack.js?ver=0.5.10"></script> 
+  <script type="text/javascript" src="http://zevross.com/blog/wp-content/plugins/wp-code-highlightjs/highlight.custom.pack.js?ver=0.5.10"></script> 
+  <style>pre.hljs{padding:5px}pre.hljs code{}</style> 
+  <script type="text/javascript">(function($,window){var init_fn_flag=false;var init_fn=(function(){if(init_fn_flag)
+return;init_fn_flag=true;hljs.configure({"tabReplace":"    "});$('pre code').each(function(i,block){hljs.highlightBlock(block);});});$(document).ready(init_fn);$(window).on("load",init_fn);})(jQuery,window);</script> 
+  <script type="text/javascript" src="https://stats.wp.com/e-201740.js" async defer></script> 
+  <script type="text/javascript">_stq=window._stq||[];_stq.push(['view',{v:'ext',j:'1:5.0',blog:'66135838',post:'1277',tz:'-4',srv:'zevross.com'}]);_stq.push(['clickTrackerInit','66135838','1277']);</script> 
+  <script src="/blog/wp-content/themes/graphy/js/zr-navbar--mobile.js"></script>  
+ </body>
+</html>

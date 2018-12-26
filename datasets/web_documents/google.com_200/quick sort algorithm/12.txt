@@ -1,0 +1,596 @@
+<!doctype html>
+<!--[if IE 7]>
+<html class="ie ie7" lang="en-US">
+<![endif]-->
+<!--[if IE 8]>
+<html class="ie ie8" lang="en-US">
+<![endif]-->
+<!--[if !(IE 7) & !(IE 8)]><!-->
+<html lang="en-US">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width"> 
+  <!--<title>Friday Algorithms: JavaScript Merge Sort</title>--> 
+  <title>stoimen's web log</title> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://www.stoimen.com/blog/xmlrpc.php"> 
+  <!--[if lt IE 9]>
+	<script src="http://www.stoimen.com/blog/wp-content/themes/twentythirteen/js/html5.js"></script>
+	<![endif]--> 
+  <!-- All in One SEO Pack 2.3.16 by Michael Torbert of Semper Fi Web Design[314,386] --> 
+  <meta name="description" content="Merge Sort This week I'm going to cover one very popular sorting algorithm - the merge sort. It's very intuitive and simple as it's described in Wikipedia"> 
+  <meta name="keywords" content="algorithm,computer science,computing,firebug,javascript,mathematics,merge sort,sorting algorithms,technology/internet"> 
+  <link rel="canonical" href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/"> 
+  <!-- /all in one seo pack --> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="stoimen's web log » Feed" href="http://www.stoimen.com/blog/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="stoimen's web log » Comments Feed" href="http://www.stoimen.com/blog/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="stoimen's web log » Friday Algorithms: JavaScript Merge Sort Comments Feed" href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"wpemoji":"http:\/\/www.stoimen.com\/blog\/wp-includes\/js\/wp-emoji.js?ver=4.8.1","twemoji":"http:\/\/www.stoimen.com\/blog\/wp-includes\/js\/twemoji.js?ver=4.8.1"}};
+			( function( window, document, settings ) {
+	var src, ready, ii, tests;
+
+	/*
+	 * Create a canvas element for testing native browser support
+	 * of emoji.
+	 */
+	var canvas = document.createElement( 'canvas' );
+	var context = canvas.getContext && canvas.getContext( '2d' );
+
+	/**
+	 * Detect if the browser supports rendering emoji or flag emoji. Flag emoji are a single glyph
+	 * made of two characters, so some browsers (notably, Firefox OS X) don't support them.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param type {String} Whether to test for support of "flag" or "emoji4" emoji.
+	 * @return {Boolean} True if the browser can render emoji, false if it cannot.
+	 */
+	function browserSupportsEmoji( type ) {
+		var stringFromCharCode = String.fromCharCode,
+			flag, flag2, emoji41, emoji42;
+
+		if ( ! context || ! context.fillText ) {
+			return false;
+		}
+
+		// Cleanup from previous test.
+		context.clearRect( 0, 0, canvas.width, canvas.height );
+
+		/*
+		 * Chrome on OS X added native emoji rendering in M41. Unfortunately,
+		 * it doesn't work when the font is bolder than 500 weight. So, we
+		 * check for bold rendering support to avoid invisible emoji in Chrome.
+		 */
+		context.textBaseline = 'top';
+		context.font = '600 32px Arial';
+
+		switch ( type ) {
+			case 'flag':
+				/*
+				 * Test for UN flag compatibility. This is the least supported of the letter locale flags,
+				 * so gives us an easy test for full support.
+				 *
+				 * To test for support, we try to render it, and compare the rendering to how it would look if
+				 * the browser doesn't render it correctly ([U] + [N]).
+				 */
+				context.fillText( stringFromCharCode( 55356, 56826, 55356, 56819 ), 0, 0 );
+				flag = canvas.toDataURL();
+
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				// Add a zero width space between the characters, to force rendering as characters.
+				context.fillText( stringFromCharCode( 55356, 56826, 8203, 55356, 56819 ), 0, 0 );
+				flag2 = canvas.toDataURL();
+
+				if ( flag !== flag2 ) {
+					return false;
+				}
+
+				/*
+				 * Test for English flag compatibility. England is a country in the United Kingdom, it
+				 * does not have a two letter locale code but rather an five letter sub-division code.
+				 *
+				 * To test for support, we try to render it, and compare the rendering to how it would look if
+				 * the browser doesn't render it correctly (black flag emoji + [G] + [B] + [E] + [N] + [G]).
+				 */
+				// Cleanup from previous test.
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				context.fillText( stringFromCharCode( 55356, 57332, 56128, 56423, 56128, 56418, 56128, 56421, 56128, 56430, 56128, 56423, 56128, 56447 ), 0, 0 );
+				flag = canvas.toDataURL();
+
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				context.fillText( stringFromCharCode( 55356, 57332, 8203, 56128, 56423, 8203, 56128, 56418, 8203, 56128, 56421, 8203, 56128, 56430, 8203, 56128, 56423, 8203, 56128, 56447 ), 0, 0 );
+				flag2 = canvas.toDataURL();
+
+				return flag !== flag2;
+			case 'emoji4':
+				/*
+				 * Emoji 5 has faries of all genders.
+				 *
+				 * To test for support, try to render a new emoji (fairy, male), then compares
+				 * it to how it would look if the browser doesn't render it correctly
+				 * (fairy + male sign).
+				 */
+				context.fillText( stringFromCharCode( 55358, 56794, 8205, 9794, 65039 ), 0, 0 );
+				emoji41 = canvas.toDataURL();
+
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				context.fillText( stringFromCharCode( 55358, 56794, 8203, 9794, 65039 ), 0, 0 );
+				emoji42 = canvas.toDataURL();
+
+				return emoji41 !== emoji42;
+		}
+
+		return false;
+	}
+
+	function addScript( src ) {
+		var script = document.createElement( 'script' );
+
+		script.src = src;
+		script.defer = script.type = 'text/javascript';
+		document.getElementsByTagName( 'head' )[0].appendChild( script );
+	}
+
+	tests = Array( 'flag', 'emoji4' );
+
+	settings.supports = {
+		everything: true,
+		everythingExceptFlag: true
+	};
+
+	for( ii = 0; ii < tests.length; ii++ ) {
+		settings.supports[ tests[ ii ] ] = browserSupportsEmoji( tests[ ii ] );
+
+		settings.supports.everything = settings.supports.everything && settings.supports[ tests[ ii ] ];
+
+		if ( 'flag' !== tests[ ii ] ) {
+			settings.supports.everythingExceptFlag = settings.supports.everythingExceptFlag && settings.supports[ tests[ ii ] ];
+		}
+	}
+
+	settings.supports.everythingExceptFlag = settings.supports.everythingExceptFlag && ! settings.supports.flag;
+
+	settings.DOMReady = false;
+	settings.readyCallback = function() {
+		settings.DOMReady = true;
+	};
+
+	if ( ! settings.supports.everything ) {
+		ready = function() {
+			settings.readyCallback();
+		};
+
+		if ( document.addEventListener ) {
+			document.addEventListener( 'DOMContentLoaded', ready, false );
+			window.addEventListener( 'load', ready, false );
+		} else {
+			window.attachEvent( 'onload', ready );
+			document.attachEvent( 'onreadystatechange', function() {
+				if ( 'complete' === document.readyState ) {
+					settings.readyCallback();
+				}
+			} );
+		}
+
+		src = settings.source || {};
+
+		if ( src.concatemoji ) {
+			addScript( src.concatemoji );
+		} else if ( src.wpemoji && src.twemoji ) {
+			addScript( src.twemoji );
+			addScript( src.wpemoji );
+		}
+	}
+
+} )( window, document, window._wpemojiSettings );
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="yarppWidgetCss-css" href="http://www.stoimen.com/blog/wp-content/plugins/yet-another-related-posts-plugin/style/widget.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wp-syntax-css-css" href="http://www.stoimen.com/blog/wp-content/plugins/wp-syntax/css/wp-syntax.css?ver=1.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentythirteen-fonts-css" href="//fonts.googleapis.com/css?family=Source+Sans+Pro%3A300%2C400%2C700%2C300italic%2C400italic%2C700italic%7CBitter%3A400%2C700&amp;subset=latin%2Clatin-ext" type="text/css" media="all"> 
+  <link rel="stylesheet" id="genericons-css" href="http://www.stoimen.com/blog/wp-content/themes/twentythirteen/genericons/genericons.css?ver=3.03" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentythirteen-style-css" href="http://www.stoimen.com/blog/wp-content/themes/twentythirteen/style.css?ver=2013-07-18" type="text/css" media="all"> 
+  <!--[if lt IE 9]>
+<link rel='stylesheet' id='twentythirteen-ie-css'  href='http://www.stoimen.com/blog/wp-content/themes/twentythirteen/css/ie.css?ver=2013-07-18' type='text/css' media='all' />
+<![endif]--> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-includes/js/jquery/jquery-migrate.js?ver=1.4.1"></script> 
+  <link rel="https://api.w.org/" href="http://www.stoimen.com/blog/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.stoimen.com/blog/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.stoimen.com/blog/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Replace the Broken Images with a Default Image with JavaScript" href="http://www.stoimen.com/blog/2010/07/01/replace-the-broken-images-with-a-default-image-with-javascript/"> 
+  <link rel="next" title="PHP: preg_match Give Names to the Matches" href="http://www.stoimen.com/blog/2010/07/03/php-preg_match-give-names-to-the-matches/"> 
+  <meta name="generator" content="WordPress 4.8.1"> 
+  <link rel="shortlink" href="http://www.stoimen.com/blog/?p=1746"> 
+  <link rel="alternate" type="application/json+oembed" href="http://www.stoimen.com/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.stoimen.com%2Fblog%2F2010%2F07%2F02%2Ffriday-algorithms-javascript-merge-sort%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="http://www.stoimen.com/blog/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.stoimen.com%2Fblog%2F2010%2F07%2F02%2Ffriday-algorithms-javascript-merge-sort%2F&amp;format=xml"> 
+  <style data-context="foundation-flickity-css">/*! Flickity v2.0.2
+http://flickity.metafizzy.co
+---------------------------------------------- */.flickity-enabled{position:relative}.flickity-enabled:focus{outline:0}.flickity-viewport{overflow:hidden;position:relative;height:100%}.flickity-slider{position:absolute;width:100%;height:100%}.flickity-enabled.is-draggable{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.flickity-enabled.is-draggable .flickity-viewport{cursor:move;cursor:-webkit-grab;cursor:grab}.flickity-enabled.is-draggable .flickity-viewport.is-pointer-down{cursor:-webkit-grabbing;cursor:grabbing}.flickity-prev-next-button{position:absolute;top:50%;width:44px;height:44px;border:none;border-radius:50%;background:#fff;background:hsla(0,0%,100%,.75);cursor:pointer;-webkit-transform:translateY(-50%);transform:translateY(-50%)}.flickity-prev-next-button:hover{background:#fff}.flickity-prev-next-button:focus{outline:0;box-shadow:0 0 0 5px #09F}.flickity-prev-next-button:active{opacity:.6}.flickity-prev-next-button.previous{left:10px}.flickity-prev-next-button.next{right:10px}.flickity-rtl .flickity-prev-next-button.previous{left:auto;right:10px}.flickity-rtl .flickity-prev-next-button.next{right:auto;left:10px}.flickity-prev-next-button:disabled{opacity:.3;cursor:auto}.flickity-prev-next-button svg{position:absolute;left:20%;top:20%;width:60%;height:60%}.flickity-prev-next-button .arrow{fill:#333}.flickity-page-dots{position:absolute;width:100%;bottom:-25px;padding:0;margin:0;list-style:none;text-align:center;line-height:1}.flickity-rtl .flickity-page-dots{direction:rtl}.flickity-page-dots .dot{display:inline-block;width:10px;height:10px;margin:0 8px;background:#333;border-radius:50%;opacity:.25;cursor:pointer}.flickity-page-dots .dot.is-selected{opacity:1}</style>
+  <style data-context="foundation-slideout-css">.slideout-menu{position:fixed;left:0;top:0;bottom:0;right:auto;z-index:0;width:256px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}.slideout-menu.pushit-right{left:auto;right:0}.slideout-panel{position:relative;z-index:1;will-change:transform}.slideout-open,.slideout-open .slideout-panel,.slideout-open body{overflow:hidden}.slideout-open .slideout-menu{display:block}.pushit{display:none}</style> 
+  <style type="text/css" id="twentythirteen-header-css">
+			.site-header {
+			background: url(http://www.stoimen.com/blog/wp-content/themes/twentythirteen/images/headers/circle.png) no-repeat scroll top;
+			background-size: 1600px auto;
+		}
+		@media (max-width: 767px) {
+			.site-header {
+				background-size: 768px auto;
+			}
+		}
+		@media (max-width: 359px) {
+			.site-header {
+				background-size: 360px auto;
+			}
+		}
+		</style> 
+  <style>.ios7.web-app-mode.has-fixed header{ background-color: rgba(3,122,221,.88);}</style>
+ </head> 
+ <body class="post-template-default single single-post postid-1746 single-format-standard"> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-670359-6', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+  <div id="page" class="hfeed site"> 
+   <header id="masthead" class="site-header" role="banner"> 
+    <a class="home-link" href="http://www.stoimen.com/blog/" title="stoimen's web log" rel="home"> <h1 class="site-title">stoimen's web log</h1> <h2 class="site-description">on web development</h2> </a> 
+    <div id="navbar" class="navbar"> 
+     <nav id="site-navigation" class="navigation main-navigation" role="navigation"> 
+      <button class="menu-toggle">Menu</button> 
+      <a class="screen-reader-text skip-link" href="#content" title="Skip to content">Skip to content</a> 
+      <div class="menu-menu-1-container">
+       <ul id="primary-menu" class="nav-menu">
+        <li id="menu-item-3594" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-3594"><a href="http://www.stoimen.com/blog/">Home</a></li> 
+        <li id="menu-item-3595" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3595"><a href="http://www.stoimen.com/blog/about/">About</a></li> 
+        <li id="menu-item-3597" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-3597"><a href="https://github.com/stoimen/algorithms">Algorithms on GitHub</a></li> 
+        <li id="menu-item-3641" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-3641"><a href="https://github.com/stoimen/infographics">Infographics on GitHub</a></li> 
+       </ul>
+      </div> 
+      <form role="search" method="get" class="search-form" action="http://www.stoimen.com/blog/"> 
+       <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s"> </label> 
+       <input type="submit" class="search-submit" value="Search"> 
+      </form> 
+     </nav>
+     <!-- #site-navigation --> 
+    </div>
+    <!-- #navbar --> 
+   </header>
+   <!-- #masthead --> 
+   <div id="main" class="site-main"> 
+    <div id="primary" class="content-area"> 
+     <div id="content" class="site-content" role="main"> 
+      <article id="post-1746" class="post-1746 post type-post status-publish format-standard hentry category-algorithms category-javascript-on-stoimen-com category-web-development tag-algorithm tag-computer-science tag-computing tag-firebug tag-javascript-on-stoimen-com tag-mathematics tag-merge-sort tag-sorting-algorithms tag-technologyinternet"> 
+       <header class="entry-header"> 
+        <h1 class="entry-title">Friday Algorithms: JavaScript Merge Sort</h1> 
+        <div class="entry-meta"> 
+         <span class="date"><a href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/" title="Permalink to Friday Algorithms: JavaScript Merge Sort" rel="bookmark"><time class="entry-date" datetime="2010-07-02T13:28:16+00:00">July 2, 2010</time></a></span>
+         <span class="categories-links"><a href="http://www.stoimen.com/blog/category/algorithms/" rel="category tag">algorithms</a>, <a href="http://www.stoimen.com/blog/category/javascript-on-stoimen-com/" rel="category tag">javascript</a>, <a href="http://www.stoimen.com/blog/category/web-development/" rel="category tag">web development</a></span>
+         <span class="tags-links"><a href="http://www.stoimen.com/blog/tag/algorithm/" rel="tag">Algorithm</a>, <a href="http://www.stoimen.com/blog/tag/computer-science/" rel="tag">Computer science</a>, <a href="http://www.stoimen.com/blog/tag/computing/" rel="tag">Computing</a>, <a href="http://www.stoimen.com/blog/tag/firebug/" rel="tag">firebug</a>, <a href="http://www.stoimen.com/blog/tag/javascript-on-stoimen-com/" rel="tag">javascript</a>, <a href="http://www.stoimen.com/blog/tag/mathematics/" rel="tag">Mathematics</a>, <a href="http://www.stoimen.com/blog/tag/merge-sort/" rel="tag">Merge sort</a>, <a href="http://www.stoimen.com/blog/tag/sorting-algorithms/" rel="tag">Sorting algorithms</a>, <a href="http://www.stoimen.com/blog/tag/technologyinternet/" rel="tag">Technology/Internet</a></span>
+         <span class="author vcard"><a class="url fn n" href="http://www.stoimen.com/blog/author/admin/" title="View all posts by Stoimen" rel="author">Stoimen</a></span> 
+        </div>
+        <!-- .entry-meta --> 
+       </header>
+       <!-- .entry-header --> 
+       <div class="entry-content"> 
+        <h2>Merge Sort</h2> 
+        <p>This week I’m going to cover one very popular sorting algorithm – the merge sort. It’s very intuitive and simple as it’s described in <a title="Merge Sort" href="http://en.wikipedia.org/wiki/Merge_sort" target="_blank">Wikipedia</a>:</p> 
+        <ul> 
+         <li>If the list is of length 0 or 1, then it is already sorted. Otherwise:</li> 
+         <li>Divide the unsorted list into two sublists of about half the size.</li> 
+         <li>Sort each sublist recursively by re-applying merge sort.</li> 
+         <li>Merge the two sublists back into one sorted list.</li> 
+        </ul> 
+        <h2>Here’s the Source</h2> 
+        <p><em>(JavaScript)</em></p> 
+        <div class="wp_syntax" style="position:relative;">
+         <table>
+          <tbody>
+           <tr>
+            <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> a <span style="color: #339933;">=</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">34</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">203</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">3</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">746</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">200</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">984</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">198</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">764</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">9</span><span style="color: #009900;">]</span><span style="color: #339933;">;</span>
+&nbsp;
+<span style="color: #000066; font-weight: bold;">function</span> mergeSort<span style="color: #009900;">(</span>arr<span style="color: #009900;">)</span>
+<span style="color: #009900;">{</span>
+    <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">(</span>arr.<span style="color: #660066;">length</span> <span style="color: #339933;">&lt;</span> <span style="color: #CC0000;">2</span><span style="color: #009900;">)</span>
+        <span style="color: #000066; font-weight: bold;">return</span> arr<span style="color: #339933;">;</span>
+&nbsp;
+    <span style="color: #000066; font-weight: bold;">var</span> middle <span style="color: #339933;">=</span> parseInt<span style="color: #009900;">(</span>arr.<span style="color: #660066;">length</span> <span style="color: #339933;">/</span> <span style="color: #CC0000;">2</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+    <span style="color: #000066; font-weight: bold;">var</span> left   <span style="color: #339933;">=</span> arr.<span style="color: #660066;">slice</span><span style="color: #009900;">(</span><span style="color: #CC0000;">0</span><span style="color: #339933;">,</span> middle<span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+    <span style="color: #000066; font-weight: bold;">var</span> right  <span style="color: #339933;">=</span> arr.<span style="color: #660066;">slice</span><span style="color: #009900;">(</span>middle<span style="color: #339933;">,</span> arr.<span style="color: #660066;">length</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+&nbsp;
+    <span style="color: #000066; font-weight: bold;">return</span> merge<span style="color: #009900;">(</span>mergeSort<span style="color: #009900;">(</span>left<span style="color: #009900;">)</span><span style="color: #339933;">,</span> mergeSort<span style="color: #009900;">(</span>right<span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+<span style="color: #009900;">}</span>
+&nbsp;
+<span style="color: #000066; font-weight: bold;">function</span> merge<span style="color: #009900;">(</span>left<span style="color: #339933;">,</span> right<span style="color: #009900;">)</span>
+<span style="color: #009900;">{</span>
+    <span style="color: #000066; font-weight: bold;">var</span> result <span style="color: #339933;">=</span> <span style="color: #009900;">[</span><span style="color: #009900;">]</span><span style="color: #339933;">;</span>
+&nbsp;
+    while <span style="color: #009900;">(</span>left.<span style="color: #660066;">length</span> <span style="color: #339933;">&amp;&amp;</span> right.<span style="color: #660066;">length</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+        <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">(</span>left<span style="color: #009900;">[</span><span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">&lt;=</span> right<span style="color: #009900;">[</span><span style="color: #CC0000;">0</span><span style="color: #009900;">]</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+            result.<span style="color: #660066;">push</span><span style="color: #009900;">(</span>left.<span style="color: #660066;">shift</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+        <span style="color: #009900;">}</span> <span style="color: #000066; font-weight: bold;">else</span> <span style="color: #009900;">{</span>
+            result.<span style="color: #660066;">push</span><span style="color: #009900;">(</span>right.<span style="color: #660066;">shift</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+        <span style="color: #009900;">}</span>
+    <span style="color: #009900;">}</span>
+&nbsp;
+    while <span style="color: #009900;">(</span>left.<span style="color: #660066;">length</span><span style="color: #009900;">)</span>
+        result.<span style="color: #660066;">push</span><span style="color: #009900;">(</span>left.<span style="color: #660066;">shift</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+&nbsp;
+    while <span style="color: #009900;">(</span>right.<span style="color: #660066;">length</span><span style="color: #009900;">)</span>
+        result.<span style="color: #660066;">push</span><span style="color: #009900;">(</span>right.<span style="color: #660066;">shift</span><span style="color: #009900;">(</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+&nbsp;
+    <span style="color: #000066; font-weight: bold;">return</span> result<span style="color: #339933;">;</span>
+<span style="color: #009900;">}</span>
+&nbsp;
+console.<span style="color: #660066;">log</span><span style="color: #009900;">(</span>mergeSort<span style="color: #009900;">(</span>a<span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre></td>
+           </tr>
+          </tbody>
+         </table>
+         <p class="theCode" style="display:none;">var a = [34, 203, 3, 746, 200, 984, 198, 764, 9]; function mergeSort(arr) { if (arr.length &lt; 2) return arr; var middle = parseInt(arr.length / 2); var left = arr.slice(0, middle); var right = arr.slice(middle, arr.length); return merge(mergeSort(left), mergeSort(right)); } function merge(left, right) { var result = []; while (left.length &amp;&amp; right.length) { if (left[0] &lt;= right[0]) { result.push(left.shift()); } else { result.push(right.shift()); } } while (left.length) result.push(left.shift()); while (right.length) result.push(right.shift()); return result; } console.log(mergeSort(a));</p>
+        </div> 
+        <p>It’s interesting to see what happens in the Firebug’s console:</p> 
+        <div class="wp_syntax" style="position:relative;">
+         <table>
+          <tbody>
+           <tr>
+            <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #009900;">[</span><span style="color: #CC0000;">34</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">203</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">3</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">746</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">200</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">984</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">198</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">764</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">9</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">34</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">203</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">3</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">746</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">34</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">203</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">3</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">746</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">200</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">984</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">198</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">764</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">9</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">200</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">984</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">198</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">764</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">9</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">764</span><span style="color: #009900;">]</span> <span style="color: #009900;">[</span><span style="color: #CC0000;">9</span><span style="color: #009900;">]</span>
+&nbsp;
+<span style="color: #009900;">[</span><span style="color: #CC0000;">3</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">9</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">34</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">198</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">200</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">203</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">746</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">764</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">984</span><span style="color: #009900;">]</span></pre></td>
+           </tr>
+          </tbody>
+         </table>
+         <p class="theCode" style="display:none;">[34, 203, 3, 746] [200, 984, 198, 764, 9] [34, 203] [3, 746] [34] [203] [3] [746] [200, 984] [198, 764, 9] [200] [984] [198] [764, 9] [764] [9] [3, 9, 34, 198, 200, 203, 746, 764, 984]</p>
+        </div> 
+        <p>Actually the tricky part in this algorithm is the merge function – it does all the work. </p> 
+        <div class="yarpp-related"> 
+         <p><a href="http://www.codeproject.com/script/Articles/BlogFeedList.aspx?amid=3166682" rel="tag" style="display:none">CodeProject</a></p>
+         <p>Related posts:</p>
+         <ol> 
+          <li><a href="http://www.stoimen.com/blog/2010/07/09/friday-algorithms-javascript-bubble-sort/" rel="bookmark" title="Friday Algorithms: JavaScript Bubble Sort">Friday Algorithms: JavaScript Bubble Sort </a></li> 
+          <li><a href="http://www.stoimen.com/blog/2010/06/11/friday-algorithms-quicksort-difference-between-php-and-javascript/" rel="bookmark" title="Friday Algorithms: Quicksort – Difference Between PHP and JavaScript">Friday Algorithms: Quicksort – Difference Between PHP and JavaScript </a></li> 
+          <li><a href="http://www.stoimen.com/blog/2012/03/05/computer-algorithms-merge-sort/" rel="bookmark" title="Computer Algorithms: Merge Sort">Computer Algorithms: Merge Sort </a></li> 
+          <li><a href="http://www.stoimen.com/blog/2010/01/21/array-merge-in-javascript/" rel="bookmark" title="Array merge in JavaScript">Array merge in JavaScript </a></li> 
+          <li><a href="http://www.stoimen.com/blog/2012/02/13/computer-algorithms-insertion-sort/" rel="bookmark" title="Computer Algorithms: Insertion Sort">Computer Algorithms: Insertion Sort </a></li> 
+         </ol> 
+        </div> 
+       </div>
+       <!-- .entry-content --> 
+       <footer class="entry-meta"> 
+       </footer>
+       <!-- .entry-meta --> 
+      </article>
+      <!-- #post --> 
+      <nav class="navigation post-navigation" role="navigation"> 
+       <h1 class="screen-reader-text">Post navigation</h1> 
+       <div class="nav-links"> 
+        <a href="http://www.stoimen.com/blog/2010/07/01/replace-the-broken-images-with-a-default-image-with-javascript/" rel="prev"><span class="meta-nav">?</span> Replace the Broken Images with a Default Image with JavaScript</a> 
+        <a href="http://www.stoimen.com/blog/2010/07/03/php-preg_match-give-names-to-the-matches/" rel="next">PHP: preg_match Give Names to the Matches <span class="meta-nav">?</span></a> 
+       </div>
+       <!-- .nav-links --> 
+      </nav>
+      <!-- .navigation --> 
+      <div id="comments" class="comments-area"> 
+       <h2 class="comments-title"> 4 thoughts on “<span>Friday Algorithms: JavaScript Merge Sort</span>” </h2> 
+       <ol class="comment-list"> 
+        <li id="comment-396941" class="comment even thread-even depth-1"> 
+         <article id="div-comment-396941" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://1.gravatar.com/avatar/ae1805d243fbf4dbd6a0a397d1a6f2f7?s=74&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/ae1805d243fbf4dbd6a0a397d1a6f2f7?s=148&amp;d=mm&amp;r=g 2x" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn"><a href="http://www.evanbdesigns.com" rel="external nofollow" class="url">evan b</a></b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/#comment-396941"> <time datetime="2016-02-08T17:49:41+00:00"> February 8, 2016 at 5:49 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Quick question, the part where you push right.shift() into the array. What is this part doing?</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-420068" class="comment odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-420068" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://0.gravatar.com/avatar/9738c97ca551aad7b8fa8d54b03c4b7e?s=74&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/9738c97ca551aad7b8fa8d54b03c4b7e?s=148&amp;d=mm&amp;r=g 2x" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Paloma</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/#comment-420068"> <time datetime="2016-09-13T16:29:39+00:00"> September 13, 2016 at 4:29 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Wouldn’t be better to do an array concat instead of iterate the rest of the positions? I mean for this part:</p> 
+           <p> while (left.length)<br> result.push(left.shift());</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-420300" class="comment even thread-even depth-1"> 
+         <article id="div-comment-420300" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://2.gravatar.com/avatar/269f5d5dfe707f774428b24d53544e04?s=74&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/269f5d5dfe707f774428b24d53544e04?s=148&amp;d=mm&amp;r=g 2x" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Anthony</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/#comment-420300"> <time datetime="2016-09-15T23:24:56+00:00"> September 15, 2016 at 11:24 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>evenb: It’s removing the zeroth element from the right array and putting it into the result array</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-441617" class="comment odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-441617" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://1.gravatar.com/avatar/4dfdf6cd064499349c33a21c537e54f1?s=74&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/4dfdf6cd064499349c33a21c537e54f1?s=148&amp;d=mm&amp;r=g 2x" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Chris Reeve</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.stoimen.com/blog/2010/07/02/friday-algorithms-javascript-merge-sort/#comment-441617"> <time datetime="2017-02-10T22:06:33+00:00"> February 10, 2017 at 10:06 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>This code works fine for small and medium-sized inputs, but it may not complete for far larger arrays. Probably has to do with all of the shifts …</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+       </ol>
+       <!-- .comment-list --> 
+       <div id="respond" class="comment-respond"> 
+        <h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/blog/2010/07/02/friday-algorithms-javascript-merge-sort/#respond" style="display:none;">Cancel reply</a></small></h3> 
+        <form action="http://www.stoimen.com/blog/wp-comments-post.php" method="post" id="commentform" class="comment-form" novalidate> 
+         <p class="comment-notes"><span id="email-notes">Your email address will not be published.</span> Required fields are marked <span class="required">*</span></p>
+         <p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required></textarea></p>
+         <p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" maxlength="245" aria-required="true" required></p> 
+         <p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" type="email" value="" size="30" maxlength="100" aria-describedby="email-notes" aria-required="true" required></p> 
+         <p class="comment-form-url"><label for="url">Website</label> <input id="url" name="url" type="url" value="" size="30" maxlength="200"></p> 
+         <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="1746" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"> </p>
+         <p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="ffc7fcf21c"></p>
+         <p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="0"></p> 
+        </form> 
+       </div>
+       <!-- #respond --> 
+      </div>
+      <!-- #comments --> 
+     </div>
+     <!-- #content --> 
+    </div>
+    <!-- #primary --> 
+   </div>
+   <!-- #main --> 
+   <footer id="colophon" class="site-footer" role="contentinfo"> 
+    <div id="secondary" class="sidebar-container" role="complementary"> 
+     <div class="widget-area"> 
+      <aside id="search-2" class="widget widget_search">
+       <form role="search" method="get" class="search-form" action="http://www.stoimen.com/blog/"> 
+        <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s"> </label> 
+        <input type="submit" class="search-submit" value="Search"> 
+       </form>
+      </aside>
+      <aside id="yarpp_widget-3" class="widget widget_yarpp_widget">
+       <h3 class="widget-title">Related Posts</h3>
+       <div class="yarpp-related-widget"> 
+        <ol>
+         <li><a href="http://www.stoimen.com/blog/2010/07/09/friday-algorithms-javascript-bubble-sort/" rel="bookmark">Friday Algorithms: JavaScript Bubble Sort</a></li>
+         <li><a href="http://www.stoimen.com/blog/2010/06/11/friday-algorithms-quicksort-difference-between-php-and-javascript/" rel="bookmark">Friday Algorithms: Quicksort – Difference Between PHP and JavaScript</a></li>
+         <li><a href="http://www.stoimen.com/blog/2012/03/05/computer-algorithms-merge-sort/" rel="bookmark">Computer Algorithms: Merge Sort</a></li>
+         <li><a href="http://www.stoimen.com/blog/2010/01/21/array-merge-in-javascript/" rel="bookmark">Array merge in JavaScript</a></li>
+         <li><a href="http://www.stoimen.com/blog/2012/02/13/computer-algorithms-insertion-sort/" rel="bookmark">Computer Algorithms: Insertion Sort</a></li>
+        </ol> 
+       </div> 
+      </aside>
+      <aside id="categories-3" class="widget widget_categories">
+       <h3 class="widget-title">Categories</h3> 
+       <ul> 
+        <li class="cat-item cat-item-834"><a href="http://www.stoimen.com/blog/category/agile/" title="All about agile software development">agile</a> (3) </li> 
+        <li class="cat-item cat-item-886"><a href="http://www.stoimen.com/blog/category/algorithms/" title="A process or set of rules to be followed in calculations or other problem-solving operations, esp. by a computer.">algorithms</a> (65) </li> 
+        <li class="cat-item cat-item-1251"><a href="http://www.stoimen.com/blog/category/cheatsheets/">cheatsheets</a> (2) </li> 
+        <li class="cat-item cat-item-24"><a href="http://www.stoimen.com/blog/category/css/">css</a> (29) </li> 
+        <li class="cat-item cat-item-1336"><a href="http://www.stoimen.com/blog/category/data-structures-2/" title="A data structure is a particular way of storing and organizing data in a computer so that it can be used efficiently.">data structures</a> (25) </li> 
+        <li class="cat-item cat-item-108"><a href="http://www.stoimen.com/blog/category/download/" title="You can download different chunks of code and custom components here.">download</a> (3) </li> 
+        <li class="cat-item cat-item-1487"><a href="http://www.stoimen.com/blog/category/algorithms/dynamic-programming/">dynamic programming</a> (1) </li> 
+        <li class="cat-item cat-item-38"><a href="http://www.stoimen.com/blog/category/featured/">featured</a> (46) </li> 
+        <li class="cat-item cat-item-50"><a href="http://www.stoimen.com/blog/category/flex-3/">flex 3</a> (25) </li> 
+        <li class="cat-item cat-item-1420"><a href="http://www.stoimen.com/blog/category/graphs/">Graphs</a> (10) </li> 
+        <li class="cat-item cat-item-1527"><a href="http://www.stoimen.com/blog/category/infographic/">infographic</a> (3) </li> 
+        <li class="cat-item cat-item-123"><a href="http://www.stoimen.com/blog/category/javascript-on-stoimen-com/">javascript</a> (143) </li> 
+        <li class="cat-item cat-item-174"><a href="http://www.stoimen.com/blog/category/micro-tutorial/">micro tutorial</a> (204) </li> 
+        <li class="cat-item cat-item-40"><a href="http://www.stoimen.com/blog/category/php/">PHP</a> (114) </li> 
+        <li class="cat-item cat-item-37"><a href="http://www.stoimen.com/blog/category/what-i-make/">portfolio</a> (5) </li> 
+        <li class="cat-item cat-item-573"><a href="http://www.stoimen.com/blog/category/quiz/">quiz</a> (7) </li> 
+        <li class="cat-item cat-item-631"><a href="http://www.stoimen.com/blog/category/snippets/">snippets</a> (7) </li> 
+        <li class="cat-item cat-item-131"><a href="http://www.stoimen.com/blog/category/tech-related-videos/">video</a> (1) </li> 
+        <li class="cat-item cat-item-12"><a href="http://www.stoimen.com/blog/category/web-development/">web development</a> (169) </li> 
+        <li class="cat-item cat-item-39"><a href="http://www.stoimen.com/blog/category/zend-framework-on-stoimen-com/" title="Extending the art &amp; spirit of PHP, Zend Framework is based on simplicity, object-oriented best practices, corporate friendly licensing, and a rigorously tested agile codebase. Zend Framework is focused on building more secure, reliable, and modern Web 2.0 applications &amp; web services, and consuming widely available APIs from leading vendors like Google, Amazon, Yahoo!, Flickr, as well as API providers and cataloguers like StrikeIron and ProgrammableWeb.">zend framework</a> (82) </li> 
+       </ul> 
+      </aside> 
+     </div>
+     <!-- .widget-area --> 
+    </div>
+    <!-- #secondary --> 
+    <div class="site-info"> 
+     <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform">Proudly powered by WordPress</a> 
+    </div>
+    <!-- .site-info --> 
+   </footer>
+   <!-- #colophon --> 
+  </div>
+  <!-- #page --> 
+  <!-- Powered by WPtouch: 4.3.19 -->
+  <link rel="stylesheet" id="yarppRelatedCss-css" href="http://www.stoimen.com/blog/wp-content/plugins/yet-another-related-posts-plugin/style/related.css?ver=4.8.1" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-content/plugins/wp-syntax/js/wp-syntax.js?ver=1.1"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-includes/js/imagesloaded.min.js?ver=3.2.0"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-includes/js/masonry.min.js?ver=3.3.2"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-includes/js/jquery/jquery.masonry.min.js?ver=3.1.2b"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-content/themes/twentythirteen/js/functions.js?ver=20150330"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-includes/js/wp-embed.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="http://www.stoimen.com/blog/wp-content/plugins/akismet/_inc/form.js?ver=3.3.4"></script>  
+ </body>
+</html>

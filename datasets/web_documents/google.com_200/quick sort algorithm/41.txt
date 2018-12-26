@@ -1,0 +1,181 @@
+<!doctype html>
+<html class="no-js">
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Is R Fast Enough? - Part 2 - "Sorting" | Predictive Ecology</title> 
+  <meta name="description" content="In part 2 of this series on benchmarking R, we’ll explore sorting. This has been a topic on numerous blogs, discussions and posts around the internet, includ..."> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta http-equiv="X-Frame-Options" content="sameorigin"> 
+  <!-- CSS --> 
+  <link rel="stylesheet" href="/css/main.css"> 
+  <!--Favicon--> 
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"> 
+  <!-- Canonical --> 
+  <link rel="canonical" href="predictiveecology.org/2015/04/28/Is-R-fast-enough-02.html"> 
+  <!-- RSS --> 
+  <link rel="alternate" type="application/atom+xml" title="Predictive Ecology" href="predictiveecology.org/feed.xml"> 
+  <!-- Font Awesome --> 
+  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet"> 
+  <!-- Google Fonts --> 
+  <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,700italic,400italic" rel="stylesheet" type="text/css"> 
+  <!-- KaTeX --> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.3.0/katex.min.js"></script> 
+  <!-- Google Analytics --> 
+  <script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	ga('create', 'UA-58633549-2', 'auto');
+	ga('send', 'pageview');
+	</script> 
+ </head> 
+ <body> 
+  <header class="site-header"> 
+   <div class="branding"> 
+    <a href="/"> <img class="avatar" src="/img/avatar.png" alt=""> </a> 
+    <h1 class="site-title"> <a href="/">Predictive Ecology</a> </h1> 
+   </div> 
+   <nav class="site-nav"> 
+    <ul> 
+     <li> <a class="page-link" href="/SpaDES/"> SpaDES </a> </li> 
+     <li> <a class="page-link" href="/workshops/"> Workshops </a> </li> 
+     <li> <a class="page-link" href="/about/"> About </a> </li> 
+     <li> <a class="page-link" href="/presentations/"> Presentations </a> </li> 
+     <li> <a class="page-link" href="/publications/"> Publications </a> </li> 
+     <li> <a class="page-link" href="/software/"> Software </a> </li> 
+     <!-- Social icons from Font Awesome, if enabled --> 
+     <li> <a href="predictiveecology.org/feed.xml" title="Follow RSS feed"> <i class="fa fa-fw fa-rss"></i> </a> </li> 
+     <li> <a href="mailto:eliot.mcintire@canada.ca" title="Email"> <i class="fa fa-fw fa-envelope"></i> </a> </li> 
+     <li> <a href="https://github.com/PredictiveEcology" title="Follow on GitHub"> <i class="fa fa-fw fa-github"></i> </a> </li> 
+     <li> <a href="https://twitter.com/@eliotmcintire" title="Follow on Twitter"> <i class="fa fa-fw fa-twitter"></i> </a> </li> 
+    </ul> 
+   </nav> 
+  </header> 
+  <div class="content"> 
+   <article> 
+    <header style="background-image: url('/')"> 
+     <h1 class="title">Is R Fast Enough? - Part 2 - "Sorting"</h1> 
+     <p class="meta"> April 28, 2015 - Eliot McIntire </p> 
+    </header> 
+    <section class="post-content">
+     <p>In part 2 of this series on benchmarking <code class="highlighter-rouge">R</code>, we’ll explore sorting. This has been a topic on numerous blogs, discussions and posts around the internet, including here: <a href="http://www.r-bloggers.com/quicksort-speed-just-in-time-compiling-and-vectorizing/">r-blogger post</a>. Similarly, <a href="http://julialang.org">julialang.org</a> showed that sorting was particularly bad in <code class="highlighter-rouge">R</code>. We, again, felt that this was a case of poor <code class="highlighter-rouge">R</code> coding, or more accurately, missing the point of whether <code class="highlighter-rouge">R</code> was capable or not. Another <a href="http://gallery.rcpp.org/articles/sorting/">example here</a> compares <code class="highlighter-rouge">R</code> sorting with standard library of C++, called from <code class="highlighter-rouge">R</code>.</p> 
+     <p>In all cases, we felt that one of the points of using <code class="highlighter-rouge">R</code> is that there are concise ways of doing things <strong>because the open source community has brought them to <code class="highlighter-rouge">R</code></strong>. So lets take advantage of that! We will cover both real number sorting and integer sorting.</p> 
+     <h3 id="sorting">Sorting</h3> 
+     <p>This was in part inspired from a blog post by Wingfeet at http://www.r-bloggers.com/quicksort-speed-just-in-time-compiling-and-vectorizing/ which drew on benchmark tests here: http://julialang.org/ Essentially, that julia test was a benchmark to test the speed of Julia. It showed for the Quicksort, that <code class="highlighter-rouge">R</code> is 524x slower than C. Below is that version. But, there was no explicit comparison of how the base <code class="highlighter-rouge">R</code> sort would match with C, nor how any of the more recent packages with sorting capability fare against these procedural versions of low level languages.</p> 
+     <h4 id="real-number-sorting">Real number sorting</h4> 
+     <div class="language-r highlighter-rouge">
+      <pre class="highlight"><code><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">runif</span><span class="p">(</span><span class="m">1e5</span><span class="p">)</span><span class="w"> </span><span class="n">xtbl</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">tbl_df</span><span class="p">(</span><span class="n">data.frame</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="n">mbReal</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">benchmark</span><span class="p">(</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">qsort</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="o">=</span><span class="s2">"quick"</span><span class="p">),</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">.Internal</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">decreasing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)),</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">data.table</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span><span class="n">key</span><span class="o">=</span><span class="s2">"x"</span><span class="p">),</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">arrange</span><span class="p">(</span><span class="n">xtbl</span><span class="p">,</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">stl_sort</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">replications</span><span class="o">=</span><span class="m">25L</span><span class="p">,</span><span class="w"> </span><span class="n">columns</span><span class="o">=</span><span class="nf">c</span><span class="p">(</span><span class="s2">"test"</span><span class="p">,</span><span class="w"> </span><span class="s2">"elapsed"</span><span class="p">,</span><span class="w"> </span><span class="s2">"relative"</span><span class="p">),</span><span class="w"> </span><span class="n">order</span><span class="o">=</span><span class="s2">"relative"</span><span class="p">))</span><span class="w"> </span></code></pre> 
+     </div> 
+     <div class="highlighter-rouge">
+      <pre class="highlight"><code>##                                          test elapsed relative
+## 7                            i &lt;- stl_sort(x)    0.19    1.000
+## 5           g &lt;- data.table(x = x, key = "x")    0.21    1.105
+## 3              e &lt;- sort(x, method = "quick")    0.22    1.158
+## 4 f &lt;- .Internal(sort(x, decreasing = FALSE))    0.26    1.368
+## 2                                d &lt;- sort(x)    0.28    1.474
+## 6                       h &lt;- arrange(xtbl, x)    1.48    7.789
+## 1                               a &lt;- qsort(x)   86.58  455.684
+</code></pre> 
+     </div> 
+     <div class="language-r highlighter-rouge">
+      <pre class="highlight"><code><span class="n">all.equalV</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="n">g</span><span class="o">$</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="o">$</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span></code></pre> 
+     </div> 
+     <div class="highlighter-rouge">
+      <pre class="highlight"><code>## [1] TRUE
+</code></pre> 
+     </div> 
+     <h4 id="integer-sorting">Integer sorting</h4> 
+     <div class="language-r highlighter-rouge">
+      <pre class="highlight"><code><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sample</span><span class="p">(</span><span class="m">1e6</span><span class="p">,</span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1e5</span><span class="p">)</span><span class="w"> </span><span class="n">xtbl</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">tbl_df</span><span class="p">(</span><span class="n">data.frame</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="n">mbInteger</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">benchmark</span><span class="p">(</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">qsort</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">method</span><span class="o">=</span><span class="s2">"quick"</span><span class="p">),</span><span class="w"> </span><span class="n">f</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">.Internal</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">decreasing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">)),</span><span class="w"> </span><span class="n">g</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">data.table</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span><span class="n">key</span><span class="o">=</span><span class="s2">"x"</span><span class="p">),</span><span class="w"> </span><span class="n">h</span><span class="o">&lt;-</span><span class="n">arrange</span><span class="p">(</span><span class="n">xtbl</span><span class="p">,</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">stl_sort</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="w"> </span><span class="n">replications</span><span class="o">=</span><span class="m">25L</span><span class="p">,</span><span class="w"> </span><span class="n">columns</span><span class="o">=</span><span class="nf">c</span><span class="p">(</span><span class="s2">"test"</span><span class="p">,</span><span class="w"> </span><span class="s2">"elapsed"</span><span class="p">,</span><span class="w"> </span><span class="s2">"relative"</span><span class="p">),</span><span class="w"> </span><span class="n">order</span><span class="o">=</span><span class="s2">"relative"</span><span class="p">))</span><span class="w"> </span></code></pre> 
+     </div> 
+     <div class="highlighter-rouge">
+      <pre class="highlight"><code>##                                          test elapsed relative
+## 5           g &lt;- data.table(x = x, key = "x")    0.13    1.000
+## 3              e &lt;- sort(x, method = "quick")    0.17    1.308
+## 7                            i &lt;- stl_sort(x)    0.19    1.462
+## 4 f &lt;- .Internal(sort(x, decreasing = FALSE))    0.23    1.769
+## 2                                d &lt;- sort(x)    0.25    1.923
+## 6                       h &lt;- arrange(xtbl, x)    0.67    5.154
+## 1                               a &lt;- qsort(x)   89.28  686.769
+</code></pre> 
+     </div> 
+     <div class="language-r highlighter-rouge">
+      <pre class="highlight"><code><span class="n">all.equalV</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="n">g</span><span class="o">$</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="o">$</span><span class="n">x</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">)</span><span class="w"> </span></code></pre> 
+     </div> 
+     <div class="highlighter-rouge">
+      <pre class="highlight"><code>## [1] TRUE
+</code></pre> 
+     </div> 
+     <p>Both real numbers and integers can be sorted quickly with R. The slowest function is indeed the procedural <code class="highlighter-rouge">qsort</code> written in native <code class="highlighter-rouge">R</code> without any optimization. This was also the <code class="highlighter-rouge">qsort</code> that the Julia testers used. Our numbers match almost exactly those from the the table in julialang.org; however, here we also test the real world <code class="highlighter-rouge">R</code> usage that a normal <code class="highlighter-rouge">R</code> user would face (i.e., we can all use <code class="highlighter-rouge">sort()</code>). We show that <code class="highlighter-rouge">R</code> competes quite favourably and regularly outperforms standard library of C++ (and Julia!, though that is not tested here explicitly).</p> 
+     <h4 id="take-home-points">Take home points:</h4> 
+     <ol> 
+      <li>the basic <code class="highlighter-rouge">R</code> sorting functions are fast. The <code class="highlighter-rouge">sort(method="quick")</code> is about as fast as the standard <code class="highlighter-rouge">C++</code> library sort (11% faster).</li> 
+      <li>using <a href="http://cran.r-project.org/web/packages/data.table/index.html">data.table</a> on integers is 32% faster than the <code class="highlighter-rouge">C++</code> standard library sort.</li> 
+     </ol> 
+     <p>In real world situations, where we want to use the easiest, shortest code to produce fast, accurate results, <code class="highlighter-rouge">R</code> certainly holds its own compared to the standard <code class="highlighter-rouge">C++</code> library. But of course, there are many ways to do things in <code class="highlighter-rouge">R</code>. Some are much faster than others.</p> 
+     <h4 id="conclusion">Conclusion</h4> 
+     <p>Using the <code class="highlighter-rouge">sort(method="quick")</code> and <a href="http://cran.r-project.org/web/packages/data.table/index.html"><code class="highlighter-rouge">data.table</code></a> sorting, we were able to sort a vector of real numbers <strong><em>412x</em></strong> faster than a naive procedural coding (<code class="highlighter-rouge">qsort</code>) and <strong><em>687x</em></strong> faster on a vector of integers. These put the <code class="highlighter-rouge">data.table</code> sort as fast as or substantially faster than C or Fortran or Julia’s version of quicksort (based on timings on <a href="http://julialang.org">julialang.org</a>).</p> 
+     <p><em>YES! <code class="highlighter-rouge">R</code> is more than fast enough</em>.</p> 
+     <h4 id="next-time-really-i-promised-it-last-time">Next time (really! I promised it last time…)</h4> 
+     <p>We will redo the Fibonacci series, a common low level benchmarking test that <a href="http://julialang.org">shows <code class="highlighter-rouge">R</code> to be slow</a>. But it turns out to be a case of bad coding…</p> 
+     <hr> 
+     <h4 id="functions-used">Functions used</h4> 
+     <p>The C++ functions that were used are:</p> 
+     <div class="language-r highlighter-rouge">
+      <pre class="highlight"><code><span class="n">cppFunction</span><span class="p">(</span><span class="s1">'NumericVector stl_sort(NumericVector x) { NumericVector y = clone(x); std::sort(y.begin(), y.end()); return y; }'</span><span class="p">)</span><span class="w"> </span><span class="n">qsort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">qsort_kernel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span><span class="w"> </span><span class="n">hi</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lo</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hi</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">hi</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">pivot</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="nf">floor</span><span class="p">((</span><span class="n">lo</span><span class="o">+</span><span class="n">hi</span><span class="p">)</span><span class="o">/</span><span class="m">2</span><span class="p">)]</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">pivot</span><span class="p">)</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">pivot</span><span class="p">)</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">&lt;&lt;-</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="o">&lt;&lt;-</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">lo</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="n">qsort_kernel</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="w"> </span><span class="n">lo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hi</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">qsort_kernel</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="w"> </span><span class="nf">length</span><span class="p">(</span><span class="n">a</span><span class="p">))</span><span class="w"> </span><span class="nf">return</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="n">all.equalV</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">...</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">vals</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nf">list</span><span class="p">(</span><span class="n">...</span><span class="p">)</span><span class="w"> </span><span class="nf">all</span><span class="p">(</span><span class="n">sapply</span><span class="p">(</span><span class="n">vals</span><span class="p">[</span><span class="m">-1</span><span class="p">],</span><span class="w"> </span><span class="k">function</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="w"> </span><span class="n">all.equal</span><span class="p">(</span><span class="n">vals</span><span class="p">[[</span><span class="m">1</span><span class="p">]],</span><span class="w"> </span><span class="n">x</span><span class="p">)))</span><span class="w"> </span><span class="p">}</span><span class="w"> </span></code></pre> 
+     </div> 
+     <h4 id="system-used">System used:</h4> 
+     <p>Tests were done on an HP Z400, Xeon 3.33 GHz processor, running Windows 7 Enterprise, using:</p> 
+     <div class="highlighter-rouge">
+      <pre class="highlight"><code>## R version 3.2.0 (2015-04-16)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 7 x64 (build 7601) Service Pack 1
+## 
+## locale:
+## [1] LC_COLLATE=English_Canada.1252  LC_CTYPE=English_Canada.1252   
+## [3] LC_MONETARY=English_Canada.1252 LC_NUMERIC=C                   
+## [5] LC_TIME=English_Canada.1252    
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] data.table_1.9.4 Rcpp_0.11.5      dplyr_0.4.1      rbenchmark_1.0.0
+## 
+## loaded via a namespace (and not attached):
+##  [1] digest_0.6.8    assertthat_0.1  chron_2.3-45    plyr_1.8.1     
+##  [5] DBI_0.3.1       formatR_1.0     magrittr_1.5    evaluate_0.5.5 
+##  [9] lazyeval_0.1.10 reshape2_1.4.1  rmarkdown_0.5.1 tools_3.2.0    
+## [13] stringr_0.6.2   yaml_2.1.13     parallel_3.2.0  htmltools_0.2.6
+## [17] knitr_1.9
+</code></pre> 
+     </div> 
+    </section> 
+   </article> 
+   <!-- Post navigation --> 
+   <!-- Disqus --> 
+   <div class="comments"> 
+    <div id="disqus_thread"></div> 
+    <script type="text/javascript">
+	var disqus_shortname = 'predictiveecologyorg';
+	(function() {
+		var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+		dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+		(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	})();
+</script> 
+    <noscript>
+     Please enable JavaScript to view the 
+     <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+    </noscript> 
+   </div> 
+  </div> 
+  <script src="/js/katex_init.js"></script> 
+  <footer class="site-footer"> 
+   <p class="text">This blog is maintained by Eliot McIntire, a research scientist, and Alex Chubaty, a post doc, both working with the Government of Canada.<br>All content is his own or that of contributors ("the lab"), and does not necessarily reflect any official policy of the Government of Canada.<br><small>Powered by <a href="http://jekyllrb.com">Jekyll</a> with <a href="https://rohanchandra.github.io/project/type/">Type Theme</a></small> </p> 
+  </footer>   
+ </body>
+</html>

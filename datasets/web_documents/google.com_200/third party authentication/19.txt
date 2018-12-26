@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="icon" href="//www.ibm.com/favicon.ico"> 
+  <link rel="canonical" href="http://www.ibm.com/developerworks/library/se-add-authorization-proxy-third-party-app/index.html"> 
+  <meta name="geo.country" content="ZZ"> 
+  <meta name="dcterms.rights" content="© Copyright&nbsp;IBM Corporation&nbsp;2016"> 
+  <meta name="dcterms.date" content="2016-06-03"> 
+  <meta name="description" content="In this article, you learn how to use Bluemix Node.js to create an authorization proxy. This proxy can then perform authorization checks that are not supported by an original application, which might be a third-party app."> 
+  <meta name="keywords" content="proxy, authorization proxy, node.js, tttsecca"> 
+  <meta name="robots" content="index,follow"> 
+  <title>Add your own authorization proxy to a third-party app</title> 
+  <script> 
+    digitalData = {
+        "page":{
+            "category":{
+                "primaryCategory":"SOFDCSECZZ"
+            },
+            "pageInfo":{
+                "effectiveDate":"2016-06-03",
+                "expiryDate":"2017-04-27",
+                "language":"en",
+                "publishDate":"2016-06-03",
+                "publisher":"IBM Corporation",
+                "version":"v18",
+                "ibm":{ 
+                    "contentDelivery":"IBM developerWorks template",
+                    "contentProducer":"IBM developerWorks",
+                    "country":"ZZ",
+                    "owner":"developerWorks Content/Raleigh/IBM",
+                    "subject":",,,SWI00",
+                    "type":"CT316",
+                    "topic":"Authentication,Bluemix",
+                    "topicId":"95,1237",
+                    "contentArea":"security",
+                    "contentAreaId":"16",
+                    "contentType":"article",
+                    "contentId":"1032913",
+                    "brandProduct":",,"
+                },
+                "keywords":"proxy, authorization proxy, node.js, tttsecca",
+                "description":"In this article, you learn how to use Bluemix Node.js to create an authorization proxy. This proxy can then perform authorization checks that are not supported by an original application, which might be a third-party app."
+            }
+        }
+    };
+    window._analytics = {
+        "segment_key":'HU3dbkAG5wE0F1IkRf9S1RexlAqo3jby'
+    };
+</script> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:site" content="@developerworks"> 
+  <meta property="og:title" content="Add your own authorization proxy to a third-party app"> 
+  <meta property="og:description" content="Receive alerts on unauthorized requests."> 
+  <meta property="og:image" content="http://www.ibm.com/developerworks/i/twitterdw-topic-security.png"> 
+  <!-- Segment meta tag --> 
+  <meta name="segment" property="(developerWorks)" productTitle="developerWorks" value="Security English (developerWorks)"> 
+  <!-- SITE MON : START (DO NOT DELETE) --> 
+  <!-- developerWorks monitoring token --> 
+  <!-- SITE MON : END (DO NOT DELETE) --> 
+  <!-- HEADER_SCRIPTS_AND_CSS_INCLUDE --> 
+  <!-- <script src="//cdn.optimizely.com/js/5399420604.js"></script> --> 
+  <!-- BEGIN: Use this section to set page specific variables for the Page Tag --> 
+  <script language="JavaScript">var NTPT_PGEXTRA="ibmSkillLevel=3&ibmCmaId=1032913&ibmContentAreas=security";</script> 
+  <!--END --> 
+  <script src="//1.www.s81c.com/common/stats/ida_stats.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/www.css" rel="stylesheet"> 
+  <link href="//1.www.s81c.com/common/v18/css/syntaxhighlighter.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/www.js"></script> 
+  <script src="//1.www.s81c.com/common/v18/js/syntaxhighlighter.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/tables.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/tables.js"></script> 
+  <!--  Masthead/footer  --> 
+  <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-v18.css?v=092117" rel="stylesheet"> 
+  <!-- <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/alt-signedin-ux.css" rel="stylesheet" /> --> 
+  <!--[if lt IE 9]>
+    <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-ie8fix.css?v=022216" rel="stylesheet" />
+<![endif]--> 
+  <link href="//dw1.s81c.com/developerworks/css/v18/dw-article.css?v=073117" rel="stylesheet"> 
+  <link href="//dw1.s81c.com/developerworks/css/v18/dw-article-archive.css?v=121316" rel="stylesheet"> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth-properties.js?v=041017"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth.js?v=062717"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/dw-mf/v18/dw-mf.js?v=110316"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-include.js"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-article.js?v=051817"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auto-links.js?v=091217"></script> 
+  <script src="//www.ibm.com/software/info/js/tactic.js"></script> 
+  <script src="//www.ibm.com/software/info/js/tacticbindlinks.js"></script> 
+  <!-- Segment --> 
+  <script src="//console.ng.bluemix.net/analytics/build/bluemix-analytics.min.js"></script> 
+  <!-- 
+<PageMap>
+    <DataObject type="document">
+        <Attribute name="topic">Authentication,Bluemix</Attribute>
+        <Attribute name="topicId">95,1237</Attribute>
+        <Attribute name="contentArea">security</Attribute>
+        <Attribute name="contentAreaId">16</Attribute>
+        <Attribute name="abstract">In this article, you learn how to use Bluemix Node.js to create an
+            authorization proxy. This proxy can then perform authorization checks that are
+            not supported by an original application, which might be a third-party
+            app.</Attribute>
+        <Attribute name="pub.date">2016-06-03</Attribute>
+        <Attribute name="contentState">archived<Attribute>
+        <Attribute name="contentType">article</Attribute>
+    </DataObject>
+</PageMap>
+--> 
+ </head> 
+ <body id="ibm-com" class="ibm-type dw-js-disabled"> 
+  <div id="ibm-top" class="ibm-landing-page"> 
+   <!-- MASTHEAD_BEGIN --> 
+   <div id="ibm-masthead" role="banner" aria-label="IBM"> 
+    <div id="ibm-mast-options"> 
+     <ul role="toolbar" aria-labelledby="ibm-masthead"> 
+      <li id="ibm-geo" role="presentation"><a href="http://www.ibm.com/planetwide/select/selector.html" role="button" aria-label="United States selected - Choose a country">United States</a></li> 
+     </ul> 
+    </div> 
+    <div id="ibm-universal-nav"> 
+     <nav role="navigation" aria-label="IBM"> 
+      <div id="ibm-home">
+       <a href="http://www.ibm.com/us/en/">IBM®</a>
+      </div> 
+      <ul id="ibm-menu-links" role="toolbar" aria-label="Site map"> 
+       <li><a href="http://www.ibm.com/sitemap/us/en/">Site map</a></li> 
+      </ul> 
+     </nav> 
+     <div id="ibm-search-module" role="search" aria-labelledby="ibm-masthead"> 
+      <form id="ibm-search-form" action="https://www.ibm.com/Search/" method="get"> 
+       <p> <label for="q">IBM</label> <input type="text" maxlength="100" value="" placeholder="Search" name="q" id="q" aria-label="Search developerWorks"> <input type="hidden" value="18" name="v"> <input type="hidden" value="utf" name="en"> <input type="hidden" value="en" name="lang"> <input type="hidden" value="us" name="cc"> <input type="hidden" name="sn" value="dw"> <input type="hidden" name="dws" value="dw"> <input type="hidden" name="hpp" value="20"> <input type="submit" id="ibm-search" class="ibm-btn-search" value="Submit"> </p> 
+      </form> 
+     </div> 
+    </div> 
+   </div>
+   <!-- MASTHEAD_END --> 
+   <!-- LAYOUT --> 
+   <div id="ibm-content-wrapper"> 
+    <!-- LEADSPACE_BEGIN --> 
+    <header role="banner" aria-labelledby="ibm-pagetitle-h1"> 
+     <!-- MASTHEAD_SITENAV_BEGIN --> 
+     <div class="ibm-sitenav-menu-container"> 
+      <div class="ibm-sitenav-menu-name"> 
+       <a href="//www.ibm.com/developerworks/"> <img width="186" height="24" alt="developerWorks®" src="//dw1.s81c.com/developerworks/i/mf/dw-mf-wordmark.svg"> </a> 
+      </div> 
+      <div class="ibm-sitenav-menu-list"> 
+       <ul role="menubar"> 
+        <li class="dw-navpage-learn ibm-haschildlist" role="presentation"> <span role="menuitem"><a href="//www.ibm.com/developerworks/learn/">Learn</a></span> 
+         <ul role="menu" aria-label="Learn" id="dw-mega-learn"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Learn with our tutorials and training</h2> 
+             <p class="dw-mega-main-p">developerWorks provides tutorials, articles and other technical resources to help you grow your development skills on a wide variety of topics and products. Learn about a specific product or take a course and get certified. So, what do you want to learn about?</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/learn/" class="ibm-btn-pri">Choose a topic</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured topics</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/mobile">Mobile development</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bigdata.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/analytics">Big data</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cognitive.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cognitive">Cognitive computing</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cloud">Cloud</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-develop ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/develop/">Develop</a></span> 
+         <ul role="menu" aria-label="Develop" id="dw-mega-develop"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Develop with our trials &amp; downloads</h2> 
+             <p class="dw-mega-main-p">Start developing with product trials, free downloads, and IBM Bluemix™ services. Sort by topic or product name and find everything we have to offer.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/develop/" class="ibm-btn-pri">View all downloads &amp; trials</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured products</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/sso/bmregistration">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-websphere.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/ws/was/">WebSphere Application Server</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-db2express.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/im/db2express/">DB2 Express C</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//mobilefirstplatform.ibmcloud.com/">MobileFirst Platform Foundation</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dest.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-connect ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/connect/">Connect</a></span> 
+         <ul role="menu" aria-label="Connect" id="dw-mega-connect"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Find a community and connect</h2> 
+             <p class="dw-mega-main-p">Learn from the experts and share with other developers in one of our dev centers. Ask questions and get answers with dW answers. Search for local events in your area. All in developerWorks communities.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/connect/" class="ibm-btn-pri">View communities</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured Developer Centers</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-jazz-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//jazz.net/">Jazz.net</a> 
+              </div> 
+             </div> 
+             <!--<div class="dw-mega-nav-item">
+                                        <div class="dw-mega-nav-img">
+                                            <img width="30" height="30" alt=""
+                                                src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud-dev.png">
+                                        </div>
+                                        <div class="dw-mega-nav-link">
+                                            <a href="//developer.ibm.com/cloud-analytics/">IBM Cloud Analytics DEV</a>
+                                        </div>
+                                    </div>--> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/bluemix/">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <!-- dW featured --> 
+        <!-- <li role="presentation" class="dw-navpage-devcenter"><strong>Subheading</strong></li> --> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cognitive/">Cognitive</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cloud/">Cloud</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/analytics/">Data</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/iot/">Internet of Things</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/java/">Java</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/">All topics</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+     <!-- MASTHEAD_SITENAV_END --> 
+     <!-- NAVIGATION_TRAIL_BEGIN --> 
+     <div id="ibm-leadspace-head" class="ibm-alternate"> 
+      <div id="ibm-leadspace-body"> 
+       <nav aria-label="Breadcrumb" role="navigation"> 
+        <ul id="dw-navigation-trail" itemscope itemtype="http://schema.org/BreadcrumbList">
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/learn/"><span itemprop="name">Learn</span></a>
+          <meta itemprop="position" content="1"></li>
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/security/"><span itemprop="name">Security</span></a>
+          <meta itemprop="position" content="2"></li>
+        </ul> 
+       </nav> 
+      </div> 
+     </div> 
+     <!-- NAVIGATION_TRAIL_END --> 
+    </header> 
+    <!-- LEADSPACE_END --> 
+    <!-- MAIN_CONTENT_BEGIN --> 
+    <main role="main" aria-labelledby="ibm-pagetitle-h1"> 
+     <div id="ibm-pcon"> 
+      <!-- BEGIN_IBM-CONTENT --> 
+      <div id="ibm-content"> 
+       <!-- BEGIN_IBM-CONTENT-BODY --> 
+       <div id="ibm-content-body"> 
+        <!-- BEGIN_IBM-CONTENT-MAIN --> 
+        <div id="ibm-content-main" class="dw-article"> 
+         <!-- BEGIN_INTERIOR-COLUMNS --> 
+         <div class="ibm-columns dw-article-notoc"> 
+          <!-- LEFT_6_1_CONTENT_COLUMN_BEGIN --> 
+          <div class="ibm-col-6-1"> 
+           <!-- empty col --> 
+          </div> 
+          <!-- LEFT_6_1_CONTENT_COLUMN_END --> 
+          <!-- CENTER_6_4_CONTENT_COLUMN_BEGIN --> 
+          <div class="ibm-col-6-4"> 
+           <h1 id="ibm-pagetitle-h1" class="ibm-h1">Add your own authorization proxy to a third-party app</h1>
+           <p class="dw-article-subhead">Receive alerts on unauthorized requests</p>
+           <p class="dw-article-archive-subhead">From the developerWorks archives</p> 
+           <!-- Author/Date --> 
+           <p class="dw-article-archive-author">Ori Pomerantz</p> 
+           <p> <span class="dw-article-archive-date">Date archived: April 27, 2017</span> <span class="dw-article-divider"> | </span> <span class="dw-article-archive-date">First published: June 03, 2016</span> </p> 
+           <!-- Archive Body --> 
+           <p>In this article, you learn how to use Bluemix Node.js to create an authorization proxy. This proxy can then perform authorization checks that are not supported by an original application, which might be a third-party app.</p>
+           <p class="dw-article-archive-notice">This content is no longer being updated or maintained. The full article is provided "as is" in a PDF file. Given the rapid evolution of technology, some content, steps, or illustrations may have changed.</p> 
+           <!-- Translated versions --> 
+           <!-- CODE REQUIRED --> 
+           <br>
+           <br> 
+           <!-- PDF button link --> 
+           <p class="ibm-ind-link"><a class="ibm-download-link dw-article-archive-pdf" href="se-add-authorization-proxy-third-party-app-pdf.pdf">View PDF file</a></p> 
+          </div> 
+          <!-- CENTER_6_4_CONTENT_COLUMN_END --> 
+          <!-- RIGHT_6_1_CONTENT_COLUMN_BEGIN --> 
+          <div class="ibm-col-6-1"> 
+           <!-- empty col --> 
+          </div> 
+          <!-- RIGHT_6_1_CONTENT_COLUMN_END --> 
+         </div> 
+         <!--Rating_Meta_BEGIN-->
+         <div class="metavalue">
+          static.content.url=http://www.ibm.com/developerworks/js/artrating/
+         </div>
+         <div class="metavalue">
+          SITE_ID=1
+         </div>
+         <div class="metavalue">
+          Zone=Security
+         </div>
+         <div class="metavalue">
+          ArticleID=1032913
+         </div>
+         <div class="metavalue">
+          ArticleTitle=Add your own authorization proxy to a third-party app
+         </div>
+         <div class="metavalue">
+          publish-date=06032016
+         </div>
+         <script language="javascript" type="text/javascript">document.write('<div class="metavalue">url='+location.href.replace(/</g,  '%3C')+'</div>');</script>
+         <!--Rating_Meta_END--> 
+        </div> 
+        <!-- END_IBM-CONTENT-MAIN --> 
+       </div> 
+       <!-- END_IBM-CONTENT-BODY --> 
+      </div> 
+      <!-- END_IBM-CONTENT --> 
+     </div> 
+     <!-- END_IBM-PCON --> 
+    </main> 
+    <!-- MAIN_CONTENT_END --> 
+    <!-- END_CONTENT-WRAPPER --> 
+   </div> 
+   <!-- FOOTER_BEGIN --> 
+   <footer role="contentinfo" aria-label="IBM developerWorks"> 
+    <div id="dw-footer-module" class="dw-footer-home"> 
+     <section aria-label="Resources" role="contentinfo"> 
+      <div class="ibm-columns"> 
+       <div class="ibm-col-6-1 dw-footer-col-1"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="developerWorks">developerWorks</li> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/">About</a></li> 
+         <li><a href="//www.ibm.com/developerworks/feedback">Help</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/ideas">Submit content</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/secure/report/">Report abuse</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/community/terms/thirdparty/">Third-party notice</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Community">Community</li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/rfe/">Product feedback</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/connect/">Developer Centers</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading dw-follow-us" aria-label="Follow us">Follow us</li> 
+        </ul> 
+        <p class="dw-footer-social"> <a href="//twitter.com/developerWorks"> <img width="28" height="27" alt="Twitter" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-twitter.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.facebook.com/developerworks"> <img width="28" height="27" alt="Facebook" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-facebook.png"> </a> </p> 
+        <br> 
+        <p class="dw-footer-social"> <a href="//www.linkedin.com/groups/IBM-developerWorks-8137234"> <img width="28" height="27" alt="LinkedIn" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-linkedin.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.youtube.com/user/developerworks"> <img width="28" height="27" alt="YouTube" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-youtube.png"> </a> </p> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-2"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Join">Join</li> 
+         <li><a href="//developer.ibm.com/academic/">Faculty</a></li> 
+         <li><a href="//developer.ibm.com/students/">Students</a></li> 
+         <li><a href="//developer.ibm.com/startups/">Startups</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/isv/">Business Partners</a></li> 
+        </ul> 
+        <ul class="dw-footer-lang" aria-label="Select a language"> 
+         <li class="dw-footer-heading">Select a language</li> 
+         <li><a href="//www.ibm.com/developerworks/">English</a></li> 
+         <li><a href="//www.ibm.com/developerworks/cn/" lang="zh">??</a></li> 
+         <li><a href="//www.ibm.com/developerworks/jp/" lang="ja">???</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ru/" lang="ru">???????</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/br/" lang="pt">Português (Brasil)</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ssa/" lang="es">Español</a></li> 
+         <li><a href="//developer.ibm.com/kr/" lang="kr">??</a></li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-3"> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-4"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/learn/">Tutorials &amp; training</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/accelerate/">Demos &amp; sample code</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/answers">Q&amp;A forums</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/dwblog/">dW Blog</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/events/">Events</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-5"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/courses/">Courses</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/open/">Open source projects</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/tv/">Videos</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/recipes/">Recipes</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-6"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/develop/">Downloads</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/api/">APIs</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/newsletter/">Newsletters</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/feeds/">Feeds</a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </section> 
+    </div> 
+    <div id="dw-footer" class="ibm-padding-normal ibm-alternate"> 
+     <div class="ibm-columns"> 
+      <div class="ibm-col-1-1"> 
+       <div class="dw-footer-corporate-links"> 
+        <ul> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/contacts.html">Contact</a></li> 
+         <li><a href="//www.ibm.com/privacy/us/en/">Privacy</a></li> 
+         <li><a href="//www.ibm.com/developerworks/community/terms/use/">Terms of use</a></li> 
+         <li><a href="//www.ibm.com/accessibility/us/en/">Accessibility</a></li> 
+         <li class="ibm-feedbacklink"><a href="#">Feedback</a></li> 
+         <li id="ibm-truste-cp"><a onclick="truste.eu.clickListener();return false;" href="#">Cookie Preferences</a></li> 
+        </ul> 
+       </div> 
+       <div id="ibm-footer-locale-selector"></div> 
+      </div> 
+     </div> 
+    </div> 
+   </footer> 
+   <!-- FOOTER_END --> 
+   <!-- END_IBM-TOP --> 
+  </div> 
+  <!-- SCRIPTS_INCLUDE_BEGIN --> 
+  <script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-41146412-3','auto');ga('require','linkid','linkid.js');var dcdate="2016-06-03";var cmaid="1032913";ga('set','dimension1',dcdate);ga('set','dimension2',cmaid);var dw_canonical="http://www.ibm.com/developerworks/library/se-add-authorization-proxy-third-party-app/index.html";dw_canonical=dw_canonical.substring(dw_canonical.indexOf(".ibm.com")+8);ga('send','pageview',{'page':dw_canonical,'dimension1':dcdate,'dimension2':cmaid});var trkOBL=function(url,id){id=id.split("-");var cat="v18 article";var act="Bluemix";if(id[2]=="dwpremium")act="Premium";if(id[2]=="dwopen")act="dWOpen";if(id[2]=="devops")act="Devops";act=act+' '+id[3];if(id[4]){var label=id[4];if(label=="btn")label="button";if(label=="txt")label="text link";if(label=="bnr")label="banner";if(label=="tl")label="tile";if(label=="regbar")label="registration bar";if(label=="vp")label="video promotion"}var ab=0;if(id[5]){if(id[5]=="ABa")ab=1;if(id[5]=="ABb")ab=2;if(id[5]=="ABc")ab=3;if(id[5]=="ABd")ab=4;if(id[5]=="ABe")ab=5;if(id[5]=="ABf")ab=6;if(id[5]=="ABg")ab=7;if(id[5]=="ABh")ab=8}ga('send','event',cat,act,label,ab,{'page':dw_canonical,'hitCallback':function(){document.location=url}})}</script>
+  <!-- Piwik --> 
+  <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(["setDomains", ["*.www.ibm.com/developerworks","*.www.ibm.com/developerworks"]]);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+    var u="//developer.ibm.com/piwik/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', 7]);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+</script> 
+  <noscript>
+   <p><img src="//developer.ibm.com/piwik/piwik.php?idsite=7" style="border:0;" alt=""></p>
+  </noscript> 
+  <!-- End Piwik Code -->
+  <!-- Hotjar Tracking Code for ibm.com --> 
+  <script>
+    (function(h,o,t,j,a,r){
+    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+    h._hjSettings={hjid:42920,hjsv:5};
+    a=o.getElementsByTagName('head')[0];
+    r=o.createElement('script');r.async=1;
+    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+    a.appendChild(r);
+    })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+</script> 
+  <!-- SCRIPTS_INCLUDE_END -->   
+ </body>
+</html>

@@ -1,0 +1,742 @@
+<!doctype html>
+<html>
+ <head> 
+  <title>
+    
+        RESTful Authentication with Flask - miguelgrinberg.com
+    
+</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <meta name="description" content="miguelgrinberg.com"> 
+  <meta name="copyright" content="Copyright (c) 2012-2015 Miguel Grinberg"> 
+  <meta name="author" content="Miguel Grinberg"> 
+  <meta name="keywords" content="flask, programming, python, rest, restful, api, password, hashing, authentication"> 
+  <!-- Bootstrap --> 
+  <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet"> 
+  <link href="/static/prettify.css" type="text/css" rel="stylesheet"> 
+  <link href="/static/colorbox/colorbox.css" rel="stylesheet" type="text/css"> 
+  <link href="/static/style.css" rel="stylesheet" type="text/css"> 
+  <link rel="shortcut icon" href="/static/favicon.ico"> 
+  <link rel="alternate" type="application/rss+xml" href="/feed" title="miguelgrinberg.com RSS feed"> 
+ </head> 
+ <body> 
+  <!-- facebook sdk --> 
+  <div id="fb-root"></div> 
+  <script>(function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));</script> 
+  <!-- google plus sdk --> 
+  <script src="https://apis.google.com/js/platform.js" async defer></script> 
+  <!-- twitter sdk --> 
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script> 
+  <!-- linkedin sdk --> 
+  <script src="//platform.linkedin.com/in.js" type="text/javascript" defer></script> 
+  <nav class="navbar navbar-default" role="navigation"> 
+   <div class="container-fluid"> 
+    <div class="container"> 
+     <div class="navbar-header"> 
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+      <a class="navbar-brand" href="/index">miguelgrinberg.com</a> 
+     </div> 
+     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1"> 
+      <ul class="nav navbar-nav"> 
+       <li><a href="/index">Home</a></li> 
+       <li><a href="/post/about-me">About Me</a></li> 
+       <li><a href="/post/about-this-blog">About This Blog</a></li> 
+      </ul> 
+      <ul class="nav navbar-nav navbar-right"> 
+       <li> <p class="navbar-text" style="margin-top: 10px; margin-bottom: 0px;"> <a type="application/rss+xml" href="/feed"><img src="/static/rss.png" alt="RSS Feed" title="RSS Feed"></a> <a href="https://www.facebook.com/miguelgrinbergblog"><img src="/static/facebook.png" alt="Facebook" title="Facebook"></a> <a href="https://plus.google.com/u/0/117786742456929977820"><img src="/static/googleplus.png" alt="Google+" title="Google+"></a> <a href="http://www.linkedin.com/in/miguelgrinberg"><img src="/static/linkedin.png" alt="LinkedIn" title="LinkedIn"></a> <a href="http://github.com/miguelgrinberg"><img src="/static/github.png" alt="GitHub" title="GitHub"></a> <a href="https://twitter.com/#!/miguelgrinberg"><img src="/static/twitter.png" alt="Twitter" title="Twitter"></a> </p> </li> 
+      </ul> 
+     </div> 
+    </div> 
+   </div> 
+  </nav> 
+  <div class="container"> 
+   <div class="row"> 
+    <div class="col-md-8"> 
+     <div id="main"> 
+      <div class="post"> 
+       <p class="date"><span class="flask-moment" data-timestamp="2013-11-28T07:33:19Z" data-format="format('LL')" data-refresh="0">2013-11-28T07:33:19Z</span></p> 
+       <h1 class="post-title"><a href="/post/restful-authentication-with-flask">RESTful Authentication with Flask</a></h1> 
+       <div class="posted">
+        Posted by 
+        <span class="label label-danger"><a href="/author/Miguel Grinberg">Miguel Grinberg</a></span> under 
+        <span class="label label-primary"><a href="/category/Flask">Flask</a></span>, 
+        <span class="label label-primary"><a href="/category/Programming">Programming</a></span>, 
+        <span class="label label-primary"><a href="/category/Python">Python</a></span>, 
+        <span class="label label-primary"><a href="/category/REST">REST</a></span>, 
+        <span class="label label-primary"><a href="/category/Authentication">Authentication</a></span>, 
+        <span class="label label-primary"><a href="/category/Security">Security</a></span>. 
+       </div> 
+       <div class="social-bar"> 
+        <table> 
+         <tbody>
+          <tr> 
+           <td>
+            <div class="social-box" style="padding-top: 8px;">
+             <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask" data-via="miguelgrinberg">Tweet</a>
+            </div></td> 
+           <td>
+            <div class="social-box" style="padding-left: 6px;">
+             <div class="fb-like" data-href="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask" data-send="false" data-layout="button" data-width="450" data-show-faces="false" data-font="verdana"></div>
+            </div></td> 
+           <td>
+            <div class="social-box" style="padding-top: 8px;">
+             <div class="g-plusone" data-size="medium" data-annotation="none" data-href="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask"></div>
+            </div></td> 
+           <td>
+            <div class="social-box" style="padding-top: 8px;">
+             <script type="IN/Share" data-url="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask"></script>
+            </div></td> 
+          </tr> 
+         </tbody>
+        </table> 
+       </div> 
+       <div class="post_body">
+        <p>This article is the fourth in my series on RESTful APIs. Today I will be showing you a simple, yet secure way to protect a <a href="http://flask.pocoo.org/">Flask</a> based API with password or token based authentication.</p> 
+        <p>This article stands on its own, but if you feel you need to catch up here are the links to the previous articles:</p> 
+        <ul> 
+         <li><a href="/post/designing-a-restful-api-with-python-and-flask">Designing a RESTful API with Python and Flask</a></li> 
+         <li><a href="/post/writing-a-javascript-rest-client">Writing a Javascript REST client</a></li> 
+         <li><a href="/post/designing-a-restful-api-using-flask-restful">Designing a RESTful API using Flask-RESTful</a></li> 
+        </ul> 
+        <h2>Example Code</h2> 
+        <p>The code discussed in the following sections is available for you to try and hack. You can find it on github: <a href="https://github.com/miguelgrinberg/REST-auth">REST-auth</a>.</p> 
+        <h2>The User Database</h2> 
+        <p>To give this example some resemblance to a real life project I'm going to use a Flask-SQLAlchemy database to store users.</p> 
+        <p>The user model will be very simple. For each user a <code>username</code> and a <code>password_hash</code> will be stored.</p> 
+        <pre><code>class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(32), index = True)
+    password_hash = db.Column(db.String(128))
+</code></pre> 
+        <p>For security reasons the original password will not be stored, after the hash is calculated during registration it will be discarded. If this user database were to fall in malicious hands it would be extremely hard for the attacker to decode the real passwords from the hashes.</p> 
+        <p>Passwords should <u>never</u> be stored in the clear in a user database.</p> 
+        <h2>Password Hashing</h2> 
+        <p>To create the password hashes I'm going to use PassLib, a package dedicated to password hashing.</p> 
+        <p>PassLib provides several hashing algorithms to choose from. The <code>custom_app_context</code> object is an easy to use option based on the sha256_crypt hashing algorithm.</p> 
+        <p>To add password hashing and verification two new methods are added to the <code>User</code> model:</p> 
+        <pre><code>from passlib.apps import custom_app_context as pwd_context
+
+class User(db.Model):
+    # ...
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
+</code></pre> 
+        <p>The <code>hash_password()</code> method takes a plain password as argument and stores a hash of it with the user. This method is called when a new user is registering with the server, or when the user changes the password.</p> 
+        <p>The <code>verify_password()</code> method takes a plain password as argument and returns <code>True</code> if the password is correct or <code>False</code> if not. This method is called whenever the user provides credentials and they need to be validated.</p> 
+        <p>You may ask how can the password be verified if the original password was thrown away and lost forever after it was hashed.</p> 
+        <p>Hashing algorithms are <em>one-way</em> functions, meaning that they can be used to generate a hash from a password, but they cannot be used in the reverse direction. But these algorithms are <em>deterministic</em>, given the same inputs they will always generate the same output. All PassLib needs to do to verify a password is to hash it with the same function that was used during registration, and then compare the resulting hash against the one stored in the database.</p> 
+        <h2>User Registration</h2> 
+        <p>In this example, a client can register a new user with a <code>POST</code> request to <code>/api/users</code>. The body of the request needs to be a JSON object that has <code>username</code> and <code>password</code> fields.</p> 
+        <p>The implementation of the Flask route is shown below:</p> 
+        <pre><code>@app.route('/api/users', methods = ['POST'])
+def new_user():
+    username = request.json.get('username')
+    password = request.json.get('password')
+    if username is None or password is None:
+        abort(400) # missing arguments
+    if User.query.filter_by(username = username).first() is not None:
+        abort(400) # existing user
+    user = User(username = username)
+    user.hash_password(password)
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({ 'username': user.username }), 201, {'Location': url_for('get_user', id = user.id, _external = True)}
+</code></pre> 
+        <p>This function is extremely simple. The <code>username</code> and <code>password</code> arguments are obtained from the JSON input coming with the request and then validated.</p> 
+        <p>If the arguments are valid then a new <code>User</code> instance is created. The <code>username</code> is assigned to it, and the password is hashed using the <code>hash_password()</code> method. The user is finally written to the database.</p> 
+        <p>The body of the response shows the user representation as a JSON object, with a status code of 201 and a <code>Location</code> header pointing to the URI of the newly created user. </p> 
+        <p>Note: the implementation of the <code>get_user</code> endpoint is now shown here, you can find it in the full example on github.</p> 
+        <p>Here is an example user registration request sent from <em>curl</em>:</p> 
+        <pre><code>$ curl -i -X POST -H "Content-Type: application/json" -d '{"username":"miguel","password":"python"}' http://127.0.0.1:5000/api/users
+HTTP/1.0 201 CREATED
+Content-Type: application/json
+Content-Length: 27
+Location: http://127.0.0.1:5000/api/users/1
+Server: Werkzeug/0.9.4 Python/2.7.3
+Date: Thu, 28 Nov 2013 19:56:39 GMT
+
+{
+  "username": "miguel"
+}
+</code></pre> 
+        <p>Note that in a real application this would be done over secure HTTP. There is no point in going through the effort of protecting the API if the login credentials are going to travel through the network in clear text.</p> 
+        <h2>Password Based Authentication</h2> 
+        <p>Now let's assume there is a resource exposed by this API that needs to be available only to registered users. This resource is accessed at the <code>/api/resource</code> endpoint.</p> 
+        <p>To protect this resource I'm going to use <a href="http://en.wikipedia.org/wiki/Basic_access_authentication">HTTP Basic Authentication</a>, but instead of implementing this protocol by hand I'm going to let the Flask-HTTPAuth extension do it for me.</p> 
+        <p>Using Flask-HTTPAuth an endpoint is protected by adding the <code>login_required</code> decorator to it:</p> 
+        <pre><code>from flask_httpauth import HTTPBasicAuth
+auth = HTTPBasicAuth()
+
+@app.route('/api/resource')
+@auth.login_required
+def get_resource():
+    return jsonify({ 'data': 'Hello, %s!' % g.user.username })
+</code></pre> 
+        <p>But of course Flask-HTTPAuth needs to be given some more information to know how to validate user credentials, and for this there are several options depending on the level of security implemented by the application.</p> 
+        <p>The option that gives the maximum flexibility (and the only that can accomodate PassLib hashes) is implemented through the <code>verify_password</code> callback, which is given the username and password and is supposed to return <code>True</code> if the combination is valid or <code>False</code> if not. Flask-HTTPAuth invokes this callback function whenever it needs to validate a username and password pair.</p> 
+        <p>An implementation of the <code>verify_password</code> callback for the example API is shown below:</p> 
+        <pre><code>@auth.verify_password
+def verify_password(username, password):
+    user = User.query.filter_by(username = username).first()
+    if not user or not user.verify_password(password):
+        return False
+    g.user = user
+    return True
+</code></pre> 
+        <p>This function finds the user by the username, then verifies the password using the <code>verify_password()</code> method. If the credentials are valid then the user is stored in Flask's <code>g</code> object so that the view function can use it.</p> 
+        <p>Here is an example curl request that gets the protected resource for the user registered above:</p> 
+        <pre><code>$ curl -u miguel:python -i -X GET http://127.0.0.1:5000/api/resource
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 30
+Server: Werkzeug/0.9.4 Python/2.7.3
+Date: Thu, 28 Nov 2013 20:02:25 GMT
+
+{
+  "data": "Hello, miguel!"
+}
+</code></pre> 
+        <p>If an incorrect login is used, then this is what happens:</p> 
+        <pre><code>$ curl -u miguel:ruby -i -X GET http://127.0.0.1:5000/api/resource
+HTTP/1.0 401 UNAUTHORIZED
+Content-Type: text/html; charset=utf-8
+Content-Length: 19
+WWW-Authenticate: Basic realm="Authentication Required"
+Server: Werkzeug/0.9.4 Python/2.7.3
+Date: Thu, 28 Nov 2013 20:03:18 GMT
+
+Unauthorized Access
+</code></pre> 
+        <p>Once again I feel the need to reiterate that in a real application the API should be available on secure HTTP only.</p> 
+        <h2>Token Based Authentication</h2> 
+        <p>Having to send the username and the password with every request is inconvenient and can be seen as a security risk even if the transport is secure HTTP, since the client application must have those credentials stored without encryption to be able to send them with the requests.</p> 
+        <p>An improvement over the previous solution is to use a <em>token</em> to authenticate requests.</p> 
+        <p>The idea is that the client application exchanges authentication credentials for an authentication token, and in subsequent requests just sends this token.</p> 
+        <p>Tokens are usually given out with an expiration time, after which they become invalid and a new token needs to be obtained. The potential damage that can be caused if a token is leaked is much smaller due to their short life span.</p> 
+        <p>There are many ways to implement tokens. A straightforward implementation is to generate a random sequence of characters of certain length that is stored with the user and the password in the database, possibly with an expiration date as well. The token then becomes sort of a plain text password, in that can be easily verified with a string comparison, plus a check of its expiration date.</p> 
+        <p>A more elaborated implementation that requires no server side storage is to use a cryptographically signed message as a token. This has the advantage that the information related to the token, namely the user for which the token was generated, is encoded in the token itself and protected against tampering with a strong cryptographic signature.</p> 
+        <p>Flask uses a similar approach to write secure cookies. This implementation is based on a package called itsdangerous, which I will also use here.</p> 
+        <p>The token generation and verification can be implemented as additional methods in the <code>User</code> model:</p> 
+        <pre><code>from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
+
+class User(db.Model):
+    # ...
+
+    def generate_auth_token(self, expiration = 600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+        return s.dumps({ 'id': self.id })
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None # valid token, but expired
+        except BadSignature:
+            return None # invalid token
+        user = User.query.get(data['id'])
+        return user
+</code></pre> 
+        <p>In the <code>generate_auth_token()</code> method the token is an encrypted version of a dictionary that has the <code>id</code> of the user. The token will also have an expiration time embedded in it, which by default will be of ten minutes (600 seconds).</p> 
+        <p>The verification is implemented in a <code>verify_auth_token()</code> static method. A static method is used because the user will only be known once the token is decoded. If the token can be decoded then the <code>id</code> encoded in it is used to load the user, and that user is returned.</p> 
+        <p>The API needs a new endpoint that the client can use to request a token:</p> 
+        <pre><code>@app.route('/api/token')
+@auth.login_required
+def get_auth_token():
+    token = g.user.generate_auth_token()
+    return jsonify({ 'token': token.decode('ascii') })
+</code></pre> 
+        <p>Note that this endpoint is protected with the <code>auth.login_required</code> decorator from Flask-HTTPAuth, which requires that username and password are provided.</p> 
+        <p>What remains is to decide how the client is to include this token in a request.</p> 
+        <p>The HTTP Basic Authentication protocol does not specifically require that usernames and passwords are used for authentication, these two fields in the HTTP header can be used to transport any kind of authentication information. For token based authentication the token can be sent as a username, and the password field can be ignored.</p> 
+        <p>This means that now the server can get some requests authenticated with username and password, while others authenticated with an authentication token. The <code>verify_password</code> callback needs to support both authentication styles:</p> 
+        <pre><code>@auth.verify_password
+def verify_password(username_or_token, password):
+    # first try to authenticate by token
+    user = User.verify_auth_token(username_or_token)
+    if not user:
+        # try to authenticate with username/password
+        user = User.query.filter_by(username = username_or_token).first()
+        if not user or not user.verify_password(password):
+            return False
+    g.user = user
+    return True
+</code></pre> 
+        <p>This new version of the <code>verify_password</code> callback attempts authentication twice. First it tries to use the username argument as a token. If that doesn't work, then username and password are verified as before.</p> 
+        <p>The following curl request gets an authentication token:</p> 
+        <pre><code>$ curl -u miguel:python -i -X GET http://127.0.0.1:5000/api/token
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 139
+Server: Werkzeug/0.9.4 Python/2.7.3
+Date: Thu, 28 Nov 2013 20:04:15 GMT
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsImV4cCI6MTM4NTY2OTY1NSwiaWF0IjoxMzg1NjY5MDU1fQ.eyJpZCI6MX0.XbOEFJkhjHJ5uRINh2JA1BPzXjSohKYDRT472wGOvjc"
+}
+</code></pre> 
+        <p>Now the protected resource can be obtained authenticating with the token:</p> 
+        <pre><code>$ curl -u eyJhbGciOiJIUzI1NiIsImV4cCI6MTM4NTY2OTY1NSwiaWF0IjoxMzg1NjY5MDU1fQ.eyJpZCI6MX0.XbOEFJkhjHJ5uRINh2JA1BPzXjSohKYDRT472wGOvjc:unused -i -X GET http://127.0.0.1:5000/api/resource
+HTTP/1.0 200 OK
+Content-Type: application/json
+Content-Length: 30
+Server: Werkzeug/0.9.4 Python/2.7.3
+Date: Thu, 28 Nov 2013 20:05:08 GMT
+
+{
+  "data": "Hello, miguel!"
+}
+</code></pre> 
+        <p>Note that in this last request the password is written as the word <code>unused</code>. The password in this request can be anything, since it isn't used.</p> 
+        <h2>OAuth Authentication</h2> 
+        <p>When talking about RESTful authentication the OAuth protocol is usually mentioned.</p> 
+        <p>So what is OAuth?</p> 
+        <p>OAuth can be many things. It is most commonly used to allow an application (the <em>consumer</em>) to access data or services that the user (the <em>resource owner</em>) has with another service (the <em>provider</em>), and this is done in a way that prevents the consumer from knowing the login credentials that the user has with the provider.</p> 
+        <p>For example, consider a website or application that asks you for permission to access your Facebook account and post something to your timeline. In this example you are the resource holder (you own your Facebook timeline), the third party application is the consumer and Facebook is the provider. Even if you grant access and the consumer application writes to your timeline, it never sees your Facebook login information.</p> 
+        <p>This usage of OAuth does not apply to a client/server RESTful API. Something like this would only make sense if your RESTful API can be accessed by third party applications (consumers).</p> 
+        <p>In the case of a direct client/server communication there is no need to hide login credentials, the client (curl in the examples above) receives the credentials from the user and uses them to authenticate requests with the server directly.</p> 
+        <p>OAuth can do this as well, and then it becomes a more elaborated version of the example described in this article. This is commonly referred to as the "two-legged OAuth", to contrast it to the more common "three-legged OAuth".</p> 
+        <p>If you decide to support OAuth there are a few implementations available for Python listed in the <a href="http://oauth.net/code/">OAuth website</a>.</p> 
+        <h2>Conclusion</h2> 
+        <p>I hope this article helped you understand how to implement user authentication for your API. </p> 
+        <p>Once again, you can download and play with a fully working implementation of the server described above. You can find the software on my github site: <a href="https://github.com/miguelgrinberg/REST-auth">REST-auth</a>.</p> 
+        <p>If you have any questions or found any flaws in the solution I presented please let me know below in the comments.</p> 
+        <p>Miguel</p>
+       </div> 
+       <div class="social-bar"> 
+        <table> 
+         <tbody>
+          <tr> 
+           <td>
+            <div class="social-box" style="padding-top: 8px;">
+             <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask" data-via="miguelgrinberg">Tweet</a>
+            </div></td> 
+           <td>
+            <div class="social-box" style="padding-left: 6px;">
+             <div class="fb-like" data-href="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask" data-send="false" data-layout="button" data-width="450" data-show-faces="false" data-font="verdana"></div>
+            </div></td> 
+           <td>
+            <div class="social-box" style="padding-top: 8px;">
+             <div class="g-plusone" data-size="medium" data-annotation="none" data-href="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask"></div>
+            </div></td> 
+           <td>
+            <div class="social-box" style="padding-top: 8px;">
+             <script type="IN/Share" data-url="http://blog.miguelgrinberg.com/post/restful-authentication-with-flask"></script>
+            </div></td> 
+          </tr> 
+         </tbody>
+        </table> 
+       </div> 
+       <h4 style="text-align: right"><a name="comments"></a>181 comments</h4> 
+       <div class="comment"> 
+        <ul> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/3770ed402ff4edcc7951ded9541f0a02?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#1</span> <span class="label label-primary">paramonies</span> said <span class="flask-moment" data-timestamp="2013-11-28T14:59:47Z" data-format="fromNow(0)" data-refresh="0">2013-11-28T14:59:47Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Miguel, wonderful as always. Thanks to you, I became a fan of Flask</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/9e2c6eddda9e041f0113e3f9f89d39e8?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#2</span> <span class="label label-primary">Saša</span> said <span class="flask-moment" data-timestamp="2013-11-29T10:15:09Z" data-format="fromNow(0)" data-refresh="0">2013-11-29T10:15:09Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">I am concerned about 2 queries to the database to check if credentials are good, and getting user object. If your API is used heavily it will affect performance. How would you work around this issue if you have restful API in flask and for example AngularJS and Android clients? Cash user object in Redis or somewhere and invalidate on each change to the user or set TTL on it? Also, how would you ensure idempotency (ensure that if same requests is sent a few times only one is executed) of requests? Have some decorator around this requests and in it also store/check in redis some flag that it is or it is not already done? Thanks!</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#3</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-11-29T18:11:27Z" data-format="fromNow(0)" data-refresh="0">2013-11-29T18:11:27Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Saša: when you say "two queries", do you mean the two methods of verification in the verify_password callback, namely token and then username/password? If you assume that clients use tokens most of the time then the second query will never trigger, only during token renewal this would happen. And if that bothers you then you could use the password field in the authentication header to indicate the username field is a token, and that would address the issue completely. About idempotency, I'm not sure it is what you are saying. An idempotent request is one that returns the same response when it is called multiple times, the all obviously need to execute, the key is that repeating the request does not change anything. The POST request to create a user is not idempotent, the GET request that gets the protected resource is. I don't think adding a Redis cache layer is any more complex for this example, as long as you handle the caching logic things should work just fine.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/ce758ecf6bff06861aa9dad5c743ccea?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#4</span> <span class="label label-primary">ck</span> said <span class="flask-moment" data-timestamp="2013-11-30T12:14:33Z" data-format="fromNow(0)" data-refresh="0">2013-11-30T12:14:33Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Great tutorial, as always, Miguel :) Just one question: How is salting handled in passlib? Does the library take care of that?</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#5</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-11-30T17:56:43Z" data-format="fromNow(0)" data-refresh="0">2013-11-30T17:56:43Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@ck: Yes, passlib handles salts transparently. Each hashed password gets its own randomly generated salt, which is appended to the hash, so there is no need to store it separately in the database. During verification passlib extracts the salt from the stored hash and uses it again on the password that needs to be verified.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/1d4899925a4d64c33dcba2d76d7f20dc?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#6</span> <span class="label label-primary"><a href="http://codetrips.com">Marco Massenzio</a></span> said <span class="flask-moment" data-timestamp="2013-12-08T09:16:01Z" data-format="fromNow(0)" data-refresh="0">2013-12-08T09:16:01Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Very interesting article, thanks for sharing. A couple of things: I'm wondering whether the code changes significantly if using Digest auth (whilst not perfect, and not as ideal as using https:// it sill alleviates the cleartext monstrosity of Basic HTTP). Also, just wanted to let you know that your blog renders poorly on an iPad: the right-hand side column essentially gets in the way of the text and makes it illegible (both in landscape or portrait). No big deal, but I thought you may want to know in case you have some control over the CSS of the page.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#7</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-08T18:22:13Z" data-format="fromNow(0)" data-refresh="0">2013-12-08T18:22:13Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Marco: Digest Auth is not a replacement for SSL. It is correct that at least you don't send clear text passwords, but with digest it is not possible to create user accounts or to change passwords, since for those the password needs to reach the server in clear text so that it is hashed. You could combine SSL for the account admin routes and digest auth for the regular routes, but if you are already doing SSL you might as well do everything encrypted. I'll look at the formatting of the page, thanks for letting me know.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/b2bc42f69510d6a1d2c9cde1c2214d24?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#8</span> <span class="label label-primary">lukas</span> said <span class="flask-moment" data-timestamp="2013-12-09T08:58:49Z" data-format="fromNow(0)" data-refresh="0">2013-12-09T08:58:49Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">the flask restfull is more problematic that I though. For: class Token(Resource): @auth.login_required def get(self): token = g.user.generate_auth_token(600, api.app.config["SECRET_KEY"]) return jsonify({"token": token.edcode("ascii"), "duration": 600 }) I got TypeError: verify_password() takes exactly 2 arguments (3 given) so I changed def verify_password(username_or_token, password): to def verify_password(username_or_token, password, bla): and now it's TypeError: verify_password() takes exactly 2 arguments (3 given)</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#9</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-10T05:12:42Z" data-format="fromNow(0)" data-refresh="0">2013-12-10T05:12:42Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@lukas: the problem is likely in your implementation of the verify_password callback. It would help me to see the stack trace of the failure, without that I can only guess.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/b2bc42f69510d6a1d2c9cde1c2214d24?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#10</span> <span class="label label-primary">lukas</span> said <span class="flask-moment" data-timestamp="2013-12-10T06:19:26Z" data-format="fromNow(0)" data-refresh="0">2013-12-10T06:19:26Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Here is the souce code https://github.com/lukasz-madon/crud/tree/master/server</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/b2bc42f69510d6a1d2c9cde1c2214d24?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#11</span> <span class="label label-primary">lukas</span> said <span class="flask-moment" data-timestamp="2013-12-10T06:20:55Z" data-format="fromNow(0)" data-refresh="0">2013-12-10T06:20:55Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Sure! The implemention is the same. Stacktrace doesn't help much. Traceback (most recent call last): File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask\app.py", line 1836, in __call__ return self.wsgi_app(environ, start_response) File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask\app.py", line 1820, in wsgi_app response = self.make_response(self.handle_exception(e)) File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask_restful\__init__.py", line 250, in error_router return self.handle_error(e) File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask_restful\__init__.py", line 268, in handle_error raise exc TypeError: verify_password() takes exactly 3 arguments (2 given)</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#12</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-10T06:37:12Z" data-format="fromNow(0)" data-refresh="0">2013-12-10T06:37:12Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Lukas: You can't use a view function decorator on a method. Flask provides an alternative way to attach decorators, see http://flask.pocoo.org/docs/views/#decorating-views.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/b2bc42f69510d6a1d2c9cde1c2214d24?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#13</span> <span class="label label-primary">lukas</span> said <span class="flask-moment" data-timestamp="2013-12-11T15:37:41Z" data-format="fromNow(0)" data-refresh="0">2013-12-11T15:37:41Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">I posted 4 comments, only 2 are published. Traceback (most recent call last): File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask\app.py", line 1836, in __call__ return self.wsgi_app(environ, start_response) File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask\app.py", line 1820, in wsgi_app response = self.make_response(self.handle_exception(e)) File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask_restful\__init__.py", line 250, in error_router return self.handle_error(e) File "c:\Users\lukas\Desktop\web\project-mgmt\server\venv\lib\site-packages\fl ask_restful\__init__.py", line 268, in handle_error raise exc TypeError: verify_password() takes exactly 3 arguments (2 given) </p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#14</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-11T17:03:48Z" data-format="fromNow(0)" data-refresh="0">2013-12-11T17:03:48Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@lukas: how you seen my message above? You are repeating the same stack trace as before.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/31f80349a81989ad1f6d718dbd86cc3d?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#15</span> <span class="label label-primary">Gurom</span> said <span class="flask-moment" data-timestamp="2013-12-14T13:48:20Z" data-format="fromNow(0)" data-refresh="0">2013-12-14T13:48:20Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Dear Miguel, Perhaps I'am very "green" in Flask knowledge, but please make some comments. Please look at the method: @staticmethod def verify_auth_token(token): .......... user = User.query.get(data['id']) return user Each time we use db-request for reading "user" . Such request will be used for each "click" of webapp. I think that it is not correct for server algorithm. Do you have idea how to get "user" from the quick cache?</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#16</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-14T18:27:43Z" data-format="fromNow(0)" data-refresh="0">2013-12-14T18:27:43Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Gurom: You are correct, each time a request arrives the verify_auth_token() function will load the user from the database. This example does not have a cache, so that's the only way to obtain the user. It may seem to you that this is expensive, but locating a user by its primary key id is one of the simplest database operations, so I would only optimize this if it is found to be causing performance problems. In a real application you would be doing way more work during the request, reading the user will be insignificant compared to the real work done by the request.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/6f2c1c00d296f65c84520b5c654c969a?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#17</span> <span class="label label-primary">Jacopo</span> said <span class="flask-moment" data-timestamp="2013-12-27T12:14:55Z" data-format="fromNow(0)" data-refresh="0">2013-12-27T12:14:55Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Thanks for the tutorial awesome as usual. I have a question that might slightly off-topic but how would you protect the registration endpoint from bots? Here are few ideas I can think of and why none of them are ideal: - Confirmation email with activation URL. This seems the best idea but I find it inconvenient for the user. - Client-side captcha written in Javascript and validated before the post request to the registration endpoint. This is easy to implement but obviously doesn't protect you at all from registration requests outside of the client. - Checking the referer in the request header against a whitelist of allowed clients. This is a fairly simple solution as well but doesn't work against spoofing. Which solution would you suggest? </p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#18</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-27T19:12:12Z" data-format="fromNow(0)" data-refresh="0">2013-12-27T19:12:12Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Jacopo: On a real API I would probably not have user registration as part of the API. Registration would be done on a web site, where you can have CSRF protection and if you like them, captchas. The method to prevent bogus registrations varies depending on the application and is a hard problem. You may need to be prepared to ban accounts after they are found spamming or doing other bad things.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/2e047f03314a1e909e6004dfe18387ca?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#19</span> <span class="label label-primary">bluekirai</span> said <span class="flask-moment" data-timestamp="2013-12-29T12:14:42Z" data-format="fromNow(0)" data-refresh="0">2013-12-29T12:14:42Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Hi! Thanks for writing, Flask is definitely great for API's, I am going to use it from now on. I have two design level questions regarding the API that I encountered. 1) With this design, how to handle the expiration on mobile devices? By setting an expiry time of ten minutes for token, the developer would have to store username + password locally to mobile device, and re-authenticate if token expires? My first instinct would be setting the expiry time to something like 10 days but this would not really be a solution. 2) Why you prefer using the authorization instead of delivering the token in headers as its own field? ("X-Auth-Token" or such) </p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#20</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2013-12-29T18:44:38Z" data-format="fromNow(0)" data-refresh="0">2013-12-29T18:44:38Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@bluekirai: 1) if you are going to use token that have expiration then the client needs to store credentials. You can opt to not make your tokens expire if you prefer, then once a token is obtained it can be used forever. Alternatively, with this particular implementation you can use a token as authorization in a request that gets a new token. That way you can pass from token to token without having to have client credentials stored. 2) I'm using the Flask-HTTPAuth extension (which I also wrote) to handle the server side authentication. It is perfectly fine to send the token in the X-Auth-Token and handle it yourself.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/4303db0c9ede8bea8f4dd6eb6e5e055a?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#21</span> <span class="label label-primary"><a href="www.adthink-media.com">Damien Mathieu</a></span> said <span class="flask-moment" data-timestamp="2014-01-28T16:57:56Z" data-format="fromNow(0)" data-refresh="0">2014-01-28T16:57:56Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Hi, Thanks for your interesting article. I created an flask app like you. But i have a problem. The authentication is ok when i run the flask app in dev (on localhost) But behind a web server (apache), the authentication is broken (error 500). i use mod_wsgi. Do you have an idea ? Regards, damien </p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#22</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2014-01-28T17:24:34Z" data-format="fromNow(0)" data-refresh="0">2014-01-28T17:24:34Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Damien: Enable logging of errors in your Flask server so that you can determine what the source of the code 500 error is.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/71e2f7411a9f9b821de2401d8520307c?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#23</span> <span class="label label-primary">Sam M</span> said <span class="flask-moment" data-timestamp="2014-02-17T11:54:40Z" data-format="fromNow(0)" data-refresh="0">2014-02-17T11:54:40Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Miguel, again, an excellent article. I will be using some parts of it (the idea of token based authentication) to create an API authentication mechanism for my app. So thanks for that. But a question, why not simply use generate_password_hash and check_password_hash from werkzeug instead of using passlib?</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/729e26a2a2c7ff24a71958d4aa4e5f35?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#24</span> <span class="label label-danger">Miguel Grinberg</span> said <span class="flask-moment" data-timestamp="2014-02-17T20:55:34Z" data-format="fromNow(0)" data-refresh="0">2014-02-17T20:55:34Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">@Sam: using Werkzeug's hashing should be fine, it's similar. This is just a personal preference. While Werkzeug's hashing functions are unlikely to be updated when using a dedicated package it is expected that new algorithms will be more likely to be made available.</p> 
+           </div> 
+          </div> </li> 
+         <li> 
+          <div class="comment-thumbnail">
+           <img src="https://gravatar.com/avatar/59738c31901a848e919bdd6fbb740708?s=60&amp;d=identicon">
+          </div> 
+          <div class="comment-body"> 
+           <p> <span class="label label-default">#25</span> <span class="label label-primary">zimyand</span> said <span class="flask-moment" data-timestamp="2014-02-19T02:29:12Z" data-format="fromNow(0)" data-refresh="0">2014-02-19T02:29:12Z</span> </p> 
+           <div style="overflow: auto;"> 
+            <p style="white-space: pre-wrap;">Hm.. The problem here is if almost expired token is stolen - you can get a new token with the old one. Did you consider accepting only username and password to get a new token?</p> 
+           </div> 
+          </div> </li> 
+        </ul> 
+       </div> 
+       <div class="page"> 
+        <ul class="pager"> 
+         <li class="previous disabled"> <a href="#">««</a> </li> 
+         <li class="previous disabled"> <a href="#">«</a> </li> 
+         <li class="next"> <a href="/post/restful-authentication-with-flask/page/0#comments">»»</a> </li> 
+         <li class="next"> <a href="/post/restful-authentication-with-flask/page/2#comments">»</a> </li> 
+        </ul> 
+       </div> 
+       <h3><a name="commentform"></a>Leave a Comment</h3> 
+       <form action="#commentform" method="post" class="form" role="form"> 
+        <input id="csrf_token" name="csrf_token" type="hidden" value="IjViZjk1NDU1OTE4MDQzNjM3Yjg1YWYxMWViYjNmZmY2OWNjMDU0ZTgi.DKBcSw.ZtNEZUJjKCaYfiD9lE8Ui_ysxAA"> 
+        <div class="form-group  required">
+         <label class="control-label" for="name">Name</label> 
+         <input class="form-control" id="name" name="name" required type="text" value=""> 
+        </div> 
+        <div class="form-group ">
+         <label class="control-label" for="url">URL</label> 
+         <input class="form-control" id="url" name="url" type="text" value=""> 
+        </div> 
+        <div class="form-group  required">
+         <label class="control-label" for="email">Email</label> 
+         <input class="form-control" id="email" name="email" required type="text" value=""> 
+        </div> 
+        <div class="form-group  required">
+         <label class="control-label" for="comment">Comment</label> 
+         <textarea class="form-control" id="comment" name="comment" required></textarea> 
+        </div> 
+        <div class="form-group ">
+         <label class="control-label" for="captcha">Captcha</label> 
+         <script src="https://www.google.com/recaptcha/api.js" async defer></script> 
+         <div class="g-recaptcha" data-sitekey="6Ld5Zs4SAAAAAOY0DOi4r18bgHlEaz41qAoRf__S"></div> 
+        </div> 
+        <input class="btn btn-default" id="submit" name="submit" type="submit" value="Submit"> 
+       </form> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="col-md-4 sidebar-bg"> 
+     <div id="sidebar"> 
+      <h1>Check Out My Kickstarter Project!</h1> 
+      <p>My <a href="https://www.kickstarter.com/projects/1124925856/the-new-and-improved-flask-mega-tutorial">Kickstarter</a> project is now live!</p> 
+      <p>Would you like to support my effort to do a major update to the Flask Mega-Tutorial?</p> 
+      <center>
+       <p><a href="https://www.kickstarter.com/projects/1124925856/the-new-and-improved-flask-mega-tutorial"><img src="https://blog.miguelgrinberg.com/static/kickstarter_badge.png"></a></p>
+      </center> 
+      <p>I'm hoping to get funding to work on a much deserved update to this tutorial!</p> 
+      <p>If you have learned from the tutorial and would like to see it updated to 2017 technology including Python 3.6, please head over to the <a href="https://www.kickstarter.com/projects/1124925856/the-new-and-improved-flask-mega-tutorial">Kickstarter page</a> for more information on the campaign.</p> 
+      <center>
+       <p><a href="https://www.kickstarter.com/projects/1124925856/the-new-and-improved-flask-mega-tutorial"><img src="https://blog.miguelgrinberg.com/static/kickstarter.jpg" style="border: 2px solid black;"></a></p>
+      </center> 
+      <h1>About Miguel</h1> 
+      <img style="float: right; margin: 0px 8px 8px 0px; padding: 4px; border: 1px solid #ccc;" src="/static/miguel.jpg"> 
+      <p>Welcome to my blog!</p> 
+      <p>I'm a software engineer, photographer and filmmaker in Portland, Oregon, USA.</p> 
+      <p>You can also find me on <a href="https://www.facebook.com/miguelgrinbergblog">Facebook</a>, <a href="https://plus.google.com/u/0/117786742456929977820">Google+</a>, <a href="http://www.linkedin.com/in/miguelgrinberg">LinkedIn</a>, <a href="https://github.com/miguelgrinberg">Github</a> and <a href="https://twitter.com/#!/miguelgrinberg">Twitter</a>.</p> 
+      <p>Thank you for visiting!</p> 
+      <h1>Categories</h1> 
+      <ul> 
+       <li> <a href="/category/AWS/feed"> <img src="/static/rss-small.png" title="AWS RSS Feed" label="AWS RSS Feed"> </a> <span class="label label-primary"><a href="/category/AWS">AWS</a></span> (1) </li> 
+       <li> <a href="/category/Arduino/feed"> <img src="/static/rss-small.png" title="Arduino RSS Feed" label="Arduino RSS Feed"> </a> <span class="label label-primary"><a href="/category/Arduino">Arduino</a></span> (7) </li> 
+       <li> <a href="/category/Authentication/feed"> <img src="/static/rss-small.png" title="Authentication RSS Feed" label="Authentication RSS Feed"> </a> <span class="label label-primary"><a href="/category/Authentication">Authentication</a></span> (5) </li> 
+       <li> <a href="/category/Blog/feed"> <img src="/static/rss-small.png" title="Blog RSS Feed" label="Blog RSS Feed"> </a> <span class="label label-primary"><a href="/category/Blog">Blog</a></span> (1) </li> 
+       <li> <a href="/category/C++/feed"> <img src="/static/rss-small.png" title="C++ RSS Feed" label="C++ RSS Feed"> </a> <span class="label label-primary"><a href="/category/C++">C++</a></span> (5) </li> 
+       <li> <a href="/category/Cloud/feed"> <img src="/static/rss-small.png" title="Cloud RSS Feed" label="Cloud RSS Feed"> </a> <span class="label label-primary"><a href="/category/Cloud">Cloud</a></span> (4) </li> 
+       <li> <a href="/category/Database/feed"> <img src="/static/rss-small.png" title="Database RSS Feed" label="Database RSS Feed"> </a> <span class="label label-primary"><a href="/category/Database">Database</a></span> (6) </li> 
+       <li> <a href="/category/Filmmaking/feed"> <img src="/static/rss-small.png" title="Filmmaking RSS Feed" label="Filmmaking RSS Feed"> </a> <span class="label label-primary"><a href="/category/Filmmaking">Filmmaking</a></span> (6) </li> 
+       <li> <a href="/category/Flask/feed"> <img src="/static/rss-small.png" title="Flask RSS Feed" label="Flask RSS Feed"> </a> <span class="label label-primary"><a href="/category/Flask">Flask</a></span> (51) </li> 
+       <li> <a href="/category/Games/feed"> <img src="/static/rss-small.png" title="Games RSS Feed" label="Games RSS Feed"> </a> <span class="label label-primary"><a href="/category/Games">Games</a></span> (1) </li> 
+       <li> <a href="/category/HTML5/feed"> <img src="/static/rss-small.png" title="HTML5 RSS Feed" label="HTML5 RSS Feed"> </a> <span class="label label-primary"><a href="/category/HTML5">HTML5</a></span> (1) </li> 
+       <li> <a href="/category/Heroku/feed"> <img src="/static/rss-small.png" title="Heroku RSS Feed" label="Heroku RSS Feed"> </a> <span class="label label-primary"><a href="/category/Heroku">Heroku</a></span> (1) </li> 
+       <li> <a href="/category/Javascript/feed"> <img src="/static/rss-small.png" title="Javascript RSS Feed" label="Javascript RSS Feed"> </a> <span class="label label-primary"><a href="/category/Javascript">Javascript</a></span> (4) </li> 
+       <li> <a href="/category/Microservices/feed"> <img src="/static/rss-small.png" title="Microservices RSS Feed" label="Microservices RSS Feed"> </a> <span class="label label-primary"><a href="/category/Microservices">Microservices</a></span> (2) </li> 
+       <li> <a href="/category/Movie Reviews/feed"> <img src="/static/rss-small.png" title="Movie Reviews RSS Feed" label="Movie Reviews RSS Feed"> </a> <span class="label label-primary"><a href="/category/Movie Reviews">Movie Reviews</a></span> (5) </li> 
+       <li> <a href="/category/Netflix/feed"> <img src="/static/rss-small.png" title="Netflix RSS Feed" label="Netflix RSS Feed"> </a> <span class="label label-primary"><a href="/category/Netflix">Netflix</a></span> (5) </li> 
+       <li> <a href="/category/Node.js/feed"> <img src="/static/rss-small.png" title="Node.js RSS Feed" label="Node.js RSS Feed"> </a> <span class="label label-primary"><a href="/category/Node.js">Node.js</a></span> (1) </li> 
+       <li> <a href="/category/OpenStack/feed"> <img src="/static/rss-small.png" title="OpenStack RSS Feed" label="OpenStack RSS Feed"> </a> <span class="label label-primary"><a href="/category/OpenStack">OpenStack</a></span> (1) </li> 
+       <li> <a href="/category/Personal/feed"> <img src="/static/rss-small.png" title="Personal RSS Feed" label="Personal RSS Feed"> </a> <span class="label label-primary"><a href="/category/Personal">Personal</a></span> (2) </li> 
+       <li> <a href="/category/Photography/feed"> <img src="/static/rss-small.png" title="Photography RSS Feed" label="Photography RSS Feed"> </a> <span class="label label-primary"><a href="/category/Photography">Photography</a></span> (7) </li> 
+       <li> <a href="/category/Product Reviews/feed"> <img src="/static/rss-small.png" title="Product Reviews RSS Feed" label="Product Reviews RSS Feed"> </a> <span class="label label-primary"><a href="/category/Product Reviews">Product Reviews</a></span> (2) </li> 
+       <li> <a href="/category/Programming/feed"> <img src="/static/rss-small.png" title="Programming RSS Feed" label="Programming RSS Feed"> </a> <span class="label label-primary"><a href="/category/Programming">Programming</a></span> (65) </li> 
+       <li> <a href="/category/Project Management/feed"> <img src="/static/rss-small.png" title="Project Management RSS Feed" label="Project Management RSS Feed"> </a> <span class="label label-primary"><a href="/category/Project Management">Project Management</a></span> (1) </li> 
+       <li> <a href="/category/Python/feed"> <img src="/static/rss-small.png" title="Python RSS Feed" label="Python RSS Feed"> </a> <span class="label label-primary"><a href="/category/Python">Python</a></span> (60) </li> 
+       <li> <a href="/category/REST/feed"> <img src="/static/rss-small.png" title="REST RSS Feed" label="REST RSS Feed"> </a> <span class="label label-primary"><a href="/category/REST">REST</a></span> (5) </li> 
+       <li> <a href="/category/Rackspace/feed"> <img src="/static/rss-small.png" title="Rackspace RSS Feed" label="Rackspace RSS Feed"> </a> <span class="label label-primary"><a href="/category/Rackspace">Rackspace</a></span> (1) </li> 
+       <li> <a href="/category/Raspberry Pi/feed"> <img src="/static/rss-small.png" title="Raspberry Pi RSS Feed" label="Raspberry Pi RSS Feed"> </a> <span class="label label-primary"><a href="/category/Raspberry Pi">Raspberry Pi</a></span> (6) </li> 
+       <li> <a href="/category/Robotics/feed"> <img src="/static/rss-small.png" title="Robotics RSS Feed" label="Robotics RSS Feed"> </a> <span class="label label-primary"><a href="/category/Robotics">Robotics</a></span> (6) </li> 
+       <li> <a href="/category/Security/feed"> <img src="/static/rss-small.png" title="Security RSS Feed" label="Security RSS Feed"> </a> <span class="label label-primary"><a href="/category/Security">Security</a></span> (7) </li> 
+       <li> <a href="/category/Video/feed"> <img src="/static/rss-small.png" title="Video RSS Feed" label="Video RSS Feed"> </a> <span class="label label-primary"><a href="/category/Video">Video</a></span> (5) </li> 
+       <li> <a href="/category/Windows/feed"> <img src="/static/rss-small.png" title="Windows RSS Feed" label="Windows RSS Feed"> </a> <span class="label label-primary"><a href="/category/Windows">Windows</a></span> (1) </li> 
+      </ul> 
+     </div> 
+    </div> 
+   </div> 
+   <div id="footer"> 
+    <p>© 2012-<script type="text/javascript">document.write(new Date().getFullYear());</script> by Miguel Grinberg. All rights reserved. <a href="mailto:webmaster _at_ miguelgrinberg _dot_ com">Questions?</a></p> 
+   </div> 
+  </div> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script> 
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery.colorbox/1.4.33/jquery.colorbox-min.js"></script> 
+  <script type="text/javascript" src="/static/prettify.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment-with-langs.min.js"></script> 
+  <script>
+function flask_moment_render(elem) {
+    $(elem).text(eval('moment("' + $(elem).data('timestamp') + '").' + $(elem).data('format') + ';'));
+    $(elem).removeClass('flask-moment');
+}
+function flask_moment_render_all() {
+    $('.flask-moment').each(function() {
+        flask_moment_render(this);
+        if ($(this).data('refresh')) {
+            (function(elem, interval) { setInterval(function() { flask_moment_render(elem) }, interval); })(this, $(this).data('refresh'));
+        }
+    })
+}
+$(document).ready(function() {
+    flask_moment_render_all();
+});
+</script> 
+  <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-4777284-15']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script> 
+  <script type="text/javascript">
+        $(document).ready(function(){
+            $(".gallery").colorbox({rel:".gallery",maxWidth:"95%",maxHeight:"95%",scalePhotos:true});
+            // add prettyprint class to all <pre><code></code></pre> blocks
+            var prettify = false;
+            $("pre code").parent().each(function() {
+                $(this).addClass('prettyprint');
+                prettify = true;
+            });
+            prettyPrint();
+        });
+    </script>   
+ </body>
+</html>

@@ -1,0 +1,75 @@
+<html>
+ <head> 
+  <!-- $Revision: 1.2 $ $Date: 2005/07/15 13:27:12 $ --> 
+  <title>Trusted users and third party authentication</title> 
+  <link REL="stylesheet" HREF="../../base/templates/topics.css"> 
+  <meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1"> 
+ </head>
+ <body> 
+  <!-- Start location --> 
+  <p class="lid"><a href="../../admintocs/TOC_FUNC_TYPE.html">Secure Global Desktop Administration Guide</a> &gt; <a href="../../admintocs/TOC_FUNC_TYPE.html#USERSAUTH">Users and authentication</a> &gt; Trusted users and third party authentication</p> 
+  <!-- End location --> 
+  <h1>Trusted users and third party authentication</h1> 
+  <p>Third party authentication gives users access to Secure Global Desktop <strong>without</strong> having to authenticate to a Secure Global Desktop server. Secure Global Desktop is able to trust the third party authentication mechanism because client applications (such as the browser-based webtop) and the Secure Global Desktop server have a shared secret: the username and password of a trusted user.</p> 
+  <p>In a standard installation, there is just one trusted user. However, you might want to create additional trusted users if you:</p> 
+  <ul>
+   <li>relocate the browser-based webtop to a different JavaServer Pages (JSP) container on a different host.</li>
+   <li>develop your own client applications, using the Secure Global Desktop <code>com.tarantella.tta.webservices.client.views</code> package, either on the same host as Secure Global Desktop or on a different host.</li>
+   <li>have concerns about the security of the default trusted user.</li>
+  </ul> 
+  <p>You create and maintain the "database" of trusted users on the Secure Global Desktop server. Usually client applications only use the credentials of a single trusted user to access Secure Global Desktop services.</p> 
+  <p>To create a new trusted user:</p> 
+  <ol>
+   <li>Stop the Secure Global Desktop Web Server: <code>tarantella webserver stop</code>. </li>
+   <li>Add the new trusted user to the "database" of trusted users on the Secure Global Desktop server. 
+    <ul>
+     <li>Think of a username and password for the trusted user.</li>
+     <li>Use <code>tarantella webserver <a href="../../base/standard/tta_webserver_add_trusted_user.html">add_trusted_user <var>username</var> </a> </code> to create the trusted user. When prompted, type the password. </li>
+     <li>Use <code>tarantella webserver <a href="../../base/standard/tta_webserver_list_trusted_users.html">list_trusted_users</a> </code> to check the user has been created.</li>
+     <li>Check that the trusted user works by visiting <code>http://<var>server</var>/axis/services/rpc/externalauth</code>. When prompted, log in as the trusted user.</li>
+    </ul> </li>
+   <li>Add the new trusted user to the webtop web application. 
+    <ul>
+     <li>Change to the <code><a href="../../base/gettingstarted/where_installed.html">/opt/tarantella</a>/webserver/tomcat/<var>version</var>/webapps/sgd/WEB-INF/classes</code> directory. </li>
+     <li>Run the following command to encode the username/password of the trusted user: <pre class="codeblock"><a href="../../base/gettingstarted/where_installed.html">/opt/tarantella</a>/bin/jre/bin/java \
+   com.tarantella.tta.webservices.client.views.SgdPasswd \ 
+   --encode <var>trusted_username</var>:<var>password</var></pre> </li>
+     <li>Copy the output.</li>
+     <li>Edit the <code><a href="../../base/gettingstarted/where_installed.html">/opt/tarantella</a>/webserver/tomcat/<var>version</var>/webapps/sgd/WEB-INF/classes/com/tarantella/tta/webservices/client/views/Resources.properties</code> file. </li>
+     <li>Replace the text after <code>sggdaccess=</code> with the output obtained above.</li>
+     <li>Save the changes.</li>
+    </ul> <p><strong class="note">Note </strong>If you have relocated the webtop, you must perform this step on the remote host.</p> </li>
+   <li>Start the Secure Global Desktop Web Server: <code>tarantella webserver start</code>.</li>
+   <li>Repeat these steps on each member of the array.</li>
+  </ol> 
+  <p>To change the password of an existing trusted user, you must first delete the user (<code>tarantella webserver <a href="../../base/standard/tta_webserver_delete_trusted_user.html">delete_trusted_user</a></code>) and then follow the above steps to create the user again.</p> 
+  <h2>Information for application developers</h2> 
+  <p>If you are using Secure Global Desktop web services to develop your own applications, the <code>ITarantellaExternalAuth</code> web service is used for third party authentication. This web service is protected with Basic web server authentication so that you can only access it using the credentials of a trusted user:</p> 
+  <ul>
+   <li>The <code>http://<var>server</var>/axis/services/rpc/externalauth</code> URL is protected in the configuration file for the Axis web application: <code><a href="../../base/gettingstarted/where_installed.html">/opt/tarantella</a>/webserver/tomcat/<var>version</var>/webapps/axis/WEB-INF/web.xml</code> </li>
+   <li>The Tomcat component of the Secure Global Desktop Web Server is configured to support Basic web server authentication using Tomcat's MemoryRealm and SHA digested passwords. This is in the Tomcat configuration file: <code> <a href="../../base/gettingstarted/where_installed.html">/opt/tarantella</a>/webserver/tomcat/<var>version</var>/conf/server.xml</code>.</li>
+   <li>The list of trusted users is stored in the Tomcat users configuration file: <code><a href="../../base/gettingstarted/where_installed.html">/opt/tarantella</a>/webserver/tomcat/<var>version</var>/conf/tomcat-users.xml</code> </li>
+  </ul> 
+  <p>The <code>tarantella webserver <a href="../../base/standard/tta_webserver_add_trusted_user.html">add_trusted_user</a> </code>command is the only supported way to store trusted users on the Secure Global Desktop server.</p> 
+  <p>If you have developed your own client applications using the <code>com.tarantella.tta.webservices.client.views</code> package, you can store the trusted user credentials for the application in the same way as the browser-based webtop (see step 3 above). Otherwise, you need to develop your own methods for storing the credentials. </p> 
+  <p>Every time you make a change to a trusted user, you must restart the Secure Global Desktop Web Server.</p> 
+  <div class="relatedpanel"> 
+   <table cellpadding="6" cellspacing="0" class="tableborder"> 
+    <tbody>
+     <tr>
+      <th>Related topics</th>
+     </tr> 
+     <tr>
+      <td> 
+       <ul> 
+        <li><a href="../../base/customizer/webtop_relocate.html">Relocating the browser-based webtop to your own JSP container</a></li> 
+        <li><a href="../../base/standard/external_auth.html">Web server/third party authentication</a></li> 
+        <li><a href="../../base/standard/tta_webserver_add_trusted_user.html">The tarantella webserver add_trusted_user command</a></li> 
+       </ul> </td>
+     </tr>
+    </tbody>
+   </table>
+  </div> 
+  <p class="copyright">Copyright © 1997-2005 Sun Microsystems, Inc. All rights reserved.</p> 
+ </body>
+</html>

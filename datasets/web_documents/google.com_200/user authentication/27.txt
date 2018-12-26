@@ -1,0 +1,474 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html" charset="UTF-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <title>Daniel Gynn • Authenticating Users in a Node App using Express &amp; Passport (Part One)</title> 
+  <meta name="description" content=""> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="stylesheet" type="text/css" href="/assets/build/app.css?v=395b51856b"> 
+  <link rel="shortcut icon" href="/assets/favicon.ico"> 
+  <link rel="canonical" href="http://www.danielgynn.com/build-an-authentication-app-using-express-node-passport/"> 
+  <meta name="referrer" content="origin"> 
+  <meta property="og:site_name" content="Daniel Gynn"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Authenticating Users in a Node App using Express &amp; Passport (Part One)"> 
+  <meta property="og:description" content="In this article we are going to build a Node app from scratch. The app will allow a user to be authenticated locally and save their details to a database. This article will be 'Part 1' of a two-part tutorial. In the second part we will add third-party 0social network"> 
+  <meta property="og:url" content="http://www.danielgynn.com/build-an-authentication-app-using-express-node-passport/"> 
+  <meta property="article:published_time" content="2015-11-22T20:59:00.000Z"> 
+  <meta property="article:modified_time" content="2017-02-10T10:18:02.572Z"> 
+  <meta property="article:tag" content="Express"> 
+  <meta property="article:tag" content="Web"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:title" content="Authenticating Users in a Node App using Express &amp; Passport (Part One)"> 
+  <meta name="twitter:description" content="In this article we are going to build a Node app from scratch. The app will allow a user to be authenticated locally and save their details to a database. This article will be 'Part 1' of a two-part tutorial. In the second part we will add third-party 0social network"> 
+  <meta name="twitter:url" content="http://www.danielgynn.com/build-an-authentication-app-using-express-node-passport/"> 
+  <script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "publisher": "Daniel Gynn",
+    "author": {
+        "@type": "Person",
+        "name": "Daniel Gynn",
+        "image": "//www.gravatar.com/avatar/ffbf0fed6675290eb30783b1c28ec30f?s=250&d=mm&r=x",
+        "url": "http://www.danielgynn.com/author/daniel/"
+    },
+    "headline": "Authenticating Users in a Node App using Express &amp; Passport (Part One)",
+    "url": "http://www.danielgynn.com/build-an-authentication-app-using-express-node-passport/",
+    "datePublished": "2015-11-22T20:59:00.000Z",
+    "dateModified": "2017-02-10T10:18:02.572Z",
+    "keywords": "Express, Web",
+    "description": "In this article we are going to build a Node app from scratch. The app will allow a user to be authenticated locally and save their details to a database. This article will be &#x27;Part 1&#x27; of a two-part tutorial. In the second part we will add third-party 0social network"
+}
+    </script> 
+  <script type="text/javascript" src="/shared/ghost-url.min.js?v=395b51856b"></script> 
+  <script type="text/javascript">
+ghost.init({
+	clientId: "ghost-frontend",
+	clientSecret: "659799cb481b"
+});
+</script> 
+  <meta name="generator" content="Ghost 0.7"> 
+  <link rel="alternate" type="application/rss+xml" title="Daniel Gynn" href="http://www.danielgynn.com/rss/"> 
+ </head> 
+ <body class="post-template tag-express-js tag-learning"> 
+  <nav class="flex flex-ac flex-jsb navigation-bar" role="banner"> 
+   <a class="title-link" href="http://www.danielgynn.com"> <h1>Daniel Gynn.</h1> </a> 
+   <div id="hamburgler" class="hamburgler-icon-wrapper"> 
+    <span class="hamburgler-icon"></span> 
+   </div> 
+   <ul class="nav-list"> 
+    <a class="" href="http://www.danielgynn.com/profile/"><li class="nav-Profile." role="presentation">Profile.</li></a> 
+    <a class="" href="http://www.danielgynn.com/writing/"><li class="nav-Writing." role="presentation">Writing.</li></a> 
+    <a class="" href="http://www.danielgynn.com/photography/"><li class="nav-Photography." role="presentation">Photography.</li></a> 
+   </ul> 
+  </nav> 
+  <div class="hamburgler-menu"> 
+   <ul class="hamburgler-menu-list"> 
+    <a href="http://www.danielgynn.com/profile/" role="presentation">Profile.</a> 
+    <a href="http://www.danielgynn.com/writing/" role="presentation">Writing.</a> 
+    <a href="http://www.danielgynn.com/photography/" role="presentation">Photography.</a> 
+   </ul> 
+  </div> 
+  <main> 
+   <article> 
+    <section class="page__content"> 
+     <progress value="0"></progress> 
+     <article class="mt4"> 
+      <header class="w-80 w-100-tab"> 
+       <h1 class="m0">Authenticating Users in a Node App using Express &amp; Passport (Part One)</h1> 
+       <p class="dis-in-bl m0 flex flex-jfs"><time datetime="22-11-15">22 November, 2015</time>. Posted in <a href="/tag/express-js/">Express</a>, <a href="/tag/learning/">Web</a>.</p> 
+      </header> 
+      <section class="wrap"> 
+       <div class="mb3"> 
+        <p>In this article we are going to build a Node app from scratch. The app will allow a user to be authenticated locally and save their details to a database. This article will be 'Part 1' of a two-part tutorial. In the second part we will add third-party 0social network authentication to the app through Facebook, Twitter and Google+ accounts.</p> 
+        <p>I will be using the <a href="http://expressjs.com/">Express</a> framework for Node and a popular authentication middleware service called <a href="http://passportjs.org/">Passport</a>, as well as <a href="https://www.mongodb.com/">MongoDB</a> to store the user data. </p> 
+        <h2 id="gettingstarted">Getting Started</h2> 
+        <p>You will need to have <a href="https://nodejs.org/en/">Node</a>, with npm, installed globally on your machine, which you can easily do via the <a href="https://nodejs.org/en/download/">downloads page</a> on the Node website. You will also need a Mongo instance running. To get MongoDB setup and ready to use, you can read my article on <a href="http://www.danielgynn.com/getting-started-mongodb/">getting started with MongoDB</a>.</p> 
+        <p>Express has a <a href="http://expressjs.com/starter/generator.html">great tool</a> for quickly generating Node apps, which you will need to install globally.</p> 
+        <pre><code class="language-bash">$ npm install express-generator -g
+</code></pre> 
+        <p>Once the Express generator is installed, we can now use it to generate a new Node app. For this article, I am going to use <a href="http://www.embeddedjs.com/">EJS</a>, Embedded JavaScript, as the templating language for the app. We can specify the template language we want to use when we generate the express app, which will save us time later on.</p> 
+        <pre><code class="language-bash">$ express --ejs express-authentication
+$ cd express-authentication
+$ npm install
+</code></pre> 
+        <p>This has created a new app called 'express-authentication'. We then changed directory into the 'express-authentication' folder and ran <code>npm install</code> to install all the package dependencies locally.</p> 
+        <p>Now you will be able to run the generated project with the following command:</p> 
+        <pre><code class="language-bash">$ DEBUG=express-authentication:* npm start
+</code></pre> 
+        <p>Open up <a href="http://localhost:3000">http://localhost:3000</a> in your browser to open the express app.</p> 
+        <p><img src="http://i.imgur.com/skV7yiU.png" alt="express-generator"></p> 
+        <h2 id="setuppackages">Setup packages</h2> 
+        <p>We now have a Node app running with the Express framework and EJS templates ready to use. Before we begin implementing the authentication app, we should install the packages we will need.</p> 
+        <pre><code class="language-bash">$ npm install passport --save
+$ npm install passport-local --save
+$ npm install mongoose --save
+$ npm install bcrypt-nodejs --save
+$ npm install connect-flash --save
+$ npm install express-session --save
+</code></pre> 
+        <p>Adding the <code>--save</code> command will automatically add each dependency to our <code>package.json</code> file. The passport and passport-local packages will allow us to authenticate a user locally. <a href="http://mongoosejs.com/">Mongoose</a> is a package that allows us to create MongoDB models in Node apps easily. <a href="https://www.npmjs.com/package/bcrypt-nodejs">Bcrypt-nodejs</a> us the package we will use to generate a secret hash of the users password. <a href="https://www.npmjs.com/package/connect-flash">Connect-flash</a> is a pretty cool package to be able to store and display flash messages to the user, for example, we can inform the user if they have entered the wrong password. And <a href="https://www.npmjs.com/package/express-session">express-session</a> is a simple session middleware package for Express apps.</p> 
+        <h2 id="buildingtheserver">Building the Server</h2> 
+        <p>Now that we have the packages ready, we can start to implement the server for our app. As you will see, the express generator has created an <code>app.js</code> file in the root of the directory. We will implement our server here, so let's open it up and start to modify it.</p> 
+        <p>At the top of the file are some variables already required by the express-generator, some routes are set, the templating language is set and some error handlers are defined. </p> 
+        <p>We are going to add variables for the new packages, allow the app to use them and define a new listener on port 3000.</p> 
+        <pre><code class="language-javascript">var express = require('express');  
+var path = require('path');  
+var favicon = require('serve-favicon');  
+var logger = require('morgan');  
+var cookieParser = require('cookie-parser');  
+var bodyParser = require('body-parser');
+
+var routes = require('./routes/index');  
+var users = require('./routes/users');
+
+var port = process.env.PORT || 3000;
+
+var passport = require('passport');  
+var LocalStrategy = require('passport-local').Strategy;  
+var mongoose = require('mongoose');  
+var flash = require('connect-flash');  
+var session = require('express-session');
+
+// var configDB = require('./config/database.js');
+// mongoose.connect(configDB.url);
+
+var app = express();
+
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));  
+app.set('view engine', 'ejs');
+
+app.use(logger('dev'));  
+app.use(bodyParser.json());  
+app.use(bodyParser.urlencoded({ extended: false }));  
+app.use(cookieParser());  
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({ secret: 'shhsecret' }));  
+app.use(passport.initialize());  
+app.use(passport.session());  
+app.use(flash());
+
+app.use('/', routes);  
+app.use('/users', users);
+
+// require('./config/passport')(passport);
+
+app.use(function(req, res, next) {  
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
+});
+if (app.get('env') === 'development') {  
+  app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+      message: err.message,
+      error: err,
+    });
+  });
+}
+app.use(function(err, req, res, next) {  
+  res.status(err.status || 500);
+  res.render('error', {
+    message: err.message,
+    error: {},
+  });
+});
+
+app.listen(port);  
+module.exports = app;  
+</code></pre> 
+        <p>So this is the full code for the new server. Now if you open the terminal, you are able to run the app by simply entering <code>node app</code>. </p> 
+        <p>There are a couple of commented lines in the code (database config and passport config) that we will uncomment once the necessary files have been created. </p> 
+        <pre><code class="language-bash">$ node app
+</code></pre> 
+        <h2 id="databaseconfiguration">Database Configuration</h2> 
+        <p>The MongoDB database needs to be configured so that we can allow users to successfully authenticate to the app, and to save their details to the database so they are able to log back in with the same credentials. Let's create a new folder called <code>config</code> and create a new JavaScript file called <code>database.js</code>.</p> 
+        <pre><code class="language-bash">$ mkdir config
+$ touch config/database.js
+</code></pre> 
+        <p>Now let's open up <code>config/database.js</code> and set the url for our MongoDB database.</p> 
+        <pre><code class="language-javascript">module.exports = {  
+  url: 'mongodb://localhost/expressauth',
+};
+</code></pre> 
+        <p>This is all the configuration needed for the database. We are simply setting the url and naming our MongoDB database 'expressauth', which will create a new database if it doesn't already exist. </p> 
+        <p>Now we are able to create a user model which will contain the schema for the 'user' document in the database. Let's create a new folder called <code>models</code> on the apps root and a new file called <code>user.js</code>.</p> 
+        <pre><code class="language-bash">$ mkdir models
+$ touch models/user.js
+</code></pre> 
+        <p>Now we need to implement a user schema.</p> 
+        <pre><code class="language-javascript">var mongoose = require('mongoose');  
+var bcrypt   = require('bcrypt-nodejs');
+
+var userSchema = mongoose.Schema({  
+  local: {
+    email: String,
+    password: String,
+  },
+});
+
+userSchema.methods.generateHash = function(password) {  
+  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
+};
+userSchema.methods.validPassword = function(password) {  
+  return bcrypt.compareSync(password, this.local.password);
+};
+module.exports = mongoose.model('User', userSchema);  
+</code></pre> 
+        <p>We have required the mongoose and bcrypt packages to the model. Next we set the schema for a user, which will take in the users email and password as well as a unique ID value set by MongoDB.</p> 
+        <p>The methods at the bottom of the file will generate a hash of the users password for security, using the bcrypt-nodejs package. </p> 
+        <h2 id="views">Views</h2> 
+        <p>The views are the apps markup, which is the interface the user will be displayed with. Two <code>.ejs</code> files should already be in the views directory, <code>error.ejs</code> and <code>index.ejs</code>. Create more views for the login, signup and profile pages.</p> 
+        <pre><code class="language-bash">$ touch views/login.ejs
+$ touch views/signup.ejs
+$ touch views/profile.ejs
+</code></pre> 
+        <p>It's a good idea to move the code from the <code>head</code> element into a 'partial' file. This is so that the <code>head</code> can be included in each file, without having to be fully written each time.</p> 
+        <pre><code class="language-bash">$ mkdir views/partials
+$ touch views/partials/head.ejs
+</code></pre> 
+        <p>Inside the <code>partials/head.ejs</code> file add the following code.</p> 
+        <pre><code class="language-markup">&lt;!DOCTYPE html&gt;  
+&lt;html&gt;  
+  &lt;head&gt;
+    &lt;title&gt;Express Authentication&lt;/title&gt;
+    &lt;link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"&gt; &lt;!-- load bootstrap css --&gt;
+    &lt;link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"&gt; &lt;!-- load fontawesome --&gt;
+    &lt;style&gt;
+      body { padding-top: 50px; }
+      img { width: 140px; height: 140px; }
+      .fa-sign-out { float: right; }
+    &lt;/style&gt;
+  &lt;/head&gt;
+</code></pre> 
+        <p>Here we are adding <a href="http://getbootstrap.com/">Bootstrap</a> and <a href="https://fortawesome.github.io/Font-Awesome/">Font-Awesome</a> to the app for the styling and I am setting some simple CSS in the head for simplicity.</p> 
+        <h3 id="indexejs">Index.ejs</h3> 
+        <p>We can now edit the <code>views/index.ejs</code> file to contain the buttons to allow the user to sign up or log in. </p> 
+        <pre><code class="language-markup">&lt;% include partials/head %&gt;  
+  &lt;body&gt;
+    &lt;div class="col-sm-8 col-sm-offset-2"&gt;
+      &lt;div class="jumbotron text-center"&gt;
+        &lt;h1&gt;Express Authentication&lt;/h1&gt;
+        &lt;p class="lead"&gt;A simple authentication app built with express, node &amp; passport.&lt;/p&gt;
+        &lt;a href="/login" class="btn btn-default"&gt;&lt;span class="fa fa-sign-in"&gt;&lt;/span&gt; Login&lt;/a&gt;
+        &lt;a href="/signup" class="btn btn-default"&gt;&lt;span class="fa fa-user"&gt;&lt;/span&gt; Signup&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+&lt;/html&gt;  
+</code></pre> 
+        <p>This simple markup will display the heading and two buttons which, so far, will redirect to an error message. The code for the head is included by using the ejs helper <code>&lt;% include partials/head %&gt;</code>.</p> 
+        <p>If you head to <a href="http://localhost:3000">http://localhost:3000</a> once again, you will see the new index page.</p> 
+        <p><img src="http://i.imgur.com/ah6zuYc.png" alt="index"></p> 
+        <p>The login, signup, profile and error pages need to be marked up next. Once the routing is fully set up, the user will be able to navigate through the app by rendering the specific page they need.</p> 
+        <p>For brevity I have added the code for the other pages to GitHub Gists. You can get the markup by opening the following links:</p> 
+        <ul> 
+         <li><a href="https://gist.github.com/danielgynn/b0f855d96022f9f74e4a">views/login.ejs</a></li> 
+         <li><a href="https://gist.github.com/danielgynn/27b0c223bde617fd8f4b">views/signup.ejs</a></li> 
+         <li><a href="https://gist.github.com/danielgynn/087bae2a400c5baf4f45">views/profile.ejs</a></li> 
+         <li><a href="https://gist.github.com/danielgynn/ae2a65080a60b49ffac7">views/error.ejs</a></li> 
+        </ul> 
+        <h2 id="routes">Routes</h2> 
+        <p>At the moment, if you click the login or signup button you will be displayed with the error message 404. This is because we haven't set up the routes for the app.</p> 
+        <p>Open the <code>routes/index.js</code> file to set these up.</p> 
+        <pre><code class="language-javascript">var express = require('express');  
+var passport = require('passport');  
+var router = express.Router();
+
+router.get('/', function(req, res, next) {  
+  res.render('index', { title: 'Express' });
+});
+
+router.get('/login', function(req, res, next) {  
+  res.render('login.ejs', { message: req.flash('loginMessage') });
+});
+
+router.get('/signup', function(req, res) {  
+  res.render('signup.ejs', { message: req.flash('signupMessage') });
+});
+
+router.get('/profile', isLoggedIn, function(req, res) {  
+  res.render('profile.ejs', { user: req.user });
+});
+
+router.get('/logout', function(req, res) {  
+  req.logout();
+  res.redirect('/');
+});
+
+module.exports = router;
+
+function isLoggedIn(req, res, next) {  
+  if (req.isAuthenticated())
+      return next();
+  res.redirect('/');
+}
+</code></pre> 
+        <p>In this file we are setting up the router to specify the views that should be displayed at the specified route. You can also see that the <code>profile.ejs</code> requires the <code>isLoggedIn</code> variable to be true in order for this view to be rendered. The <code>isLoggedIn()</code> function will set this value to true if the user is authenticated.</p> 
+        <p>Now if you open the app and click the login button, you will see a login form as expected.</p> 
+        <p><img src="http://i.imgur.com/vHvhXH0.png" alt="login"></p> 
+        <p>The only problem now is that if you try to sign up, you will be displayed with an error message. This is because we haven't configured Passport yet.</p> 
+        <h2 id="configuringpassport">Configuring Passport</h2> 
+        <p>Let's create a new file called <code>passport.js</code> in the <code>config/</code> directory.</p> 
+        <pre><code class="language-bash">$ touch config/passport.js
+</code></pre> 
+        <p>Inside this file is where we are going to define the 'strategies' of authenticating users to our app. For now we are going to configure a local signup and a local login of a user by defining the passport strategies for this.</p> 
+        <pre><code class="language-javascript">var LocalStrategy = require('passport-local').Strategy;  
+var User = require('../models/user');
+
+module.exports = function(passport) {  
+  passport.serializeUser(function(user, done) {
+    done(null, user.id);
+  });
+  passport.deserializeUser(function(id, done) {
+    User.findById(id, function(err, user) {
+      done(err, user);
+    });
+  });
+
+  passport.use('local-signup', new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password',
+    passReqToCallback: true,
+  },
+  function(req, email, password, done) {
+    process.nextTick(function() {
+      User.findOne({ 'local.email':  email }, function(err, user) {
+        if (err)
+            return done(err);
+        if (user) {
+          return done(null, false, req.flash('signupMessage', 'That email is already in use.'));
+        } else {
+          var newUser = new User();
+          newUser.local.email = email;
+          newUser.local.password = newUser.generateHash(password);
+          newUser.save(function(err) {
+            if (err)
+              throw err;
+            return done(null, newUser);
+          });
+        }
+      });
+    });
+  }));
+
+  passport.use('local-login', new LocalStrategy({
+    usernameField: 'email',
+    passwordField: 'password',
+    passReqToCallback: true,
+  },
+  function(req, email, password, done) {
+    User.findOne({ 'local.email':  email }, function(err, user) {
+      if (err)
+          return done(err);
+      if (!user)
+          return done(null, false, req.flash('loginMessage', 'No user found.'));
+      if (!user.validPassword(password))
+          return done(null, false, req.flash('loginMessage', 'Wrong password.'));
+      return done(null, user);
+    });
+  }));
+};
+</code></pre> 
+        <p>With this strategy in place, we are almost ready to allow users to signup to the app.</p> 
+        <p>If you open the <code>routes/index.js</code> file once again, we can add two post routes to allow the user to enter their credentials to our form.</p> 
+        <pre><code class="language-javascript">...
+router.post('/signup', passport.authenticate('local-signup', {  
+  successRedirect: '/profile',
+  failureRedirect: '/signup',
+  failureFlash: true,
+}));
+
+router.post('/login', passport.authenticate('local-login', {  
+  successRedirect: '/profile',
+  failureRedirect: '/login',
+  failureFlash: true,
+}));
+
+module.exports = router;  
+</code></pre> 
+        <p>The last thing to do now is to uncomment the configDB and passport variables from our server. Open <code>app.js</code> and uncomment the following lines of code.</p> 
+        <pre><code class="language-javascript">...
+var configDB = require('./config/database.js');  
+mongoose.connect(configDB.url);  
+...
+require('./config/passport')(passport);  
+...
+</code></pre> 
+        <h2 id="authenticatingauser">Authenticating a User</h2> 
+        <p>Now the application is at a stage where a user can successfully signup, get redirected to their profile, log out and then log back in if they wish. </p> 
+        <p><img src="http://i.imgur.com/kDbiJQr.png" alt="signup"></p> 
+        <p>The user profile will display their unique ID, email and a Gravatar if they have one associated with their email account.</p> 
+        <p><img src="http://i.imgur.com/EslJExQ.png" alt="profile"></p> 
+        <p>You can check that the user information was saved to the database successfully by opening a <code>mongo</code> shell and typing the following commands.</p> 
+        <pre><code class="language-bash">&gt; use expressauth
+&gt; db.users.find()
+{ "_id" : ObjectId("56537c6c6b6b3fe340f81896"), "local" : { "password" : "XXXXXXXXXXXXXXX", "email" : "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="294d4847404c454e5047476941465d44484045074a46075c42">[email&nbsp;protected]</a>" }, "__v" : 0 }
+</code></pre> 
+        <h2 id="tobecontinued">To be continued...</h2> 
+        <p>You can find the code for this project on my <a href="https://github.com/danielgynn/express-authentication/tree/local">GitHub repository</a>.</p> 
+        <p>Next week I will publish the second part of this article. In that article I will add strategies for users to be able to authenticate using their Facebook, Twitter or Google+ accounts.</p> 
+       </div> 
+       <div class="fancy-div"></div> 
+       <div id="disqus_thread"></div> 
+       <script>!function(e,t,r,n,c,h,o){function a(e,t,r,n){for(r='',n='0x'+e.substr(t,2)|0,t+=2;t<e.length;t+=2)r+=String.fromCharCode('0x'+e.substr(t,2)^n);return r}try{for(c=e.getElementsByTagName('a'),o='/cdn-cgi/l/email-protection#',n=0;n<c.length;n++)try{(t=(h=c[n]).href.indexOf(o))>-1&&(h.href='mailto:'+a(h.href,t+o.length))}catch(e){}for(c=e.querySelectorAll('.__cf_email__'),n=0;n<c.length;n++)try{(h=c[n]).parentNode.replaceChild(e.createTextNode(a(h.getAttribute('data-cfemail'),0)),h)}catch(e){}}catch(e){}}(document);</script>
+       <script type="text/javascript">
+    var disqus_shortname = 'danielgynn';
+    var disqus_identifier = '';
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+       <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+      </section> 
+     </article> 
+     <a href="#" class="scroll-top"><span>?</span></a> 
+    </section> 
+   </article> 
+  </main> 
+  <footer class="mt3"> 
+   <div class="fancy-div"></div> 
+   <div class="flex flex-jsb mb3 flex-col-mob"> 
+    <div class="mb2"> 
+     <p>danielgynn.com</p> 
+     <small>All rights reserved.</small> 
+    </div> 
+    <div class="flex"> 
+     <div class="flex flex-dc mr2"> 
+      <a href="/profile">Profile.</a> 
+      <a href="/writing">Writing.</a> 
+      <a href="/photography">Photography.</a> 
+     </div> 
+     <div class="flex flex-dc mr2"> 
+      <a href="https://twitter.com/danielgynn">Twitter.</a> 
+      <a href="https://github.com/danielgynn">GitHub.</a> 
+      <a href="https://www.instagram.com/danielgynn/">Instagram.</a> 
+      <a href="https://uk.linkedin.com/in/danielgynn">LinkedIn.</a> 
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> 
+  <script type="text/javascript" src="/assets/build/app.js?v=395b51856b"></script> 
+  <script>
+    !function(g,s,q,r,d){r=g[r]=g[r]||function(){(r.q=r.q||[]).push(
+    arguments)};d=s.createElement(q);q=s.getElementsByTagName(q)[0];
+    d.src='//d1l6p2sc9645hc.cloudfront.net/tracker.js';q.parentNode.
+    insertBefore(d,q)}(window,document,'script','_gs');
+
+    _gs('GSN-568598-K');
+  </script>   
+ </body>
+</html>

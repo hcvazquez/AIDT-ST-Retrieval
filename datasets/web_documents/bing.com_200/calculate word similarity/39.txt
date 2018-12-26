@@ -1,0 +1,1273 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8"> 
+  <link href="http://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700|Roboto:400,700" rel="stylesheet" type="text/css"> 
+  <link href="http://fonts.googleapis.com/css?family=Merriweather:400,400italic,700" rel="stylesheet" type="text/css"> 
+  <link rel="stylesheet" type="text/css" href="style.css"> 
+  <meta name="viewport" content="width=device-width,
+  minimum-scale=1.0, maximum-scale=1.0"> 
+  <link rel="alternate" type="application/atom+xml" href="http://stevehanov.ca/blog/?atom" title="RSS"> 
+  <title>Fast and Easy Levenshtein distance using a Trie</title> 
+  <style>
+</style> 
+ </head> 
+ <body> 
+  <a href="https://plus.google.com/115821829711457452449" rel="publisher"></a> 
+  <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script> 
+  <script src="Layout2.js"></script> 
+  <div class="blog-title"> 
+   <a href="/blog"><img class="logo" src="http://stevehanov.ca/blog/caption.png" alt="Steve Hanov's Blog"></a>
+   <br> I know how to make and sell software online, and I can share my tips with you.
+   <br> 
+   <a href="mailto:steve.hanov@gmail.com">Email</a> | 
+   <a href="https://twitter.com/smhanov">Twitter</a> | 
+   <a href="http://www.linkedin.com/pub/steve-hanov/10/430/410">LinkedIn</a> | 
+   <a href="http://stevehanov.ca/comics">Comics</a> | 
+   <a href="/blog">All articles</a> 
+  </div> 
+  <div class="main" id="main" style="visibility:hidden"> 
+   <div class="main-entry cols-2"> 
+    <div class="navigate"> 
+     <a class="nav-left" href="?id=111">&lt;</a> 
+     <a class="nav-right" href="?id=115">&gt;</a> 
+    </div> 
+    <h1 id="blogTitle" class="blogTitle">Fast and Easy Levenshtein distance using a Trie</h1> 
+    <div class="blogDate">
+     Posted six years ago
+    </div> 
+    <div id="blogText"> 
+     <p> If you have a web site with a search function, you will rapidly realize that most mortals are terrible typists. Many searches contain mispelled words, and users will expect these searches to magically work. This magic is often done using levenshtein distance. In this article, I'll compare two ways of finding the closest matching word in a large dictionary. I'll describe how I use it on <a href="http://rhymebrain.com">rhymebrain.com</a> not for corrections, but to search 2.6 million words for rhymes, for every request, with no caching, on my super-powerful <a href="http://stevehanov.ca/blog/index.php?id=95#sock">sock-drawer datacenter</a>: </p>
+     <p align="center"><img src="images/acer.jpg"></p> 
+     <h2>Algorithm #1</h2> 
+     <p> The levenshtein function take two words and returns how far apart they are. It's an O(N*M) algorithm, where N is the length of one word, and M is the length of the other. If you want to know how it works, go to this <a href="http://en.wikipedia.org/wiki/Levenshtein_distance">wikipedia page.</a> </p>
+     <p> But comparing two words at a time isn't useful. Usually you want to find the closest matching words in a whole dictionary, possibly with many thousands of words. Here's a quick python program to do that, using the straightforward, but slow way. It uses the file /usr/share/dict/words. The first argument is the misspelled word, and the second argument is the maximum distance. It will print out all the words with that distance, as well as the time spent actually searching. For example: </p>
+     <pre>
+smhanov@ubuntu1004:~$ ./method1.py goober 1
+('goober', 0)
+('goobers', 1)
+('gooier', 1)
+Search took 4.5575 s
+</pre> 
+     <p> Here's the program: </p>
+     <pre>
+#!/usr/bin/python
+#By Steve Hanov, 2011. Released to the public domain
+import time
+import sys
+
+DICTIONARY = "/usr/share/dict/words";
+TARGET = sys.argv[1]
+MAX_COST = int(sys.argv[2])
+
+# read dictionary file
+words = open(DICTIONARY, "rt").read().split();
+
+# for brevity, we omit transposing two characters. Only inserts,
+# removals, and substitutions are considered here.
+def levenshtein( word1, word2 ):
+    columns = len(word1) + 1
+    rows = len(word2) + 1
+
+    # build first row
+    currentRow = [0]
+    for column in xrange( 1, columns ):
+        currentRow.append( currentRow[column - 1] + 1 )
+
+    for row in xrange( 1, rows ):
+        previousRow = currentRow
+        currentRow = [ previousRow[0] + 1 ]
+
+        for column in xrange( 1, columns ):
+
+            insertCost = currentRow[column - 1] + 1
+            deleteCost = previousRow[column] + 1
+
+            if word1[column - 1] != word2[row - 1]:
+                replaceCost = previousRow[ column - 1 ] + 1
+            else:                
+                replaceCost = previousRow[ column - 1 ]
+
+            currentRow.append( min( insertCost, deleteCost, replaceCost ) )
+
+    return currentRow[-1]
+
+def search( word, maxCost ):
+    results = []
+    for word in words:
+        cost = levenshtein( TARGET, word )
+
+        if cost &lt;= maxCost:
+            results.append( (word, cost) )
+
+    return results
+
+start = time.time()
+results = search( TARGET, MAX_COST )
+end = time.time()
+
+for result in results: print result        
+
+print "Search took %g s" % (end - start)
+
+</pre> 
+     <h3>Runtime</h3> For each word, we have to fill in an N x M table. An upper bound for the runtime is O( &lt;number of words&gt; * &lt;max word length&gt; ^2 ) 
+     <h2>Improving it</h2> Sorry, now you need to know how the algorithm works and I'm not going to explain it. (You really need to read the 
+     <a href="http://en.wikipedia.org/wiki/Levenshtein_distance">wikipedia page.</a>) The important things to know are that it fills in a N x M sized table, like this one, and the answer is in the bottom-right square. 
+     <br> 
+     <table border="1" cellspacing="0" align="center"> 
+      <tbody>
+       <tr>
+        <th></th>
+        <th></th>
+        <th>k</th>
+        <th>a</th>
+        <th>t</th>
+        <th>e</th>
+       </tr> 
+       <tr>
+        <th> </th>
+        <td>0</td>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+        <td>4</td>
+       </tr> 
+       <tr>
+        <th>c</th>
+        <td>1</td>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+        <td>4</td>
+       </tr> 
+       <tr>
+        <th>a</th>
+        <td>2</td>
+        <td>2</td>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+       </tr> 
+       <tr>
+        <th>t</th>
+        <td>3</td>
+        <td>3</td>
+        <td>2</td>
+        <td>1</td>
+        <td>2</td>
+       </tr> 
+      </tbody>
+     </table> 
+     <br> But wait, what's it going to do when it moves on to the next word 
+     <i>after</i> cat? In my dictionary, that's "cats" so here it is: 
+     <br> 
+     <table border="1" cellspacing="0" align="center"> 
+      <tbody>
+       <tr>
+        <th></th>
+        <th></th>
+        <th>k</th>
+        <th>a</th>
+        <th>t</th>
+        <th>e</th>
+       </tr> 
+       <tr>
+        <th> </th>
+        <td>0</td>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+        <td>4</td>
+       </tr> 
+       <tr>
+        <th>c</th>
+        <td>1</td>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+        <td>4</td>
+       </tr> 
+       <tr>
+        <th>a</th>
+        <td>2</td>
+        <td>2</td>
+        <td>1</td>
+        <td>2</td>
+        <td>3</td>
+       </tr> 
+       <tr>
+        <th>t</th>
+        <td>3</td>
+        <td>3</td>
+        <td>2</td>
+        <td>1</td>
+        <td>2</td>
+       </tr> 
+       <tr>
+        <th>s</th>
+        <td>4</td>
+        <td>4</td>
+        <td>3</td>
+        <td>2</td>
+        <td>2</td>
+       </tr> 
+      </tbody>
+     </table> 
+     <br> 
+     <p> <b>Only the last row changes.</b> We can avoid a lot of work if we can process the words in order, so we never need to repeat a row for the same prefix of letters. The <b>trie</b> data structure is perfect for this. A trie is a giant tree, where each node represents a partial or complete word. Here's one with the words <i>cat, cats, catacomb, and catacombs</i> in it (courtesy of <a href="http://zwibbler.com">zwibbler.com</a>). Nodes that represent a word are marked in black. </p>
+     <p align="center"><img src="http://zwibbler.com/shared/898.png"></p> 
+     <b>With a trie, all shared prefixes in the dictionary are collaped into a single path,</b> so we can process them in the best order for building up our levenshtein tables one row at a time. Here's a python program to do that: 
+     <pre>
+#!/usr/bin/python
+#By Steve Hanov, 2011. Released to the public domain
+import time
+import sys
+
+DICTIONARY = "/usr/share/dict/words";
+TARGET = sys.argv[1]
+MAX_COST = int(sys.argv[2])
+
+# Keep some interesting statistics
+NodeCount = 0
+WordCount = 0
+
+# The Trie data structure keeps a set of words, organized with one node for
+# each letter. Each node has a branch for each letter that may follow it in the
+# set of words.
+class TrieNode:
+    def __init__(self):
+        self.word = None
+        self.children = {}
+
+        global NodeCount
+        NodeCount += 1
+
+    def insert( self, word ):
+        node = self
+        for letter in word:
+            if letter not in node.children: 
+                node.children[letter] = TrieNode()
+
+            node = node.children[letter]
+
+        node.word = word
+
+# read dictionary file into a trie
+trie = TrieNode()
+for word in open(DICTIONARY, "rt").read().split():
+    WordCount += 1
+    trie.insert( word )
+
+print "Read %d words into %d nodes" % (WordCount, NodeCount)
+
+# The search function returns a list of all words that are less than the given
+# maximum distance from the target word
+def search( word, maxCost ):
+
+    # build first row
+    currentRow = range( len(word) + 1 )
+
+    results = []
+
+    # recursively search each branch of the trie
+    for letter in trie.children:
+        searchRecursive( trie.children[letter], letter, word, currentRow, 
+            results, maxCost )
+
+    return results
+
+# This recursive helper is used by the search function above. It assumes that
+# the previousRow has been filled in already.
+def searchRecursive( node, letter, word, previousRow, results, maxCost ):
+
+    columns = len( word ) + 1
+    currentRow = [ previousRow[0] + 1 ]
+
+    # Build one row for the letter, with a column for each letter in the target
+    # word, plus one for the empty string at column 0
+    for column in xrange( 1, columns ):
+
+        insertCost = currentRow[column - 1] + 1
+        deleteCost = previousRow[column] + 1
+
+        if word[column - 1] != letter:
+            replaceCost = previousRow[ column - 1 ] + 1
+        else:                
+            replaceCost = previousRow[ column - 1 ]
+
+        currentRow.append( min( insertCost, deleteCost, replaceCost ) )
+
+    # if the last entry in the row indicates the optimal cost is less than the
+    # maximum cost, and there is a word in this trie node, then add it.
+    if currentRow[-1] &lt;= maxCost and node.word != None:
+        results.append( (node.word, currentRow[-1] ) )
+
+    # if any entries in the row are less than the maximum cost, then 
+    # recursively search each branch of the trie
+    if min( currentRow ) &lt;= maxCost:
+        for letter in node.children:
+            searchRecursive( node.children[letter], letter, word, currentRow, 
+                results, maxCost )
+
+start = time.time()
+results = search( TARGET, MAX_COST )
+end = time.time()
+
+for result in results: print result        
+
+print "Search took %g s" % (end - start)
+</pre> Here are the results: 
+     <pre>
+smhanov@ubuntu1004:~$ ./method1.py goober 1
+Read 98568 words into 225893 nodes
+('goober', 0)
+('goobers', 1)
+('gooier', 1)
+Search took 0.0141618 s
+</pre> The second algorithm is over 300 times faster than the first. Why? Well, we create at most one row of the table for each node in the trie. The upper bound for the runtime is O(&lt;max word length&gt; * &lt;number of nodes in the trie&gt;). For most dictionaries, considerably less than O(&lt;number of words&gt; * &lt;max word length&gt;^2) 
+     <h2>Saving memory</h2> Building a trie can take a lot of memory. In 
+     <a href="?id=115">Part 2</a>, I discuss how to construct a MA-FSA (or DAWG) which contains the same information in a more compact form. 
+     <h2>RhymeBrain</h2> 
+     <a href="http://rhymebrain.com"><img style="margin:1em" align="left" src="http://rhymebrain.com/logo.png"></a>In December, I realized that Google had released their 
+     <a href="http://ngrams.googlelabs.com/datasets">N-grams data</a>, a list of all of the words in all of the books that they have scanned for their Books search feature. When I imported them all into RhymeBrain, my dictionary size at once increased from 260,000 to 2.6 million, and I was having performance problems. 
+     <p> I already stored the words in a trie, indexed by pronunciation instead of letters. However, to search it, I was first performing a <i>quick and dirty</i> scan to find words that might possibly rhyme. Then I took that large list and ran each one through the levenshtein function to calculate RhymeRank<sup>TM</sup>. The user is presented with only the top 50 entries of that list. </p>
+     <p> After a lot of deep thinking, I realized that the levenshtein function could be evaluated incrementally, as I described above. Of course, I might have realized this sooner if I had read one of the many scholarly papers on the subject, which describe this exact method. But who has time for that? :) </p>
+     <p> With the new algorithm, queries take between 19 and 50 ms even for really long words, but the best part is that I don't need to maintain two separate checks (quick and full), and the RhymeRank<sup>TM</sup> algorithm is performed uniformly for each of the 2.6 million words on my 1GHz Acer Aspire One datacenter. </p>
+     <p><a href="http://stevehanov.ca/blog/index.php?id=81">(Previous articles on RhymeBrain)</a> </p>
+     <h2>Other references</h2> In his article 
+     <i><a href="http://norvig.com/spell-correct.html">How to write a spelling corrector</a></i>, Peter Norvig approaches the problem using a different way of thinking. He first stores his dictionary in a hash-table for fast lookup. Then he goes through hundreds, or even thousands of combinations of spelling mutations of the target word and checks if each one is in the dictionary. This system is clever, but breaks down quickly if you want to find words with an error greater than 1. Also, it would not work for me, since I needed to modify the cost functions for insert, delete, and substitution. 
+     <p> In the blog article <a href="http://fiber-space.de/wordpress/?p=1579">Fuzzy String Matching</a>, the author presents a recursive solution using memoization (caching). This is equivalent to flood-filling a diagonal band across the table. It gives a runtime of O(k * &lt;number of nodes in the trie&gt;), where k is the maximum cost. You can modify my algorithm above to only fill in only some entries of the table. I tried it, but it made the examples too complex and actually slowed it down. I blame my python skills. </p>
+     <p> <i>Update</i>: I just realized the author has created a <a href="http://fiber-space.de/wordpress/">new solution for dictionary search</a>, also based on tries. I quickly tried it on my machine and dictionary, and got a time of 0.009301, assuming the prefix tree is prebuilt. It's slightly faster for an edit distance of 1! But somethings going on, because it takes 1.5 s for an edit distance of 4, whereas my code takes only 0.44. <i>Phew!</i> </p>
+     <p> And of course, you could create a <a href="http://blog.notdot.net/2010/07/Damn-Cool-Algorithms-Levenshtein-Automata">levenshtein automaton</a>, essentially a <i>big honking regular expression</i> that matches all possible mispellings. But to do it efficiently you need to write <i>big honking gobs of code</i>. (The code in the linked article does not do it efficiently, but states that it is possible to do so.) Alternatively, you could enumerate all possible mispellings and <a href="?id=115">insert them into a MA-FSA or DAWG</a> to obtain the regular expression. </p>
+     <ul> 
+      <li><a href="http://stevehanov.ca/blog/index.php?id=71">Using a netbook as a webserver</a> </li>
+      <li><a href="http://stevehanov.ca/blog/index.php?id=95">C++: A language for next-generation web apps</a> </li>
+     </ul> 
+    </div> 
+   </div> 
+   <div class="comment"> 
+    <b>Steve Hanov</b> makes a living working on 
+    <a href="http://rhymebrain.com">Rhymebrain.com</a>, 
+    <a href="http://pricemonkey.ca">PriceMonkey.ca</a>, 
+    <a href="http://www.websequencediagrams.com">www.websequencediagrams.com</a>, and 
+    <a href="http://zwibbler.com">Zwibbler.com</a>. He lives in Waterloo, Canada. 
+   </div> 
+   <div class="comment"> 
+    <div id="writecomment-div">
+      Post comment
+     <br> 
+     <input type="text" style="width:100%" onfocus="writeComment()"> 
+    </div> 
+    <form id="commentForm" action="/blog/index.php" method="POST" onsubmit="return validateCommentForm(this);"> 
+     <span style="visibility:hidden;position:absolute;"> Your Email (Not displayed): <input type="text" name="email"></span> Post comment
+     <br> 
+     <textarea style="width:100%" cols="60" id="comment-text" name="comment" rows="10" wrap="soft"></textarea>
+     <br> 
+     <br> Real Name 
+     <br> 
+     <input type="text" name="displayname" id="realname"> 
+     <br> Editing Password (Optional): 
+     <br> 
+     <input type="text" name="editpassword">
+     <br> 
+     <span style="font-size: 10px;color:#888"> Choose an edit password if you want to be able to edit or delete your comment later. </span> 
+     <br> 
+     <input type="submit" value="Post Comment"> 
+     <input type="button" value="Cancel" onclick="cancelComment()"> 
+     <input type="hidden" name="id" value="114"> 
+    </form> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5650)" onmouseleave="mouseleavecomment(5650)" id="wholecomment5650"> 
+    <a href="javascript:editcomment(5650)" class="edit-comment" id="edit-comment-5650">edit</a> 
+    <div class="comment-name">
+     "/&gt;&lt;script&gt;alert('Hacked.By')&lt;/script&gt; 
+    </div> 
+    <div class="comment-date">
+     one month ago 
+    </div> 
+    <div class="comment-text" id="commentText5650">
+     "/&gt;&lt;script&gt;alert('Hacked.By')&lt;/script&gt; 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5643)" onmouseleave="mouseleavecomment(5643)" id="wholecomment5643"> 
+    <a href="javascript:editcomment(5643)" class="edit-comment" id="edit-comment-5643">edit</a> 
+    <div class="comment-name">
+     sdsd 
+    </div> 
+    <div class="comment-date">
+     three months ago 
+    </div> 
+    <div class="comment-text" id="commentText5643">
+     &lt;script&gt;alert("Hacked by NeoxTIM !")&lt;/script&gt; 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5642)" onmouseleave="mouseleavecomment(5642)" id="wholecomment5642"> 
+    <a href="javascript:editcomment(5642)" class="edit-comment" id="edit-comment-5642">edit</a> 
+    <div class="comment-name">
+     sdsd 
+    </div> 
+    <div class="comment-date">
+     three months ago 
+    </div> 
+    <div class="comment-text" id="commentText5642">
+     &lt;script&gt;alert("Hacked by NeoxTIM !")&lt;/script&gt; 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5638)" onmouseleave="mouseleavecomment(5638)" id="wholecomment5638"> 
+    <a href="javascript:editcomment(5638)" class="edit-comment" id="edit-comment-5638">edit</a> 
+    <div class="comment-name">
+     fejfjejf' and (SELECT 13de FROM information_schema.tables);-- 
+    </div> 
+    <div class="comment-date">
+     six months ago 
+    </div> 
+    <div class="comment-text" id="commentText5638">
+     fejfjejf' and (SELECT 13de FROM information_schema.tables);-- 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5636)" onmouseleave="mouseleavecomment(5636)" id="wholecomment5636"> 
+    <a href="javascript:editcomment(5636)" class="edit-comment" id="edit-comment-5636">edit</a> 
+    <div class="comment-name">
+     Umberto 
+    </div> 
+    <div class="comment-date">
+     six months ago 
+    </div> 
+    <div class="comment-text" id="commentText5636">
+     Great Post! 
+     <p> </p>
+     <p> I've included this algorithm in my Trie implementation in Java. </p>
+     <p> The source is here: </p>
+     <p> github.com/umbertogriffo/Trie </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5630)" onmouseleave="mouseleavecomment(5630)" id="wholecomment5630"> 
+    <a href="javascript:editcomment(5630)" class="edit-comment" id="edit-comment-5630">edit</a> 
+    <div class="comment-name">
+     0x000000 
+    </div> 
+    <div class="comment-date">
+     seven months ago 
+    </div> 
+    <div class="comment-text" id="commentText5630">
+     ";&lt;script&gt;alert('xss')&lt;/script&gt; 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5545)" onmouseleave="mouseleavecomment(5545)" id="wholecomment5545"> 
+    <a href="javascript:editcomment(5545)" class="edit-comment" id="edit-comment-5545">edit</a> 
+    <div class="comment-name">
+     Algorithmo 
+    </div> 
+    <div class="comment-date">
+     one year ago 
+    </div> 
+    <div class="comment-text" id="commentText5545">
+     Used your code on a apache web server. Nice work! 0.5s on a 420,000 word dictionary edit distance 3. The trie is built only once and all searches are IPCed using a socket connection between the php web page and the python process running in the background. 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(5490)" onmouseleave="mouseleavecomment(5490)" id="wholecomment5490"> 
+    <a href="javascript:editcomment(5490)" class="edit-comment" id="edit-comment-5490">edit</a> 
+    <div class="comment-name">
+     Spyros 
+    </div> 
+    <div class="comment-date">
+     two years ago 
+    </div> 
+    <div class="comment-text" id="commentText5490">
+     Very nice and clear code! 
+     <p> I have a version of this algorithm in C++. You can see it here: </p>
+     <p> github.com/Spyros-DC/words-in-some-edit-distance/blob/master/my_distance.cpp </p>
+     <p> for a file of 235887 words, this program needs 1.1 sec to build a trie and 0.0019 sec to search for a word in edit distance of one. </p>
+     <p> Regards, </p>
+     <p> Spyros </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(4408)" onmouseleave="mouseleavecomment(4408)" id="wholecomment4408"> 
+    <a href="javascript:editcomment(4408)" class="edit-comment" id="edit-comment-4408">edit</a> 
+    <div class="comment-name">
+     Mikhail 
+    </div> 
+    <div class="comment-date">
+     three years ago 
+    </div> 
+    <div class="comment-text" id="commentText4408">
+     Thanks for the article. 
+     <p> You can also check the Ternary Tree algorithm (see en.wikipedia.org/wiki/Ternary_search_tree). It seems to me that it can be useful in this case. </p>
+     <p> Best regards </p>
+     <p> Mikhail </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(4377)" onmouseleave="mouseleavecomment(4377)" id="wholecomment4377"> 
+    <a href="javascript:editcomment(4377)" class="edit-comment" id="edit-comment-4377">edit</a> 
+    <div class="comment-name">
+     Tom 
+    </div> 
+    <div class="comment-date">
+     three years ago 
+    </div> 
+    <div class="comment-text" id="commentText4377">
+     Very nice article. 
+     <p> </p>
+     <p> Thought others might be interested to know... I was playing with the algorithm and realized that the same result could be achieved without the Levenshtein matrix. Instead, pass a "cost so far" through the recursive function along with an index of current position within the word. If the letter at that position doesn't match the current trie node's letter then adjust the "cost so far" by one and search the next level with the index the same (a delete), index+1 (a replace), and index+2 (an insert). Otherwise don't adjust the cost-so-far, and just continue on searching index+1. Also add a condition to see if the node word thus far is larger than the original search term by more than the max cost, and short-circuit the search at that point if it is (as suggested earlier by Matthew Davidson). </p>
+     <p> </p>
+     <p> Performance wise this approach seemed to run about the same speed, but conceptually it is much easier to understand. </p>
+     <p> </p>
+     <p> P.S. I found performance of both algorithms written in Java and running on an Android phone (Galaxy SII) rather disappointing. There was noticeable lag for longer words. Of course there could be various reasons for this, but just want to let people know that using a Trie or DAWG are not a guaranteed fix for performance --binary searches on simple arrays are surprisingly fast. The big gain with a DAWG is really the memory foot print. </p>
+     <p> </p>
+     <p> </p>
+     <p> </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(3018)" onmouseleave="mouseleavecomment(3018)" id="wholecomment3018"> 
+    <a href="javascript:editcomment(3018)" class="edit-comment" id="edit-comment-3018">edit</a> 
+    <div class="comment-name">
+     Wael 
+    </div> 
+    <div class="comment-date">
+     three years ago 
+    </div> 
+    <div class="comment-text" id="commentText3018">
+     Lovely post Steve! 
+     <p> </p>
+     <p> Just a small comment. Couldn't this section: </p>
+     <p> </p>
+     <p> # build first row </p>
+     <p> currentRow = [0] </p>
+     <p> for column in xrange( 1, columns ): </p>
+     <p> currentRow.append( currentRow[column - 1] + 1 ) </p>
+     <p> </p>
+     <p> </p>
+     <p> be rewritten simply as: </p>
+     <p> currentRow = range(columns) </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2834)" onmouseleave="mouseleavecomment(2834)" id="wholecomment2834"> 
+    <a href="javascript:editcomment(2834)" class="edit-comment" id="edit-comment-2834">edit</a> 
+    <div class="comment-name">
+     Georgi Marinov 
+    </div> 
+    <div class="comment-date">
+     four years ago 
+    </div> 
+    <div class="comment-text" id="commentText2834">
+     Hi Mr. Hanov, 
+     <p> thanks for the useful article, recently (at last) I entered fuzzy string matching. </p>
+     <p> </p>
+     <p> My "on the fly" C implementation took shape of a console tool: </p>
+     <p> www.sanmayce.com/Downloads/_Galadriel_r1+++.zip </p>
+     <p> </p>
+     <p> Sadly, it turns out that I am too naive to seek sharing and good will among short-tailored "programmers". </p>
+     <p> My disappointment at: stackoverflow.com/questions/14442052/fastest-structureless-fuzzy-string-searching-for-obtaining-levenshtein-distance </p>
+     <p> </p>
+     <p> What approach(es) would you recommend as next step? </p>
+     <p> </p>
+     <p> I intend revision 2 of Galadriel to enforce/use as 4th command line parameter number of OPEN MP threads, these days having 8+ threads and 400+MB/s external memory reads will benefit the linear traversal, yet for super speeds using a structure is inevitable. </p>
+     <p> </p>
+     <p> For example my "abridged" 3-gram file is 100+ million lines long. I need real-time responses implementing some simple approach, any ideas! </p>
+     <p> To see what I am talking about, you are welcome to my phrase checker thread at: </p>
+     <p> forum.thefreedictionary.com/profile696240.aspx </p>
+     <p> </p>
+     <p> It would be helpful to see your view on further speedups. </p>
+     <p> </p>
+     <p> Regards </p>
+     <p> </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2808)" onmouseleave="mouseleavecomment(2808)" id="wholecomment2808"> 
+    <a href="javascript:editcomment(2808)" class="edit-comment" id="edit-comment-2808">edit</a> 
+    <div class="comment-name">
+     Vadim 
+    </div> 
+    <div class="comment-date">
+     four years ago 
+    </div> 
+    <div class="comment-text" id="commentText2808">
+     BTW. I tried downloading a few Google N-gram files from the like in this article just to find out that the content of these files is different from what is described on that page. For example, instead of mentioned content in 3,000,000th and 3,000,001st lines from a file of the English 1-grams (googlebooks-eng-all-1gram-20120701-a.gz): 
+     <p> </p>
+     <p> circumvallate 1978 335 91 </p>
+     <p> circumvallate 1979 261 91 </p>
+     <p> </p>
+     <p> You will find: </p>
+     <p> </p>
+     <p> applica_VERB 1917 1 1 </p>
+     <p> applica_VERB 1918 4 4 </p>
+     <p> </p>
+     <p> which looks like a garbage and does not make much sense to me. What a heck? </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2800)" onmouseleave="mouseleavecomment(2800)" id="wholecomment2800"> 
+    <a href="javascript:editcomment(2800)" class="edit-comment" id="edit-comment-2800">edit</a> 
+    <div class="comment-name">
+     Vadim 
+    </div> 
+    <div class="comment-date">
+     four years ago 
+    </div> 
+    <div class="comment-text" id="commentText2800">
+     Very good article! Thanks for Google Books Ngram Viewer database link. Few years back I wrote similar code for fuzzy matching on trie using Java, you can see example of search using this code here: Wikipedia People Fuzzy Search: www.softcorporation.com/products/people 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2559)" onmouseleave="mouseleavecomment(2559)" id="wholecomment2559"> 
+    <a href="javascript:editcomment(2559)" class="edit-comment" id="edit-comment-2559">edit</a> 
+    <div class="comment-name">
+     Alex 
+    </div> 
+    <div class="comment-date">
+     five years ago 
+    </div> 
+    <div class="comment-text" id="commentText2559">
+     My program takes 25 seconds to run and I want to make it run in less than 5 seconds. 
+     <p> The program recursive finds friends of words. Can we not put the words in dictionary rather than list from the file you take. It would give O(1) complexity and the search will be even faster. In this line </p>
+     <p> </p>
+     <p> node.children[letter] = TrieNode() </p>
+     <p> </p>
+     <p> LinkedHashset in Java I think </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2554)" onmouseleave="mouseleavecomment(2554)" id="wholecomment2554"> 
+    <a href="javascript:editcomment(2554)" class="edit-comment" id="edit-comment-2554">edit</a> 
+    <div class="comment-name">
+     Anuj Acharya 
+    </div> 
+    <div class="comment-date">
+     five years ago 
+    </div> 
+    <div class="comment-text" id="commentText2554">
+     Hi,
+     <p></p>
+     <p>THANK YOU VERY VERY MUCH. IT RUN LIKE A CHARM. Brilliant Tree concept running so fast now</p>
+     <p></p>
+     <p></p>
+     <p></p>
+     <p></p>
+     <p> </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2499)" onmouseleave="mouseleavecomment(2499)" id="wholecomment2499"> 
+    <a href="javascript:editcomment(2499)" class="edit-comment" id="edit-comment-2499">edit</a> 
+    <div class="comment-name">
+     Jeb 
+    </div> 
+    <div class="comment-date">
+     five years ago 
+    </div> 
+    <div class="comment-text" id="commentText2499">
+     Just found your blog on a google search for Levenshtein distance, great stuff! Lots of great articles. 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2473)" onmouseleave="mouseleavecomment(2473)" id="wholecomment2473"> 
+    <a href="javascript:editcomment(2473)" class="edit-comment" id="edit-comment-2473">edit</a> 
+    <div class="comment-name">
+     Matthew Davidson 
+    </div> 
+    <div class="comment-date">
+     five years ago 
+    </div> 
+    <div class="comment-text" id="commentText2473">
+     Great article, Steve! 
+     <p> </p>
+     <p> One further improvement: there's no need to actually compute the rows after the trie word's length exceeds the TARGET length. The Levenshtein distance of longer words is just the Levenshtein distance of the substring of equal length to the TARGET plus the difference in total string length. Intuitively, this is because once the string lengths are matched, all that remains is to keep inserting letters at the end until you have the new string. </p>
+     <p> </p>
+     <p> This should be much faster for short TARGET strings. </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2359)" onmouseleave="mouseleavecomment(2359)" id="wholecomment2359"> 
+    <a href="javascript:editcomment(2359)" class="edit-comment" id="edit-comment-2359">edit</a> 
+    <div class="comment-name">
+     Marii Yonov 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2359">
+     You can improve it even further. If you add a number to every node of the tree -- the longest word that passes in this node, then when you do fuzzy search you can skip nodes which aren't long enough. I was precomputing dictionary and have gained 3 times faster times. 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2304)" onmouseleave="mouseleavecomment(2304)" id="wholecomment2304"> 
+    <a href="javascript:editcomment(2304)" class="edit-comment" id="edit-comment-2304">edit</a> 
+    <div class="comment-name">
+     Dharmesh Bhatt 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2304">
+     You posted the time that the search took here (some 1.4ms). Would you have any idea on how that compares to the running time for a fuzzy dictionary lookup using BK Trees? 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2225)" onmouseleave="mouseleavecomment(2225)" id="wholecomment2225"> 
+    <a href="javascript:editcomment(2225)" class="edit-comment" id="edit-comment-2225">edit</a> 
+    <div class="comment-name">
+     murilo 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2225">
+     Cool. I was searching for something like and it is a really good algorithm. 
+     <p> I implemented this algorithm in C++ with some difference because I wanted to match only with the word with the fewest Levenshtein distance. </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2213)" onmouseleave="mouseleavecomment(2213)" id="wholecomment2213"> 
+    <a href="javascript:editcomment(2213)" class="edit-comment" id="edit-comment-2213">edit</a> 
+    <div class="comment-name">
+     John McKinnar 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2213">
+     Meh! I can do this in four lines of Visual Basic. 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2202)" onmouseleave="mouseleavecomment(2202)" id="wholecomment2202"> 
+    <a href="javascript:editcomment(2202)" class="edit-comment" id="edit-comment-2202">edit</a> 
+    <div class="comment-name">
+     Francois BORGES 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2202">
+     Please post more fried chicken stories. If you don't have any more then fried turkey stories would be OK. Thanks!!! 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2197)" onmouseleave="mouseleavecomment(2197)" id="wholecomment2197"> 
+    <a href="javascript:editcomment(2197)" class="edit-comment" id="edit-comment-2197">edit</a> 
+    <div class="comment-name">
+     Petrica 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2197">
+     For who needs this algorithm implementation in ruby I've added it to the RubyTrie 1.1 gem. Great article. Thank you. 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2196)" onmouseleave="mouseleavecomment(2196)" id="wholecomment2196"> 
+    <a href="javascript:editcomment(2196)" class="edit-comment" id="edit-comment-2196">edit</a> 
+    <div class="comment-name">
+     Delip Rao 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2196">
+     Good post. For Algorithm #1 if you have a MAX_COST why not break out of the loop once you exceed MAX_COST? 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2195)" onmouseleave="mouseleavecomment(2195)" id="wholecomment2195"> 
+    <a href="javascript:editcomment(2195)" class="edit-comment" id="edit-comment-2195">edit</a> 
+    <div class="comment-name">
+     Peter 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2195">
+     I once wrote a similar fuzzy matching function based on ternary DAGs: 
+     <p> </p>
+     <p> www.strchr.com/ternary_dags </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2193)" onmouseleave="mouseleavecomment(2193)" id="wholecomment2193"> 
+    <a href="javascript:editcomment(2193)" class="edit-comment" id="edit-comment-2193">edit</a> 
+    <div class="comment-name">
+     Alexander Behm 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2193">
+     Nice article with a short and simple implementation! 
+     <p> </p>
+     <p> In case you are interested: There is an entirely different approach to answering Levenshtein range queries using n-grams. Intuitively, two strings are similar if they share a certain number of grams. The grams can therefore be used as a filter (necessary but not sufficient condition) to get a small subset of candidates for which the real Levenshtein distance needs to be computed (to remove false positives). </p>
+     <p> To facilitate finding all strings that share a certain number of grams with a query you can build an inverted index on the grams of all the strings in your dictionary. The problem then becomes "merging" the inverted lists of those grams that appear in your query and then removing false positives. </p>
+     <p> </p>
+     <p> Typically, the gram-based approach works better for longer strings whereas the trie-based approach works best for shorter strings. Also, the gram-based approach can support other similarity functions such as Jaccard. On the other hand, the trie-based approach can support incremental prefix-searches as well (e.g. for auto-complete type of applications). </p>
+     <p> </p>
+     <p> We have a decent C++ implementation in "The Flamingo Project on Data Cleaning". For relatively small datasets (&lt; 1million strings) you typically can answer a query in &lt;1ms. </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2192)" onmouseleave="mouseleavecomment(2192)" id="wholecomment2192"> 
+    <a href="javascript:editcomment(2192)" class="edit-comment" id="edit-comment-2192">edit</a> 
+    <div class="comment-name">
+     Ralph Corderoy 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2192">
+     I didn't make clear, but the pruning of the dictionary words to measure against can still take place with the above list and array but you'd need to walk the array until the number of rows to keep was less than the current number you have, i.e. if you've three rows for `cat' then you wouldn't measure words until you kept less than three rows, e.g. two rows for `caviar'. A third parallel array could contain that pre-computed new index. 
+     <p> </p>
+     <p> I thought searchRecursive() above looked a bit inefficient and given it was the heart of the search any improvements would be beneficial. My simple changes take about 30% off the search time here without altering the output. See dorset.pastebin.com/4fm5ZNFs </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2191)" onmouseleave="mouseleavecomment(2191)" id="wholecomment2191"> 
+    <a href="javascript:editcomment(2191)" class="edit-comment" id="edit-comment-2191">edit</a> 
+    <div class="comment-name">
+     Roger Rohrbach 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2191">
+     Nick Johnson's Levenshtein automaton code works great in practice for the most obvious application: finding all entries in a dictionary within an edit distance of 1 from a given word. It takes an average of .065 seconds to search a dictionary of 40,000 words. 
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2190)" onmouseleave="mouseleavecomment(2190)" id="wholecomment2190"> 
+    <a href="javascript:editcomment(2190)" class="edit-comment" id="edit-comment-2190">edit</a> 
+    <div class="comment-name">
+     Ralph Corderoy 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2190">
+     Is building a trie needed to see how many rows of the matrix can be re-used when measuring the distance of the next dictionary word? If processing the dictionary in sorted order then could the number of letters in common at the start of the previous and current words give the number of rows that can be re-used, the rest to be discarded? So `cat' to `cats' keeps three rows, `cats' to `caviar' two, and `caviar' to `dog' none. 
+     <p> </p>
+     <p> This avoids having to construct a trie and if memory is under pressure then as long as the dictionary file is in some sorted order, as look(1) requires of /usr/share/dict/words, then each word can be read and measured in turn. For repeated searching an array (in the Python array.array('B') sense) of the number of rows to keep, alongside a parallel list of the characters needed by the new rows, could be created. For the above `cat cats caviar dog' that would be `0 3 2 0' and `cat s viar dog'. </p>
+     <p> </p>
+     <p> (BTW, the comment "for brevity, we omit transposing two characters" suggests Levenshtein normally includes transposition but I don't think it does. That's one of the differences with Damerau-Levenshtein.) </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2189)" onmouseleave="mouseleavecomment(2189)" id="wholecomment2189"> 
+    <a href="javascript:editcomment(2189)" class="edit-comment" id="edit-comment-2189">edit</a> 
+    <div class="comment-name">
+     Yariv 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2189">
+     Nice read. 
+     <p> </p>
+     <p> You are aware of PyPy (jitted python), are you? </p>
+     <p> Free performance gain. </p>
+     <p> </p>
+     <p> Of course, the version in the Ubuntu repositories is dated. You will have to download a nightly build as even the ppa is not up to date. </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2188)" onmouseleave="mouseleavecomment(2188)" id="wholecomment2188"> 
+    <a href="javascript:editcomment(2188)" class="edit-comment" id="edit-comment-2188">edit</a> 
+    <div class="comment-name">
+     Joe 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2188">
+     Very nice! .. 
+     <p> What would be the license to reuse this? </p>
+    </div> 
+   </div> 
+   <div class="comment" onmouseenter="mouseentercomment(2186)" onmouseleave="mouseleavecomment(2186)" id="wholecomment2186"> 
+    <a href="javascript:editcomment(2186)" class="edit-comment" id="edit-comment-2186">edit</a> 
+    <div class="comment-name">
+     Mohamed Mansour 
+    </div> 
+    <div class="comment-date">
+     six years ago 
+    </div> 
+    <div class="comment-text" id="commentText2186">
+     Beautifully written, thanks Steve! 
+    </div> 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=61&quot;"> 
+    <a class="title" href="?id=61"> <h1>Experiment: Deleting a post from the Internet</h1> </a> 
+    <img src="transparent.gif" osrc="delreddit.png" style="background: url(sprite.jpg); background-position: 0px -6844px;width:270px;height:54px"> Once you post something on the Internet, it is hard to get rid of it. As an experiment, I deleted one of my past posts, and I tried to remove all traces of it. 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=2&quot;"> 
+    <a class="title" href="?id=2"> <h1>UMA's dirty secrets</h1> </a> Recently, many carriers have started offering UMA, or WiFi phones. These are cell phones with WiFi capabilites. Don't be fooled -- you won't be able to get free calls and run skype on them. The UMA technology is meant to extend the carrier's cellular network into your home using your broadband internet connection. 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=116&quot;"> 
+    <a class="title" href="?id=116"> <h1>Fun with Colour Difference</h1> </a> Are you looking for a nifty way to choose colours that stand out? Are you the type of person who is not satisfied until you have mathematically proven that your choice is optimal? 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=67&quot;"> 
+    <a class="title" href="?id=67"> <h1>Game Theory, Salary Negotiation, and Programmers</h1> </a> When you get a new job, you can breathe a sigh of relief, but not for long. You have an offer letter in your hand, and it is easy to miss one of the most important opportunities of your life: the starting salary. Here's what to do to increase your chances. 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=120&quot;"> 
+    <a class="title" href="?id=120"> <h1>Succinct Data Structures: Cramming 80,000 words into a Javascript file.</h1> </a> 
+    <img src="transparent.gif" osrc="http://zwibbler.com/shared/1024.png" style="background: url(sprite.jpg); background-position: 0px -2623px;width:270px;height:279px"> jQuery creator John Resig needs a little help storing lists of words in his side project. Let's go overkill and explore a little known branch of computer science called Succinct Data Structures. 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=92&quot;"> 
+    <a class="title" href="?id=92"> <h1>qb.js: An implementation of QBASIC in Javascript </h1> </a> Play NIBBLES.BAS in your browser. I re-implemented a small part of QBASIC as a compiler in Javascript, so it runs in a webpage. 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=52&quot;"> 
+    <a class="title" href="?id=52"> <h1>Automatically remove wordiness from your writing</h1> </a> 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=72&quot;"> 
+    <a class="title" href="?id=72"> <h1>Microsoft's generosity knows no end for a year (comic)</h1> </a> 
+    <img src="transparent.gif" osrc="../comics/comic_20090720.png" style="background: url(sprite.jpg); background-position: 0px -5883px;width:270px;height:82px"> 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=90&quot;"> 
+    <a class="title" href="?id=90"> <h1>Regular Expression Matching can be Ugly and Slow</h1> </a> If you open the first few pages of O'Reilly's Beautiful Code, you will find a well written chapter by Brian Kernighan (Personal motto: "No, I didn't invent C. Who told you that?"). The non-C inventing professor describes how a limited form of regular expressions can be implemented elegantly in only a few lines of C code. 
+   </div> 
+   <div class="article small-article" onclick="document.location.href=&quot;?id=82&quot;"> 
+    <a class="title" href="?id=82"> <h1>The PenIsland Problem: Text-to-speech for domain names</h1> </a> Recently, I was contracted to run a list of domain names through the custom-built pronunciation engine that powers my rhyming web site. On the first attempt, I found that the results were embarrassingly bad. A quick inspection revealed the problem: most domain names are severalwordsstucktogether. 
+   </div> 
+  </div>  
+  <script>
+        var layout = new Layout({
+            container: document.getElementById("main"),
+            columnWidth: 350,
+            maxCols: 3,
+            margin: 10,
+            fill: "#eee"
+        });
+        document.getElementById("main").style.visibility = "visible";
+
+        function MakeAjaxRequest( strUrl, params, fnCallBack, param ) 
+{
+    var xmlHttpReq;
+
+    try {
+        xmlHttpReq = new XMLHttpRequest();
+    } catch ( trymicrosoft ) {
+        try {
+            xmlHttpReq = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch(othermicrosoft) {
+            try {
+                xmlHttpReq = new ActiveXObject("Microsoft.XMLHTTP");
+            } catch(failed) {
+                xmlHttpReq = null;
+            }
+        }
+    }
+
+    xmlHttpReq.open('POST', strUrl, true);
+    xmlHttpReq.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xmlHttpReq.onreadystatechange = function() {
+        if (xmlHttpReq.readyState === 4) {
+            var result = { status: "", json: null };
+            if (xmlHttpReq.status === 200 ) {
+                try {
+                    //result.json = window.JSON.parse(xmlHttpReq.responseText);
+                    result.json = eval("("+xmlHttpReq.responseText+")");
+                    result.status = result.json["status"];
+                } catch( e ) {
+                    //alert(e);
+                    result.status = "Error in server response";
+                }
+            } else if ( xmlHttpReq.message ) {
+                result.status = xmlHttpReq.message;
+            } else if ( xmlHttpReq.status === 0 ) {
+                result.status = "Network error. Check internet connection";
+            } else {
+                result.status = 
+                    "Server returned status " + xmlHttpReq.status;
+            }
+            fnCallBack( result );
+        }
+    };
+
+    var query = "";
+    var first = true;
+    for ( var key in params ) {
+        if ( params.hasOwnProperty( key ) ) {
+            if ( !first ) {
+                query += '&';
+            } 
+            first = false;
+            query += key + "=" + encodeURIComponent(params[key]);
+        }
+    }
+
+    xmlHttpReq.send(query);
+}
+
+function delcomment(id)
+{
+    elem = document.getElementById("comment"+id);
+    MakeAjaxRequest(
+        "index.php",
+        {
+            'delcomment': 1,
+            'id': id,
+            "password": ""
+        },
+
+        function( result ) {
+            if ( result.status === "ok" ) {
+                var box = document.getElementById("wholecomment" + id);
+                $(box).slideUp("slow");
+            } else {
+
+            }
+        },
+        null
+    );
+    return null;
+}
+
+function rtrim( buffer )
+{   
+    var pos = buffer.length - 1;
+    while( pos >= 0 && 
+        ( buffer.charAt(pos) === ' ' ||
+          buffer.charAt(pos) === '\t' ||
+          buffer.charAt(pos) === '\r' ||
+          buffer.charAt(pos) === '\n' ) ) {
+        pos--;      
+    }
+
+    return buffer.substr(0, pos + 1);
+}
+
+function ltrim( buffer )
+{   
+    var pos = 0;
+    while( pos < buffer.length && 
+        ( buffer.charAt(pos) === ' ' ||
+          buffer.charAt(pos) === '\t' ||
+          buffer.charAt(pos) === '\r' ||
+          buffer.charAt(pos) === '\n' ) ) {
+        pos += 1;
+    }
+
+    return buffer.substr(pos);
+}
+
+function divToText( div )
+{
+    var stack = [div];
+    var text = [];
+    while( stack.length > 0 ) {
+        var node = stack.pop();
+
+        if ( node.nodeType === 1 && node.nodeName === "P" ) {
+            var t = ltrim(rtrim(node.textContent));
+            if ( t !== "" && t !== "Edit" ) {
+                text.push(t);
+                text.push("\n\n");
+            }
+        } else if ( node.nodeType === 3 ) {
+            var t = ltrim(rtrim(node.data));
+            if ( t !== "" && t !== "Edit" ) {
+                text.push(t);
+                text.push("\n\n");
+            }
+
+        } else {
+            for ( node = node.lastChild;
+                  node !== null;  
+                  node = node.previousSibling )
+            {
+                stack.push( node );
+            }
+        }
+
+    }
+
+    return text.join("");
+}
+
+function textToDiv( div, text )
+{
+    while( div.firstChild !== null ) {
+        div.removeChild( div.firstChild);
+    }
+
+    var arr = text.split("\n" );
+    for ( var i = 0; i < arr.length; i++ ) {
+        var p = document.createElement("p");
+        p.appendChild( document.createTextNode(arr[i]));
+        div.appendChild( p );
+    }
+}
+
+var cancelFn = null;
+
+function editcomment(id)
+{
+    if (cancelFn) {
+        cancelFn();
+    }
+
+    var commentDiv = document.getElementById("commentText" + id);
+    var textarea = document.createElement("textarea" );
+    textarea.cols = 80;
+    textarea.rows = 15;
+    textarea.wrap = "soft";
+    textarea.value = divToText( commentDiv );
+    textarea.style.width = "100%";
+    commentDiv.style.display = "none";
+
+    var containerDiv = commentDiv.parentNode;
+    var div = document.createElement("div");
+    containerDiv.appendChild( div );
+
+    div.appendChild(textarea);
+    div.appendChild(document.createElement("br"));
+
+    var passwordInput = document.createElement("input");
+    passwordInput.type = "text";
+    div.appendChild(document.createTextNode("Editing Password"));
+    div.appendChild(passwordInput);
+    div.appendChild(document.createElement("br"));
+    
+    var saveButton = document.createElement("input");
+    saveButton.type = "button";
+    saveButton.value = "Save Changes";
+    div.appendChild(saveButton);
+
+    var deleteButton = document.createElement("input");
+    deleteButton.type = "button";
+    deleteButton.value = "Delete Comment";
+    div.appendChild(deleteButton);
+
+    var cancelButton = document.createElement("input");
+    cancelButton.type = "button";
+    cancelButton.value = "Cancel";
+    div.appendChild(cancelButton);
+
+    var statusDiv = document.createElement("div");
+    div.appendChild(statusDiv);
+    statusDiv.style.color = "red";
+
+    layout.go();
+    textarea.focus();
+
+    saveButton.onclick = function()
+    {
+        div.style.visibility = "hidden";
+        MakeAjaxRequest(
+            "index.php",
+            {
+                'editcomment': 1,
+                'id': id,
+                'text': textarea.value,
+                "password": passwordInput.value
+            },
+
+            function( result ) {
+                if ( result.status === "ok" ) {
+                    containerDiv.removeChild(div);
+                    commentDiv.style.display = "block";
+                    textToDiv( commentDiv, textarea.value );
+                    var adiv = document.createElement("div");
+                    var a= document.createElement("a");
+                    a.href="javascript:editcomment("+id+")";
+                    a.appendChild(document.createTextNode("Edit"));
+                    adiv.appendChild(a);
+                    commentDiv.appendChild(adiv);
+                } else {
+                    div.style.visibility = "visible";
+                    while( statusDiv.firstChild !== null ) {
+                        statusDiv.removeChild( statusDiv.firstChild );
+                    }
+                    statusDiv.appendChild(document.createTextNode(result.status) );
+                }
+                layout.go();
+                cancelFn = null;
+            },
+            null
+        );
+    };
+
+    deleteButton.onclick = function()
+    {
+        if ( confirm( "Are you sure you want to delete this comment?" ) ) {
+            div.style.visibility = "hidden";
+            MakeAjaxRequest(
+                "index.php",
+                {
+                    'delcomment': 1,
+                    'id': id,
+                    "password": passwordInput.value
+                },
+
+                function( result ) {
+                    if ( result.status === "ok" ) {
+                        var box = document.getElementById("wholecomment" + id);
+                        box.parentNode.removeChild(box);
+                    } else {
+                        div.style.visibility = "visible";
+                        while( statusDiv.firstChild !== null ) {
+                            statusDiv.removeChild( statusDiv.firstChild );
+                        }
+                        statusDiv.appendChild(document.createTextNode(result.status) );
+                    }
+                    layout.go();
+                    cancelFn = null;
+                },
+                null
+            );
+        }
+    };
+
+    cancelButton.onclick = function()
+    {
+        containerDiv.removeChild(div);
+        commentDiv.style.display = "block";
+        layout.go();
+        cancelFn = null;
+    };
+
+    cancelFn = function() {
+        cancelButton.onclick();
+        cancelFn = null;
+    }
+
+}
+
+function e(name) {
+    return document.getElementById(name);
+}
+
+function writeComment() {
+    document.getElementById("writecomment-div").style.display = "none";
+    document.getElementById("commentForm").style.display = "block";
+    layout.go();
+    document.getElementById("comment-text").focus();
+}
+
+function cancelComment() {
+    document.getElementById("writecomment-div").style.display = "block";
+    document.getElementById("commentForm").style.display = "none";
+    layout.go();
+}
+
+function validateCommentForm(form) {
+    if (form.displayname.value == "") {
+        alert("Please fill in the display name.");
+        return false;
+    }
+
+    if (form.comment.value == "") {
+        alert("Please fill in the comment.");
+        return false;
+    }
+
+    if (form.comment.value.indexOf("http:") >= 0 || form.comment.value.indexOf("https:") >=
+            0 ) {
+        alert("You may not write http: in your comment.");
+        return false;
+    }
+}
+
+function mouseentercomment(id)
+{
+    e("edit-comment-" + id).style.color = "#000";
+}
+
+function mouseleavecomment(id)
+{
+    e("edit-comment-" + id).style.color = "#aaa";
+}
+    </script> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+     (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new
+     Date();a=s.createElement(o),
+       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-5751047-4', 'auto');
+  ga('require', 'displayfeatures');
+  ga('send', 'pageview');
+
+</script>   
+ </body>
+</html>

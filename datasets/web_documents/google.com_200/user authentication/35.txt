@@ -1,0 +1,522 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Node.js Authentication using Passport.js | @RisingStack</title> 
+  <meta name="description" content="Learn how you can implement a local Node.js authentication strategy using Passport.js and Redis. This is the 8th chapter of the Node Hero tutorial series."> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="google-site-verification" content="1VZwYFsfiVb7eRGn7Hx4CQN2PHLUmbYZnlJOXrBaCPA"> 
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicons/apple-touch-icon.png?v=f0f1dc8a72"> 
+  <link rel="icon" type="image/png" href="/assets/favicons/favicon-32x32.png?v=f0f1dc8a72" sizes="32x32"> 
+  <link rel="icon" type="image/png" href="/assets/favicons/favicon-16x16.png?v=f0f1dc8a72" sizes="16x16"> 
+  <link rel="manifest" href="/assets/favicons/manifest.json?v=f0f1dc8a72"> 
+  <link rel="mask-icon" href="/assets/favicons/safari-pinned-tab.svg?v=f0f1dc8a72" color="#5bbad5"> 
+  <meta name="theme-color" content="#ffffff"> 
+  <noscript id="deferred-styles"> 
+   <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet"> 
+   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/default.min.css"> 
+   <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans:300,300i,700,700i" rel="stylesheet"> 
+   <link rel="stylesheet" type="text/css" href="/assets/css/prism.css?v=f0f1dc8a72"> 
+   <link rel="stylesheet" type="text/css" href="/assets/css/screen.css?v=f0f1dc8a72"> 
+  </noscript> 
+  <style>
+      .fa{display:inline-block;font-family:FontAwesome;font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.fa-tag:before{content:"\f02b"}.fa-calendar:before{content:"\f073"}.fa-comment-o:before{content:"\f0e5"}@font-face{font-family:'Merriweather Sans';font-style:normal;font-weight:300;src:local('Merriweather Sans Light'),local('MerriweatherSans-Light'),url(https://fonts.gstatic.com/s/merriweathersans/v8/6LmGj5dOJopQKEkt88GowQNd2zpumJ3ZXdYPaAdqT7w.ttf) format('truetype')}@font-face{font-family:'Merriweather Sans';font-style:normal;font-weight:700;src:local('Merriweather Sans Bold'),local('MerriweatherSans-Bold'),url(https://fonts.gstatic.com/s/merriweathersans/v8/6LmGj5dOJopQKEkt88GowfqJSHIsY8pKqTgTouATXAk.ttf) format('truetype')}@font-face{font-family:'Merriweather Sans';font-style:italic;font-weight:300;src:local('Merriweather Sans Light Italic'),local('MerriweatherSans-LightItalic'),url(https://fonts.gstatic.com/s/merriweathersans/v8/nAqt4hiqwq3tzCecpgPmVZK-EqCRAgJ4DGsxXn5jo_s.ttf) format('truetype')}@font-face{font-family:'Merriweather Sans';font-style:italic;font-weight:700;src:local('Merriweather Sans Bold Italic'),local('MerriweatherSans-BoldItalic'),url(https://fonts.gstatic.com/s/merriweathersans/v8/nAqt4hiqwq3tzCecpgPmVQqfFxSJsGWORebWzQ_6S3g.ttf) format('truetype')}article,footer,header,main,nav,section{display:block}html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}body{margin:0;background-color:#f1f2f1}a{background:transparent}h1{font-size:2em;margin:.67em 0}hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}img{border:0}button{font-family:inherit;font-size:100%;margin:0}button{line-height:normal}button{text-transform:none}button{-webkit-appearance:button}button::-moz-focus-inner{border:0;padding:0}html{height:100%;max-height:100%;font-size:62.5%}body{height:100%;max-height:100%;font-family:'Merriweather Sans',sans-serif;font-size:1.8rem;line-height:1em;color:#595B66}h1{text-rendering:optimizeLegibility;line-height:1;margin-top:1.5em;font-family:'Merriweather Sans',sans-serif}h1{font-size:3rem;line-height:1.2em;letter-spacing:-2px;text-indent:-3px}a{color:#57A3E8;text-decoration:none}h1 a{color:#123E2D}ul{margin:1.6em 0;hyphens:none}ul ul{margin:.4em 0}hr{display:block;height:1px;border:0;border-top:1px solid #efefef;margin:1.2em 0;padding:0}iframe{display:block;margin:1.6em 0}.post{position:relative;max-width:inherit;word-break:break-word;hyphens:none;margin-bottom:1em;padding:20px}.post img.author{width:50px;position:absolute;right:20px;border-radius:10px}.post:after{display:block;content:"";width:7px;height:7px;border:#E7EEF2 1px solid;position:absolute;bottom:-5px;left:50%;margin-left:-5px;background:#fff;-webkit-border-radius:100%;-moz-border-radius:100%;border-radius:100%;box-shadow:#fff 0 0 0 5px}.post-title{margin:0;color:#123E2D;margin-right:55px;font-family:'Merriweather Sans',sans-serif;font-weight:700}.post-title a{line-height:1em;text-decoration:none;font-size:3rem;hyphens:none;font-family:'Merriweather Sans',sans-serif}.post-meta{display:inline-block;margin:8px 0;font-family:'Merriweather Sans',sans-serif;font-size:12px;line-height:1.4em;color:#464646}.post-meta a{color:#464646;text-decoration:none}.post-meta i{width:18px;font-size:14px}main{margin:0 auto;max-width:700px}.main-inner{max-width:800px;line-height:24px;padding:75px 60px 60px 60px;background-color:#fff;font-size:16px}@media (max-width:700px){.main-inner{padding:75px 5px 5px 5px}}.post-indexfooter{font-size:14px;margin:2rem 0}.post-indexfooter i{width:18px;font-size:14px}.post-indexfooter a{font-weight:700;text-decoration:none;color:#296faf}.post-time .fulldate{display:none}.post-content{padding-bottom:.5em}@media (max-width:1023px){main{position:relative;left:0}}@media only screen and (max-width:1279px){main{padding:40px 10%}}@media only screen and (max-width:1023px){.post{font-size:.9em;line-height:1.6em}h1{font-size:3.3rem;text-indent:-2px}main{padding:40px 8%}}@media only screen and (max-width:500px){.post{width:auto}h1{font-size:2.4rem;line-height:1.1em;letter-spacing:-1px}.post-meta{font-size:13px}.post-meta i{width:15px}main{padding:20px 12px}}.site-header-content-wr{max-width:1092px;padding:0 5px;margin:auto}@media only screen and (min-width:568px) and (max-width:929px){.site-header-content-wr{padding:0 30px}}@media only screen and (max-width:567px){.site-header-content-wr{padding:0 10px}}.site-header{width:100%;background:#fcfcfc;z-index:10;position:fixed;border-bottom:1px solid #eee;margin-top:4px}.site-header-content-wr{padding-top:7px;padding-bottom:4px;position:relative;height:100%}.site-header-content-wr:after{content:'';display:table;clear:both}.site-header-content-wr h1{font-size:1em;line-height:1;float:left;margin:0 0 0 40px}@media only screen and (max-width:929px){.site-header-content-wr h1{float:none;margin:0}}.site-header-content-wr:after{border-top-color:#fff;bottom:-5px}@media only screen and (max-width:929px){.site-header-content-wr{padding-bottom:15px}}.site-header-content{position:relative;padding:0 84px;z-index:2}@media only screen and (max-width:929px){.site-header-content{padding:0 10px}}.site-header-content:after{content:'';display:table;clear:both}#btn-nav{position:absolute;right:10px;top:19px;display:none;height:19px;width:30px;background-color:transparent;background-image:url('https://risingstack.com/static/images/nav-icon.svg');background-repeat:no-repeat;border:0;float:right}@media only screen and (max-width:929px){#btn-nav{display:inline-block}}nav{float:right;margin-top:5px}nav .nav{list-style:none;margin:auto}nav .caret{display:inline-block;width:0;height:0;margin-top:-2px;margin-left:5px;vertical-align:middle;border-top:4px solid;border-right:4px solid transparent;border-left:4px solid transparent}nav .nav>li{float:left}nav .nav>li a{font-family:'Muli',sans-serif;font-weight:300;font-size:16px;display:inline-block;padding:8px 15px;color:#485469}@media only screen and (min-width:1092px){nav .nav>li a{padding:8px 19px}}nav .nav>li .dropdown-menu{list-style:none;margin:0;min-width:160px;padding:0;position:absolute;background-color:#fff;display:none}nav .nav>li .dropdown-menu li{border-top:1px solid #d7dbdf}nav .nav>li .dropdown-menu a{font-size:13px;display:block}nav hr{display:none;margin:0 0 15px 0}@media only screen and (max-width:929px){nav{float:left;z-index:1;width:100%;display:none}nav .caret{display:none}nav .nav{width:100%;padding:0}nav .nav li{width:100%;padding:5px 0 5px 0;border-top:1px solid #d7dbdf}nav .nav li a{width:100%;display:block}nav .nav>li .dropdown-menu{width:100%;position:relative;display:block}nav .nav>li .dropdown-menu li{display:block;padding:5px 0 0 16px}nav .nav li:first-child{border:none}nav .nav,nav a,nav hr,nav li{display:block}nav .nav>li:last-child{border-left:0}}.floating-cta{width:210px;position:fixed;top:77px;left:9px;z-index:2}.floating-cta iframe{width:210px;height:364px;margin:0}@media only screen and (max-width:992px){.floating-cta{display:none!important}}@media only screen and (max-width:1150px){.floating-cta{width:130px}.floating-cta iframe{display:none}}.progress-container{width:100%;z-index:11;background-color:transparent;position:fixed;top:0;left:0;height:4px;display:block;background:#eee}.progress-bar{background-color:#40aa94;width:0%;display:block;height:inherit}
+    </style> 
+  <link rel="canonical" href="http://blog.risingstack.com/node-hero-node-js-authentication-passport-js/"> 
+  <meta name="referrer" content="no-referrer-when-downgrade"> 
+  <meta property="og:site_name" content="RisingStack Engineering"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Node.js Authentication using Passport.js | @RisingStack"> 
+  <meta property="og:description" content="Learn how you can implement a local Node.js authentication strategy using Passport.js and Redis. This is the 8th chapter of the Node Hero tutorial series."> 
+  <meta property="og:url" content="http://blog.risingstack.com/node-hero-node-js-authentication-passport-js/"> 
+  <meta property="og:image" content="https://risingstack-blog.s3.amazonaws.com/2016/Jun/Node_js_authentication_using_passport_js_1464012308586-1466682211929.gif"> 
+  <meta property="article:published_time" content="2016-05-24T08:24:14.000Z"> 
+  <meta property="article:modified_time" content="2017-09-05T15:40:33.000Z"> 
+  <meta property="article:tag" content="Node.js Tutorials for Beginners"> 
+  <meta property="article:tag" content="Node Hero - Getting Started with Node.js"> 
+  <meta property="article:tag" content="Node.js Security"> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:title" content="Node.js Authentication using Passport.js | @RisingStack"> 
+  <meta name="twitter:description" content="Learn how you can implement a local Node.js authentication strategy using Passport.js and Redis. This is the 8th chapter of the Node Hero tutorial series."> 
+  <meta name="twitter:url" content="http://blog.risingstack.com/node-hero-node-js-authentication-passport-js/"> 
+  <meta name="twitter:image" content="https://risingstack-blog.s3.amazonaws.com/2016/Jun/Node_js_authentication_using_passport_js_1464012308586-1466682211929.gif"> 
+  <meta name="twitter:label1" content="Written by"> 
+  <meta name="twitter:data1" content="Gergely Nemeth"> 
+  <meta name="twitter:label2" content="Filed under"> 
+  <meta name="twitter:data2" content="Node.js Tutorials for Beginners, Node Hero - Getting Started with Node.js, Node.js Security"> 
+  <meta name="twitter:site" content="@risingstack"> 
+  <meta property="og:image:width" content="720"> 
+  <meta property="og:image:height" content="217"> 
+  <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "RisingStack Engineering",
+        "logo": "https://risingstack-blog.s3.amazonaws.com/2016/Mar/risingstack_logo-1457001742686.png"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Gergely Nemeth",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://blog-assets.risingstack.com/2017/01/gergely-nemeth-risingstack-1.png",
+            "width": 50,
+            "height": 50
+        },
+        "url": "http://blog.risingstack.com/author/gergely/",
+        "sameAs": [],
+        "description": "Node.js and microservices, organizer of @Oneshotbudapest @nodebp @jsconfbp"
+    },
+    "headline": "Node.js Authentication using Passport.js | @RisingStack",
+    "url": "http://blog.risingstack.com/node-hero-node-js-authentication-passport-js/",
+    "datePublished": "2016-05-24T08:24:14.000Z",
+    "dateModified": "2017-09-05T15:40:33.000Z",
+    "image": {
+        "@type": "ImageObject",
+        "url": "https://risingstack-blog.s3.amazonaws.com/2016/Jun/Node_js_authentication_using_passport_js_1464012308586-1466682211929.gif",
+        "width": 720,
+        "height": 217
+    },
+    "keywords": "Node.js Tutorials for Beginners, Node Hero - Getting Started with Node.js, Node.js Security",
+    "description": "Learn how you can implement a local Node.js authentication strategy using Passport.js and Redis. This is the 8th chapter of the Node Hero tutorial series.",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "http://blog.risingstack.com"
+    }
+}
+    </script> 
+  <meta name="generator" content="Ghost 0.11"> 
+  <link rel="alternate" type="application/rss+xml" title="RisingStack Engineering" href="http://blog.risingstack.com/rss/"> 
+  <script type="text/javascript">
+	var $mcGoal = {'settings':{'uuid':'510d6f81b948a39e0d9c32ec3','dc':'us9'}};
+	(function() {
+		 var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+		sp.src = 'https://resources.risingstack.com/mailchimp-v1.js'
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+	})(); 
+</script> 
+  <script>
+(function (){
+    var tests = [
+    ]
+    document.addEventListener("DOMContentLoaded", function(event) { 
+        var $topCta = $('#top-cta')
+        $topCta.html(tests[Math.floor(Math.random() * tests.length)])
+    });
+}())
+</script> 
+ </head> 
+ <body class="post-template tag-node-js-tutorials-for-beginners tag-node-hero-getting-started-with-node-js tag-node-js-security"> 
+  <div class="progress-container"> 
+   <span class="progress-bar"></span> 
+  </div> 
+  <header class="site-header"> 
+   <div class="site-header-content-wr"> 
+    <div class="site-header-content"> 
+     <h1><a href="/" title="RisingStack Homepage"><img class="rs-logo" src="https://resources.risingstack.com/risingstack-logo-2017.svg" alt="RisingStack" height="45" width="150"></a></h1> 
+     <button id="btn-nav"></button> 
+     <span class="mission-statement" style="font-size: 0.8em; font-style: italic; margin-top: 13px; display: inline-block; margin-left: 23px;">we help companies succeed with Node.js</span> 
+     <nav id="main-nav"> 
+      <hr> 
+      <ul class="nav"> 
+       <li class="dropdown-toggle"> <a href="#" title="Trainings">Trainings<span class="caret"></span></a> 
+        <ul class="dropdown-menu" role="menu"> 
+         <li><a target="_blank" href="https://blog.risingstack.com/training-node-js-fundamentals/" title="">Node.js Fundamentals</a></li> 
+         <li><a target="_blank" href="https://blog.risingstack.com/training-securing-node-js-web-applications/" title="">Securing Node.js Web Applications</a></li> 
+         <li><a target="_blank" href="https://blog.risingstack.com/training-building-microservices-node-js/" title="">Building Microservices with Node.js</a></li> 
+        </ul> </li> 
+       <li class="dropdown-toggle"> <a href="#" title="Services">Services<span class="caret"></span></a> 
+        <ul class="dropdown-menu" role="menu"> 
+         <li><a target="_blank" href="https://risingstack.com/nodejs-development-consulting-services?utm_source=rsblog&amp;utm_medium=header" title="Node.js Services">Node.js Consulting &amp; Development</a></li> 
+         <li><a target="_blank" href="https://risingstack.com/nodejs-support?utm_source=rsblog&amp;utm_medium=header" title="Node.js Support">24 / 7 Node.js Support</a></li> 
+         <li><a target="_blank" href="https://risingstack.com/kubernetes-consulting-training?utm_source=rsblog&amp;utm_medium=header" title="">Kubernetes Consulting</a></li> 
+        </ul> </li> 
+       <li class="dropdown-toggle"> <a href="#" title="Products">Products<span class="caret"></span></a> 
+        <ul class="dropdown-menu" role="menu"> 
+         <li><a target="_blank" href="https://trace.risingstack.com?utm_source=rsblog&amp;utm_medium=header" title="Trace Node.js Monitoring">SaaS Node.js Monitoring</a></li> 
+         <li><a target="_blank" href="https://trace.risingstack.com/on-premises.html?utm_source=rsblog&amp;utm_medium=header" title="Trace Node.js Monitoring">On-premises Node.js Monitoring</a></li> 
+        </ul> </li> 
+       <li><a target="_blank" href="https://risingstack.com/resources?utm_source=rsblog&amp;utm_medium=header" title="Resources">Resources</a></li> 
+      </ul> 
+      <div style="clear:both"></div> 
+     </nav> 
+    </div> 
+   </div> 
+  </header> 
+  <div class="floating-cta"> 
+   <style>
+        .floating-cta h4 {font-size: 0.6em;}
+      </style> 
+   <iframe frameborder="0" src="https://blog-sidebar.risingstack.com/"></iframe> 
+  </div> 
+  <main> 
+   <div class="main-inner"> 
+    <article class="post-page post tag-node-js-tutorials-for-beginners tag-node-hero-getting-started-with-node-js tag-node-js-security"> 
+     <div id="top-cta" style="margin-bottom: 1em; padding-bottom:1em; border-bottom: 1px solid #eee; font-size:0.9em; font-style:italic;"> 
+     </div> 
+     <header class="post-header"> 
+      <h1 class="post-title">Node Hero - Node.js Authentication using Passport.js</h1> 
+      <section class="post-meta"> 
+       <span class="post-time"> <i class="fa fa-calendar"></i> <time datetime="2016-05-24" class="timeago">a year ago</time> <time datetime="2016-05-24" class="fulldate">May 24th, 2016</time> </span> 
+      </section> 
+     </header> 
+     <section class="post-content"> 
+      <p>This is the 8th part of the tutorial series called Node Hero - in these chapters, you can learn how to get started with Node.js and deliver software products using it.</p> 
+      <p>In this tutorial, you are going to learn how to implement a local Node.js authentication strategy using Passport.js and Redis.</p> 
+      <div class="accordion-wrapper"> 
+       <div class=""> 
+        <div class="tab"> 
+         <input id="tab-one" type="checkbox" name="tabs"> 
+         <label for="tab-one"><strong>Click to see all chapters of the Node Hero tutorial series:</strong></label> 
+         <div class="tab-content"> 
+          <p> </p>
+          <ol> 
+           <li><a href="https://blog.risingstack.com/node-hero-tutorial-getting-started-with-node-js/" target="_blank">Getting started with Node.js</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-npm-tutorial/" target="_blank">Using NPM</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-async-programming-in-node-js/" target="_blank">Understanding async programming</a></li> 
+           <li><a href="https://blog.risingstack.com/your-first-node-js-http-server/" target="_blank">Your first Node.js HTTP server</a></li> 
+           <li><a href="https://blog.risingstack.com/node-js-database-tutorial/" target="_blank">Node.js database tutorial</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-node-js-request-module-tutorial/" target="_blank">Node.js request module tutorial</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-node-js-project-structure-tutorial/" target="_blank">Node.js project structure tutorial</a></li> 
+           <li>Node.js authentication using Passport.js <i>[ this article ]</i> </li> 
+           <li><a href="https://blog.risingstack.com/node-hero-node-js-unit-testing-tutorial/" target="_blank">Node.js unit testing tutorial</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-node-js-debugging-tutorial/" target="_blank">Debugging Node.js applications</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-node-js-security-tutorial/" target="_blank">Node.js Security Tutorial</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-deploy-node-js-heroku-docker/" target="_blank">How to Deploy Node.js Applications</a></li> 
+           <li><a href="https://blog.risingstack.com/node-hero-monitoring-node-js-applications/" target="_blank">Monitoring Node.js Applications</a></li> 
+          </ol> 
+          <p></p> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <h2 id="technologiestouse">Technologies to use</h2> 
+      <p>Before jumping into the actual coding, let's take a look at the new technologies we are going to use in this chapter.</p> 
+      <h4 id="whatispassportjs">What is Passport.js?</h4> 
+      <blockquote> 
+       <p>Simple, unobtrusive authentication for Node.js - <a href="http://passportjs.org/">http://passportjs.org/</a></p> 
+      </blockquote> 
+      <p><img src="http://blog-assets.risingstack.com/2016/May/Node_js_authentication_using_passport_js-1464012308586.gif" alt="Passport.js is an authentication middleware for Node.js"></p> 
+      <p>Passport is an authentication middleware for Node.js which we are going to use for session management.</p> 
+      <h4 id="whatisredis">What is Redis?</h4> 
+      <blockquote> 
+       <p>Redis is an open source (BSD licensed), in-memory data structure store, used as database, cache and message broker. - <a href="https://redis.io/">https://redis.io/</a></p> 
+      </blockquote> 
+      <p>We are going to store our user's session information in Redis, and not in the process's memory. This way our application will be a lot easier to scale.</p> 
+      <h2 id="thedemoapplication">The Demo Application</h2> 
+      <p>For demonstration purposes, let’s build an application that does only the following:</p> 
+      <ul> 
+       <li>exposes a login form,</li> 
+       <li>exposes two protected pages: 
+        <ul>
+         <li>a profile page,</li> 
+         <li>secured notes</li>
+        </ul></li> 
+      </ul> 
+      <div class="card"> 
+       <img src="https://trace.risingstack.com/images/trace-by-risingstack-logo.svg"> 
+       <h4>Node.js Monitoring and Debugging from the Experts of RisingStack</h4> 
+       <h5>Build performant applications using Trace</h5> 
+       <a href="https://trace.risingstack.com?utm_source=rsblog&amp;utm_medium=roadblock-new&amp;utm_campaign=trace" target="_blank" title="Trace Node.js monitoring">Learn more <i class="fa fa-caret-right" aria-hidden="true"></i> </a> 
+      </div> 
+      <h3 id="theprojectstructure">The Project Structure</h3> 
+      <p>You have already learned <a href="/node-hero-node-js-project-structure-tutorial/">how to structure Node.js projects</a> in the previous chapter of Node Hero, so let's use that knowledge! </p> 
+      <p>We are going to use the following structure:</p> 
+      <pre><code>??? app
+|   ??? authentication
+|   ??? note
+|   ??? user
+|   ??? index.js
+|   ??? layout.hbs
+??? config
+|   ??? index.js
+??? index.js
+??? package.json
+</code></pre> 
+      <p>As you can see we will organize files and directories around features. We will have a user page, a note page, and some authentication related functionality.</p> 
+      <p><em>(Download the full source code at <a href="https://github.com/RisingStack/nodehero-authentication">https://github.com/RisingStack/nodehero-authentication</a>)</em></p> 
+      <h3 id="thenodejsauthenticationflow">The Node.js Authentication Flow</h3> 
+      <p>Our goal is to implement the following authentication flow into our application:</p> 
+      <ol> 
+       <li>User enters username and password </li> 
+       <li>The application checks if they are matching </li> 
+       <li>If they are matching, it sends a <code>Set-Cookie</code> header that will be used to authenticate further pages </li> 
+       <li>When the user visits pages from the same domain, the previously set cookie will be added to all the requests </li> 
+       <li>Authenticate restricted pages with this cookie</li> 
+      </ol> 
+      <p>To set up an authentication strategy like this, follow these three steps:</p> 
+      <h2 id="step1settingupexpress">Step 1: Setting up Express</h2> 
+      <p>We are going to use Express for the server framework - you can learn more on the topic by reading our <a href="/your-first-node-js-http-server">Express tutorial</a>.</p> 
+      <pre><code class="language-javascript">// file:app/index.js
+const express = require('express')  
+const passport = require('passport')  
+const session = require('express-session')  
+const RedisStore = require('connect-redis')(session)
+
+const app = express()  
+app.use(session({  
+  store: new RedisStore({
+    url: config.redisStore.url
+  }),
+  secret: config.redisStore.secret,
+  resave: false,
+  saveUninitialized: false
+}))
+app.use(passport.initialize())  
+app.use(passport.session())  
+</code></pre> 
+      <p>What did we do here? </p> 
+      <p>First of all, we required all the dependencies that the session management needs. After that we have created a new instance from the <code>express-session</code> module, which will store our sessions. </p> 
+      <p>For the backing store, we are using Redis, but you can use any other, like MySQL or MongoDB.</p> 
+      <h2 id="step2settinguppassportfornodejs">Step 2: Setting up Passport for Node.js</h2> 
+      <p>Passport is a great example of a library using plugins. For this tutorial, we are adding the <code>passport-local</code> module which enables easy integration of a simple local authentication strategy using usernames and passwords.</p> 
+      <p>For the sake of simplicity, in this example, we are not using a second backing store, but only an in-memory user instance. In real life applications, the <code>findUser</code> would look up a user in a database.</p> 
+      <pre><code class="language-javascript">// file:app/authenticate/init.js
+const passport = require('passport')  
+const bcrypt = require('bcrypt')  
+const LocalStrategy = require('passport-local').Strategy
+
+const user = {  
+  username: 'test-user',
+  passwordHash: 'bcrypt-hashed-password',
+  id: 1
+}
+
+passport.use(new LocalStrategy(  
+ (username, password, done) =&gt; {
+    findUser(username, (err, user) =&gt; {
+      if (err) {
+        return done(err)
+      }
+
+      // User not found
+      if (!user) {
+        return done(null, false)
+      }
+
+      // Always use hashed passwords and fixed time comparison
+      bcrypt.compare(password, user.passwordHash, (err, isValid) =&gt; {
+        if (err) {
+          return done(err)
+        }
+        if (!isValid) {
+          return done(null, false)
+        }
+        return done(null, user)
+      })
+    })
+  }
+))
+</code></pre> 
+      <p>Once the <code>findUser</code> returns with our user object the only thing left is to compare the user's hashed password and the real password to see if there is a match. Always store passwords hashed and use fixed time comparison to avoid timing attacks.</p> 
+      <p>If it is a match, we let the user in (by returning the user to passport - <code>return done(null, user)</code>), if not we return an unauthorized error (by returning nothing to passport - <code>return done(null)</code>).</p> 
+      <h2 id="step3addingprotectedendpoints">Step 3: Adding Protected Endpoints</h2> 
+      <p>To add protected endpoints, we are leveraging the middleware pattern Express uses. For that, let's create the authentication middleware first:</p> 
+      <pre><code class="language-javascript">// file:app/authentication/middleware.js
+function authenticationMiddleware () {  
+  return function (req, res, next) {
+    if (req.isAuthenticated()) {
+      return next()
+    }
+    res.redirect('/')
+  }
+}
+</code></pre> 
+      <p>It only has one role if the user is authenticated (has the right cookies) it simply calls the next middleware; otherwise it redirects to the page where the user can log in.</p> 
+      <p>Using it is as easy as adding a new middleware to the route definition.</p> 
+      <pre><code class="language-javascript">// file:app/user/init.js
+const passport = require('passport')
+
+app.get('/profile', passport.authenticationMiddleware(), renderProfile)  
+</code></pre> 
+      <h2 id="summary">Summary</h2> 
+      <div style="padding: 15px 30px; margin: 15px 0; border: 1px solid #ddd; border-radius: 4px;"> 
+       <p style="margin: 0; paddig:0; margin-bottom: 10px; word-wrap: break-word;"> <a style="color: #A2B537; font-size: 1.2em;" href="https://twitter.com/share?text=%22Setting%20up%20authentication%20for%20Node.js%20with%20Passport%20is%20a%20piece%20of%20cake!%E2%80%9D%20via%20%40RisingStack%20%23nodejs;url=https://blog.risingstack.com/node-hero-node-js-authentication-passport-js" target="_blank">"Setting up authentication for Node.js with Passport is a piece of cake!” via @RisingStack #nodejs</a> </p> 
+       <p style="margin: 8px; color: #6e7b8d; font-size:0.7em; text-align:right; text-transform: uppercase;"> <a style="padding-right: 25px; color: #999; font-weight: bold; background: transparent url(http://blog-assets.risingstack.com/2016/May/1462889492_twitter-1462871499796.png) no-repeat right top" href="https://twitter.com/share?text=%22Setting%20up%20authentication%20for%20Node.js%20with%20Passport%20is%20a%20piece%20of%20cake!%E2%80%9D%20via%20%40RisingStack%20%23nodejs;url=https://blog.risingstack.com/node-hero-node-js-authentication-passport-js" target="_blank" c>Click To Tweet</a> </p> 
+      </div> 
+      <p>In this Node.js tutorial, you have learned how to add basic authentication to your application. Later on, you can extend it with different authentication strategies, like Facebook or Twitter. You can find more strategies at <a href="http://passportjs.org/">http://passportjs.org/</a>.</p> 
+      <p>The full, working example is on GitHub, you can take a look here: <a href="https://github.com/RisingStack/nodehero-authentication">https://github.com/RisingStack/nodehero-authentication</a></p> 
+      <p><a href="https://risingstack.com/resources/node-hero?utm_source=rsblog&amp;utm_medium=get-node-hero&amp;utm_campaign=node-hero&amp;utm_content=nh8-authentication"><img src="https://blog-assets.risingstack.com/static/get-node-hero/get-the-whole-node-hero.png" alt="Download the whole Node Hero series as a single pdf" title=""></a></p> 
+      <h2 id="nextup">Next up</h2> 
+      <p>The next chapter of Node Hero will be all about <a href="/node-hero-node-js-unit-testing-tutorial">unit testing Node.js applications</a>. You will learn concepts like unit testing, test pyramid, test doubles and a lot more!</p> 
+      <p>Share your questions and feedbacks in the comment section.</p> 
+      <p><br></p> 
+     </section> 
+     <footer class="post-footer"> 
+      <figure class="author-image"> 
+       <a class="img" href="/author/gergely/" style="background-image: url(https://blog-assets.risingstack.com/2017/01/gergely-nemeth-risingstack-1.png)"><span class="hidden">Gergely Nemeth's Picture</span></a> 
+      </figure> 
+      <section class="author"> 
+       <h4><a href="/author/gergely/">Gergely Nemeth</a></h4> 
+       <p>Node.js and microservices, organizer of @Oneshotbudapest @nodebp @jsconfbp</p> 
+       <div class="author-meta"> 
+       </div> 
+      </section> 
+     </footer> 
+     <a href="https://trace.risingstack.com/on-premises.html?utm_source=risingstack&amp;utm_medium=blog&amp;utm_content=Node Hero - Node.js Authentication using Passport.js&amp;utm_campaign=trace" target="_blank"> <img src="https://blog-assets.risingstack.com/static/node-js-on-premises-monitoring.png" alt="On-premises Node.js and microservice monitoring" style="max-width: 100%; margin: 0px;"> </a> 
+     <div class="tags"> 
+      <br>
+      <i class="fa fa-tag"></i> 
+      <a href="/tag/node-js-tutorials-for-beginners/">Node.js Tutorials for Beginners</a> 
+      <a href="/tag/node-hero-getting-started-with-node-js/">Node Hero - Getting Started with Node.js</a> 
+      <a href="/tag/node-js-security/">Node.js Security</a> 
+     </div> 
+     <div class="bottom-navigation"> 
+      <span>Read more from us:</span> 
+      <ul style="margin: 0px;"> 
+       <li> <a class="post-nav-item post-nav-prev" href="/node-js-windows-10-tutorial/">Setting up Node.js on Windows 10</a> </li> 
+       <li> <a class="post-nav-item post-nav-next" href="/node-js-logging-tutorial/">How to Get Node.js Logging Right</a> </li> 
+      </ul> 
+     </div> 
+     <div id="mc_embed_signup"> 
+      <form action="//risingstack.us9.list-manage.com/subscribe/post?u=510d6f81b948a39e0d9c32ec3&amp;id=02a6a69990" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate> 
+       <label for="mce-EMAIL">Get early access to our posts</label> 
+       <input type="email" value="" name="EMAIL" class="email" id="mce-EMAIL" placeholder="email address" required> 
+       <div style="position: absolute; left: -5000px;">
+        <input type="text" name="b_510d6f81b948a39e0d9c32ec3_02a6a69990" tabindex="-1" value="">
+       </div> 
+       <div class="clear">
+        <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+       </div> 
+      </form> 
+     </div> 
+     <center> 
+      <a class="twitter-follow-button" href="https://twitter.com/RisingStack" data-size="large">Follow @RisingStack</a> 
+     </center> 
+     <section class="post-comments"> 
+      <div id="disqus_thread"></div> 
+      <script type="text/javascript">
+                /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                var disqus_shortname = 'risingstackblog';
+                /* * * DON'T EDIT BELOW THIS LINE * * */
+                (function() {
+                    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+            </script> 
+      <noscript>
+       Please enable JavaScript to view the 
+       <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+      </noscript> 
+      <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+     </section> 
+    </article> 
+   </div> 
+  </main> 
+  <footer class="site-footer"> 
+   <div class="row group"> 
+    <div class="col"> 
+     <h4>Blog</h4> 
+     <a href="/articles" target="_blank">Best articles</a> 
+     <a href="/node-hero-tutorial-getting-started-with-node-js/?utm_source=rsblog&amp;utm_medium=footer" target="_blank">Node Hero Tutorials</a> 
+     <a href="/nodejs-at-scale-npm-best-practices/?utm_source=rsblog&amp;utm_medium=footer" target="_blank">Node.js at Scale Tutorials</a> 
+    </div> 
+    <div class="col"> 
+     <h4>Resources</h4> 
+     <a href="https://node-checklist.risingstack.com/?utm_source=rsblog&amp;utm_medium=footer" target="_blank">Node.js Maturity Checklist</a> 
+     <a href="https://trace.risingstack.com/?utm_source=rsblog&amp;utm_medium=footer" target="_blank">Trace by RisingStack - Node.js Monitoring</a> 
+     <a href="https://risingstack.com/resources/nodejs-is-enterprise-ready?utm_source=rsblog&amp;utm_medium=footer" target="_blank">Node.js is Enterprise Ready</a> 
+     <a href="https://community.risingstack.com/?utm_source=rsblog&amp;utm_medium=footer" target="_blank">RisingStack Community</a> 
+     <a href="https://news.risingstack.com?utm_source=rsblog&amp;utm_medium=footer" target="_blank">Node.js Daily</a> 
+    </div> 
+    <div class="col"> 
+     <h4>Connect</h4> 
+     <a href="https://risingstack.com/?utm_source=rsblog&amp;utm_medium=footer" target="_blank">RisingStack.com</a> 
+     <a href="https://twitter.com/risingstack" target="_blank">Twitter</a> 
+     <a href="https://github.com/risingstack" target="_blank">Github</a> 
+     <a href="https://facebook.com/risingstack" target="_blank">Facebook</a> 
+    </div> 
+   </div> 
+   <div class="inc">
+     We ? Node.js © RisingStack, Inc. 2017 | | RisingStack® and Trace by RisingStack® are registered trademarks of RisingStack, Inc. 
+   </div> 
+  </footer> 
+  <script>
+    console.log("______  _       _                _____  _                 _    \n| ___ \\(_)     (_)              /  ___|| |               | |   \n| |_/ / _  ___  _  _ __    __ _ \\ `--. | |_   __ _   ___ | | __\n|    / | |/ __|| || '_ \\  / _` | `--. \\| __| / _` | / __|| |/ /\n| |\\ \\ | |\\__ \\| || | | || (_| |/\\__/ /| |_ | (_| || (__ |   < \n\\_| \\_||_||___/|_||_| |_| \\__, |\\____/  \\__| \\__,_| \\___||_|\\_\\\n                           __/ |                               \n                          |___/                                \n");
+    console.log("You like to look under the hood? Why not join us? https://risingstack.workable.com")
+</script> 
+  <script type="text/javascript">
+  var _dcq = _dcq || [];
+  var _dcs = _dcs || {}; 
+  _dcs.account = '3044742';
+  
+  (function() {
+    var dc = document.createElement('script');
+    dc.type = 'text/javascript'; dc.async = true; 
+    dc.src = '//resources.risingstack.com/js/drip.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(dc, s);
+  })();
+</script> 
+  <script data-cfasync="true" type="text/javascript" src="/assets/js/jquery-3.1.1.min.js?v=f0f1dc8a72"></script> 
+  <script data-cfasync="true" type="text/javascript" src="/assets/js/highlight-9.9.0.min.js?v=f0f1dc8a72"></script> 
+  <script data-cfasync="true" type="text/javascript" src="/assets/js/fbds.js?v=f0f1dc8a72"></script> 
+  <script data-cfasync="true" type="text/javascript" src="/assets/js/index.js?v=f0f1dc8a72"></script> 
+  <noscript>
+   <iframe src="//www.googletagmanager.com/ns.html?id=GTM-KV8B2T" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript> 
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KV8B2T');</script> 
+  <script>
+       var loadDeferredStyles = function() {
+         var addStylesNode = document.getElementById("deferred-styles");
+         var replacement = document.createElement("div");
+         replacement.innerHTML = addStylesNode.textContent;
+         document.body.appendChild(replacement)
+         addStylesNode.parentElement.removeChild(addStylesNode);
+       };
+       var raf = requestAnimationFrame || mozRequestAnimationFrame ||
+           webkitRequestAnimationFrame || msRequestAnimationFrame;
+       if (raf) raf(function() { window.setTimeout(loadDeferredStyles, 0); });
+       else window.addEventListener('load', loadDeferredStyles);
+     </script> 
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script> 
+  <script>
+    window.addEventListener("load", function(){
+    window.cookieconsent.initialise({
+      "location": true,
+      "palette": {
+        "popup": {
+          "background": "#dedede",
+          "text": "#404040"
+        },
+        "button": {
+          "background": "#8ec760",
+          "text": "#ffffff"
+        }
+      },
+      "theme": "edgeless",
+      "content": {
+        "href": "https://blog.risingstack.com/privacy-policy/"
+      }
+    })});
+    </script> 
+  <script>window.twttr = (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0],
+        t = window.twttr || {};
+      if (d.getElementById(id)) return t;
+      js = d.createElement(s);
+      js.id = id;
+      js.src = "https://platform.twitter.com/widgets.js";
+      fjs.parentNode.insertBefore(js, fjs);
+
+      t._e = [];
+      t.ready = function(f) {
+        t._e.push(f);
+      };
+
+      return t;
+    }(document, "script", "twitter-wjs"));
+    </script> 
+  <script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/2831645.js"></script>   
+ </body>
+</html>

@@ -1,0 +1,1552 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="icon" href="//www.ibm.com/favicon.ico"> 
+  <link rel="canonical" href="http://www.ibm.com/developerworks/java/tutorials/j-sec1/j-sec1.html"> 
+  <meta name="geo.country" content="ZZ"> 
+  <meta name="dcterms.rights" content="© Copyright&nbsp;IBM Corporation&nbsp;2002"> 
+  <meta name="dcterms.date" content="2002-07-19"> 
+  <meta name="description" content="The Java platform, both its base language features and library extensions, provides an excellent base for writing secure applications. In this tutorial, the first of two parts on Java security, Brad Rubin guides you through the basics of cryptography and how it is implemented in the Java programming language, using plenty of code examples to illustrate the concepts."> 
+  <meta name="keywords" content=", tttjca"> 
+  <meta name="robots" content="index,follow"> 
+  <title>Java security: Java security, Part 1: Crypto basics</title> 
+  <script> 
+    digitalData = {
+        "page":{
+            "category":{
+                "primaryCategory":"SOFDCJVAZZ"
+            },
+            "pageInfo":{
+                "effectiveDate":"2002-07-19",
+                "language":"en",
+                "publishDate":"2002-07-19",
+                "publisher":"IBM Corporation",
+                "version":"v18",
+                "ibm":{ 
+                    "contentDelivery":"IBM developerWorks template",
+                    "contentProducer":"IBM developerWorks",
+                    "country":"ZZ",
+                    "owner":"developerWorks Content/Raleigh/IBM",
+                    "subject":"TT300",
+                    "type":"CT321",
+                    "topic":"General programming",
+                    "topicId":"16",
+                    "contentArea":"java",
+                    "contentAreaId":"1",
+                    "contentType":"article",
+                    "contentId":"132295",
+                },
+                "keywords":", tttjca",
+                "description":"The Java platform, both its base language features and library extensions, provides an excellent base for writing secure applications. In this tutorial, the first of two parts on Java security, Brad Rubin guides you through the basics of cryptography and how it is implemented in the Java programming language, using plenty of code examples to illustrate the concepts."
+            }
+        }
+    };
+    window._analytics = {
+        "segment_key":'HU3dbkAG5wE0F1IkRf9S1RexlAqo3jby'
+    };
+</script> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:site" content="@developerworks"> 
+  <meta property="og:title" content="Java security, Part 1: Crypto basics"> 
+  <meta property="og:description" content="The Java platform, both its base language features and library extensions, provides an excellent base for writing secure applications. In this tutorial, the first of two parts on Java security, Brad Rubin guides you through the basics of cryptography and how it is implemented in the Java programming language, using plenty of code examples to illustrate the concepts."> 
+  <meta property="og:image" content="http://www.ibm.com/developerworks/i/dw-social-201508.png"> 
+  <!-- Segment meta tag --> 
+  <meta name="segment" property="(developerWorks)" productTitle="developerWorks" value="Java English (developerWorks)"> 
+  <!-- SITE MON : START (DO NOT DELETE) --> 
+  <!-- developerWorks monitoring token --> 
+  <!-- SITE MON : END (DO NOT DELETE) --> 
+  <!-- HEADER_SCRIPTS_AND_CSS_INCLUDE --> 
+  <!-- <script src="//cdn.optimizely.com/js/5399420604.js"></script> --> 
+  <!-- BEGIN: Use this section to set page specific variables for the Page Tag --> 
+  <script language="JavaScript">var NTPT_PGEXTRA="ibmSkillLevel=1&ibmCmaId=132295&ibmContentAreas=java";</script> 
+  <!--END --> 
+  <script src="//1.www.s81c.com/common/stats/ida_stats.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/www.css" rel="stylesheet"> 
+  <link href="//1.www.s81c.com/common/v18/css/syntaxhighlighter.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/www.js"></script> 
+  <script src="//1.www.s81c.com/common/v18/js/syntaxhighlighter.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/tables.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/tables.js"></script> 
+  <!--  Masthead/footer  --> 
+  <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-v18.css?v=092117" rel="stylesheet"> 
+  <!-- <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/alt-signedin-ux.css" rel="stylesheet" /> --> 
+  <!--[if lt IE 9]>
+    <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-ie8fix.css?v=022216" rel="stylesheet" />
+<![endif]--> 
+  <link href="//dw1.s81c.com/developerworks/css/v18/dw-article.css?v=073117" rel="stylesheet"> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth-properties.js?v=041017"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth.js?v=062717"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/dw-mf/v18/dw-mf.js?v=110316"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-include.js"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-article.js?v=051817"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auto-links.js?v=091217"></script> 
+  <script src="//www.ibm.com/software/info/js/tactic.js"></script> 
+  <script src="//www.ibm.com/software/info/js/tacticbindlinks.js"></script> 
+  <!-- Segment --> 
+  <script src="//console.ng.bluemix.net/analytics/build/bluemix-analytics.min.js"></script> 
+  <!-- 
+<PageMap>
+    <DataObject type="document">
+        <Attribute name="topic">General programming</Attribute>
+        <Attribute name="topicId">16</Attribute>
+        <Attribute name="contentArea">java</Attribute>
+        <Attribute name="contentAreaId">1</Attribute>
+        <Attribute name="abstract">The Java platform, both its base language features and library
+            extensions, provides an excellent base for writing secure applications. In
+            this tutorial, the first of two parts on Java security, Brad Rubin guides you
+            through the basics of cryptography and how it is implemented in the Java
+            programming language, using plenty of code examples to illustrate the
+            concepts.</Attribute>
+        <Attribute name="pub.date">2002-07-19</Attribute>
+        <Attribute name="contentType">article</Attribute>
+    </DataObject>
+</PageMap>
+--> 
+ </head> 
+ <body id="ibm-com" class="ibm-type dw-js-disabled"> 
+  <div id="ibm-top" class="ibm-landing-page"> 
+   <!-- MASTHEAD_BEGIN --> 
+   <div id="ibm-masthead" role="banner" aria-label="IBM"> 
+    <div id="ibm-mast-options"> 
+     <ul role="toolbar" aria-labelledby="ibm-masthead"> 
+      <li id="ibm-geo" role="presentation"><a href="http://www.ibm.com/planetwide/select/selector.html" role="button" aria-label="United States selected - Choose a country">United States</a></li> 
+     </ul> 
+    </div> 
+    <div id="ibm-universal-nav"> 
+     <nav role="navigation" aria-label="IBM"> 
+      <div id="ibm-home">
+       <a href="http://www.ibm.com/us/en/">IBM®</a>
+      </div> 
+      <ul id="ibm-menu-links" role="toolbar" aria-label="Site map"> 
+       <li><a href="http://www.ibm.com/sitemap/us/en/">Site map</a></li> 
+      </ul> 
+     </nav> 
+     <div id="ibm-search-module" role="search" aria-labelledby="ibm-masthead"> 
+      <form id="ibm-search-form" action="https://www.ibm.com/Search/" method="get"> 
+       <p> <label for="q">IBM</label> <input type="text" maxlength="100" value="" placeholder="Search" name="q" id="q" aria-label="Search developerWorks"> <input type="hidden" value="18" name="v"> <input type="hidden" value="utf" name="en"> <input type="hidden" value="en" name="lang"> <input type="hidden" value="us" name="cc"> <input type="hidden" name="sn" value="dw"> <input type="hidden" name="dws" value="dw"> <input type="hidden" name="hpp" value="20"> <input type="submit" id="ibm-search" class="ibm-btn-search" value="Submit"> </p> 
+      </form> 
+     </div> 
+    </div> 
+   </div>
+   <!-- MASTHEAD_END --> 
+   <!-- LAYOUT --> 
+   <div id="ibm-content-wrapper"> 
+    <!-- LEADSPACE_BEGIN --> 
+    <header role="banner" aria-labelledby="ibm-pagetitle-h1"> 
+     <!-- MASTHEAD_SITENAV_BEGIN --> 
+     <div class="ibm-sitenav-menu-container"> 
+      <div class="ibm-sitenav-menu-name"> 
+       <a href="//www.ibm.com/developerworks/"> <img width="186" height="24" alt="developerWorks®" src="//dw1.s81c.com/developerworks/i/mf/dw-mf-wordmark.svg"> </a> 
+      </div> 
+      <div class="ibm-sitenav-menu-list"> 
+       <ul role="menubar"> 
+        <li class="dw-navpage-learn ibm-haschildlist" role="presentation"> <span role="menuitem"><a href="//www.ibm.com/developerworks/learn/">Learn</a></span> 
+         <ul role="menu" aria-label="Learn" id="dw-mega-learn"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Learn with our tutorials and training</h2> 
+             <p class="dw-mega-main-p">developerWorks provides tutorials, articles and other technical resources to help you grow your development skills on a wide variety of topics and products. Learn about a specific product or take a course and get certified. So, what do you want to learn about?</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/learn/" class="ibm-btn-pri">Choose a topic</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured topics</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/mobile">Mobile development</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bigdata.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/analytics">Big data</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cognitive.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cognitive">Cognitive computing</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cloud">Cloud</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-develop ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/develop/">Develop</a></span> 
+         <ul role="menu" aria-label="Develop" id="dw-mega-develop"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Develop with our trials &amp; downloads</h2> 
+             <p class="dw-mega-main-p">Start developing with product trials, free downloads, and IBM Bluemix™ services. Sort by topic or product name and find everything we have to offer.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/develop/" class="ibm-btn-pri">View all downloads &amp; trials</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured products</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/sso/bmregistration">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-websphere.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/ws/was/">WebSphere Application Server</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-db2express.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/im/db2express/">DB2 Express C</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//mobilefirstplatform.ibmcloud.com/">MobileFirst Platform Foundation</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dest.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-connect ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/connect/">Connect</a></span> 
+         <ul role="menu" aria-label="Connect" id="dw-mega-connect"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Find a community and connect</h2> 
+             <p class="dw-mega-main-p">Learn from the experts and share with other developers in one of our dev centers. Ask questions and get answers with dW answers. Search for local events in your area. All in developerWorks communities.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/connect/" class="ibm-btn-pri">View communities</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured Developer Centers</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-jazz-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//jazz.net/">Jazz.net</a> 
+              </div> 
+             </div> 
+             <!--<div class="dw-mega-nav-item">
+                                        <div class="dw-mega-nav-img">
+                                            <img width="30" height="30" alt=""
+                                                src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud-dev.png">
+                                        </div>
+                                        <div class="dw-mega-nav-link">
+                                            <a href="//developer.ibm.com/cloud-analytics/">IBM Cloud Analytics DEV</a>
+                                        </div>
+                                    </div>--> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/bluemix/">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <!-- dW featured --> 
+        <!-- <li role="presentation" class="dw-navpage-devcenter"><strong>Subheading</strong></li> --> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cognitive/">Cognitive</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cloud/">Cloud</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/analytics/">Data</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/iot/">Internet of Things</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/java/">Java</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/">All topics</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+     <!-- MASTHEAD_SITENAV_END --> 
+     <!-- NAVIGATION_TRAIL_BEGIN --> 
+     <div id="ibm-leadspace-head" class="ibm-alternate"> 
+      <div id="ibm-leadspace-body"> 
+       <nav aria-label="Breadcrumb" role="navigation"> 
+        <ul id="dw-navigation-trail" itemscope itemtype="http://schema.org/BreadcrumbList">
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/learn/"><span itemprop="name">Learn</span></a>
+          <meta itemprop="position" content="1"></li>
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/java/"><span itemprop="name">Java development</span></a>
+          <meta itemprop="position" content="2"></li>
+        </ul> 
+       </nav> 
+      </div> 
+     </div> 
+     <!-- NAVIGATION_TRAIL_END --> 
+    </header> 
+    <!-- LEADSPACE_END --> 
+    <!-- MAIN_CONTENT_BEGIN --> 
+    <main role="main" aria-labelledby="ibm-pagetitle-h1"> 
+     <div id="ibm-pcon"> 
+      <!-- BEGIN_IBM-CONTENT --> 
+      <div id="ibm-content"> 
+       <!-- BEGIN_IBM-CONTENT-BODY --> 
+       <div id="ibm-content-body"> 
+        <!-- BEGIN_IBM-CONTENT-MAIN --> 
+        <div id="ibm-content-main" class="dw-article"> 
+         <!-- BEGIN_INTERIOR-COLUMNS --> 
+         <div class="ibm-columns dw-article-toc"> 
+          <!-- LEFT_6_2_CONTENT_COLUMN_BEGIN --> 
+          <div id="dw-article-toc-container" class="ibm-col-6-2"> 
+           <div id="dw-article-toc-body"> 
+            <h2>Contents</h2>
+            <div class="ibm-alternate-rule">
+             <hr>
+            </div>
+            <ul role="directory" aria-label="Table of contents" class="ibm-plain-list">
+             <li><a href="#ibm-pagetitle-h1">Introduction</a></li>
+             <li><a href="#N100C1">About this tutorial</a></li>
+             <li><a href="#N10106">Java security programming concepts</a></li>
+             <li><a href="#N101D5">Ensuring the integrity of a message</a></li>
+             <li><a href="#N1028A">Keeping a message confidential</a></li>
+             <li><a href="#N10383">Secret messages with public keys</a></li>
+             <li><a href="#N1040B">Signatures without paper</a></li>
+             <li><a href="#N104B8">Proving you are who you are</a></li>
+             <li><a href="#N1052A">Trusting the code</a></li>
+             <li><a href="#N10566">SSL/TLS: Securing C/S communication</a></li>
+             <li><a href="#N105BD">Wrapup</a></li>
+             <li><a href="#artdownload">Downloadable resources</a></li>
+             <li><a href="#artrelatedtopics">Related topics</a></li>
+             <li><a href="#icomments">Comments</a></li>
+            </ul> 
+           </div> 
+          </div> 
+          <!-- LEFT_6_2_CONTENT_COLUMN_END --> 
+          <!-- CENTER_6_4_CONTENT_COLUMN_BEGIN --> 
+          <div class="ibm-col-6-4"> 
+           <p class="dw-article-series-head">Java security</p> 
+           <h1 id="ibm-pagetitle-h1" class="ibm-h1">Java security, Part 1: Crypto basics</h1> 
+           <!-- Article Top Bar --> 
+           <div class="ibm-columns dw-article-topbar"> 
+            <!-- Author and article info. --> 
+            <div class="ibm-col-6-2 ibm-col-medium-6-4 dw-article-metadata"> 
+             <div class="dw-article-avatar">
+              <img width="42" height="42" src="//dw1.s81c.com/developerworks/i/v18/article/dw-author.png" alt="">
+             </div>
+             <div class="dw-article-authordate">
+              Brad Rubin
+              <br>
+              <span class="dw-article-pubdate">Published on July 19, 2002</span>
+             </div> 
+            </div> 
+            <!-- Social --> 
+            <div class="ibm-col-6-2 ibm-col-medium-6-4 ibm-col-small-6-2 dw-article-social"> 
+             <!-- Sharing links --> 
+             <div id="dw-article-share-inline"> 
+              <div class="dw-article-sharelink-inline"> 
+               <div class="ibm-sharethispage"></div> 
+              </div> 
+             </div> 
+             <!-- Number of comments and link to comments --> 
+             <div id="dw-article-cmts"> 
+              <div class="dw-article-cmtslink"> 
+               <a onclick="tocLink('#icomments')" href="#icomments" role="link" tabindex="0" aria-label="Comments"> <img src="//dw1.s81c.com/developerworks/i/v18/article/dw-article-cmt-icon.png" width="29" height="29" alt="Comments"> </a> 
+              </div> 
+              <div class="dw-article-cmtslink"> 
+               <a onclick="tocLink('#icomments')" href="#icomments" role="link" tabindex="0"> 
+                <div id="nCmts"></div> </a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+           <div id="dw-series-container">
+            <h3 class="ibm-h3" id="dw-series-heading">Content series:</h3>
+            <div data-widget="showhide" data-type="panel" class="ibm-show-hide">
+             <h2 id="dw-series-show-hide">This content is part <span id="dw-series-part">#</span> of <span id="dw-series-total">#</span> in the series: <span id="dw-series-title">Java security</span></h2>
+             <div class="ibm-container-body" id="dw-series-links">
+              http://www.ibm.com/developerworks/library/?series_title_by=**auto**
+             </div>
+             <div id="dw-not-all-published">
+              Stay tuned for additional content in this series.
+             </div>
+            </div>
+            <div id="dw-series-alt">
+             <h2>This content is part of the series:<span id="dw-series-title-alt">Java security</span></h2>
+             <p>Stay tuned for additional content in this series.</p>
+            </div>
+           </div> 
+           <!-- Article Body --> 
+           <h2 id="N100C1" class="ibm-h2">About this tutorial</h2>
+           <h3 id="N10042" class="ibm-h3">What is this tutorial about?</h3>
+           <p>There is perhaps no software engineering topic of more timely importance than application security. Attacks are costly, whether the attack comes from inside or out, and some attacks can expose a software company to liability for damages. As computer (and especially Internet) technologies evolve, security attacks are becoming more sophisticated and frequent. Staying on top of the most up-to-date techniques and tools is one key to application security; the other is a solid foundation in proven technologies such as data encryption, authentication, and authorization.</p>
+           <p>The Java platform, both the basic language and library extensions, provides an excellent foundation for writing secure applications. This tutorial covers the basics of cryptography and how it is implemented in the Java programming language, and it offers example code to illustrate the concepts.</p>
+           <p>In this first installment of a two-part tutorial, we cover material in the library extensions -- now part of the JDK 1.4 base -- known as Java Cryptography Extension (JCE) and Java Secure Sockets Extension (JSSE). In addition, this tutorial introduces the CertPath API, which is new for JDK 1.4. In Part 2 (see <a href="#artrelatedtopics">Related topics</a>), we'll expand the discussion to encompass access control, which is managed in the Java platform by the Java Authentication and Authorization Service (JAAS).</p>
+           <h3 id="N10050" class="ibm-h3">Should I take this tutorial?</h3>
+           <p>This is an intermediate-level tutorial; it assumes you know how to read and write basic Java programs, both applications and applets.</p>
+           <p>If you are already a Java programmer and have been curious about cryptography (topics such as private and public key encryption, RSA, SSL, certificates) and the Java libraries that support them (JCE, JSSE), this tutorial is for you. It does not assume any previous background in cryptography, JCE, or JSSE.</p>
+           <p>This tutorial introduces the basic cryptographic building block concepts. Each concept is followed by the Java implementation considerations, a code example, and the results of the example execution.</p>
+           <h3 id="N1005A" class="ibm-h3">Tools, code samples, and installation requirements</h3>
+           <p> You'll need the following items to complete the programming exercises in this tutorial:</p>
+           <ul class="ibm-bullet-list">
+            <li><a href="http://java.sun.com/j2se/1.4.2/download.html">JDK 1.4, Standard Edition</a></li>
+            <li>The tutorial source code and classes, <a href="JavaSecurity1-source.jar">JavaSecurity1-source.jar</a>, so that you can follow the examples as we go along</li>
+            <li>The <a href="http://www.bouncycastle.org">Bouncy Castle Crypto library</a> for the RSA example</li>
+            <li>A browser that supports the Java 1.4 plug-in</li>
+           </ul>
+           <p>You can use JDK 1.3.x, but you must install JCE and JSSE yourself.</p>
+           <h3 id="N10075" class="ibm-h3">A note on the code examples</h3>
+           <p>The code examples dump encrypted data directly to the screen. In most cases, this will result in strange-looking control characters, some of which may occasionally cause screen-formatting problems. This is not good programming practice (it would be better to convert them to displayable ASCII characters or decimal representations), but has been done here to keep the code examples and their output brief.</p>
+           <p>In most cases in the example execution sections, the actual strings have been modified to be compatible with the character set requirements of this tutorial. Also, in most examples, we look up and display the actual security provider library used for a given algorithm. This is done to give the user a better feel of which libraries are called for which functions. Why? Because, in most installations, there are a number of these providers installed.</p>
+           <h2 id="N10106" class="ibm-h2">Java security programming concepts</h2>
+           <h3 id="N10081" class="ibm-h3">How the Java platform facilitates secure programming</h3>
+           <p>The Java programming language and environment has many features that facilitate secure programming:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>No pointers</strong>, which means that a Java program cannot address arbitrary memory locations in the address space.</li>
+            <li><strong>A bytecode verifier</strong>, which operates after compilation on the .class files and checks for security issues before execution. For example, an attempt to access an array element beyond the array size will be rejected. Because buffer overflow attacks are responsible for most system breaches, this is an important security feature.</li>
+            <li><strong>Fine-grained control over resource access</strong> for both applets and applications. For example, applets can be restricted from reading from or writing to disk space, or can be authorized to read from only a specific directory. This authorization can be based on who signed the code (see <a href="#codesign">The concept of code signing</a>) and the http address of the code source. These settings appear in a java.policy file.</li>
+            <li><strong>A large number of library functions</strong> for all the major cryptographic building blocks and SSL (the topic of this tutorial) and authentication and authorization (discussed in the second tutorial in this series). In addition, numerous third-party libraries are available for additional algorithms.</li>
+           </ul>
+           <h3 id="N1009C" class="ibm-h3">What are secure programming techniques?</h3>
+           <p>Simply put, there are a number of programming styles and techniques available to help ensure a more secure application. Consider the following as two general examples:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>Storing/deleting passwords.</strong> If a password is stored in a Java <code> String</code> object, the password will stay in memory until it is either garbage collected or the process ends. If it is garbage collected, it will still exist in the free memory heap until the memory space is reused. The longer the password <code> String</code> stays in memory, the more vulnerable it is to snooping.<br><br> Even worse, if real memory runs low, the operating system might page this password <code>String</code> to the disk's swap space, so it is vulnerable to disk block snooping.<br><br> To minimize (but not eliminate) these exposures, you should store passwords in <code>char</code> arrays and zero them out after use. (<code>String</code> s are immutable, so you can't zero them out.)</li>
+            <li><strong>Smart serialization.</strong> When objects are serialized for storage or transmission any private fields are, by default, present in the stream. So, sensitive data is vulnerable to snooping. You can use the <code> transient</code> keyword to flag an attribute so it is skipped in the streaming.</li>
+           </ul>
+           <p>We'll be discussing these and other techniques in more detail when we encounter a need for them throughout the tutorial.</p>
+           <h3 id="N100C5" class="ibm-h3">Security is integrated in JDK 1.4</h3>
+           <p>Prior to JDK 1.4, many security functions had to be added to the base Java code distribution as extensions. Tight U.S. export restrictions required this separation of function.</p>
+           <p>Now, new relaxed regulations open the door to tighter integration of security features and the base language. The following packages -- used as extensions prior to the 1.4 release -- are now integrated into JDK 1.4:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>JCE</strong> (Java Cryptography Extension)</li>
+            <li><strong>JSSE</strong> (Java Secure Sockets Extension)</li>
+            <li><strong>JAAS</strong> (Java Authentication and Authorization Service)</li>
+           </ul>
+           <p>JDK 1.4 also introduces two new functions:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>JGSS</strong> (Java General Security Service)</li>
+            <li><strong>CertPath API</strong> (Java Certification Path API)</li>
+           </ul>
+           <p>JCE, JSSE, and the CertPath API are the subject of this tutorial. We'll focus on JAAS in the next tutorial in this series. Neither tutorial covers the JGSS (which provides a generic framework to securely exchange messages between applications).</p>
+           <h3 id="3rdparty" class="ibm-h3">Security is enriched with third-party libraries</h3>
+           <p>We can enhance an already rich set of functions in the current Java language with third-party libraries, also called <em>providers</em>. Providers add additional security algorithms.</p>
+           <p>As an example of a library, we'll be working with the Bouncy Castle provider (see <a href="#artrelatedtopics">Related topics</a> ). The Bouncy Castle library provides other cryptographic algorithms, including the popular RSA algorithm discussed in <a href="#public">What is public key cryptography?</a> and <a href="#ds">What are digital signatures?</a> of this tutorial.</p>
+           <p>While your directory names and <em>java.security</em> files might be a bit different, here is the template for installing the Bouncy Castle provider. To install this library, download the bcprov-jdk14-112.jar file and place it in the j2sdk1.4.0\jre\lib\ext and the Program Files\Java\J2re1.4.0\lib\ext directories. In both java.security files, which are in the same directories as above but use "security" instead of "ext", add the following line:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">security.provider.6=org.bouncycastle.jce.provider.BouncyCastleProvider</pre></span>
+           <p>to the end of this group of lines:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">security.provider.1=sun.security.provider.Sun
+security.provider.2=com.sun.net.ssl.internal.ssl.Provider
+security.provider.3=com.sun.rsajca.Provider
+security.provider.4=com.sun.crypto.provider.SunJCE
+security.provider.5=sun.security.jgss.SunProvider
+security.provider.6=org.bouncycastle.jce.provider.BouncyCastleProvider</pre></span>
+           <h3 id="N1010D" class="ibm-h3">Looking ahead</h3>
+           <p>In this section, we've introduced the features the Java language provides, either fully integrated or extension-based, that help to ensure that programming remains secure. We've offered some general examples of secure programming techniques to help you become familiar with the concept. We've covered security technologies that used to be extensions but are now integrated into the version 1.4 release; we've also noted two new security technologies. And we've demonstrated that third-party libraries can enhance security programs by offering new technologies.</p>
+           <p>In the remainder of this tutorial, we will familiarize you with these concepts designed to provide secure messaging (as they apply to Java programming):</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>Message digests.</strong> Coupled with message authentication codes, a technology that ensures the integrity of your message.</li>
+            <li><strong>Private key encryption.</strong> A technology designed to ensure the confidentiality of your message.</li>
+            <li><strong>Public key encryption.</strong> A technology that allows two parties to share secret messages without prior agreement on secret keys.</li>
+            <li><strong>Digital signatures.</strong> A bit pattern that identifies the other party's message as coming from the appropriate person.</li>
+            <li><strong>Digital certificates.</strong> A technology that adds another level of security to digital signatures by having the message certified by a third-party authority.</li>
+            <li><strong>Code signing.</strong> The concept that a trusted entity embeds a signature in delivered code.</li>
+            <li><strong>SSL/TLS.</strong> A protocol for establishing a secure communications channel between a client and a server. Transport Layer Security (TLS) is the replacement for Secure Sockets Layer (SSL).</li>
+           </ul>
+           <p>As we discuss each of these topics, we'll serve up examples and sample code.</p>
+           <h2 id="N101D5" class="ibm-h2">Ensuring the integrity of a message</h2>
+           <h3 id="N10138" class="ibm-h3">Overview</h3>
+           <p>In this section, we will learn about message digests, which take the data in a message and generate a block of bits designed to represent the "fingerprint" of the message. We will also cover the JDK 1.4-supported algorithms, classes, and methods related to message digests, offer a code example and a sample execution code for both the message digest and message authentication features.</p>
+           <h3 id="md" class="ibm-h3">What is a message digest?</h3>
+           <p>A <em>message digest</em> is a function that ensures the integrity of a message. Message digests take a message as input and generate a block of bits, usually several hundred bits long, that represents the fingerprint of the message. A small change in the message (say, by an interloper or eavesdropper) creates a noticeable change in the fingerprint.</p>
+           <p>The message-digest function is a one-way function. It is a simple matter to generate the fingerprint from the message, but quite difficult to generate a message that matches a given fingerprint.</p>
+           <p>Message digests can be weak or strong. A checksum -- which is the XOR of all the bytes of a message -- is an example of a weak message-digest function. It is easy to modify one byte to generate any desired checksum fingerprint. Most strong functions use hashing. A 1-bit change in the message leads to a massive change in the fingerprint (ideally, 50 percent of the fingerprint bits change).</p>
+           <h3 id="N1014C" class="ibm-h3">Algorithms, classes, and methods</h3>
+           <p>JDK 1.4 supports the following message-digest algorithms:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>MD2</strong> and <strong>MD5</strong> , which are 128-bit algorithms</li>
+            <li><strong>SHA-1</strong>, which is a 160-bit algorithm</li>
+            <li><strong>SHA-256,</strong><strong>SHA-383,</strong> and <strong>SHA-512</strong>, which offer longer fingerprint sizes of 256, 383, and 512 bits, respectively</li>
+           </ul>
+           <p>MD5 and SHA-1 are the most used algorithms.</p>
+           <p>The <code>MessageDigest</code> class manipulates message digests. The following methods are used in the <a href="#mdexample">Message digest code example</a>:</p>
+           <ul class="ibm-bullet-list">
+            <li><code>MessageDigest.getInstance("MD5")</code> : Creates the message digest.</li>
+            <li><code>.update(plaintext)</code> : Calculates the message digest with a plaintext string.</li>
+            <li><code>.digest()</code> : Reads the message digest.</li>
+           </ul>
+           <p>If a key is used as part of the message-digest generation, the algorithm is known as a <em>message-authentication code</em>. JDK 1.4 supports the HMAC/SHA-1 and HMAC/MD5 message-authentication code algorithms.</p>
+           <p>The <code>Mac</code> class manipulates message-authentication codes using a key produced by the <code>KeyGenerator</code> class. The following methods are used in the <a href="#macexample">Message authentication code example</a>:</p>
+           <ul class="ibm-bullet-list">
+            <li><code>KeyGenerator.getInstance("HmacMD5")</code> and <code>.generateKey()</code> : Generates the key.</li>
+            <li><code>Mac.getInstance("HmacMD5")</code> : Creates a <code>MAC</code> object.</li>
+            <li><code>.init(MD5key)</code> : Intializes the <code>MAC</code> object.</li>
+            <li><code>.update(plaintext)</code> and <code>.doFinal()</code> : Calculates the <code>MAC</code> object with a plaintext string.</li>
+           </ul>
+           <h3 id="mdexample" class="ibm-h3">Message digest code example</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.security.*;
+import javax.crypto.*;
+//
+// Generate a Message Digest
+public class MessageDigestExample {
+
+  public static void main (String[] args) throws Exception {
+    //
+    // check args and get plaintext
+    if (args.length !=1) {
+
+      System.err.println("Usage: java MessageDigestExample text");
+      System.exit(1);
+    }
+    byte[] plainText = args[0].getBytes("UTF8");
+    //
+    // get a message digest object using the MD5 algorithm
+    MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+    //
+    // print out the provider used
+    System.out.println( "\n" + messageDigest.getProvider().getInfo() );
+    //
+    // calculate the digest and print it out
+    messageDigest.update( plainText);
+    System.out.println( "\nDigest: " );
+    System.out.println( new String( messageDigest.digest(), "UTF8") );
+  }
+}</pre></span>
+           <h3 id="N101B8" class="ibm-h3">Message digest sample execution</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;java MessageDigestExample "This is a test!"
+
+SUN (DSA key/parameter generation; DSA signing; SHA-1, MD5 digests
+; SecureRandom; X.509 certificates; JKS keystore; PKIX CertPathValidator
+; PKIX CertPathBuilder; LDAP, Collection CertStores)
+
+Digest:
+D93,.x2%$kd8xdp3di5*</pre></span>
+           <h3 id="macexample" class="ibm-h3">Message authentication code example</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.security.*;
+import javax.crypto.*;
+//
+// Generate a Message Authentication Code
+public class MessageAuthenticationCodeExample {
+
+  public static void main (String[] args) throws Exception {
+    //
+    // check args and get plaintext
+    if (args.length !=1) {
+      System.err.println
+        ("Usage: java MessageAuthenticationCodeExample text");
+      System.exit(1);
+    }
+    byte[] plainText = args[0].getBytes("UTF8");
+    //
+    // get a key for the HmacMD5 algorithm
+    System.out.println( "\nStart generating key" );
+    KeyGenerator keyGen = KeyGenerator.getInstance("HmacMD5");
+    SecretKey MD5key = keyGen.generateKey();
+    System.out.println( "Finish generating key" );
+    //
+    // get a MAC object and update it with the plaintext
+    Mac mac = Mac.getInstance("HmacMD5");
+    mac.init(MD5key);
+    mac.update(plainText);
+    //
+    // print out the provider used and the MAC
+    System.out.println( "\n" + mac.getProvider().getInfo() );
+    System.out.println( "\nMAC: " );
+    System.out.println( new String( mac.doFinal(), "UTF8") );
+
+  }
+}</pre></span>
+           <h3 id="N101C8" class="ibm-h3">Message authentication sample execution</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;java MessageAuthenticationCodeExample "This is a test!"
+
+Start generating key
+Finish generating key
+
+SunJCE Provider (implements DES, Triple DES, Blowfish, PBE, Diffie-Hellman,
+HMAC-MD5, HMAC-SHA1)
+
+MAC:
+Dkdj47x4#.@kd#n8a-x&gt;</pre></span>
+           <p>Note that the key generation takes a long time because the code is generating excellent quality pseudo-random numbers using the timing of thread behavior. Once the first number is generated, the others take much less time.</p>
+           <p>Also, notice that unlike the message digest, the message-authentication code uses a cryptographic provider. (For more on providers, see <a href="#3rdparty">Security is enriched with third-party libraries</a>.)</p>
+           <h2 id="N1028A" class="ibm-h2">Keeping a message confidential</h2>
+           <h3 id="N101DC" class="ibm-h3">Overview</h3>
+           <p>In this section, we'll examine the uses of private key encryption and focus on such concepts as cipher blocks, padding, stream ciphers, and cipher modes. We'll quickly detail cipher algorithms, classes, and methods and illustrate this concept with a code example and sample executions.</p>
+           <h3 id="whatPrivate" class="ibm-h3">What is private key cryptography?</h3>
+           <p>Message digests may ensure integrity of a message, but they can't be used to ensure the confidentiality of a message. For that, we need to use <em>private key</em> cryptography to exchange private messages.</p>
+           <p>Consider this scenario: Alice and Bob each have a shared key that only they know and they agree to use a common cryptographic algorithm, or cipher. In other words, they keep their key private. When Alice wants to send a message to Bob, she encrypts the original message, known as <em>plaintext,</em> to create <em>ciphertext</em> and then sends the ciphertext to Bob. Bob receives the ciphertext from Alice and decrypts the ciphertext with his private key to re-create the original plaintext message. If Eve the eavesdropper is listening in on the communication, she hears only the ciphertext, so the confidentiality of the message is preserved.</p>
+           <p>You can encrypt single bits or chunks of bits, called blocks. The blocks, called <em>cipher blocks</em>, are typically 64 bits in size. If the message is not a multiple of 64 bits, then the short block must be <em>padded</em> (more on padding at <a href="#padding">What is padding?</a>). Single-bit encryption is more common in hardware implementations. Single-bit ciphers are called <em>stream ciphers</em> .</p>
+           <p>The strength of the private key encryption is determined by the cryptography algorithm and the length of the key. If the algorithm is sound, then the only way to attack it is with a brute-force approach of trying every possible key, which will take an average of <em>(1/2)*2*n</em> attempts, where <em>n</em> is the number of bits in the key.</p>
+           <p>When the U.S. export regulations were restrictive, only 40-bit keys were allowed for export. This key length is fairly weak. The official U.S. standard, the DES algorithm, used 56-bit keys and this is becoming progressively weaker as processor speeds accelerate. Generally, 128-bit keys are preferred today. With them, if one million keys could be tried every second, it would take an average of many times the age of the universe to find a key!</p>
+           <h3 id="padding" class="ibm-h3">What is padding?</h3>
+           <p>As we mentioned in the previous section, if a block cipher is used and the message length is not a multiple of the block length, the last block must be padded with bytes to yield a full block size. There are many ways to pad a block, such as using all zeroes or ones. In this tutorial, we'll be using PKCS5 padding for private key encryption and PKCS1 for public key encryption.</p>
+           <p>With PKCS5, a short block is padded with a repeating byte whose value represents the number of remaining bytes. We won't be discussing padding algorithms further in this tutorial, but for your information, JDK 1.4 supports the following padding techniques:</p>
+           <ul class="ibm-bullet-list">
+            <li>No padding</li>
+            <li>PKCS5</li>
+            <li>OAEP</li>
+            <li>SSL3</li>
+           </ul>
+           <p>The BouncyCastle library (see <a href="#3rdparty">Security is enriched with third-party libraries</a> and <a href="#artrelatedtopics">Related topics</a> ) supports additional padding techniques.</p>
+           <h3 id="N10228" class="ibm-h3">Modes: Specifying how encryption works</h3>
+           <p>A given cipher can be used in a variety of <em>modes</em>. Modes allow you to specify how encryption will work.</p>
+           <p>For example, you can allow the encryption of one block to be dependent on the encryption of the previous block, or you can make the encryption of one block independent of any other blocks.</p>
+           <p>The mode you choose depends on your needs and you must consider the trade-offs (security, ability to parallel process, and tolerance to errors in both the plaintext and the ciphertext). Selection of modes is beyond the scope of this tutorial (see <a href="#artrelatedtopics">Related topics</a> for further reading), but again, for your information, the Java platform supports the following modes:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>ECB</strong> (Electronic Code Book)</li>
+            <li><strong>CBC</strong> (Cipher Block Chaining)</li>
+            <li><strong>CFB</strong> (Cipher Feedback Mode)</li>
+            <li><strong>OFB</strong> (Output Feedback Mode)</li>
+            <li><strong>PCBC</strong> (Propagating Cipher Block Chaining)</li>
+           </ul>
+           <h3 id="N1024E" class="ibm-h3">Algorithms, classes, and methods</h3>
+           <p>JDK 1.4 supports the following private key algorithms:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>DES.</strong> DES (Data Encryption Standard) was invented by IBM in the 1970s and adopted by the U.S. government as a standard. It is a 56-bit block cipher.</li>
+            <li><strong>TripleDES.</strong> This algorithm is used to deal with the growing weakness of a 56-bit key while leveraging DES technology by running plaintext through the DES algorithm three times, with two keys, giving an effective key strength of 112 bits. TripleDES is sometimes known as DESede (for encrypt, decrypt, and encrypt, which are the three phases).</li>
+            <li><strong>AES.</strong> AES (Advanced Encryption Standard) replaces DES as the U.S. standard. It was invented by Joan Daemen and Vincent Rijmen and is also known as the Rinjdael algorithm. It is a 128-bit block cipher with key lengths of 128, 192, or 256 bits.</li>
+            <li><strong>RC2,</strong><strong>RC4,</strong> and <strong>RC5.</strong> These are algorithms from a leading encryption security company, RSA Security.</li>
+            <li><strong>Blowfish.</strong> This algorithm was developed by Bruce Schneier and is a block cipher with variable key lengths from 32 to 448 bits (in multiples of 8), and was designed for efficient implementation in software for microprocessors.</li>
+            <li><strong>PBE.</strong> PBE (Password Based Encryption) can be used in combination with a variety of message digest and private key algorithms.</li>
+           </ul>
+           <p>The <code>Cipher</code> class manipulates private key algorithms using a key produced by the <code>KeyGenerator</code> class. The following methods are used in the <a href="#prikeyexample">Private key cryptography code example</a>:</p>
+           <ul class="ibm-bullet-list">
+            <li><code>KeyGenerator.getInstance("DES")</code> , <code>.init(56)</code> , and <code>.generateKey()</code> : Generates the key.</li>
+            <li><code>Cipher.getInstance("DES/ECB/PKCS5Padding")</code> : Creates the <code>Cipher</code> object (specifying the algorithm, mode, and padding).</li>
+            <li><code>.init(Cipher.ENCRYPT_MODE, key)</code> : Initializes the <code>Cipher</code> object.</li>
+            <li><code>.doFinal(plainText)</code> : Calculates the ciphertext with a plaintext string.</li>
+            <li><code>.init(Cipher.DECRYPT_MODE, key)</code> : Decrypts the ciphertext.</li>
+            <li><code>.doFinal(cipherText)</code> : Computes the ciphertext.</li>
+           </ul>
+           <h3 id="prikeyexample" class="ibm-h3">Private key cryptography code example</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.security.*;
+import javax.crypto.*;
+//
+// encrypt and decrypt using the DES private key algorithm
+public class PrivateExample {
+
+  public static void main (String[] args) throws Exception {
+    //
+    // check args and get plaintext
+    if (args.length !=1) {
+      System.err.println("Usage: java PrivateExample text");
+      System.exit(1);
+    }
+    byte[] plainText = args[0].getBytes("UTF8");
+    //
+    // get a DES private key
+    System.out.println( "\nStart generating DES key" );
+    KeyGenerator keyGen = KeyGenerator.getInstance("DES");
+    keyGen.init(56);
+    Key key = keyGen.generateKey();
+    System.out.println( "Finish generating DES key" );
+    //
+    // get a DES cipher object and print the provider
+    Cipher cipher = Cipher.getInstance("DES/ECB/PKCS5Padding");
+    System.out.println( "\n" + cipher.getProvider().getInfo() );
+    //
+    // encrypt using the key and the plaintext
+    System.out.println( "\nStart encryption" );
+    cipher.init(Cipher.ENCRYPT_MODE, key);
+    byte[] cipherText = cipher.doFinal(plainText);
+    System.out.println( "Finish encryption: " );
+    System.out.println( new String(cipherText, "UTF8") );
+
+    //
+    // decrypt the ciphertext using the same key
+    System.out.println( "\nStart decryption" );
+    cipher.init(Cipher.DECRYPT_MODE, key);
+    byte[] newPlainText = cipher.doFinal(cipherText);
+    System.out.println( "Finish decryption: " );
+
+    System.out.println( new String(newPlainText, "UTF8") );
+  }
+}</pre></span>
+           <h3 id="N102AB" class="ibm-h3">Private key cryptography sample execution</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;java PrivateExample "This is a test!"
+
+Start generating DES key
+Finish generating DES key
+
+SunJCE Provider (implements DES, Triple DES, Blowfish, PBE, Diffie-Hellman,
+HMAC-MD5, HMAC-SHA1)
+
+Start encryption
+Finish encryption:
+Kdkj4338*3n1#kxkgtixo4
+
+Start decryption
+Finish decryption:
+This is a test!</pre></span>
+           <h2 id="N10383" class="ibm-h2">Secret messages with public keys</h2>
+           <h3 id="N102B7" class="ibm-h3">Overview</h3>
+           <p>In this section, we'll look at public key cryptography, a feature that solves the problem of encrypting messages between parties without prior arrangement on the keys. We'll take a short walk through the algorithms, classes, and methods that support the public key function, and offer a code sample and execution to illustrate the concept.</p>
+           <h3 id="public" class="ibm-h3">What is public key cryptography?</h3>
+           <p>Private key cryptography suffers from one major drawback: how does the private key get to Alice and Bob in the first place? If Alice generates it, she has to send it to Bob, but it is sensitive information so it should be encrypted. However, keys have not been exchanged to perform the encryption.</p>
+           <p><em>Public key</em> cryptography, invented in the 1970s, solves the problem of encrypting messages between two parties without prior agreement on the key.</p>
+           <p>In public key cryptography, Alice and Bob not only have different keys, they each have two keys. One key is private and must not be shared with anyone. The other key is public and can be shared with anyone.</p>
+           <p>When Alice wants to send a secure message to Bob, she encrypts the message using Bob's public key and sends the result to Bob. Bob uses his private key to decrypt the message. When Bob wants to send a secure message to Alice, he encrypts the message using Alice's public key and sends the result to Alice. Alice uses her private key to decrypt the message. Eve can eavesdrop on both public keys and the encrypted messages, but she cannot decrypt the messages because she does not have either of the private keys.</p>
+           <p>The public and private keys are generated as a pair and need longer lengths than the equivalent-strength private key encryption keys. Typical key lengths for the RSA algorithm are 1,024 bits. It is not feasible to derive one member of the key pair from the other.</p>
+           <p>Public key encryption is slow (100 to 1,000 times slower than private key encryption), so a hybrid technique is usually used in practice. Public key encryption is used to distribute a private key, known as a <em>session key</em>, to another party, and then private key encryption using that private session key is used for the bulk of the message encryption.</p>
+           <h3 id="N102D3" class="ibm-h3">Algorithms, classes, and methods</h3>
+           <p>The following two algorithms are used in public key encryption:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>RSA.</strong> This algorithm is the most popular public key cipher, but it's not supported in JDK 1.4. You must use a third-party library like BouncyCastle to get this support.</li>
+            <li><strong>Diffie-Hellman.</strong> This algorithm is technically known as a <em>key-agreement algorithm</em> . It cannot be used for encryption, but can be used to allow two parties to derive a secret key by sharing information over a public channel. This key can then be used for private key encryption.</li>
+           </ul>
+           <p>The <code>Cipher</code> class manipulates public key algorithms using keys produced by the <code>KeyPairGenerator</code> class. The following methods are used in the <a href="#pubkeyexample">Public key cryptography code example</a> example:</p>
+           <ul class="ibm-bullet-list">
+            <li><code>KeyPairGenerator.getInstance("RSA")</code> , <code>.initialize(1024)</code> , and <code>.generateKeyPair()</code> : Generates the key pair.</li>
+            <li><code>Cipher.getInstance("RSA/ECB/PKCS1Padding")</code> Creates a <code>Cipher</code> object (specifying the algorithm, mode, and padding).</li>
+            <li><code>.init(Cipher.ENCRYPT_MODE, key.getPublic())</code> : Initializes the <code>Cipher</code> object.</li>
+            <li><code>.doFinal(plainText)</code> : Calculates the ciphertext with a plaintext string.</li>
+            <li><code>.init(Cipher.DECRYPT_MODE, key.getPrivate())</code> and <code>.doFinal(cipherText)</code> : Decrypts the ciphertext.</li>
+           </ul>
+           <h3 id="pubkeyexample" class="ibm-h3">Public key cryptography code example</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.security.*;
+import javax.crypto.*;
+//
+// Public Key cryptography using the RSA algorithm.
+public class PublicExample {
+
+  public static void main (String[] args) throws Exception {
+    //
+    // check args and get plaintext
+    if (args.length !=1) {
+      System.err.println("Usage: java PublicExample text");
+      System.exit(1);
+    }
+    byte[] plainText = args[0].getBytes("UTF8");
+    //
+    // generate an RSA key
+    System.out.println( "\nStart generating RSA key" );
+    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+    keyGen.initialize(1024);
+    KeyPair key = keyGen.generateKeyPair();
+    System.out.println( "Finish generating RSA key" );
+    //
+    // get an RSA cipher object and print the provider   
+    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    System.out.println( "\n" + cipher.getProvider().getInfo() );
+    //
+    // encrypt the plaintext using the public key
+    System.out.println( "\nStart encryption" );
+    cipher.init(Cipher.ENCRYPT_MODE, key.getPublic());
+    byte[] cipherText = cipher.doFinal(plainText);
+    System.out.println( "Finish encryption: " );
+    System.out.println( new String(cipherText, "UTF8") );
+    //
+    // decrypt the ciphertext using the private key
+    System.out.println( "\nStart decryption" );
+    cipher.init(Cipher.DECRYPT_MODE, key.getPrivate());
+    byte[] newPlainText = cipher.doFinal(cipherText);
+    System.out.println( "Finish decryption: " );
+    System.out.println( new String(newPlainText, "UTF8") );
+  }
+}</pre></span>
+           <h3 id="N1031D" class="ibm-h3">Public key cryptography sample execution</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;java PublicExample "This is a test!"
+
+Start generating RSA key
+Finish generating RSA key
+
+BouncyCastle Security Provider v1.12
+
+Start encryption
+Finish encryption:
+Ajsd843*342l,AD;LKJL;1!*AD(XLKASD498asdjlkkKSFJHDuhpja;d(kawe#kjalfcas,
+.asd+,1LKSDJf;khaouiwheyahdsl87458q9734hjfc*nuywe
+
+Start decryption
+Finish decryption:
+This is a test!</pre></span>
+           <h2 id="N1040B" class="ibm-h2">Signatures without paper</h2>
+           <h3 id="N10329" class="ibm-h3">Overview</h3>
+           <p>In this section, we'll examine digital signatures, the first level of determining the identification of parties that exchange messages. We'll illustrate both difficult and easy ways to identify the message source through code samples. We'll also list the digital signature algorithms that JDK 1.4 supports, and look at the classes and methods involved.</p>
+           <h3 id="ds" class="ibm-h3">What are digital signatures?</h3>
+           <p>Did you notice the flaw in the public key message exchange described in <a href="#public">What is public key cryptography?</a>? How can Bob prove that the message <em>really</em> came from Alice? Eve could have substituted her public key for Alice's, then Bob would be exchanging messages with Eve thinking she was Alice. This is known as a <em>Man-in-the-Middle attack</em>.</p>
+           <p>We can solve this problem by using a <em>digital signature</em> -- a bit pattern that proves that a message came from a given party.</p>
+           <p>One way of implementing a digital signature is using the reverse of the public key process described in <a href="#public">What is public key cryptography?</a>. Instead of encrypting with a public key and decrypting with a private key, the private key is used by a sender to sign a message and the recipient uses the sender's public key to decrypt the message. Because only the sender knows the private key, the recipient can be sure that the message really came from the sender.</p>
+           <p>In actuality, the message digest (<a href="#md">What is a message digest?</a>), not the entire message, is the bit stream that is signed by the private key. So, if Alice wants to send Bob a signed message, she generates the message digest of the message and signs it with her private key. She sends the message (in the clear) and the signed message digest to Bob. Bob decrypts the signed message digest with Alice's public key and computes the message digest from the cleartext message and checks that the two digests match. If they do, Bob can be sure the message came from Alice.</p>
+           <p>Note that digital signatures do not provide encryption of the message, so encryption techniques must be used in conjunction with signatures if you also need confidentiality.</p>
+           <p>You can use the RSA algorithm for both digital signatures and encryption. A U.S. standard called DSA (Digital Signature Algorithm) can be used for digital signatures, but not for encryption.</p>
+           <h3 id="N10355" class="ibm-h3">Algorithms</h3>
+           <p>JDK 1.4 supports the following digital signature algorithms:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>MD2/RSA</strong></li>
+            <li><strong>MD5/RSA</strong></li>
+            <li><strong>SHA1/DSA</strong></li>
+            <li><strong>SHA1/RSA</strong></li>
+           </ul>
+           <p>We'll examine two examples in this section. The first, the hard way (see <a href="#hardway">Digital signature code example: The hard way</a> ), uses the primitives already discussed for message digests and public key cryptography to implement digital signatures. The second, the easy way (see <a href="#easyway">Digital signature code example: The easy way</a> ), uses the Java language's direct support for signatures.</p>
+           <h3 id="hardway" class="ibm-h3">Digital signature code example: The hard way</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.security.*;
+import javax.crypto.*;
+//
+// This program demonstrates the digital signature technique at the
+// primative level by generating a message digest of the plaintext
+
+// and signing it with an RSA private key, to create the signature.
+// To verify the signature, the message digest is again generated from
+// the plaintext and compared with the decryption of the signature
+// using the public key.  If they match, the signature is verified.
+public class DigitalSignature1Example {
+
+  public static void main (String[] args) throws Exception {
+    //
+    // check args and get plaintext
+    if (args.length !=1) {
+      System.err.println("Usage: java DigitalSignature1Example text");
+      System.exit(1);
+    }
+    byte[] plainText = args[0].getBytes("UTF8");
+    //
+    // get an MD5 message digest object and compute the plaintext digest
+    MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+    System.out.println( "\n" + messageDigest.getProvider().getInfo() );
+    messageDigest.update( plainText );
+    byte[] md = messageDigest.digest();
+    System.out.println( "\nDigest: " );
+    System.out.println( new String( md, "UTF8") );
+    //
+    // generate an RSA keypair
+    System.out.println( "\nStart generating RSA key" );
+    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+    keyGen.initialize(1024);
+    KeyPair key = keyGen.generateKeyPair();
+    System.out.println( "Finish generating RSA key" );
+    //
+    // get an RSA cipher and list the provider
+    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    System.out.println( "\n" + cipher.getProvider().getInfo() );
+    //
+    // encrypt the message digest with the RSA private key
+    // to create the signature
+    System.out.println( "\nStart encryption" );
+    cipher.init(Cipher.ENCRYPT_MODE, key.getPrivate());
+    byte[] cipherText = cipher.doFinal(md);
+    System.out.println( "Finish encryption: " );
+    System.out.println( new String(cipherText, "UTF8") );
+    //
+    // to verify, start by decrypting the signature with the
+    // RSA private key
+    System.out.println( "\nStart decryption" );
+    cipher.init(Cipher.DECRYPT_MODE, key.getPublic());
+
+    byte[] newMD = cipher.doFinal(cipherText);
+    System.out.println( "Finish decryption: " );
+    System.out.println( new String(newMD, "UTF8") );
+    //
+    // then, recreate the message digest from the plaintext
+    // to simulate what a recipient must do
+    System.out.println( "\nStart signature verification" );
+    messageDigest.reset();
+    messageDigest.update(plainText);
+    byte[] oldMD = messageDigest.digest();
+    //
+    // verify that the two message digests match
+    int len = newMD.length;
+    if (len &gt; oldMD.length) {
+      System.out.println( "Signature failed, length error");
+      System.exit(1);
+    }
+    for (int i = 0; i &lt; len; ++i)
+      if (oldMD[i] != newMD[i]) {
+        System.out.println( "Signature failed, element error" );
+        System.exit(1);
+      }
+    System.out.println( "Signature verified" );
+  }
+}</pre></span>
+           <h3 id="N1037A" class="ibm-h3">Sample execution</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;java DigitalSignature1Example "This is a test!"
+
+SUN (DSA key/parameter generation; DSA signing; SHA-1, MD5 digests
+; SecureRandom; X.509 certificates; JKS keystore; PKIX CertPathValidator
+; PKIX CertPathBuilder; LDAP, Collection CertStores)
+
+Digest:
+D647dbdek12*e,ad.?e
+
+Start generating RSA key
+Finish generating RSA key
+
+BouncyCastle Security Provider v1.12
+
+Start encryption
+Finish encryption:
+Akjsdfp-9q8237nrcas-9de8fn239-4rb[*[OPOsjkdfJDL:JF;lkjs;ldj
+
+Start decryption
+Finish decryption:
+iNdf6D213$dcd(ndz!0)
+
+Start signature verification
+Signature verified</pre></span>
+           <h3 id="easyway" class="ibm-h3">Digital signature code example: The easy way</h3>
+           <p>The <code>Signature</code> class manipulates digital signatures using a key produced by the <code>KeyPairGenerator</code> class. The following methods are used in the example below:</p>
+           <ul class="ibm-bullet-list">
+            <li><code>KeyPairGenerator.getInstance("RSA")</code> , <code>.initialize(1024)</code> , and <code>.generateKeyPair()</code> : Generates the keys.</li>
+            <li><code>Cipher.getInstance("MD5WithRSA")</code> : Creates the <code>Signature</code> object.</li>
+            <li><code>.initSign(key.getPrivate())</code> : Initializes the <code>Signature</code> object.</li>
+            <li><code>.update(plainText)</code> and <code>.sign()</code> : Calculates the signature with a plaintext string.</li>
+            <li><code>.initVerify(key.getPublic())</code> and <code>.verify(signature)</code> : Verifies the signature.</li>
+           </ul>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.security.*;
+import javax.crypto.*;
+//
+// This example uses the digital signature features to generate and
+// verify a signature much more easily than the previous example
+public class DigitalSignature2Example {
+
+  public static void main (String[] args) throws Exception {
+    //
+    // check args and get plaintext
+    if (args.length !=1) {
+      System.err.println("Usage: java DigitalSignature1Example text");
+      System.exit(1);
+    }
+    byte[] plainText = args[0].getBytes("UTF8");
+    //
+    // generate an RSA keypair
+    System.out.println( "\nStart generating RSA key" );
+    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+    keyGen.initialize(1024);
+
+    KeyPair key = keyGen.generateKeyPair();
+    System.out.println( "Finish generating RSA key" );
+    //
+    // get a signature object using the MD5 and RSA combo
+    // and sign the plaintext with the private key,
+    // listing the provider along the way
+
+    Signature sig = Signature.getInstance("MD5WithRSA");
+    sig.initSign(key.getPrivate());
+    sig.update(plainText);
+    byte[] signature = sig.sign();
+    System.out.println( sig.getProvider().getInfo() );
+    System.out.println( "\nSignature:" );
+    System.out.println( new String(signature, "UTF8") );
+    //
+    // verify the signature with the public key
+    System.out.println( "\nStart signature verification" );
+    sig.initVerify(key.getPublic());
+    sig.update(plainText);
+    try {
+      if (sig.verify(signature)) {
+        System.out.println( "Signature verified" );
+      } else System.out.println( "Signature failed" );
+    } catch (SignatureException se) {
+      System.out.println( "Signature failed" );
+    }
+  }
+}</pre></span>
+           <h3 id="N103B9" class="ibm-h3">Sample execution</h3>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">Start generating RSA key
+Finish generating RSA key
+Sun JSSE provider(implements RSA Signatures, PKCS12, SunX509 key/trust 
+factories, SSLv3, TLSv1)
+
+Signature:
+Ldkjahasdlkjfq[?owc42093nhasdk1a;sn;a#a;lksjd;fl@#kjas;ldjf78qwe09r7
+
+Start signature verification
+Signature verified</pre></span>
+           <h2 id="N104B8" class="ibm-h2">Proving you are who you are</h2>
+           <h3 id="N103C5" class="ibm-h3">Overview</h3>
+           <p>In this section, we'll discuss digital certificates, the second level to determining the identity of a message originator. We'll look at certificate authorities and the role they play. We'll examine key and certificate repositories and management tools (keytool and keystore) and discuss the CertPath API, a set of functions designed for building and validating certification paths.</p>
+           <h3 id="dc" class="ibm-h3">What are digital certificates?</h3>
+           <p>As you likely noticed, there is a problem with the digital signature scheme described in <a href="#ds">What are digital signatures?</a>. It proves that a message was sent by a given party, but how do we know for sure that the sender <em>really</em> is who she says she is. What if someone claims to be Alice and signs a message, but is actually Amanda? We can improve our security by using <em>digital certificates</em> which package an identity along with a public key and is digitally signed by a third party called a <em>certificate authority</em> or CA.</p>
+           <p>A certificate authority is an organization that verifies the identity, in the real-world physical sense, of a party and signs that party's public key and identity with the CA private key. A message recipient can obtain the sender's digital certificate and verify (or decrypt) it with the CA's public key. This proves that the certificate is valid and allows the recipient to extract the sender's public key to verify his signature or send him an encrypted message. Browsers and the JDK itself come with built-in certificates and their public keys from several CAs.</p>
+           <p>JDK 1.4 supports the X.509 Digital Certificate Standard.</p>
+           <h3 id="N103E3" class="ibm-h3">Understanding keytool and keystore</h3>
+           <p>The Java platform uses a <em>keystore</em> as a repository for keys and certificates. Physically, the keystore is a file (there is an option to make it an encrypted one) with a default name of .keystore. Keys and certificates can have names, called <em>aliases</em> , and each alias can be protected by a unique password. The keystore itself is also protected by a password; you can choose to have each alias password match the master keystore password.</p>
+           <p>The Java platform uses the <em>keytool</em> to manipulate the keystore. This tool offers many options; the following example (<a href="#keytoolex">keytool example</a>) shows the basics of generating a public key pair and corresponding certificate, and viewing the result by querying the keystore.</p>
+           <p>The keytool can be used to export a key into a file, in X.509 format, that can be signed by a certificate authority and then re-imported into the keystore.</p>
+           <p>There is also a special keystore that is used to hold the certificate authority (or any other trusted) certificates, which in turn contains the public keys for verifying the validity of other certificates. This keystore is called the <em>truststore</em>. The Java language comes with a default truststore in a file called <em>cacerts</em> . If you search for this filename, you will find at least two of these files. You can display the contents with the following command:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">keytool -list -keystore cacerts
+Use a password of "changeit"</pre></span>
+           <h3 id="keytoolex" class="ibm-h3">keytool example</h3>
+           <p>In this example, using the default keystore of <em>.keystore</em>, we generate a self-signed certificate using the RSA algorithm with an alias of <em>JoeUserKey</em> and then view the created certificate. We will use this certificate in <a href="#codesign">The concept of code signing</a> to sign a JAR file.</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;keytool -genkey -v -alias JoeUserKey -keyalg RSA
+Enter keystore password: password
+What is your first and last name?
+  [Unknown]:  Joe User
+What is the name of your organizational unit?
+  [Unknown]:  Security
+What is the name of your organization?
+  [Unknown]:  Company, Inc.
+What is the name of your City or Locality?
+  [Unknown]:  User City
+What is the name of your State or Province?
+  [Unknown]:  MN
+What is the two-letter country code for this unit?
+  [Unknown]:  US
+Is CN=Joe User, OU=Security, O="Company, Inc.", L=User City, ST=MN, C=US 
+correct?
+  [no]:  y
+
+Generating 1,024 bit RSA key pair and self-signed certificate (MD5WithRSA)
+        for: CN=Joe User, OU=Security, O="Company, Inc.", L=User City, 
+        ST=MN, C=US
+Enter key password for &lt;JoeUserKey&gt;
+        (RETURN if same as keystore password):
+[Saving .keystore]
+
+
+D:\IBM&gt;keytool -list -v -alias JoeUserKey
+
+Enter keystore password:  password
+Alias name: JoeUserKey
+Creation date: Apr 15, 2002
+Entry type: keyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=Joe User, OU=Security, O="Company, Inc.", L=User City, ST=MN, 
+C=US
+Issuer: CN=Joe User, OU=Security, O="Company, Inc.", L=User City, ST=MN, 
+C=US
+Serial number: 3cbae448
+Valid from: Mon Apr 15 09:31:36 CDT 2002 until: Sun Jul 14 09:31:36 
+CDT 2002
+Certificate fingerprints:
+
+       MD5:  35:F7:F7:A8:AC:54:82:CE:68:BF:6D:42:E8:22:21:39
+       SHA1: 34:09:D4:89:F7:4A:0B:8C:88:EF:B3:8A:59:F3:B9:65:AE:CE:7E:C9</pre></span>
+           <h3 id="N1041A" class="ibm-h3">CertPath API</h3>
+           <p>The Certification Path API is new for JDK 1.4. It is a set of functions for building and validating certification paths or chains. This is done implicitly in protocols like SSL/TLS (see <a href="#ssltls">What is Secure Sockets Layer/Transport Layer Security?</a>) and JAR file signature verification, but can now be done explicitly in applications with this support.</p>
+           <p>As mentioned in <a href="#dc">What are digital certificates?</a>, a CA can sign a certificate with its private key, and if the recipient holds the CA certificate that has the public key needed for signature verification, it can verify the validity of the signed certificate.</p>
+           <p>In this case, the chain of certificates is of length two -- the anchor of trust (the CA certificate) and the signed certificate. A self-signed certificate is of length one -- the anchor of trust is the signed certificate itself.</p>
+           <p>Chains can be of arbitrary length, so in a chain of three, a CA anchor of trust certificate can sign an intermediate certificate; the owner of this certificate can use its private key to sign another certificate. The CertPath API can be used to walk the chain of certificates to verify validity, as well as to construct these chains of trust.</p>
+           <p>Certificates have expiration dates, but can be compromised before they expire, so <em>Certificate Revocation Lists</em> (CRL) must be checked to really ensure the integrity of a signed certificate. These lists are available on the CA Web sites, and can also be programmatically manipulated with the CertPath API.</p>
+           <p>The specific API and code examples are beyond the scope of this tutorial, but Sun has several code examples available in addition to the API documentation.</p>
+           <h2 id="N1052A" class="ibm-h2">Trusting the code</h2>
+           <h3 id="N10439" class="ibm-h3">Overview</h3>
+           <p>In this section, we'll review the concept of code signing, focusing on the tool that manages the certification of a JAR file, Jarsigner. </p>
+           <h3 id="codesign" class="ibm-h3">The concept of code signing</h3>
+           <p>JAR files are the Java platform equivalent of ZIP files, allowing multiple Java class files to be packaged into one file with a .jar extension. This JAR file can then be digitally signed, proving the origin and the integrity of the class file code inside. A recipient of the JAR file can decide whether or not to trust the code based on the signature of the sender and can be confident that the contents have not been tampered with before receipt. The JDK comes with a <em>jarsigner</em> tool that provides this function.</p>
+           <p>In deployment, access to machine resources can be based on the signer's identity by putting access control statements in the policy file.</p>
+           <h3 id="N1044C" class="ibm-h3">Jarsigner tool</h3>
+           <p>The jarsigner tool takes a JAR file and a private key and corresponding certificate as input, then generates a signed version of the JAR file as output. It calculates the message digests for each class in the JAR file and then signs these digests to ensure the integrity of the file and to identify the file owner.</p>
+           <p>In an applet environment, an HTML page references the class file contained in a signed JAR file. When this JAR file is received by the browser, the signature is checked against any installed certificates or against a certificate authority public signature to verify validity. If no existing certificates are found, the user is prompted with a screen giving the certificate details and asking if the user wants to trust the code.</p>
+           <h3 id="N10454" class="ibm-h3">Code signing example</h3>
+           <p>In this example, we first create a JAR file from a .class file and then sign it by specifying the alias for the certificate in the keystore that is used for the signing. We then run a verification check on the signed JAR file.</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;jar cvf HelloWorld.jar HelloWorld.class
+added manifest
+adding: HelloWorld.class(in = 372) (out= 269)(deflated 27%)
+
+D:\IBM&gt;jarsigner HelloWorld.jar JoeUserKey
+Enter Passphrase for keystore: password
+
+D:\IBM&gt;jarsigner -verify -verbose -certs HelloWorld.jar
+
+         137 Mon Apr 15 12:38:38 CDT 2002 META-INF/MANIFEST.MF
+         190 Mon Apr 15 12:38:38 CDT 2002 META-INF/JOEUSERK.SF
+         938 Mon Apr 15 12:38:38 CDT 2002 META-INF/JOEUSERK.RSA
+           0 Mon Apr 15 12:38:00 CDT 2002 META-INF/
+smk      372 Mon Apr 15 12:33:02 CDT 2002 HelloWorld.class
+
+      X.509, CN=Joe User, OU=Security, O="Company, Inc.", L=User City, 
+      ST=MN, C=US (joeuserkey)
+
+
+  s = signature was verified
+  m = entry is listed in manifest
+  k = at least one certificate was found in keystore
+  i = at least one certificate was found in identity scope
+
+jar verified.</pre></span>
+           <h3 id="N1045E" class="ibm-h3">Code signing example execution</h3>
+           <p>Here is the HTML for this program:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">&lt;HTML&gt;
+&lt;HEAD&gt;
+&lt;TITLE&gt; Hello World Program &lt;/TITLE&gt;
+&lt;/HEAD&gt;
+&lt;BODY&gt;
+&lt;APPLET CODE="HelloWorld.class" ARCHIVE="HelloWorld.jar" 
+  WIDTH=150 HEIGHT=25&gt;
+&lt;/APPLET&gt;
+&lt;/BODY&gt;
+&lt;/HTML&gt;</pre></span>
+           <p>When this example is executed with a browser that uses the Java plug-in as the Java virtual machine, a dialog box pops up asking if the user wants to install and run the signed applet distributed by "Joe User", and says that the publisher authenticity is verified by "Company, Inc.", but that the security was issued by a company that is not trusted. The security certificate has not expired and is still valid. It cautions that "Joe User" asserts that this content is safe and should only be installed or viewed if you trust "Joe User" to make that assertion. The user is given the following options:</p>
+           <ul class="ibm-bullet-list">
+            <li>Grant this session</li>
+            <li>Deny</li>
+            <li>Grant always</li>
+            <li>View certificate</li>
+           </ul>
+           <h2 id="N10566" class="ibm-h2">SSL/TLS: Securing C/S communication</h2>
+           <h3 id="N10477" class="ibm-h3">Overview</h3>
+           <p>In this section, we'll examine the building blocks of the Secure Sockets Layer (and its replacement, Transport Layer Security), the protocol used to authenticate the server to the client. We'll offer a few code examples as illustrations.</p>
+           <h3 id="ssltls" class="ibm-h3">What is Secure Sockets Layer/Transport Layer Security?</h3>
+           <p>Secure Sockets Layer (SSL) and its replacement, Transport Layer Security (TLS), is a protocol for establishing a secure communications channel between a client and a server. It is also used to authenticate the server to the client and, less commonly, used to authenticate the client to the server. It is usually seen in a browser application, where the lock at the bottom of the browser window indicates SSL/TLS is in effect.</p>
+           <p>TLS 1.0 is the same as SSL 3.1.</p>
+           <p>SSL/TLS uses a hybrid of three of the cryptographic building blocks already discussed in this tutorial, but all of this is transparent to the user. Here is a simplified version of the protocol:</p>
+           <ul class="ibm-bullet-list">
+            <li>When a request is made to a site using SSL/TLS (usually with an <em>https://</em> URL), a certificate is sent from the server to the client. The client verifies the identify of the server from this certificate using the installed public CA certificates, then checks that the IP name (machine name) matches the machine that the client is connected to.</li>
+            <li>The client generates some random info that can be used to generate a private key for the conversation, known as a session key, and encrypts it with the server's public key and sends it to the server. The server decrypts the message with its private key and uses the random info to derive the same private session key as the client. The RSA public key algorithm is usually used for this phase.</li>
+            <li>The client and server then communicate using the private session key and a private key algorithm, usually RC4. A <strong>message-authentication code</strong>, using yet another key, is used to ensure the integrity of the message.</li>
+           </ul>
+           <h3 id="N10495" class="ibm-h3">SSL/TLS code sample</h3>
+           <p>In this example, we write an HTTPS daemon process using an SSL server socket that returns an HTML stream when a browser connects to it. This example also shows how to generate a machine certificate in a special keystore to support the SSL deployment.</p>
+           <p>In Java programming, the only thing that needs to be done is to use an SSL Server Socket Factory instead of a Socket Factory, using lines like the following:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">SSLServerSocketFacctory sslf = 
+  (SSLServerSocketFactor)SSLServerSocketFactory.getDefault();
+ServerSocket serverSocket = sslf.createServerSocket(PORT);</pre></span>
+           <p>The complete code example is listed below:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">import java.io.*;
+import java.net.*;
+import javax.net.ssl.*;
+//
+// Example of an HTTPS server to illustrate SSL certificate and socket
+public class HTTPSServerExample {
+
+  public static void main(String[] args) throws IOException {
+
+    //
+    // create an SSL socket using the factory and pick port 8080
+    SSLServerSocketFactory sslsf =
+      (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+    ServerSocket ss = sslsf.createServerSocket(8080);
+    //
+    // loop forever
+    while (true) {
+      try {
+        //
+        // block waiting for client connection
+        Socket s = ss.accept();
+        System.out.println( "Client connection made" );
+        // get client request
+        BufferedReader in = new BufferedReader(
+          new InputStreamReader(s.getInputStream()));
+        System.out.println(in.readLine());
+        //
+        // make an HTML response
+        PrintWriter out = new PrintWriter( s.getOutputStream() );
+        out.println("&lt;HTML&gt;&lt;HEAD&gt;
+&lt;TITLE&gt;HTTPS Server Example&lt;/TITLE&gt;
+" +
+                    "&lt;/HEAD&gt;&lt;BODY&gt;
+&lt;H1&gt;Hello World!&lt;/H1&gt;
+&lt;/BODY&gt;&lt;/HTML&gt;
+\n");
+        //
+        // Close the stream and socket
+        out.close();
+        s.close();
+      } catch (Exception e) {
+          e.printStackTrace();
+      }
+    }
+  }
+}</pre></span>
+           <h3 id="N104A7" class="ibm-h3">HTTPS server sample execution</h3>
+           <p>In this example, we create an HTTPS server daemon that waits for a client browser connection and returns "Hello, World!". The browser connects to this daemon via <em>https://localhost:8080</em>.</p>
+           <p>We first create a machine certificate. The name must match the machine name of the computer where the daemon runs; in this case, <em>localhost</em>. In addition, we cannot use the same <em>.keystore</em> we have used in the past. We must create a separate keystore just for the machine certificate. In this case, it has the name <em>sslKeyStore</em>.</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;keytool -genkey -v -keyalg RSA -alias MachineCert 
+  -keystore sslKeyStore
+Enter keystore password:  password
+What is your first and last name?
+  [Unknown]:  localhost
+What is the name of your organizational unit?
+  [Unknown]:  Security
+What is the name of your organization?
+  [Unknown]:  Company, Inc.
+What is the name of your City or Locality?
+  [Unknown]:  Machine Cert City
+What is the name of your State or Province?
+  [Unknown]:  MN
+What is the two-letter country code for this unit?
+  [Unknown]:  US
+Is CN=localhost, OU=Security, O="Company, Inc.", L=Machine Cert City, 
+ST=MN, C=US correct?
+  [no]:  y
+
+Generating 1,024 bit RSA key pair and self-signed certificate (MD5WithRSA)
+   for: CN=localhost, OU=Security, O="Company, Inc.", L=Machine Cert City,
+ST=MN, C=US
+Enter key password for &lt;MachineCert&gt;
+        (RETURN if same as keystore password):
+[Saving sslKeyStore]</pre></span>
+           <p>Then, we start the server daemon process specifying the special keystore and its password:</p>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">D:\IBM&gt;java -Djavax.net.ssl.keyStore=sslKeyStore
+ -Djavax.net.ssl.keyStorePassword=password HTTPSServerExample</pre></span>
+           <p>After waiting a few seconds, fire up a browser and point it to <em>https://localhost:8080</em> and you should be prompted on whether or not to trust the certificate. Selecting "yes" should display "Hello World!", and clicking on the lock in Internet Explorer will give the certificate details.</p>
+           <h2 id="N105BD" class="ibm-h2">Wrapup</h2>
+           <h3 id="N104CE" class="ibm-h3">Summary</h3>
+           <p>This tutorial introduced the major cryptographic building blocks that can be used to provide a vast array of application security solutions. You've become familiar with such Java security topics as:</p>
+           <ul class="ibm-bullet-list">
+            <li><strong>Built-in features that facilitate secure programming</strong> (no pointers, a bytecode verifier, fine-grained control over resource access for both applets and applications, a large number of library functions for all the major cryptographic building blocks, and SSL).</li>
+            <li><strong>Secure programming techniques</strong> (proper storage and deletion of passwords and intelligent serialization).</li>
+            <li><strong>Features newly integrated in JDK 1.4</strong> (JCE, JSSE, JAAS, JGSS, and CertPath API).</li>
+            <li><strong>Enriching, third-party security offerings</strong>.</li>
+           </ul>
+           <p>And the following concepts:</p>
+           <ul class="ibm-bullet-list">
+            <li>Message digests</li>
+            <li>Message authentication codes</li>
+            <li>Private key cryptography</li>
+            <li>Public key cryptography</li>
+            <li>Digital signatures</li>
+            <li>Digital certificates</li>
+            <li>Certification authorities and paths</li>
+            <li>Code signing</li>
+            <li>SSL/TLS</li>
+           </ul>
+           <p>You should be well poised to explore Java security in more detail (see the <a href="#artrelatedtopics">Related topics</a> section) and to take the next tutorial, <a href="http://www.ibm.com/developerworks/java/edu/j-dw-javasec2-i.html"> Java security, Part 2: Authentication and authorization</a>.</p>
+           <!--CMA ID: 132295-->
+           <!--Site ID: 1-->
+           <!--XSLT stylesheet used to transform this file: dw-document-html-8.0.xsl--> 
+           <!-- Article Resources --> 
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div>
+           <h4 id="artdownload" class="ibm-h4">Downloadable resources</h4>
+           <ul class="ibm-link-list">
+            <li><a class="ibm-pdf-link" href="j-sec1-pdf.pdf">PDF of this content</a></li>
+           </ul>
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div>
+           <h4 id="artrelatedtopics" class="ibm-h4">Related topics</h4>
+           <ul>
+            <li> Download the complete source code and classes used in this tutorial, <a href="JavaSecurity1-source.jar">JavaSecurity1-source.jar</a>. </li>
+            <li> See <a href="http://www.bouncycastle.org">BouncyCastle</a> for the third-party provider library used in this tutorial.</li>
+            <li> See Sun Microsystems's <a href="http://java.sun.com/security"> Java Security site</a> to learn more about the most current Java security technologies. </li>
+            <li> Read Brad Rubin's second tutorial in this series, "<a href="http://www.ibm.com/developerworks/java/edu/j-dw-javasec2-i.html">Java security, Part 2: Authentication and authorization</a>" (<em>developerWorks</em>, July 2002).</li>
+            <li> Greg Travis offers a practical look at JSSE in his tutorial "<a href="http://www.ibm.com/developerworks/java/edu/j-dw-javajsse-i.html">Using JSSE for secure socket communication</a>" (<em>developerWorks</em>, April 2002).</li>
+            <li> For an overall discussion of Web security and Java technology, see <em><a href="http://www.oreilly.com/catalog/websec2/">Web Security, Privacy, and Commerce, 2nd Edition</a></em>, by Simson Garfinkel and Gene Spafford, O'Reilly, 2002. </li>
+            <li> If you want to focus more on Java security, see <em><a href="http://www.amazon.com/exec/obidos/ASIN/1861004257/104-8739833-1347930">Professional Java Security</a></em>, by Jess Garms and Daniel Somerfield, Wrox Press, 2001.</li>
+            <li> Another great resource for learning about Java security is <em><a href="http://www.amazon.com/exec/obidos/ASIN/0596001576">Java Security</a></em>, by Scott Oaks, O'Reilly &amp; Associates, 2001.</li>
+            <li> Boasting new algorithms, more information on the Clipper Chip and key escrow, dozens of new protocols, more information on PGP, detailed information on key management and modes of operation, and new source code, this book should be a security winner: <em><a href="http://www.schneier.com/book-applied.html">Applied Cryptography, Second Edition</a></em>, by Bruce Schneier, 1995.</li>
+            <li> The <a href="http://www.research.ibm.com/javasec/">IBM Java Security Research</a> page details various security projects in the works.</li>
+            <li> See the <a href="http://www.ibm.com/developerworks/views/java/libraryview.jsp?type_by=Tutorials">developerWorks tutorials page</a> for a complete listing of Java technology-related free tutorials from <em>developerWorks</em>.</li>
+           </ul> 
+           <!-- Commenting --> 
+           <!-- INLINE_COMMENTS_BEGIN: --> 
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div> 
+           <div id="dw-article-cmts-top" class="ibm-columns"> 
+            <div class="ibm-col-6-2"> 
+             <h4 id="icomments" class="ibm-h4">Comments</h4> 
+             <div id="dw-article-cmts-login"> 
+              <p><a onclick="window.location=userLinks[0].url;" tabindex="0" role="link">Sign in</a> or <a onclick="window.location=userLinks[1].url;" tabindex="0" role="link">register</a> to add and subscribe to comments.</p> 
+             </div> 
+            </div> 
+            <div class="ibm-col-6-2" id="dw-notify"> 
+             <input type="checkbox" value="1" name="comment_notification" id="comment_notification" disabled> 
+             <label for="comment_notification">Subscribe me to comment notifications</label> 
+            </div> 
+           </div> 
+           <div class="dw-article-cmts-container"> 
+            <div class="ibm-no-print" id="dw-icomments-container"> 
+            </div> 
+           </div> 
+           <!-- INLINE_COMMENTS_END --> 
+           <!-- CENTER_6_4_CONTENT_COLUMN_END --> 
+          </div> 
+         </div> 
+         <!--Rating_Meta_BEGIN-->
+         <div class="metavalue">
+          static.content.url=http://www.ibm.com/developerworks/js/artrating/
+         </div>
+         <div class="metavalue">
+          SITE_ID=1
+         </div>
+         <div class="metavalue">
+          Zone=Java development
+         </div>
+         <div class="metavalue">
+          ArticleID=132295
+         </div>
+         <div class="metavalue">
+          ArticleTitle=Java security: Java security, Part 1: Crypto basics
+         </div>
+         <div class="metavalue">
+          publish-date=07192002
+         </div>
+         <script language="javascript" type="text/javascript">document.write('<div class="metavalue">url='+location.href.replace(/</g,  '%3C')+'</div>');</script>
+         <!--Rating_Meta_END--> 
+        </div> 
+        <!-- END_IBM-CONTENT-MAIN --> 
+       </div> 
+       <!-- END_IBM-CONTENT-BODY --> 
+      </div> 
+      <!-- END_IBM-CONTENT --> 
+     </div> 
+     <!-- END_IBM-PCON --> 
+    </main> 
+    <!-- MAIN_CONTENT_END --> 
+    <!-- END_CONTENT-WRAPPER --> 
+   </div> 
+   <!-- FOOTER_BEGIN --> 
+   <footer role="contentinfo" aria-label="IBM developerWorks"> 
+    <div id="dw-footer-module" class="dw-footer-home"> 
+     <section aria-label="Resources" role="contentinfo"> 
+      <div class="ibm-columns"> 
+       <div class="ibm-col-6-1 dw-footer-col-1"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="developerWorks">developerWorks</li> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/">About</a></li> 
+         <li><a href="//www.ibm.com/developerworks/feedback">Help</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/ideas">Submit content</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/secure/report/">Report abuse</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/community/terms/thirdparty/">Third-party notice</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Community">Community</li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/rfe/">Product feedback</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/connect/">Developer Centers</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading dw-follow-us" aria-label="Follow us">Follow us</li> 
+        </ul> 
+        <p class="dw-footer-social"> <a href="//twitter.com/developerWorks"> <img width="28" height="27" alt="Twitter" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-twitter.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.facebook.com/developerworks"> <img width="28" height="27" alt="Facebook" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-facebook.png"> </a> </p> 
+        <br> 
+        <p class="dw-footer-social"> <a href="//www.linkedin.com/groups/IBM-developerWorks-8137234"> <img width="28" height="27" alt="LinkedIn" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-linkedin.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.youtube.com/user/developerworks"> <img width="28" height="27" alt="YouTube" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-youtube.png"> </a> </p> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-2"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Join">Join</li> 
+         <li><a href="//developer.ibm.com/academic/">Faculty</a></li> 
+         <li><a href="//developer.ibm.com/students/">Students</a></li> 
+         <li><a href="//developer.ibm.com/startups/">Startups</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/isv/">Business Partners</a></li> 
+        </ul> 
+        <ul class="dw-footer-lang" aria-label="Select a language"> 
+         <li class="dw-footer-heading">Select a language</li> 
+         <li><a href="//www.ibm.com/developerworks/">English</a></li> 
+         <li><a href="//www.ibm.com/developerworks/cn/" lang="zh">??</a></li> 
+         <li><a href="//www.ibm.com/developerworks/jp/" lang="ja">???</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ru/" lang="ru">???????</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/br/" lang="pt">Português (Brasil)</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ssa/" lang="es">Español</a></li> 
+         <li><a href="//developer.ibm.com/kr/" lang="kr">??</a></li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-3"> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-4"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/learn/">Tutorials &amp; training</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/accelerate/">Demos &amp; sample code</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/answers">Q&amp;A forums</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/dwblog/">dW Blog</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/events/">Events</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-5"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/courses/">Courses</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/open/">Open source projects</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/tv/">Videos</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/recipes/">Recipes</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-6"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/develop/">Downloads</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/api/">APIs</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/newsletter/">Newsletters</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/feeds/">Feeds</a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </section> 
+    </div> 
+    <div id="dw-footer" class="ibm-padding-normal ibm-alternate"> 
+     <div class="ibm-columns"> 
+      <div class="ibm-col-1-1"> 
+       <div class="dw-footer-corporate-links"> 
+        <ul> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/contacts.html">Contact</a></li> 
+         <li><a href="//www.ibm.com/privacy/us/en/">Privacy</a></li> 
+         <li><a href="//www.ibm.com/developerworks/community/terms/use/">Terms of use</a></li> 
+         <li><a href="//www.ibm.com/accessibility/us/en/">Accessibility</a></li> 
+         <li class="ibm-feedbacklink"><a href="#">Feedback</a></li> 
+         <li id="ibm-truste-cp"><a onclick="truste.eu.clickListener();return false;" href="#">Cookie Preferences</a></li> 
+        </ul> 
+       </div> 
+       <div id="ibm-footer-locale-selector"></div> 
+      </div> 
+     </div> 
+    </div> 
+   </footer> 
+   <!-- FOOTER_END --> 
+   <!-- END_IBM-TOP --> 
+  </div> 
+  <!-- SCRIPTS_INCLUDE_BEGIN --> 
+  <!-- Styles --> 
+  <link rel="stylesheet" type="text/css" href="/developerworks/maverick/css/plugin/comments/jquery-comments.css"> 
+  <link rel="stylesheet" href="/developerworks/maverick/fonts/awesome-4.5.0/css/font-awesome.min.css"> 
+  <!-- Libraries --> 
+  <script type="text/javascript" src="/developerworks/maverick/js/plugin/comments/jquery-comments.min.js"></script> 
+  <script type="text/javascript" src="/developerworks/maverick/js/plugin/formatter/moment-with-locales.js"></script> 
+  <script type="text/javascript" src="/developerworks/maverick/js/ContentComments.js"></script> 
+  <script type="text/javascript" src="/developerworks/js/v18/ContentCommentsFormatter.js"></script> 
+  <script type="text/javascript" language="JavaScript">
+
+	IBMCore.common.module.masthead.subscribe("ready", "customjs", setupCommentsPlugin).runAsap(setupCommentsPlugin);
+
+	function setupCommentsPlugin(){
+		//debugger;
+			//alert(userLinks);
+			var commentsInitInfo = {
+				contentId : $("div[class=metavalue]:contains('ArticleID=')").text().split("=")[1],
+				siteId :  $("div[class=metavalue]:contains('SITE_ID=')").text().split("=")[1],
+				pluginDivId : '#dw-icomments-container',
+				notifyElementId : "#comment_notification",
+				loginMessageDivId : "#dw-article-cmts-login",
+				totalCommentsDivId : "#nCmts"
+			};				
+								
+			ContentComments.Setup(commentsInitInfo);
+	}
+</script> 
+  <script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-41146412-3','auto');ga('require','linkid','linkid.js');var dcdate="2002-07-19";var cmaid="132295";ga('set','dimension1',dcdate);ga('set','dimension2',cmaid);var dw_canonical="http://www.ibm.com/developerworks/java/tutorials/j-sec1/j-sec1.html";dw_canonical=dw_canonical.substring(dw_canonical.indexOf(".ibm.com")+8);ga('send','pageview',{'page':dw_canonical,'dimension1':dcdate,'dimension2':cmaid});var trkOBL=function(url,id){id=id.split("-");var cat="v18 article";var act="Bluemix";if(id[2]=="dwpremium")act="Premium";if(id[2]=="dwopen")act="dWOpen";if(id[2]=="devops")act="Devops";act=act+' '+id[3];if(id[4]){var label=id[4];if(label=="btn")label="button";if(label=="txt")label="text link";if(label=="bnr")label="banner";if(label=="tl")label="tile";if(label=="regbar")label="registration bar";if(label=="vp")label="video promotion"}var ab=0;if(id[5]){if(id[5]=="ABa")ab=1;if(id[5]=="ABb")ab=2;if(id[5]=="ABc")ab=3;if(id[5]=="ABd")ab=4;if(id[5]=="ABe")ab=5;if(id[5]=="ABf")ab=6;if(id[5]=="ABg")ab=7;if(id[5]=="ABh")ab=8}ga('send','event',cat,act,label,ab,{'page':dw_canonical,'hitCallback':function(){document.location=url}})}</script>
+  <!-- Piwik --> 
+  <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(["setDomains", ["*.www.ibm.com/developerworks","*.www.ibm.com/developerworks"]]);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+    var u="//developer.ibm.com/piwik/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', 7]);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+</script> 
+  <noscript>
+   <p><img src="//developer.ibm.com/piwik/piwik.php?idsite=7" style="border:0;" alt=""></p>
+  </noscript> 
+  <!-- End Piwik Code -->
+  <!-- Hotjar Tracking Code for ibm.com --> 
+  <script>
+    (function(h,o,t,j,a,r){
+    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+    h._hjSettings={hjid:42920,hjsv:5};
+    a=o.getElementsByTagName('head')[0];
+    r=o.createElement('script');r.async=1;
+    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+    a.appendChild(r);
+    })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+</script> 
+  <!-- SCRIPTS_INCLUDE_END -->   
+ </body>
+</html>

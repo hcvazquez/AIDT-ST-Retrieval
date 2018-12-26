@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://alexloth.com/xmlrpc.php"> 
+  <script>(function(html){html.className = html.className.replace(/\bno-js\b/,'js')})(document.documentElement);</script> 
+  <title>How to implement Sentiment Analysis in Tableau using R? - alexloth.com</title> 
+  <!-- This site is optimized with the Yoast SEO plugin v5.0.2 - https://yoast.com/wordpress/plugins/seo/ --> 
+  <link rel="canonical" href="http://alexloth.com/2016/01/31/how-to-implement-sentiment-analysis-in-tableau-using-r/"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="How to implement Sentiment Analysis in Tableau using R? - alexloth.com"> 
+  <meta property="og:description" content="In my previous post I highlighted Tableau’s text mining capabilities, resulting in fancy visuals such as word clouds: Today I’d like to follow up on this and show how to implement sentiment analysis in Tableau using Tableau’s R integration. Some of the many uses of social media analytics is sentiment analysis where we evaluate whether … Continue reading &quot;How to implement Sentiment Analysis in Tableau using R?&quot;"> 
+  <meta property="og:url" content="http://alexloth.com/2016/01/31/how-to-implement-sentiment-analysis-in-tableau-using-r/"> 
+  <meta property="og:site_name" content="alexloth.com"> 
+  <meta property="article:publisher" content="https://www.facebook.com/alexloth"> 
+  <meta property="article:author" content="https://www.facebook.com/alexloth"> 
+  <meta property="article:tag" content="BDA"> 
+  <meta property="article:tag" content="Data Science"> 
+  <meta property="article:tag" content="Data Visualization"> 
+  <meta property="article:tag" content="R"> 
+  <meta property="article:tag" content="Tableau"> 
+  <meta property="article:tag" content="Text Mining"> 
+  <meta property="article:tag" content="Tutorial"> 
+  <meta property="article:section" content="Blog"> 
+  <meta property="article:published_time" content="2016-01-31T15:39:57+02:00"> 
+  <meta property="article:modified_time" content="2017-03-20T22:25:57+02:00"> 
+  <meta property="og:updated_time" content="2017-03-20T22:25:57+02:00"> 
+  <meta property="og:image" content="http://alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png"> 
+  <meta property="og:image" content="https://public.tableau.com/static/images/ta/tableauhashtagwordclould/Hashtags/1_rss.png"> 
+  <meta property="og:image" content="http://alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.25.24-crop.png"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:description" content="In my previous post I highlighted Tableau’s text mining capabilities, resulting in fancy visuals such as word clouds: Today I’d like to follow up on this and show how to implement sentiment analysis in Tableau using Tableau’s R integration. Some of the many uses of social media analytics is sentiment analysis where we evaluate whether … Continue reading &quot;How to implement Sentiment Analysis in Tableau using R?&quot;"> 
+  <meta name="twitter:title" content="How to implement Sentiment Analysis in Tableau using R? - alexloth.com"> 
+  <meta name="twitter:site" content="@xlth"> 
+  <meta name="twitter:image" content="http://alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png"> 
+  <meta name="twitter:creator" content="@xlth"> 
+  <!-- / Yoast SEO plugin. --> 
+  <link rel="dns-prefetch" href="//s0.wp.com"> 
+  <link rel="dns-prefetch" href="//s.gravatar.com"> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="alexloth.com » Feed" href="http://alexloth.com/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="alexloth.com » Comments Feed" href="http://alexloth.com/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="alexloth.com » How to implement Sentiment Analysis in Tableau using R? Comments Feed" href="http://alexloth.com/2016/01/31/how-to-implement-sentiment-analysis-in-tableau-using-r/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"http:\/\/alexloth.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.8.2"}};
+			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,56826,8203,55356,56819),0,0),c=j.toDataURL(),b!==c&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55358,56794,8205,9794,65039),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55358,56794,8203,9794,65039),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="twentysixteen-jetpack-css" href="http://alexloth.com/wp-content/plugins/jetpack/modules/theme-tools/compat/twentysixteen.css?ver=5.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="adsns_css-css" href="http://alexloth.com/wp-content/plugins/adsense-plugin/css/adsns.css?ver=1.45" type="text/css" media="all"> 
+  <link rel="stylesheet" id="contact-form-7-css" href="http://alexloth.com/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=4.8" type="text/css" media="all"> 
+  <link rel="stylesheet" id="embedpress-css" href="http://alexloth.com/wp-content/plugins/embedpress/assets/css/embedpress.css?ver=4.8.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="lmb_flat_twitter_styles-css" href="http://alexloth.com/wp-content/plugins/flat-twitter/css/lmb-flat-twitter.css?ver=1.0" type="text/css" media="all"> 
+  <link rel="stylesheet" id="justifiedGallery-css" href="http://alexloth.com/wp-content/plugins/flickr-justified-gallery/css/justifiedGallery.min.css?ver=v3.6" type="text/css" media="all"> 
+  <link rel="stylesheet" id="flickrJustifiedGalleryWPPlugin-css" href="http://alexloth.com/wp-content/plugins/flickr-justified-gallery/css/flickrJustifiedGalleryWPPlugin.css?ver=v3.6" type="text/css" media="all"> 
+  <link rel="stylesheet" id="dashicons-css" href="http://alexloth.com/wp-includes/css/dashicons.min.css?ver=4.8.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="post-views-counter-frontend-css" href="http://alexloth.com/wp-content/plugins/post-views-counter/css/frontend.css?ver=1.2.7" type="text/css" media="all"> 
+  <link rel="stylesheet" id="Toptwenfive-social-icons-css" href="http://alexloth.com/wp-content/plugins/top-25-social-icons/css/toptwenfive.css?ver=4.8.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentysixteen-fonts-css" href="https://fonts.googleapis.com/css?family=Merriweather%3A400%2C700%2C900%2C400italic%2C700italic%2C900italic%7CMontserrat%3A400%2C700%7CInconsolata%3A400&amp;subset=latin%2Clatin-ext" type="text/css" media="all"> 
+  <link rel="stylesheet" id="genericons-css" href="http://alexloth.com/wp-content/plugins/jetpack/_inc/genericons/genericons/genericons.css?ver=3.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentysixteen-style-css" href="http://alexloth.com/wp-content/themes/twentysixteen/style.css?ver=4.8.2" type="text/css" media="all"> 
+  <style id="twentysixteen-style-inline-css" type="text/css">
+
+		/* Custom Main Text Color */
+		body,
+		blockquote cite,
+		blockquote small,
+		.main-navigation a,
+		.menu-toggle,
+		.dropdown-toggle,
+		.social-navigation a,
+		.post-navigation a,
+		.pagination a:hover,
+		.pagination a:focus,
+		.widget-title a,
+		.site-branding .site-title a,
+		.entry-title a,
+		.page-links > .page-links-title,
+		.comment-author,
+		.comment-reply-title small a:hover,
+		.comment-reply-title small a:focus {
+			color: #1a1a4a
+		}
+
+		blockquote,
+		.menu-toggle.toggled-on,
+		.menu-toggle.toggled-on:hover,
+		.menu-toggle.toggled-on:focus,
+		.post-navigation,
+		.post-navigation div + div,
+		.pagination,
+		.widget,
+		.page-header,
+		.page-links a,
+		.comments-title,
+		.comment-reply-title {
+			border-color: #1a1a4a;
+		}
+
+		button,
+		button[disabled]:hover,
+		button[disabled]:focus,
+		input[type="button"],
+		input[type="button"][disabled]:hover,
+		input[type="button"][disabled]:focus,
+		input[type="reset"],
+		input[type="reset"][disabled]:hover,
+		input[type="reset"][disabled]:focus,
+		input[type="submit"],
+		input[type="submit"][disabled]:hover,
+		input[type="submit"][disabled]:focus,
+		.menu-toggle.toggled-on,
+		.menu-toggle.toggled-on:hover,
+		.menu-toggle.toggled-on:focus,
+		.pagination:before,
+		.pagination:after,
+		.pagination .prev,
+		.pagination .next,
+		.page-links a {
+			background-color: #1a1a4a;
+		}
+
+		/* Border Color */
+		fieldset,
+		pre,
+		abbr,
+		acronym,
+		table,
+		th,
+		td,
+		input[type="date"],
+		input[type="time"],
+		input[type="datetime-local"],
+		input[type="week"],
+		input[type="month"],
+		input[type="text"],
+		input[type="email"],
+		input[type="url"],
+		input[type="password"],
+		input[type="search"],
+		input[type="tel"],
+		input[type="number"],
+		textarea,
+		.main-navigation li,
+		.main-navigation .primary-menu,
+		.menu-toggle,
+		.dropdown-toggle:after,
+		.social-navigation a,
+		.image-navigation,
+		.comment-navigation,
+		.tagcloud a,
+		.entry-content,
+		.entry-summary,
+		.page-links a,
+		.page-links > span,
+		.comment-list article,
+		.comment-list .pingback,
+		.comment-list .trackback,
+		.comment-reply-link,
+		.no-comments,
+		.widecolumn .mu_register .mu_alert {
+			border-color: #1a1a4a; /* Fallback for IE7 and IE8 */
+			border-color: rgba( 26, 26, 74, 0.2);
+		}
+
+		hr,
+		code {
+			background-color: #1a1a4a; /* Fallback for IE7 and IE8 */
+			background-color: rgba( 26, 26, 74, 0.2);
+		}
+
+		@media screen and (min-width: 56.875em) {
+			.main-navigation ul ul,
+			.main-navigation ul ul li {
+				border-color: rgba( 26, 26, 74, 0.2);
+			}
+
+			.main-navigation ul ul:before {
+				border-top-color: rgba( 26, 26, 74, 0.2);
+				border-bottom-color: rgba( 26, 26, 74, 0.2);
+			}
+		}
+	
+
+		/* Custom Secondary Text Color */
+
+		/**
+		 * IE8 and earlier will drop any block with CSS3 selectors.
+		 * Do not combine these styles with the next block.
+		 */
+		body:not(.search-results) .entry-summary {
+			color: #6868a8;
+		}
+
+		blockquote,
+		.post-password-form label,
+		a:hover,
+		a:focus,
+		a:active,
+		.post-navigation .meta-nav,
+		.image-navigation,
+		.comment-navigation,
+		.widget_recent_entries .post-date,
+		.widget_rss .rss-date,
+		.widget_rss cite,
+		.site-description,
+		.author-bio,
+		.entry-footer,
+		.entry-footer a,
+		.sticky-post,
+		.taxonomy-description,
+		.entry-caption,
+		.comment-metadata,
+		.pingback .edit-link,
+		.comment-metadata a,
+		.pingback .comment-edit-link,
+		.comment-form label,
+		.comment-notes,
+		.comment-awaiting-moderation,
+		.logged-in-as,
+		.form-allowed-tags,
+		.site-info,
+		.site-info a,
+		.wp-caption .wp-caption-text,
+		.gallery-caption,
+		.widecolumn label,
+		.widecolumn .mu_register label {
+			color: #6868a8;
+		}
+
+		.widget_calendar tbody a:hover,
+		.widget_calendar tbody a:focus {
+			background-color: #6868a8;
+		}
+	
+</style> 
+  <!--[if lt IE 10]>
+<link rel='stylesheet' id='twentysixteen-ie-css'  href='http://alexloth.com/wp-content/themes/twentysixteen/css/ie.css?ver=20160816' type='text/css' media='all' />
+<![endif]--> 
+  <!--[if lt IE 9]>
+<link rel='stylesheet' id='twentysixteen-ie8-css'  href='http://alexloth.com/wp-content/themes/twentysixteen/css/ie8.css?ver=20160816' type='text/css' media='all' />
+<![endif]--> 
+  <!--[if lt IE 8]>
+<link rel='stylesheet' id='twentysixteen-ie7-css'  href='http://alexloth.com/wp-content/themes/twentysixteen/css/ie7.css?ver=20160816' type='text/css' media='all' />
+<![endif]--> 
+  <link rel="stylesheet" id="fancybox-css" href="http://alexloth.com/wp-content/plugins/easy-fancybox/fancybox/jquery.fancybox-1.3.8.min.css?ver=1.6" type="text/css" media="screen"> 
+  <link rel="stylesheet" id="jetpack_css-css" href="http://alexloth.com/wp-content/plugins/jetpack/css/jetpack.css?ver=5.1" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://alexloth.com/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var related_posts_js_options = {"post_heading":"h4"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/jetpack/modules/related-posts/related-posts.js?ver=20150408"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/flat-twitter/lib/twitter-intents/widget.js?ver=4.8.2"></script> 
+  <!--[if lt IE 9]>
+<script type='text/javascript' src='http://alexloth.com/wp-content/themes/twentysixteen/js/html5.js?ver=3.7.3'></script>
+<![endif]--> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/live-flickr-comment-importer/js/lfci.js?ver=4.8.2"></script> 
+  <link rel="https://api.w.org/" href="http://alexloth.com/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://alexloth.com/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://alexloth.com/wp-includes/wlwmanifest.xml"> 
+  <meta name="generator" content="WordPress 4.8.2"> 
+  <link rel="shortlink" href="http://wp.me/p50n91-eA"> 
+  <link rel="dns-prefetch" href="//v0.wordpress.com"> 
+  <link rel="dns-prefetch" href="//jetpack.wordpress.com"> 
+  <link rel="dns-prefetch" href="//s0.wp.com"> 
+  <link rel="dns-prefetch" href="//s1.wp.com"> 
+  <link rel="dns-prefetch" href="//s2.wp.com"> 
+  <link rel="dns-prefetch" href="//public-api.wordpress.com"> 
+  <link rel="dns-prefetch" href="//0.gravatar.com"> 
+  <link rel="dns-prefetch" href="//1.gravatar.com"> 
+  <link rel="dns-prefetch" href="//2.gravatar.com"> 
+  <link rel="dns-prefetch" href="//i0.wp.com"> 
+  <link rel="dns-prefetch" href="//i1.wp.com"> 
+  <link rel="dns-prefetch" href="//i2.wp.com"> 
+  <style type="text/css">img#wpstats{display:none}</style>
+  <style type="text/css" id="custom-background-css">
+body.custom-background { background-color: #15009e; }
+</style> 
+  <!-- BEGIN GADWP v5.1.1.3 Universal Analytics - https://deconf.com/google-analytics-dashboard-wordpress/ --> 
+  <script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-2665061-1', 'auto');
+  ga('send', 'pageview');
+</script> 
+  <!-- END GADWP Universal Analytics --> 
+  <!-- Easy FancyBox 1.6 using FancyBox 1.3.8 - RavanH (http://status301.net/wordpress-plugins/easy-fancybox/) --> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var fb_timeout = null;
+var fb_opts = { 'overlayShow' : true, 'hideOnOverlayClick' : true, 'showCloseButton' : true, 'margin' : 20, 'centerOnScroll' : true, 'enableEscapeButton' : true, 'autoScale' : true };
+var easy_fancybox_handler = function(){
+	/* IMG */
+	var fb_IMG_select = 'a[href*=".jpg"]:not(.nolightbox,li.nolightbox>a), area[href*=".jpg"]:not(.nolightbox), a[href*=".jpeg"]:not(.nolightbox,li.nolightbox>a), area[href*=".jpeg"]:not(.nolightbox), a[href*=".png"]:not(.nolightbox,li.nolightbox>a), area[href*=".png"]:not(.nolightbox), a[href*=".gif"]:not(.nolightbox,li.nolightbox>a), area[href*=".gif"]:not(.nolightbox)';
+	jQuery(fb_IMG_select).addClass('fancybox image');
+	var fb_IMG_sections = jQuery('div.gallery');
+	fb_IMG_sections.each(function() { jQuery(this).find(fb_IMG_select).attr('rel', 'gallery-' + fb_IMG_sections.index(this)); });
+	jQuery('a.fancybox, area.fancybox, li.fancybox a').fancybox( jQuery.extend({}, fb_opts, { 'transitionIn' : 'elastic', 'easingIn' : 'easeOutBack', 'transitionOut' : 'elastic', 'easingOut' : 'easeInBack', 'opacity' : false, 'hideOnContentClick' : false, 'titleShow' : true, 'titlePosition' : 'inside', 'titleFromAlt' : true, 'showNavArrows' : true, 'enableKeyboardNav' : true, 'cyclic' : false }) );
+	/* iFrame */
+	jQuery('a.fancybox-iframe, area.fancybox-iframe, li.fancybox-iframe a').fancybox( jQuery.extend({}, fb_opts, { 'type' : 'iframe', 'width' : '80%', 'height' : '100%', 'titleShow' : false, 'titlePosition' : 'float', 'titleFromAlt' : true, 'allowfullscreen' : false }) );
+}
+var easy_fancybox_auto = function(){
+	/* Auto-click */
+	setTimeout(function(){jQuery('#fancybox-auto').trigger('click')},1000);
+}
+/* ]]> */
+</script> 
+ </head> 
+ <body class="post-template-default single single-post postid-904 single-format-standard custom-background"> 
+  <div id="page" class="site"> 
+   <div class="site-inner"> 
+    <a class="skip-link screen-reader-text" href="#content">Skip to content</a> 
+    <header id="masthead" class="site-header" role="banner"> 
+     <div class="site-header-main"> 
+      <div class="site-branding"> 
+       <p class="site-title"><a href="http://alexloth.com/" rel="home">alexloth.com</a></p> 
+       <p class="site-description">a blog about digital transformation, data science, and entrepreneurship&nbsp;</p> 
+      </div>
+      <!-- .site-branding --> 
+      <button id="menu-toggle" class="menu-toggle">Menu</button> 
+      <div id="site-header-menu" class="site-header-menu"> 
+       <nav id="site-navigation" class="main-navigation" role="navigation" aria-label="Primary Menu"> 
+        <div class="menu-menu-1-container">
+         <ul id="menu-menu-1" class="primary-menu">
+          <li id="menu-item-470" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-470"><a href="http://alexloth.com/about/">About</a></li> 
+          <li id="menu-item-1187" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1187"><a href="http://alexloth.com/speaking/">Speaking</a></li> 
+          <li id="menu-item-1682" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1682"><a href="http://alexloth.com/frankfurt-tableau-user-group-meetups/">Meetups</a></li> 
+          <li id="menu-item-381" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-381"><a href="http://alexloth.com/contact/">Contact</a></li> 
+          <li id="menu-item-378" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-378"><a href="http://alexloth.com/gallery/">Gallery</a> 
+           <ul class="sub-menu"> 
+            <li id="menu-item-1462" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1462"><a href="http://alexloth.com/gallery/frankfurt/">Frankfurt</a></li> 
+            <li id="menu-item-379" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-379"><a href="http://alexloth.com/gallery/portaits/">Portaits</a></li> 
+            <li id="menu-item-392" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-392"><a href="http://alexloth.com/gallery/urban/">Urban</a></li> 
+            <li id="menu-item-477" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-477"><a href="http://alexloth.com/gallery/wedding/">Wedding</a></li> 
+           </ul> </li> 
+         </ul>
+        </div> 
+       </nav>
+       <!-- .main-navigation --> 
+       <nav id="social-navigation" class="social-navigation" role="navigation" aria-label="Social Links Menu"> 
+        <div class="menu-social-container">
+         <ul id="menu-social" class="social-links-menu">
+          <li id="menu-item-781" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-781"><a href="http://www.linkedin.com/in/aloth"><span class="screen-reader-text">LinkedIn</span></a></li> 
+          <li id="menu-item-779" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-779"><a href="https://twitter.com/xlth"><span class="screen-reader-text">Twitter</span></a></li> 
+          <li id="menu-item-780" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-780"><a href="https://www.facebook.com/alexloth"><span class="screen-reader-text">Facebook</span></a></li> 
+          <li id="menu-item-782" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-782"><a href="https://www.flickr.com/photos/xlth/"><span class="screen-reader-text">Flickr</span></a></li> 
+          <li id="menu-item-783" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-783"><a href="https://www.xing.com/profile/Alexander_Loth"><span class="screen-reader-text">Xing</span></a></li> 
+          <li id="menu-item-784" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-784"><a href="http://alexloth.com/feed/"><span class="screen-reader-text">RSS Feed</span></a></li> 
+         </ul>
+        </div> 
+       </nav>
+       <!-- .social-navigation --> 
+      </div>
+      <!-- .site-header-menu --> 
+     </div>
+     <!-- .site-header-main --> 
+    </header>
+    <!-- .site-header --> 
+    <div id="content" class="site-content"> 
+     <div id="primary" class="content-area"> 
+      <main id="main" class="site-main" role="main"> 
+       <article id="post-904" class="post-904 post type-post status-publish format-standard hentry category-blog category-data-management category-science tag-bda tag-data-science tag-data-visualization tag-r tag-tableau tag-text-mining tag-tutorial"> 
+        <header class="entry-header"> 
+         <h1 class="entry-title">How to implement Sentiment Analysis in Tableau using R?</h1> 
+        </header>
+        <!-- .entry-header --> 
+        <div class="entry-content"> 
+         <div id="ca-pub-2537818595166905:9103935380" class="ads ads_before">
+          <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+          <!-- Blog alexloth.com --> 
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2537818595166905" data-ad-slot="9103935380" data-ad-format="auto"></ins> 
+          <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+         </div>
+         <figure id="attachment_924" style="width: 1241px" class="wp-caption alignnone">
+          <a href="https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png"><img class="wp-image-924 size-full" src="https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png?resize=840%2C521" alt="Interactive sentiment analysis with Tableau 9.2" srcset="https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png?w=1241 1241w, https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png?resize=300%2C186 300w, https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png?resize=768%2C477 768w, https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png?resize=1024%2C635 1024w, https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.20.16.png?resize=1200%2C745 1200w" sizes="(max-width: 709px) 85vw, (max-width: 909px) 67vw, (max-width: 1362px) 62vw, 840px" data-recalc-dims="1"></a>
+          <figcaption class="wp-caption-text">
+           Interactive sentiment analysis with Tableau 9.2
+          </figcaption>
+         </figure> 
+         <p>In my previous post I highlighted <a href="http://alexloth.com/2016/01/14/how-to-perform-text-mining-at-the-speed-of-thought-directly-in-tableau/">Tableau’s text mining capabilities</a>, resulting in fancy visuals such as word clouds:</p> 
+         <p><script src="https://public.tableau.com/javascripts/api/viz_v1.js" type="text/javascript"></script></p> 
+         <div class="tableauPlaceholder" style="width: 100%; height: 400px;">
+          <noscript>
+           <a href="http://alexloth.com/"><img alt="Hashtags " src="https://i0.wp.com/public.tableau.com/static/images/ta/tableauhashtagwordclould/Hashtags/1_rss.png?w=840&amp;ssl=1" style="border: none" data-recalc-dims="1"></a>
+          </noscript>
+          <object class="tableauViz" style="display: none;" width="100%" height="400"><param name="host_url" value="https%3A%2F%2Fpublic.tableau.com%2F"><param name="site_root" value=""><param name="name" value="tableauhashtagwordclould/Hashtags"><param name="tabs" value="no"><param name="toolbar" value="yes"><param name="static_image" value="https://public.tableau.com/static/images/ta/tableauhashtagwordclould/Hashtags/1.png"><param name="animate_transition" value="yes"><param name="display_static_image" value="yes"><param name="display_spinner" value="yes"><param name="display_overlay" value="yes"><param name="display_count" value="yes"><param name="showVizHome" value="no"><param name="showTabs" value="y"><param name="bootstrapWhenNotified" value="true"></object>
+         </div> 
+         <p>Today I’d like to follow up on this and show how to implement sentiment analysis in Tableau using <a href="http://alexloth.com/2013/11/24/data-science-toolbox-use-r-tableau/">Tableau’s R integration</a>. Some of the many uses of social media analytics is sentiment analysis where we evaluate whether posts on a specific issue are positive, neutral, or negative (polarity), and which emotion in predominant.</p> 
+         <p><strong>What do customers like or dislike about your products? How do people perceive your brand compared to last year? </strong></p> 
+         <p>In order to answer such questions in Tableau, we need to install an R package that is capable of performing the sentiment analysis. In the following example we use an <a href="https://github.com/aloth/sentiment" target="_blank">extended version of the <em>sentiment</em> package</a>, which was <a href="https://github.com/timjurka/sentiment" target="_blank">initiated by Timothy P. Jurka</a>.</p> 
+         <p>The <em>sentiment</em> package requires the <a href="https://cran.r-project.org/web/packages/tm/index.html" target="_blank"><em>tm</em></a> and <a href="https://cran.r-project.org/src/contrib/Archive/Rstem/" target="_blank"><em>Rstem</em></a> packages, so make sure that they are installed properly. Execute these commands in your R console to install <em>sentiment</em> from GitHub (see alternative way to install at the end of this blog post):</p> 
+         <p></p>
+         <div class="embedpress-wrapper ose-github ose-uid-0452d82a552f27e48b8f379f95ee729e responsive">
+          <script type="text/javascript" src="https://gist.github.com/aloth/a9eaa1cc477a947c50447968e2217329.js"></script>
+         </div>
+         <p></p> 
+         <p>The <em>sentiment</em> package offers two functions, which can be easily called from calculated fields in Tableau:</p> 
+         <p><img class="alignnone size-full wp-image-926" src="https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.25.24-crop.png?resize=545%2C320" alt="Screenshot 2016-01-31 15.25.24 crop" srcset="https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.25.24-crop.png?w=545 545w, https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.25.24-crop.png?resize=300%2C176 300w" sizes="(max-width: 545px) 85vw, 545px" data-recalc-dims="1"></p> 
+         <p>The function <code>get_polarity</code> returns “positive”, “neutral”, or “negative”:</p> 
+         <p></p>
+         <div class="embedpress-wrapper ose-github ose-uid-35854eb5ace33a7ef1a172ebbbb8a9bd responsive">
+          <script type="text/javascript" src="https://gist.github.com/aloth/3d425afc264c299f5880.js"></script>
+         </div>
+         <p></p> 
+         <p>The function <code>get_emotion</code> returns “anger”, “disgust”, “fear”, “joy”, “sadness”, “surprise”, or “NA”:</p> 
+         <p></p>
+         <div class="embedpress-wrapper ose-github ose-uid-264e733e8f3d172d536cbe4fff483ba2 responsive">
+          <script type="text/javascript" src="https://gist.github.com/aloth/eb4e59d1b45826db5e8a.js"></script>
+         </div>
+         <p></p> 
+         <p>The <em>sentiment</em> package follows a lexicon based approach and comes with two files <code>emotions_english.csv.gz</code> (<a href="https://github.com/aloth/sentiment/blob/master/sentiment/man/emotions.Rd" target="_blank">source and structure</a>) and <code>subjectivity_english.csv.gz</code> (<a href="https://github.com/aloth/sentiment/blob/master/sentiment/man/subjectivity.Rd" target="_blank">source and structure</a>). Both files contain word lists in English and are stored in the R package library under <code>/sentiment/data</code> directory.</p> 
+         <p>If text is incorrectly classified, you could easily fix this issue by extending these two files. If your aim is to analyze text other than English, you need to <a href="http://alexloth.com/2016/07/21/crowdsourcing-help-build-multi-language-sentiment-analysis/">create word lists for the target language</a>. Kindly share them in the comments!</p> 
+         <p>Feel free to download the <em>Packaged Workbook</em> (twbx) <a href="http://alexloth.com/assets/twbx/Tweets-featuring-tableau.twbx" target="_blank">here</a>.</p> 
+         <p><strong>[Update 11 Aug 2016]:</strong> If you are having trouble with <code>install_github</code>, try to install directly form this website:</p> 
+         <p></p>
+         <div class="embedpress-wrapper ose-github ose-uid-9e584f00c5d37d702fd017105706a24a responsive">
+          <script type="text/javascript" src="https://gist.github.com/aloth/47b9f47dff15f451e4fc86b572a25775.js"></script>
+         </div>
+         <p></p> 
+         <div id="ca-pub-2537818595166905:2778200187" class="ads ads_after">
+          <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+          <!-- Blog alexloth.com second --> 
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2537818595166905" data-ad-slot="2778200187" data-ad-format="auto"></ins> 
+          <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+         </div>
+         <div class="post-views post-904 entry-meta"> 
+          <span class="post-views-icon dashicons dashicons-chart-line"></span> 
+          <span class="post-views-label">Post Views: </span> 
+          <span class="post-views-count">26,872</span> 
+         </div> 
+         <div id="jp-relatedposts" class="jp-relatedposts"> 
+          <h3 class="jp-relatedposts-headline"><em>Related</em></h3> 
+         </div> 
+        </div>
+        <!-- .entry-content --> 
+        <footer class="entry-footer"> 
+         <span class="byline"><span class="author vcard"><img alt="" src="http://2.gravatar.com/avatar/2dbff9b9ef6dc2e39ef992a946b7df33?s=49&amp;d=wavatar&amp;r=g" srcset="http://2.gravatar.com/avatar/2dbff9b9ef6dc2e39ef992a946b7df33?s=98&amp;d=wavatar&amp;r=g 2x" class="avatar avatar-49 photo" height="49" width="49"><span class="screen-reader-text">Author </span> <a class="url fn n" href="http://alexloth.com/author/alexander-loth/">Alexander Loth</a></span></span>
+         <span class="posted-on"><span class="screen-reader-text">Posted on </span><a href="http://alexloth.com/2016/01/31/how-to-implement-sentiment-analysis-in-tableau-using-r/" rel="bookmark"><time class="entry-date published" datetime="2016-01-31T15:39:57+00:00">January 31, 2016</time><time class="updated" datetime="2017-03-20T22:25:57+00:00">March 20, 2017</time></a></span>
+         <span class="cat-links"><span class="screen-reader-text">Categories </span><a href="http://alexloth.com/" rel="category tag">Blog</a>, <a href="http://alexloth.com/category/science/data-management/" rel="category tag">Data Management</a>, <a href="http://alexloth.com/category/science/" rel="category tag">Information Science</a></span>
+         <span class="tags-links"><span class="screen-reader-text">Tags </span><a href="http://alexloth.com/tag/bda/" rel="tag">BDA</a>, <a href="http://alexloth.com/tag/data-science/" rel="tag">Data Science</a>, <a href="http://alexloth.com/tag/data-visualization/" rel="tag">Data Visualization</a>, <a href="http://alexloth.com/tag/r/" rel="tag">R</a>, <a href="http://alexloth.com/tag/tableau/" rel="tag">Tableau</a>, <a href="http://alexloth.com/tag/text-mining/" rel="tag">Text Mining</a>, <a href="http://alexloth.com/tag/tutorial/" rel="tag">Tutorial</a></span> 
+        </footer>
+        <!-- .entry-footer --> 
+       </article>
+       <!-- #post-## --> 
+       <div id="disqus_thread"> 
+        <div id="dsq-content"> 
+         <ul id="dsq-comments"> 
+          <li class="comment even thread-even depth-1" id="dsq-comment-149140"> 
+           <div id="dsq-comment-header-149140" class="dsq-comment-header"> 
+            <cite id="dsq-cite-149140"> <span id="dsq-author-user-149140">Petr Havlík</span> </cite> 
+           </div> 
+           <div id="dsq-comment-body-149140" class="dsq-comment-body"> 
+            <div id="dsq-comment-message-149140" class="dsq-comment-message">
+             <p>I am having issues installing Rstem in the latest version of R given it’s discontinued support – any tips?</p> 
+            </div> 
+           </div> </li>
+          <!-- #comment-## --> 
+          <li class="comment odd alt thread-odd thread-alt depth-1" id="dsq-comment-149167"> 
+           <div id="dsq-comment-header-149167" class="dsq-comment-header"> 
+            <cite id="dsq-cite-149167"> <a id="dsq-author-user-149167" href="http://alexloth.com/" target="_blank" rel="nofollow">Alexander Loth</a> </cite> 
+           </div> 
+           <div id="dsq-comment-body-149167" class="dsq-comment-body"> 
+            <div id="dsq-comment-message-149167" class="dsq-comment-message">
+             <p>What exactly are the issues?</p> 
+            </div> 
+           </div> </li>
+          <!-- #comment-## --> 
+          <li class="comment even thread-even depth-1" id="dsq-comment-149168"> 
+           <div id="dsq-comment-header-149168" class="dsq-comment-header"> 
+            <cite id="dsq-cite-149168"> <span id="dsq-author-user-149168">Adit Mishra</span> </cite> 
+           </div> 
+           <div id="dsq-comment-body-149168" class="dsq-comment-body"> 
+            <div id="dsq-comment-message-149168" class="dsq-comment-message">
+             <p>tableau showint the error<br> Error : package ‘tm’ could not be loaded</p> 
+            </div> 
+           </div> </li>
+          <!-- #comment-## --> 
+          <li class="comment odd alt thread-odd thread-alt depth-1" id="dsq-comment-149172"> 
+           <div id="dsq-comment-header-149172" class="dsq-comment-header"> 
+            <cite id="dsq-cite-149172"> <a id="dsq-author-user-149172" href="http://alexloth.com/" target="_blank" rel="nofollow">Alexander Loth</a> </cite> 
+           </div> 
+           <div id="dsq-comment-body-149172" class="dsq-comment-body"> 
+            <div id="dsq-comment-message-149172" class="dsq-comment-message">
+             <p>Did you try to install the package before in RStudio or in the R console? Just execute these commands to get he package installed:<br> install.packages(“Rcpp”)<br> install.packages(“http://alexloth.com/utils/sentiment/current/sentiment.zip”,repos=NULL)</p> 
+            </div> 
+           </div> </li>
+          <!-- #comment-## --> 
+         </ul> 
+        </div> 
+       </div> 
+       <nav class="navigation post-navigation" role="navigation"> 
+        <h2 class="screen-reader-text">Post navigation</h2> 
+        <div class="nav-links">
+         <div class="nav-previous">
+          <a href="http://alexloth.com/2016/01/14/how-to-perform-text-mining-at-the-speed-of-thought-directly-in-tableau/" rel="prev"><span class="meta-nav" aria-hidden="true">Previous</span> <span class="screen-reader-text">Previous post:</span> <span class="post-title">How to perform Text Mining at the Speed of Thought directly in Tableau?</span></a>
+         </div>
+         <div class="nav-next">
+          <a href="http://alexloth.com/2016/03/06/4-methoden-um-mit-predictive-maintenance-kosten-zu-senken/" rel="next"><span class="meta-nav" aria-hidden="true">Next</span> <span class="screen-reader-text">Next post:</span> <span class="post-title">4 Methoden um mit Predictive Maintenance Kosten zu senken</span></a>
+         </div>
+        </div> 
+       </nav> 
+      </main>
+      <!-- .site-main --> 
+     </div>
+     <!-- .content-area --> 
+     <aside id="secondary" class="sidebar widget-area" role="complementary"> 
+      <section id="search-4" class="widget widget_search"> 
+       <form role="search" method="get" class="search-form" action="http://alexloth.com/"> 
+        <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s"> </label> 
+        <button type="submit" class="search-submit"><span class="screen-reader-text">Search</span></button> 
+       </form> 
+      </section>
+      <section id="lmb-flat-twitter-profile-widget-2" class="widget lmb-flat-twitter-profile-widget"> 
+       <div class="flat-twitter-profile default "> 
+        <div class="flat-twitter-profile-wrap"> 
+         <div class="flat-twitter-profile-cover default "> 
+          <img src="https://pbs.twimg.com/profile_banners/81433748/1444308969/web_retina"> 
+         </div> 
+         <div class="flat-twitter-profile-info default"> 
+          <div class="flat-twitter-profile-info-wrap"> 
+           <div class="flat-twitter-profile-avatar-wrap default"> 
+            <a href="https://twitter.com/intent/user?screen_name=xlth" target="_blank"><img alt="xlth" src="https://pbs.twimg.com/profile_images/863805167568789504/2-CSKToy.jpg" class="flat-twitter-avatar-style-round flat-twitter-profile-avatar"></a> 
+           </div> 
+           <h2 class="flat-twitter-profile-name"><a href="https://twitter.com/intent/user?screen_name=xlth" target="_blank">Alexander Loth</a></h2> 
+           <p class="flat-twitter-profile-username"><a href="https://twitter.com/intent/user?screen_name=xlth" target="_blank">@xlth</a></p> 
+           <a href="https://twitter.com/intent/follow?screen_name=xlth" target="_blank" class="flat-twitter-profile-follow-button default">follow</a> 
+          </div> 
+         </div> 
+         <div class="flat-twitter-profile-counters default"> 
+          <ul class="flat-twitter-profile-counter-wrap"> 
+           <li class="flat-twitter-profile-counter flat-twitter-profile-counter-following flat-twitter-profile-counter-cols-3"> <p class="default"><span>5543</span>following</p> </li> 
+           <li class="flat-twitter-profile-counter flat-twitter-profile-counter-followers flat-twitter-profile-counter-cols-3"> <p class="default"><span>7738</span>followers</p> </li> 
+           <li class="flat-twitter-profile-counter flat-twitter-profile-counter-tweets flat-twitter-profile-counter-cols-3"> <p class="default"><span>1686</span>tweets</p> </li> 
+          </ul> 
+         </div> 
+        </div> 
+       </div> 
+      </section>
+      <section id="custom_html-2" class="widget_text widget widget_custom_html">
+       <div class="textwidget custom-html-widget">
+        <div class="embedpress-wrapper ose-meetup ose-uid-5ab0ee485743b927a02e0fec5008a340 responsive">
+         <style type="text/css">#meetup_oembed .mu_clearfix:after { visibility: hidden; display: block; font-size: 0; content: " "; clear: both; height: 0; }* html #meetup_oembed .mu_clearfix, *:first-child+html #meetup_oembed .mu_clearfix { zoom: 1; }#meetup_oembed { background:#eee;border:1px solid #ccc;padding:10px;-moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;margin:0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 12px; }#meetup_oembed h3 { font-weight:normal; margin:0 0 10px; padding:0; line-height:26px; font-family:Georgia,Palatino,serif; font-size:24px }#meetup_oembed p { margin: 0 0 10px; padding:0; line-height:16px; }#meetup_oembed img { border:none; margin:0; padding:0; }#meetup_oembed a, #meetup_oembed a:visited, #meetup_oembed a:link { color: #1B76B3; text-decoration: none; cursor: hand; cursor: pointer; }#meetup_oembed a:hover { color: #1B76B3; text-decoration: underline; }#meetup_oembed a.mu_button { font-size:14px; -moz-border-radius:3px;-webkit-border-radius:3px;border-radius:3px;border:2px solid #A7241D;color:white!important;text-decoration:none;background-color: #CA3E47; background-image: -moz-linear-gradient(top, #ca3e47, #a8252e); background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #a8252e), color-stop(1, #ca3e47));disvplay:inline-block;padding:5px 10px; }#meetup_oembed a.mu_button:hover { color: #fff!important; text-decoration: none; }#meetup_oembed .photo { width:50px; height:50px; overflow:hidden;background:#ccc;float:left;margin:0 5px 0 0;text-align:center;padding:1px; }#meetup_oembed .photo img { height:50px }#meetup_oembed .number { font-size:18px; }#meetup_oembed .thing { text-transform: uppercase; color: #555; }</style>
+         <div id="meetup_oembed" style="height:286px"> 
+          <div style="max-height:246px;overflow:hidden"> 
+           <h3>3rd Frankfurt Tableau User Group Meetup</h3> 
+           <p style="margin:5px 0;font-size:16px">Tuesday, Oct 17, 2017, 6:00 PM</p> 
+           <p style="margin: 0 0 5px;"><span style="font-size:14px">Capgemini Frankfurt</span><br><span style="font-size:12px;">Mainzer Landstraße 180, 60327 Frankfurt Frankfurt, DE</span></p> 
+           <span style="color:#4F8A10;font-size:16px;">24 Data Rockstars Attending</span> 
+           <div style="margin:5px 0 10px" class="mu_clearfix"> 
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/6/e/9/b/thumb_255988315.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/4/2/8/7/thumb_270857031.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/7/a/7/f/thumb_270331359.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/2/3/6/6/thumb_270369062.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/3/9/d/d/thumb_270194813.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/c/7/9/a/thumb_268851098.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/7/e/e/7/thumb_270332487.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/8/d/e/9/thumb_251676329.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/7/f/9/6/thumb_110012662.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/d/4/d/d/thumb_262674493.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/8/b/4/6/thumb_243095654.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/3/5/a/3/thumb_270793731.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/c/7/1/c/thumb_259310972.jpeg">
+            </div>
+            <div class="photo">
+             <img src="https://secure.meetupstatic.com/photos/member/4/f/6/a/thumb_270020330.jpeg">
+            </div> 
+           </div> 
+           <p style="line-height:16px">We"d like to invite you to the 3rd Frankfurt Tableau User Group Meetup,&nbsp;hosted at Capgemini Frankfurt. Georg Ogulin, Marketing Manager at Capgemini will be one of the speakers.AGENDA6:00pm: Doors Open6:30pm: Presentations7:30pm: Mix &amp; Mingle8:30pm: Event ConcludesWe"ll meet in a great environment with cool people. See you soon!PS:&nbsp;Let us kno...</p> 
+          </div> 
+          <p style="margin:10px 0 0;"><a href="https://www.meetup.com/Frankfurt-Tableau-User-Group-FTUG/events/243085462/" target="_blank" class="mu_button"><strong>Check out this Meetup ?</strong></a></p>
+         </div>
+        </div>
+       </div>
+      </section> 
+      <section id="recent-posts-4" class="widget widget_recent_entries"> 
+       <h2 class="widget-title">Recent Posts</h2> 
+       <ul> 
+        <li> <a href="http://alexloth.com/2017/09/23/risiko-fehldiagnose/">Gesundheitsrisiko Fehldiagnose: Ein Protokoll</a> </li> 
+        <li> <a href="http://alexloth.com/2017/09/12/social-media-customer-centric-data-strategy-data17-resources/">Social Media and the Customer-centric Data Strategy #data17 #resources</a> </li> 
+        <li> <a href="http://alexloth.com/2017/08/16/data-strategy-erstickt-innovation-zwischen-berichtswesen-und-data-discovery/">Data Strategy: Erstickt Innovation zwischen Berichtswesen und Data Discovery?</a> </li> 
+        <li> <a href="http://alexloth.com/2017/07/15/my-10-year-blogging-anniversary/">It’s My 10 Year Blogging Anniversary!</a> </li> 
+        <li> <a href="http://alexloth.com/2017/06/01/tableau-conference-tc17-sneak-peek-integrating-julia-advanced-analytics/">Tableau Conference TC17 Sneak Peek: Integrating Julia for Advanced Analytics</a> </li> 
+        <li> <a href="http://alexloth.com/2017/05/01/take-survey-stage-digital-transformation/">Take the Survey: The Stage of Digital Transformation</a> </li> 
+        <li> <a href="http://alexloth.com/2017/04/12/digitale-banken-die-chancen-von-blockchain-kunstlicher-intelligenz-und-machine-learning/">Digitale Banken: Die Chancen von Blockchain, Künstlicher Intelligenz und Machine Learning</a> </li> 
+        <li> <a href="http://alexloth.com/2017/03/15/data-strategy-wie-unterstutzen-analysen-ihre-entscheidungsfindung/">Data Strategy: Wie unterstützen Analysen Ihre Entscheidungsfindung?</a> </li> 
+        <li> <a href="http://alexloth.com/2017/02/15/10-bi-analytics-trends-keiner-datenstrategie-fehlen/">10 BI &amp; Analytics Trends, die in keiner Datenstrategie fehlen dürfen</a> </li> 
+        <li> <a href="http://alexloth.com/2017/01/31/price-sentiment-analysis-bitcoin-going/">Price and Sentiment Analysis: Why is Bitcoin Going Down?</a> </li> 
+        <li> <a href="http://alexloth.com/2017/01/18/data-strategy-steigern-smarte-erkenntnisse-den-business-impact/">Data Strategy: Steigern smarte Erkenntnisse den Business Impact?</a> </li> 
+        <li> <a href="http://alexloth.com/2016/12/24/monkey-business-always-ready-demo/">Monkey Business: Always be Ready to Demo</a> </li> 
+        <li> <a href="http://alexloth.com/2016/12/14/data-strategy-die-notwendigkeit-einer-modernen-datenstrategie-im-zuge-der-digitalen-transformation/">Data Strategy: Die Notwendigkeit einer modernen Datenstrategie im Zuge der digitalen Transformation</a> </li> 
+        <li> <a href="http://alexloth.com/2016/11/06/tabpy-tutorial-integrating-python-tableau-advanced-analytics/">TabPy Tutorial: Integrating Python with Tableau for Advanced Analytics</a> </li> 
+        <li> <a href="http://alexloth.com/2016/10/30/predictive-maintenance-hilft-ihnen-wartungsmasnahmen-effizient-zu-gestalten/">Predictive Maintenance hilft Ihnen Wartungsmaßnahmen effizient zu gestalten</a> </li> 
+       </ul> 
+      </section> 
+      <section id="blog_subscription-5" class="widget jetpack_subscription_widget">
+       <h2 class="widget-title">Subscribe via Email</h2> 
+       <form action="#" method="post" accept-charset="utf-8" id="subscribe-blog-blog_subscription-5"> 
+        <div id="subscribe-text">
+         <p>Enter your email address to subscribe to this blog and receive notifications of new posts by email.</p> 
+        </div> 
+        <p id="subscribe-email"> <label id="jetpack-subscribe-label" for="subscribe-field-blog_subscription-5"> Email Address </label> <input type="email" name="email" required class="required" value="" id="subscribe-field-blog_subscription-5" placeholder="Email Address"> </p> 
+        <p id="subscribe-submit"> <input type="hidden" name="action" value="subscribe"> <input type="hidden" name="source" value="http://alexloth.com/2016/01/31/how-to-implement-sentiment-analysis-in-tableau-using-r/"> <input type="hidden" name="sub-type" value="widget"> <input type="hidden" name="redirect_fragment" value="blog_subscription-5"> <input type="submit" value="Subscribe" name="jetpack_subscriptions_widget"> </p> 
+       </form> 
+       <script>
+			/*
+			Custom functionality for safari and IE
+			 */
+			(function( d ) {
+				// In case the placeholder functionality is available we remove labels
+				if ( ( 'placeholder' in d.createElement( 'input' ) ) ) {
+					var label = d.querySelector( 'label[for=subscribe-field-blog_subscription-5]' );
+						label.style.clip 	 = 'rect(1px, 1px, 1px, 1px)';
+						label.style.position = 'absolute';
+						label.style.height   = '1px';
+						label.style.width    = '1px';
+						label.style.overflow = 'hidden';
+				}
+
+				// Make sure the email value is filled in before allowing submit
+				var form = d.getElementById('subscribe-blog-blog_subscription-5'),
+					input = d.getElementById('subscribe-field-blog_subscription-5'),
+					handler = function( event ) {
+						if ( '' === input.value ) {
+							input.focus();
+
+							if ( event.preventDefault ){
+								event.preventDefault();
+							}
+
+							return false;
+						}
+					};
+
+				if ( window.addEventListener ) {
+					form.addEventListener( 'submit', handler, false );
+				} else {
+					form.attachEvent( 'onsubmit', handler );
+				}
+			})( document );
+			</script> 
+      </section>
+      <section id="categories-2" class="widget widget_categories">
+       <h2 class="widget-title">Topics</h2> 
+       <ul> 
+        <li class="cat-item cat-item-121"><a href="http://alexloth.com/">Blog</a> (57) </li> 
+        <li class="cat-item cat-item-153"><a href="http://alexloth.com/category/economics/">Economics</a> (12) 
+         <ul class="children"> 
+          <li class="cat-item cat-item-154"><a href="http://alexloth.com/category/economics/emerging-markets/">Emerging Markets</a> (2) </li> 
+         </ul> </li> 
+        <li class="cat-item cat-item-142"><a href="http://alexloth.com/category/science/">Information Science</a> (43) 
+         <ul class="children"> 
+          <li class="cat-item cat-item-143"><a href="http://alexloth.com/category/science/data-management/">Data Management</a> (17) </li> 
+          <li class="cat-item cat-item-144"><a href="http://alexloth.com/category/science/strategy/">Digital Strategy</a> (23) </li> 
+         </ul> </li> 
+        <li class="cat-item cat-item-148"><a href="http://alexloth.com/category/particle-physics/">Particle Physics</a> (7) </li> 
+        <li class="cat-item cat-item-138"><a href="http://alexloth.com/category/photography/">Photography</a> (2) 
+         <ul class="children"> 
+          <li class="cat-item cat-item-151"><a href="http://alexloth.com/category/photography/analog-photography/">Analog Photography</a> (1) </li> 
+         </ul> </li> 
+        <li class="cat-item cat-item-141"><a href="http://alexloth.com/category/traveling/">Traveling</a> (137) 
+         <ul class="children"> 
+          <li class="cat-item cat-item-91"><a href="http://alexloth.com/category/traveling/amerika/">Americas</a> (10) 
+           <ul class="children"> 
+            <li class="cat-item cat-item-92"><a href="http://alexloth.com/category/traveling/amerika/usa/">United States</a> (10) </li> 
+           </ul> </li> 
+          <li class="cat-item cat-item-70"><a href="http://alexloth.com/category/traveling/asien/">Asia</a> (98) 
+           <ul class="children"> 
+            <li class="cat-item cat-item-88"><a href="http://alexloth.com/category/traveling/asien/bahrain/">Bahrain</a> (2) </li> 
+            <li class="cat-item cat-item-122"><a href="http://alexloth.com/category/traveling/asien/china/">China</a> (2) </li> 
+            <li class="cat-item cat-item-4"><a href="http://alexloth.com/category/traveling/asien/indien/">India</a> (88) </li> 
+            <li class="cat-item cat-item-118"><a href="http://alexloth.com/category/traveling/asien/japan/">Japan</a> (2) </li> 
+            <li class="cat-item cat-item-81"><a href="http://alexloth.com/category/traveling/asien/emirate/">United Arab Emirates</a> (6) </li> 
+           </ul> </li> 
+          <li class="cat-item cat-item-75"><a href="http://alexloth.com/category/traveling/europa/">Europe</a> (31) 
+           <ul class="children"> 
+            <li class="cat-item cat-item-76"><a href="http://alexloth.com/category/traveling/europa/frankreich/">France</a> (10) </li> 
+            <li class="cat-item cat-item-78"><a href="http://alexloth.com/category/traveling/europa/deutschland/">Germany</a> (5) </li> 
+            <li class="cat-item cat-item-150"><a href="http://alexloth.com/category/traveling/europa/italy/">Italy</a> (1) </li> 
+            <li class="cat-item cat-item-79"><a href="http://alexloth.com/category/traveling/europa/monaco/">Monaco</a> (2) </li> 
+            <li class="cat-item cat-item-103"><a href="http://alexloth.com/category/traveling/europa/schweiz/">Switzerland</a> (15) </li> 
+            <li class="cat-item cat-item-86"><a href="http://alexloth.com/category/traveling/europa/grossbritannien/">United Kingdom</a> (2) </li> 
+           </ul> </li> 
+         </ul> </li> 
+        <li class="cat-item cat-item-1"><a href="http://alexloth.com/category/allgemein/">Uncategorized</a> (8) </li> 
+       </ul> 
+      </section>
+      <section id="archives-3" class="widget widget_archive">
+       <h2 class="widget-title">Time Travel</h2> 
+       <label class="screen-reader-text" for="archives-dropdown-3">Time Travel</label> 
+       <select id="archives-dropdown-3" name="archive-dropdown" onchange="document.location.href=this.options[this.selectedIndex].value;"> <option value="">Select Month</option> <option value="http://alexloth.com/2017/09/"> September 2017 &nbsp;(2)</option> <option value="http://alexloth.com/2017/08/"> August 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/07/"> July 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/06/"> June 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/05/"> May 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/04/"> April 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/03/"> March 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/02/"> February 2017 &nbsp;(1)</option> <option value="http://alexloth.com/2017/01/"> January 2017 &nbsp;(2)</option> <option value="http://alexloth.com/2016/12/"> December 2016 &nbsp;(2)</option> <option value="http://alexloth.com/2016/11/"> November 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/10/"> October 2016 &nbsp;(2)</option> <option value="http://alexloth.com/2016/09/"> September 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/08/"> August 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/07/"> July 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/06/"> June 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/04/"> April 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/03/"> March 2016 &nbsp;(1)</option> <option value="http://alexloth.com/2016/01/"> January 2016 &nbsp;(4)</option> <option value="http://alexloth.com/2015/11/"> November 2015 &nbsp;(1)</option> <option value="http://alexloth.com/2015/09/"> September 2015 &nbsp;(1)</option> <option value="http://alexloth.com/2015/06/"> June 2015 &nbsp;(1)</option> <option value="http://alexloth.com/2015/05/"> May 2015 &nbsp;(2)</option> <option value="http://alexloth.com/2015/03/"> March 2015 &nbsp;(2)</option> <option value="http://alexloth.com/2015/02/"> February 2015 &nbsp;(1)</option> <option value="http://alexloth.com/2014/12/"> December 2014 &nbsp;(1)</option> <option value="http://alexloth.com/2014/10/"> October 2014 &nbsp;(1)</option> <option value="http://alexloth.com/2014/09/"> September 2014 &nbsp;(2)</option> <option value="http://alexloth.com/2014/08/"> August 2014 &nbsp;(3)</option> <option value="http://alexloth.com/2014/07/"> July 2014 &nbsp;(1)</option> <option value="http://alexloth.com/2014/06/"> June 2014 &nbsp;(1)</option> <option value="http://alexloth.com/2013/11/"> November 2013 &nbsp;(1)</option> <option value="http://alexloth.com/2012/08/"> August 2012 &nbsp;(1)</option> <option value="http://alexloth.com/2012/07/"> July 2012 &nbsp;(1)</option> <option value="http://alexloth.com/2012/06/"> June 2012 &nbsp;(1)</option> <option value="http://alexloth.com/2012/05/"> May 2012 &nbsp;(1)</option> <option value="http://alexloth.com/2012/04/"> April 2012 &nbsp;(1)</option> <option value="http://alexloth.com/2012/02/"> February 2012 &nbsp;(1)</option> <option value="http://alexloth.com/2011/08/"> August 2011 &nbsp;(1)</option> <option value="http://alexloth.com/2010/03/"> March 2010 &nbsp;(1)</option> <option value="http://alexloth.com/2009/07/"> July 2009 &nbsp;(1)</option> <option value="http://alexloth.com/2009/06/"> June 2009 &nbsp;(1)</option> <option value="http://alexloth.com/2009/05/"> May 2009 &nbsp;(4)</option> <option value="http://alexloth.com/2009/04/"> April 2009 &nbsp;(3)</option> <option value="http://alexloth.com/2009/03/"> March 2009 &nbsp;(9)</option> <option value="http://alexloth.com/2009/02/"> February 2009 &nbsp;(1)</option> <option value="http://alexloth.com/2009/01/"> January 2009 &nbsp;(5)</option> <option value="http://alexloth.com/2008/12/"> December 2008 &nbsp;(2)</option> <option value="http://alexloth.com/2008/11/"> November 2008 &nbsp;(2)</option> <option value="http://alexloth.com/2008/10/"> October 2008 &nbsp;(3)</option> <option value="http://alexloth.com/2008/09/"> September 2008 &nbsp;(7)</option> <option value="http://alexloth.com/2008/08/"> August 2008 &nbsp;(1)</option> <option value="http://alexloth.com/2008/07/"> July 2008 &nbsp;(1)</option> <option value="http://alexloth.com/2008/06/"> June 2008 &nbsp;(1)</option> <option value="http://alexloth.com/2008/05/"> May 2008 &nbsp;(6)</option> <option value="http://alexloth.com/2008/04/"> April 2008 &nbsp;(2)</option> <option value="http://alexloth.com/2008/02/"> February 2008 &nbsp;(3)</option> <option value="http://alexloth.com/2008/01/"> January 2008 &nbsp;(12)</option> <option value="http://alexloth.com/2007/12/"> December 2007 &nbsp;(14)</option> <option value="http://alexloth.com/2007/11/"> November 2007 &nbsp;(13)</option> <option value="http://alexloth.com/2007/10/"> October 2007 &nbsp;(14)</option> <option value="http://alexloth.com/2007/09/"> September 2007 &nbsp;(14)</option> <option value="http://alexloth.com/2007/08/"> August 2007 &nbsp;(17)</option> <option value="http://alexloth.com/2007/07/"> July 2007 &nbsp;(4)</option> </select> 
+      </section>
+      <section id="top-posts-4" class="widget widget_top-posts">
+       <h2 class="widget-title">Also Interesting</h2>
+       <div class="widgets-grid-layout no-grav"> 
+        <div class="widget-grid-view-image"> 
+         <a href="http://alexloth.com/2016/11/06/tabpy-tutorial-integrating-python-tableau-advanced-analytics/" title="TabPy Tutorial: Integrating Python with Tableau for Advanced Analytics" class="bump-view" data-bump-view="tp"> <img width="200" height="200" src="https://i0.wp.com/alexloth.com/wp-content/uploads/2016/11/TabPy-repo-download.png?resize=200%2C200" alt="TabPy Tutorial: Integrating Python with Tableau for Advanced Analytics" data-pin-nopin="true"> </a> 
+        </div> 
+        <div class="widget-grid-view-image"> 
+         <a href="http://alexloth.com/2017/09/23/risiko-fehldiagnose/" title="Gesundheitsrisiko Fehldiagnose: Ein Protokoll" class="bump-view" data-bump-view="tp"> <img width="200" height="200" src="https://i2.wp.com/alexloth.com/wp-content/uploads/2017/09/img_1602.jpg?resize=200%2C200" alt="Gesundheitsrisiko Fehldiagnose: Ein Protokoll" data-pin-nopin="true"> </a> 
+        </div> 
+        <div class="widget-grid-view-image"> 
+         <a href="http://alexloth.com/2016/01/14/how-to-perform-text-mining-at-the-speed-of-thought-directly-in-tableau/" title="How to perform Text Mining at the Speed of Thought directly in Tableau?" class="bump-view" data-bump-view="tp"> <img width="200" height="200" src="https://i1.wp.com/alexloth.com/wp-content/uploads/2016/01/Dashboard-1.png?resize=200%2C200" alt="How to perform Text Mining at the Speed of Thought directly in Tableau?" data-pin-nopin="true"> </a> 
+        </div> 
+        <div class="widget-grid-view-image"> 
+         <a href="http://alexloth.com/2016/01/31/how-to-implement-sentiment-analysis-in-tableau-using-r/" title="How to implement Sentiment Analysis in Tableau using R?" class="bump-view" data-bump-view="tp"> <img width="200" height="200" src="https://i2.wp.com/alexloth.com/wp-content/uploads/2016/01/Screenshot-2016-01-31-15.25.24-crop.png?resize=200%2C200" alt="How to implement Sentiment Analysis in Tableau using R?" data-pin-nopin="true"> </a> 
+        </div> 
+        <div class="widget-grid-view-image"> 
+         <a href="http://alexloth.com/2017/09/12/social-media-customer-centric-data-strategy-data17-resources/" title="Social Media and the Customer-centric Data Strategy #data17 #resources" class="bump-view" data-bump-view="tp"> <img width="200" height="200" src="https://i0.wp.com/alexloth.com/wp-content/uploads/2017/09/Social-Media-Marketing-Mix-2048.jpg?resize=200%2C200" alt="Social Media and the Customer-centric Data Strategy #data17 #resources" data-pin-nopin="true"> </a> 
+        </div> 
+       </div> 
+      </section>
+      <section id="google_translate_widget-3" class="widget widget_google_translate_widget">
+       <h2 class="widget-title">Translate</h2>
+       <div id="google_translate_element"></div>
+      </section> 
+     </aside>
+     <!-- .sidebar .widget-area --> 
+    </div>
+    <!-- .site-content --> 
+    <footer id="colophon" class="site-footer" role="contentinfo"> 
+     <nav class="main-navigation" role="navigation" aria-label="Footer Primary Menu"> 
+      <div class="menu-menu-1-container">
+       <ul id="menu-menu-2" class="primary-menu">
+        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-470"><a href="http://alexloth.com/about/">About</a></li> 
+        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1187"><a href="http://alexloth.com/speaking/">Speaking</a></li> 
+        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1682"><a href="http://alexloth.com/frankfurt-tableau-user-group-meetups/">Meetups</a></li> 
+        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-381"><a href="http://alexloth.com/contact/">Contact</a></li> 
+        <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-378"><a href="http://alexloth.com/gallery/">Gallery</a> 
+         <ul class="sub-menu"> 
+          <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1462"><a href="http://alexloth.com/gallery/frankfurt/">Frankfurt</a></li> 
+          <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-379"><a href="http://alexloth.com/gallery/portaits/">Portaits</a></li> 
+          <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-392"><a href="http://alexloth.com/gallery/urban/">Urban</a></li> 
+          <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-477"><a href="http://alexloth.com/gallery/wedding/">Wedding</a></li> 
+         </ul> </li> 
+       </ul>
+      </div> 
+     </nav>
+     <!-- .main-navigation --> 
+     <nav class="social-navigation" role="navigation" aria-label="Footer Social Links Menu"> 
+      <div class="menu-social-container">
+       <ul id="menu-social-1" class="social-links-menu">
+        <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-781"><a href="http://www.linkedin.com/in/aloth"><span class="screen-reader-text">LinkedIn</span></a></li> 
+        <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-779"><a href="https://twitter.com/xlth"><span class="screen-reader-text">Twitter</span></a></li> 
+        <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-780"><a href="https://www.facebook.com/alexloth"><span class="screen-reader-text">Facebook</span></a></li> 
+        <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-782"><a href="https://www.flickr.com/photos/xlth/"><span class="screen-reader-text">Flickr</span></a></li> 
+        <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-783"><a href="https://www.xing.com/profile/Alexander_Loth"><span class="screen-reader-text">Xing</span></a></li> 
+        <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-784"><a href="http://alexloth.com/feed/"><span class="screen-reader-text">RSS Feed</span></a></li> 
+       </ul>
+      </div> 
+     </nav>
+     <!-- .social-navigation --> 
+     <div class="site-info"> 
+      <span class="site-title"><a href="http://alexloth.com/" rel="home">alexloth.com</a></span> 
+      <a href="https://wordpress.org/">Proudly powered by WordPress</a> 
+     </div>
+     <!-- .site-info --> 
+    </footer>
+    <!-- .site-footer --> 
+   </div>
+   <!-- .site-inner --> 
+  </div>
+  <!-- .site --> 
+  <div id="lessbuttons_holder"></div>
+  <script async src="https://lessbuttons.com/script.js?position=left&amp;onmobile=bottom&amp;facebook=1&amp;twitter=1&amp;reddit=auto&amp;vkontakte=auto&amp;gmail=auto&amp;email=1&amp;googleplus=1&amp;linkedin=1&amp;xing=1&amp;zindex=100501"></script> 
+  <div style="display:none"> 
+   <div class="grofile-hash-map-2dbff9b9ef6dc2e39ef992a946b7df33"> 
+   </div> 
+  </div> 
+  <link rel="stylesheet" id="basecss-css" href="http://alexloth.com/wp-content/plugins/eu-cookie-law/css/style.css?ver=4.8.2" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/jetpack/modules/photon/photon.js?ver=20130122"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var wpcf7 = {"apiSettings":{"root":"http:\/\/alexloth.com\/wp-json\/","namespace":"contact-form-7\/v1"},"recaptcha":{"messages":{"empty":"Please verify that you are not a robot."}},"cached":"1"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/contact-form-7/includes/js/scripts.js?ver=4.8"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-includes/js/jquery/ui/effect.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-includes/js/jquery/ui/effect-slide.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var lmb_flat_twitter_script_url = {"ajaxurl":"http:\/\/alexloth.com\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/flat-twitter/js/lmb-flat-twitter.js?ver=1.0"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/flickr-justified-gallery/js/jquery.justifiedGallery.min.js?ver=v3.6"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/flickr-justified-gallery/js/flickrJustifiedGalleryWPPlugin.js?ver=v3.4.0"></script> 
+  <script type="text/javascript" src="https://s0.wp.com/wp-content/js/devicepx-jetpack.js?ver=201740"></script> 
+  <script type="text/javascript" src="http://s.gravatar.com/js/gprofiles.js?ver=2017Octaa"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var WPGroHo = {"my_hash":""};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/jetpack/modules/wpgroho.js?ver=4.8.2"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/themes/twentysixteen/js/skip-link-focus-fix.js?ver=20160816"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var screenReaderText = {"expand":"expand child menu","collapse":"collapse child menu"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/themes/twentysixteen/js/functions.js?ver=20160816"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var eucookielaw_data = {"euCookieSet":null,"autoBlock":"0","expireTimer":"90","scrollConsent":"0","networkShareURL":"","isCookiePage":"","isRefererWebsite":"","deleteCookieUrl":"http:\/\/alexloth.com\/2016\/01\/31\/how-to-implement-sentiment-analysis-in-tableau-using-r\/?nocookie=1"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/eu-cookie-law/js/scripts.js?ver=4.8.2"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var embedVars = {"disqusConfig":{"platform":"wordpress@4.8.2","language":""},"disqusIdentifier":"904 http:\/\/alexloth.com\/?p=904","disqusShortname":"alexloth","disqusTitle":"How to implement Sentiment Analysis in Tableau using R?","disqusUrl":"http:\/\/alexloth.com\/2016\/01\/31\/how-to-implement-sentiment-analysis-in-tableau-using-r\/","options":{"manualSync":false},"postId":"904"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/disqus-comment-system/media/js/disqus.js?ver=4.8.2"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var _wp_google_translate_widget = {"lang":"en_US"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/jetpack/modules/widgets/google-translate/google-translate.js?ver=4.8.2"></script> 
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit&amp;ver=4.8.2"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var countVars = {"disqusShortname":"alexloth"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/disqus-comment-system/media/js/count.js?ver=4.8.2"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/easy-fancybox/fancybox/jquery.fancybox-1.3.8.min.js?ver=1.6"></script> 
+  <script type="text/javascript" src="http://alexloth.com/wp-content/plugins/easy-fancybox/js/jquery.mousewheel.min.js?ver=3.1.13"></script> 
+  <script type="text/javascript" src="https://stats.wp.com/e-201740.js" async defer></script> 
+  <script type="text/javascript">
+	_stq = window._stq || [];
+	_stq.push([ 'view', {v:'ext',j:'1:5.1',blog:'73970651',post:'904',tz:'2',srv:'alexloth.com'} ]);
+	_stq.push([ 'clickTrackerInit', '73970651', '904' ]);
+</script> 
+  <script type="text/javascript">
+jQuery(document).on('ready post-load', function(){ jQuery('.nofancybox,a.pin-it-button,a[href*="pinterest.com/pin/create/button"]').addClass('nolightbox'); });
+jQuery(document).on('ready post-load',easy_fancybox_handler);
+jQuery(document).on('ready',easy_fancybox_auto);</script> 
+  <!-- Eu Cookie Law 2.10 -->
+  <div class="pea_cook_wrapper pea_cook_bottomright" style="color:#FFFFFF;background:rgb(0,0,0);background: rgba(0,0,0,0.85);">
+   <p>By continuing to use the site, you agree to the use of cookies. <a style="color:#FFFFFF;" href="#" id="fom">more information</a> <button id="pea_cook_btn" class="pea_cook_btn" href="#">Accept</button></p>
+  </div>
+  <div class="pea_cook_more_info_popover">
+   <div class="pea_cook_more_info_popover_inner" style="color:#FFFFFF;background-color: rgba(0,0,0,0.9);">
+    <p>The cookie settings on this website are set to "allow cookies" to give you the best browsing experience possible. If you continue to use this website without changing your cookie settings or you click "Accept" below then you are consenting to this.</p>
+    <p><a style="color:#FFFFFF;" href="#" id="pea_close">Close</a></p>
+   </div>
+  </div>  
+ </body>
+</html>

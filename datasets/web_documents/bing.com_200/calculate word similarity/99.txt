@@ -1,0 +1,2041 @@
+<!doctype html>
+<html lang="en-US" xmlns:fb="http://ogp.me/ns/fb#" xmlns:addthis="https://www.addthis.com/help/api-spec" xmlns:og="http://ogp.me/ns#" itemscope itemtype="http://schema.org/Article" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width"> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href=""> 
+  <title>How to measure the similarity between two words - My *nix world</title> 
+  <!-- This site is optimized with the Yoast SEO plugin v5.5.1 - https://yoast.com/wordpress/plugins/seo/ --> 
+  <meta name="description" content="This article describes the algorithms to measure the similarity between two words. Examples and code for Levenshtein distance and Needleman-Wunsch algorithm"> 
+  <link rel="canonical" href="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="How to measure the similarity between two words - My *nix world"> 
+  <meta property="og:description" content="This article describes the algorithms to measure the similarity between two words. Examples and code for Levenshtein distance and Needleman-Wunsch algorithm"> 
+  <meta property="og:url" content="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/"> 
+  <meta property="og:site_name" content="My *nix world"> 
+  <meta property="article:author" content="https://www.facebook.com/eugenmihailescu"> 
+  <meta property="article:tag" content="bioinformatics"> 
+  <meta property="article:tag" content="hamming"> 
+  <meta property="article:tag" content="levenshtein"> 
+  <meta property="article:tag" content="needleman-wunsch"> 
+  <meta property="article:tag" content="word similarity"> 
+  <meta property="article:section" content="Eclipse"> 
+  <meta property="article:published_time" content="2012-09-24T02:06:43+00:00"> 
+  <meta property="article:modified_time" content="2014-02-08T13:57:06+00:00"> 
+  <meta property="og:updated_time" content="2014-02-08T13:57:06+00:00"> 
+  <meta property="fb:admins" content="100002177850337"> 
+  <meta property="og:image" content="http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1.png"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:description" content="This article describes the algorithms to measure the similarity between two words. Examples and code for Levenshtein distance and Needleman-Wunsch algorithm"> 
+  <meta name="twitter:title" content="How to measure the similarity between two words - My *nix world"> 
+  <meta name="twitter:site" content="@eugenmihailescu"> 
+  <meta name="twitter:image" content="http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1.png"> 
+  <meta name="twitter:creator" content="@eugenmihailescu"> 
+  <script type="application/ld+json">{"@context":"http:\/\/schema.org","@type":"WebSite","@id":"#website","url":"http:\/\/mynixworld.info\/","name":"My *nix world","potentialAction":{"@type":"SearchAction","target":"http:\/\/mynixworld.info\/?s={search_term_string}","query-input":"required name=search_term_string"}}</script> 
+  <!-- / Yoast SEO plugin. --> 
+  <link rel="dns-prefetch" href="//s7.addthis.com"> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//ajax.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="My *nix world » Feed" href="http://mynixworld.info/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="My *nix world » Comments Feed" href="http://mynixworld.info/comments/feed/"> 
+  <!-- WPSocial SEO Booster Plugin (Version 1.2.0) || Open Graph, Google Plus & Twitter Card Integration || http://wordpress.org/plugins/wp-social-seo-booster/ --> 
+  <meta itemprop="name" content="How to measure the similarity between two words - My *nix world"> 
+  <meta itemprop="description" content="This article describes the algorithms to measure the similarity between two words. Examples and code for Levenshtein distance and Needleman-Wunsch algorithm"> 
+  <meta itemprop="image" content="http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1.png"> 
+  <!-- / WPSocial SEO Booster Plugin --> 
+  <link rel="alternate" type="application/rss+xml" title="My *nix world » How to measure the similarity between two words Comments Feed" href="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"http:\/\/mynixworld.info\/wp-includes\/js\/wp-emoji-release.min.js?ver=54a4194dfa251ca8893e113f23d3f89c"}};
+			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,56826,8203,55356,56819),0,0),c=j.toDataURL(),b!==c&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55358,56794,8205,9794,65039),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55358,56794,8203,9794,65039),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="yarppWidgetCss-css" href="http://mynixworld.info/wp-content/plugins/yet-another-related-posts-plugin/style/widget.css?ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crayon-css" href="http://mynixworld.info/wp-content/plugins/crayon-syntax-highlighter/css/min/crayon.min.css?ver=_2.7.2_beta" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crayon-theme-classic-css" href="http://mynixworld.info/wp-content/plugins/crayon-syntax-highlighter/themes/classic/classic.css?ver=_2.7.2_beta" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crayon-font-monaco-css" href="http://mynixworld.info/wp-content/plugins/crayon-syntax-highlighter/fonts/monaco.css?ver=_2.7.2_beta" type="text/css" media="all"> 
+  <link rel="stylesheet" id="ts_fab_css-css" href="http://mynixworld.info/wp-content/plugins/fancier-author-box/css/ts-fab.min.css?ver=1.4" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wikipedify-popup-style-css" href="http://mynixworld.info/wp-content/plugins/wikipedify/css/wikipedify-style.css?ver=0.2.2-0%20$" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wp-pagenavi-css" href="http://mynixworld.info/wp-content/plugins/wp-pagenavi/pagenavi-css.css?ver=2.70" type="text/css" media="all"> 
+  <link rel="stylesheet" id="attitude_style-css" href="http://mynixworld.info/wp-content/themes/attitude-child/style.css?ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <link rel="stylesheet" id="attitude-font-awesome-css" href="http://mynixworld.info/wp-content/themes/attitude/font-awesome/css/font-awesome.css?ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <link rel="stylesheet" id="google_fonts-css" href="//fonts.googleapis.com/css?family=PT+Sans%7CPhilosopher&amp;ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <link rel="stylesheet" id="jquery-ui-style-css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/themes/ui-darkness/jquery-ui.css?ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <link rel="stylesheet" id="addthis_all_pages-css" href="http://mynixworld.info/wp-content/plugins/addthis-smart-layers/frontend/build/addthis_wordpress_public.min.css?ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wps-seo-booster-front-css" href="http://mynixworld.info/wp-content/plugins/wp-social-seo-booster/includes/css/wps-seo-booster-front.css" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var CrayonSyntaxSettings = {"version":"_2.7.2_beta","is_admin":"0","ajaxurl":"https:\/\/mynixworld.info\/wp-admin\/admin-ajax.php","prefix":"crayon-","setting":"crayon-setting","selected":"crayon-setting-selected","changed":"crayon-setting-changed","special":"crayon-setting-special","orig_value":"data-orig-value","debug":""};
+var CrayonSyntaxStrings = {"copy":"Press %s to Copy, %s to Paste","minimize":"Click To Expand Code"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/crayon-syntax-highlighter/js/min/crayon.min.js?ver=_2.7.2_beta"></script> 
+  <script type="text/javascript" src="https://mynixworld.info/wp-admin/admin-ajax.php?action=addthis_global_options_settings&amp;ver=54a4194dfa251ca8893e113f23d3f89c"></script> 
+  <script type="text/javascript" src="https://s7.addthis.com/js/300/addthis_widget.js?ver=54a4194dfa251ca8893e113f23d3f89c#pubid=ra-52dd32e558d2dc47"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var impression_object = {"ajax_url":"https:\/\/mynixworld.info\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/adrotate/library/jquery.adrotate.dyngroup.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var click_object = {"ajax_url":"https:\/\/mynixworld.info\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/adrotate/library/jquery.adrotate.clicktracker.js"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/fancier-author-box/js/ts-fab.min.js?ver=1.4"></script> 
+  <!--[if lt IE 9]>
+<script type='text/javascript' src='http://mynixworld.info/wp-content/themes/attitude/library/js/html5.min.js?ver=3.7.3'></script>
+<![endif]--> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/themes/attitude/library/js/scripts.js?ver=54a4194dfa251ca8893e113f23d3f89c"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/themes/attitude/library/js/backtotop.js?ver=54a4194dfa251ca8893e113f23d3f89c"></script> 
+  <link rel="https://api.w.org/" href="http://mynixworld.info/wp-json/"> 
+  <link rel="shortlink" href="http://mynixworld.info/?p=874"> 
+  <link rel="alternate" type="application/json+oembed" href="http://mynixworld.info/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fmynixworld.info%2F2012%2F09%2F24%2Fhow-to-measure-the-similarity-between-two-words%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="http://mynixworld.info/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fmynixworld.info%2F2012%2F09%2F24%2Fhow-to-measure-the-similarity-between-two-words%2F&amp;format=xml"> 
+  <!-- This site is using AdRotate v4.6.3 to display their advertisements - https://ajdg.solutions/products/adrotate-for-wordpress/ --> 
+  <!-- AdRotate CSS --> 
+  <style type="text/css" media="screen">
+	.g { margin:0px; padding:0px; overflow:hidden; line-height:1; zoom:1; }
+	.g img { height:auto; }
+	.g-col { position:relative; float:left; }
+	.g-col:first-child { margin-left: 0; }
+	.g-col:last-child { margin-right: 0; }
+	.g-1 { margin:0px;width:100%; max-width:800px; height:100%; max-height:104px; }
+	.g-2 { margin:0px;width:100%; max-width:980px; height:100%; max-height:104px; }
+	.g-3 { margin:0px;width:100%; max-width:800px; height:100%; max-height:104px; }
+	.g-4 { margin:0px;width:100%; max-width:210px; height:100%; max-height:610px; }
+	@media only screen and (max-width: 480px) {
+		.g-col, .g-dyn, .g-single { width:100%; margin-left:0; margin-right:0; }
+	}
+</style> 
+  <!-- /AdRotate CSS --> 
+  <style type="text/css" media="screen">
+      div.printfriendly a, div.printfriendly a:link, div.printfriendly a:hover, div.printfriendly a:visited {
+        text-decoration: none;
+        border: none;
+      }
+    </style> 
+  <style type="text/css" media="screen">
+          div.printfriendly {
+            margin: 12px 12px 12px 12px;
+            position: relative;
+            z-index: 1000;
+          }
+          div.printfriendly a, div.printfriendly a:link, div.printfriendly a:visited {
+            font-size: 14px;
+            color: #6D9F00;
+            vertical-align: bottom;
+          }
+          .printfriendly a {
+            box-shadow:none;
+          }
+          .printfriendly a:hover {
+            cursor: pointer;
+          }
+          .printfriendly a img  {
+            border: none;
+            padding:0;
+            margin-right: 6px;
+            box-shadow: none;
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+          }
+          .printfriendly a span{
+            vertical-align: bottom;
+          }
+          .pf-alignleft {
+            float: left;
+          }
+          .pf-alignright {
+            float: right;
+          }
+          div.pf-aligncenter {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+          }
+        </style> 
+  <style type="text/css" media="print">
+          .printfriendly {
+            display: none;
+          }
+        </style> 
+  <script type="text/javascript">
+(function(url){
+	if(/(?:Chrome\/26\.0\.1410\.63 Safari\/537\.31|WordfenceTestMonBot)/.test(navigator.userAgent)){ return; }
+	var addEvent = function(evt, handler) {
+		if (window.addEventListener) {
+			document.addEventListener(evt, handler, false);
+		} else if (window.attachEvent) {
+			document.attachEvent('on' + evt, handler);
+		}
+	};
+	var removeEvent = function(evt, handler) {
+		if (window.removeEventListener) {
+			document.removeEventListener(evt, handler, false);
+		} else if (window.detachEvent) {
+			document.detachEvent('on' + evt, handler);
+		}
+	};
+	var evts = 'contextmenu dblclick drag dragend dragenter dragleave dragover dragstart drop keydown keypress keyup mousedown mousemove mouseout mouseover mouseup mousewheel scroll'.split(' ');
+	var logHuman = function() {
+		var wfscr = document.createElement('script');
+		wfscr.type = 'text/javascript';
+		wfscr.async = true;
+		wfscr.src = url + '&r=' + Math.random();
+		(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(wfscr);
+		for (var i = 0; i < evts.length; i++) {
+			removeEvent(evts[i], logHuman);
+		}
+	};
+	for (var i = 0; i < evts.length; i++) {
+		addEvent(evts[i], logHuman);
+	}
+})('//mynixworld.info/?wordfence_logHuman=1&hid=F40E1A0916D6FAD9DCA456C3023349C9');
+</script>
+  <style data-context="foundation-flickity-css">/*! Flickity v2.0.2
+http://flickity.metafizzy.co
+---------------------------------------------- */.flickity-enabled{position:relative}.flickity-enabled:focus{outline:0}.flickity-viewport{overflow:hidden;position:relative;height:100%}.flickity-slider{position:absolute;width:100%;height:100%}.flickity-enabled.is-draggable{-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.flickity-enabled.is-draggable .flickity-viewport{cursor:move;cursor:-webkit-grab;cursor:grab}.flickity-enabled.is-draggable .flickity-viewport.is-pointer-down{cursor:-webkit-grabbing;cursor:grabbing}.flickity-prev-next-button{position:absolute;top:50%;width:44px;height:44px;border:none;border-radius:50%;background:#fff;background:hsla(0,0%,100%,.75);cursor:pointer;-webkit-transform:translateY(-50%);transform:translateY(-50%)}.flickity-prev-next-button:hover{background:#fff}.flickity-prev-next-button:focus{outline:0;box-shadow:0 0 0 5px #09F}.flickity-prev-next-button:active{opacity:.6}.flickity-prev-next-button.previous{left:10px}.flickity-prev-next-button.next{right:10px}.flickity-rtl .flickity-prev-next-button.previous{left:auto;right:10px}.flickity-rtl .flickity-prev-next-button.next{right:auto;left:10px}.flickity-prev-next-button:disabled{opacity:.3;cursor:auto}.flickity-prev-next-button svg{position:absolute;left:20%;top:20%;width:60%;height:60%}.flickity-prev-next-button .arrow{fill:#333}.flickity-page-dots{position:absolute;width:100%;bottom:-25px;padding:0;margin:0;list-style:none;text-align:center;line-height:1}.flickity-rtl .flickity-page-dots{direction:rtl}.flickity-page-dots .dot{display:inline-block;width:10px;height:10px;margin:0 8px;background:#333;border-radius:50%;opacity:.25;cursor:pointer}.flickity-page-dots .dot.is-selected{opacity:1}</style>
+  <style data-context="foundation-slideout-css">.slideout-menu{position:fixed;left:0;top:0;bottom:0;right:auto;z-index:0;width:256px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}.slideout-menu.pushit-right{left:auto;right:0}.slideout-panel{position:relative;z-index:1;will-change:transform}.slideout-open,.slideout-open .slideout-panel,.slideout-open body{overflow:hidden}.slideout-open .slideout-menu{display:block}.pushit{display:none}</style>
+  <!-- My *nix world Custom CSS Styles --> 
+  <style type="text/css" media="screen">
+body { background-image: none; }
+</style> 
+  <script type="text/javascript">
+//<![CDATA[
+jQuery(document).ready(function() {
+	var dialog = jQuery('<div></div>')
+	.html('<form method="post" action=""><input type="hidden" name="ip" value="152.170.26.191" /><p><label for="s2email">Your email:</label><br /><input type="text" name="email" id="s2email" value="" size="20" /></p><p><input type="submit" name="subscribe" value="Subscribe" />&nbsp;<input type="submit" name="unsubscribe" value="Unsubscribe" /></p></form>')
+	.dialog({autoOpen: false, modal: true, zIndex: 10000, title: 'Subscribe to this blog'});
+	jQuery('a.s2popup').click(function(){
+		dialog.dialog('open');
+		return false;
+	});
+});
+//]]>
+</script> 
+  <style type="text/css">.broken_link, a.broken_link {
+	text-decoration: line-through;
+}</style>
+  <style type="text/css" id="custom-background-css">
+body.custom-background { background-color: #a8b4bd; }
+</style> 
+  <!-- AdRotate JS --> 
+  <script type="text/javascript">
+jQuery(document).ready(function(){
+if(jQuery.fn.gslider) {
+	jQuery('.g-1').gslider({ groupid: 1, speed: 20000 });
+	jQuery('.g-2').gslider({ groupid: 2, speed: 60000 });
+	jQuery('.g-3').gslider({ groupid: 3, speed: 35000 });
+	jQuery('.g-4').gslider({ groupid: 4, speed: 25000 });
+}
+});
+</script> 
+  <!-- /AdRotate JS --> 
+  <link rel="icon" href="http://mynixworld.info/wp-content/uploads/2017/08/favicon.png" sizes="32x32"> 
+  <link rel="icon" href="http://mynixworld.info/wp-content/uploads/2017/08/favicon.png" sizes="192x192"> 
+  <link rel="apple-touch-icon-precomposed" href="http://mynixworld.info/wp-content/uploads/2017/08/favicon.png"> 
+  <meta name="msapplication-TileImage" content="http://mynixworld.info/wp-content/uploads/2017/08/favicon.png"> 
+  <style>.ios7.web-app-mode.has-fixed header{ background-color: rgba(45,53,63,.88);}</style> 
+ </head> 
+ <body class="post-template-default single single-post postid-874 single-format-standard custom-background "> 
+  <div class="wrapper"> 
+   <header id="branding"> 
+    <div class="container clearfix"> 
+     <div class="hgroup-wrap clearfix"> 
+      <section class="hgroup-right"> 
+       <div class="social-profiles clearfix"> 
+        <ul> 
+        </ul> 
+       </div>
+       <!-- .social-profiles --> 
+       <form action="http://mynixworld.info/" class="searchform clearfix" method="get"> 
+        <label class="assistive-text" for="s">Search</label> 
+        <input type="text" placeholder="Search" class="s field" name="s"> 
+       </form>
+       <!-- .searchform --> 
+       <button class="menu-toggle">Responsive Menu</button> 
+      </section>
+      <!-- .hgroup-right --> 
+      <hgroup id="site-logo" class="clearfix"> 
+       <h2 id="site-title"> <a href="http://mynixworld.info/" title="My *nix world" rel="home"> My *nix world </a> </h2> 
+       <h2 id="site-description">Mostly Linux, programming and hardware projects</h2> 
+      </hgroup>
+      <!-- #site-logo --> 
+     </div>
+     <!-- .hgroup-wrap --> 
+    </div>
+    <!-- .container --> 
+    <a href="http://mynixworld.info/" title="My *nix world"><img src="http://mynixworld.info/wp-content/uploads/2014/02/copy-my-nix-world.jpg" class="header-image" width="822" height="198" alt="My *nix world"></a> 
+    <nav id="access" class="clearfix"> 
+     <div class="container clearfix">
+      <ul class="root">
+       <li id="menu-item-4" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-4"><a href="/">Home</a></li> 
+       <li id="menu-item-4132" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-4132"><a href="/shop">WebShop</a></li> 
+       <li id="menu-item-2808" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-2808"><a href="http://mynixworld.info/category/linux/">linux</a></li> 
+       <li id="menu-item-2809" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-2809"><a href="http://mynixworld.info/category/hardware/">Hardware</a></li> 
+       <li id="menu-item-2810" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor menu-item-2810"><a href="http://mynixworld.info/category/programming/">Programming</a></li> 
+       <li id="menu-item-2815" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-2815"><a href="http://mynixworld.info/category/hacking/">Hacking</a></li> 
+       <li id="menu-item-4476" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-4476"><a href="http://mynixworld.info/category/electronics/">Electronics</a></li> 
+       <li id="menu-item-4682" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-4682"><a href="http://mynixworld.info/category/auto-2/">Auto</a></li> 
+       <li id="menu-item-2816" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-2816"><a href="http://mynixworld.info/category/maths/">Maths</a></li> 
+       <li id="menu-item-2871" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-2871"><a href="http://mynixworld.info/category/fysik/">Fysik</a></li> 
+       <li id="menu-item-3327" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3327"><a href="http://mynixworld.info/links/">Links</a></li> 
+       <li id="menu-item-1630" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1630"><a href="http://mynixworld.info/about/">About</a></li> 
+      </ul>
+     </div>
+     <!-- .container --> 
+    </nav>
+    <!-- #access --> 
+    <div class="page-title-wrap"> 
+     <div class="container clearfix"> 
+      <div class="breadcrumb">
+       <!-- Breadcrumb NavXT 5.7.1 --> 
+       <a title="Go to My *nix world." href="http://mynixworld.info" class="home"><img alt="home" src="/images/home.png"></a> &gt; 
+       <span property="itemListElement" typeof="ListItem"><a property="item" typeof="WebPage" title="Go to the Programming category archives." href="http://mynixworld.info/category/programming/" class="taxonomy category"><span property="name">Programming</span></a>
+        <meta property="position" content="2"></span> &gt; 
+       <span property="itemListElement" typeof="ListItem"><a property="item" typeof="WebPage" title="Go to the Eclipse category archives." href="http://mynixworld.info/category/programming/eclipse-2/" class="taxonomy category"><span property="name">Eclipse</span></a>
+        <meta property="position" content="3"></span> &gt; How to measure the similarity between two words
+      </div> 
+      <!-- .breadcrumb --> 
+     </div> 
+    </div> 
+   </header> 
+   <div class="g g-3">
+    <div class="g-dyn a-9 c-1">
+     <iframe id="woomynixbraintree-banner-header" scrolling="no" src="http://mynixworld.info/sandbox/adds/add-banner.php?bannerid=woo_header" style="border: 0px none; vertical-align: bottom; width: 736px; height: 104px;" frameborder="0" height="104px" width="736px"></iframe>
+    </div>
+    <div class="g-dyn a-6 c-2">
+     <iframe id="wpmybackup-banner-header" scrolling="no" src="http://mynixworld.info/sandbox/adds/add-banner.php?bannerid=header" style="border: 0px none; vertical-align: bottom; width: 736px; height: 104px;" frameborder="0" height="104px" width="736px"></iframe>
+    </div>
+    <div class="g-dyn a-5 c-3">
+     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+     <!-- Banner posts top full-size --> 
+     <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px;margin-left:auto;margin-right:auto;background: #FFF;" data-ad-client="ca-pub-4811916629840399" data-ad-slot="8594407460"></ins> 
+     <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    </div>
+   </div>
+   <div id="main" class="container clearfix"> 
+    <div id="container"> 
+     <div id="primary"> 
+      <div id="content"> 
+       <section id="post-874" class="post-874 post type-post status-publish format-standard hentry category-eclipse-2 category-java-2 tag-bioinformatics tag-hamming tag-levenshtein tag-needleman-wunsch tag-word-similarity"> 
+        <article> 
+         <header class="entry-header"> 
+          <h1 class="entry-title"> How to measure the similarity between two words </h1>
+          <!-- .entry-title --> 
+         </header> 
+         <div class="entry-content clearfix">  
+          <div class="at-above-post addthis_tool" data-url="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/"></div>
+          <div class="pf-content"> 
+           <p style="text-align: justify;">One problem that I have encountered these days is related to "how to measure the similarity between two words".</p> 
+           <p style="text-align: justify;">The problem is not new (in fact its solution is older than any person I know alive) and one solution could be a <a href="http://en.wikipedia.org/wiki/Hash_function#Finding_similar_substrings" target="_blank">hash function</a> that will calculate a score for each word then you compare the both scores and if they are "close enough" then you can decide whether or not they are alike. It sounds like <a href="http://en.wikipedia.org/wiki/Soundex" target="_blank">soundex</a> function, which in fact is a hashing system for English words.</p> 
+           <p style="text-align: justify;">There are also other alternatives which seems to be even better. One is <a href="http://en.wikipedia.org/wiki/Levenshtein_distance" target="_blank">Levenshtein edit distance</a>, a method that measure how many edit operations (such as insert/delete/substitute of a single char) should be done to transform one word into another. Another is the <a href="http://en.wikipedia.org/wiki/Needleman-Wunsch" target="_blank">Needleman-Wunsch</a> algorithm which tries to find the optimal score when aligning two sequences (words). For two words with the same length one could use even the <a href="http://en.wikipedia.org/wiki/Hamming_distance" target="_blank">Hamming distance</a> (which counts how many chars are different, so it measures only the necessary substitutions that are required to change one word to another).</p> 
+           <p style="text-align: justify;">Even if the Needleman-Wunsch algorithm is helping us because it provides the optimal alignment of the two sequences, for my problem the Levenshtein distance seems to be 1% better.</p> 
+           <h3 style="text-align: justify;">Levenshtein distance</h3> 
+           <div id="attachment_875" style="width: 505px" class="wp-caption aligncenter">
+            <a href="http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1.png"><img class="size-full wp-image-875 " title="Levenshtein_sample" alt="measure the similarity between two words" src="http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1.png" width="495" height="681" srcset="http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1.png 495w, http://mynixworld.info/wp-content/uploads/2012/09/levenshtein_sample1-218x300.png 218w" sizes="(max-width: 495px) 100vw, 495px"></a>
+            <p class="wp-caption-text">source: http://www-igm.univ-mlv.fr/~lecroq/seqcomp/node2.html</p>
+           </div> 
+           <p style="text-align: justify;">In the example above we have tried to find the similarity between the word "LEVENSHTEIN" and "LEVENSHMIT". So using the Levenshtein disntace algorithm you will get a number (bottom-right in matrix) that will show you how much it will cost you if you want to change first word into the second one:</p> 
+           <ul>
+            <li style="text-align: justify;">if we choose the first path/way then you have to delete the "T" letter then to substitute the "E" letter with a new one "M" (which does not exists in our source word) then to come up with another one "N" (which replaces the last "T"); so 3 edit operations</li> 
+            <li style="text-align: justify;">if we choose the second path/way then you have to substitute the "T" with "M", delete the "E" and insert the "T" at the end of the word; also 3 edit operations</li> 
+           </ul>
+           <h3>Needleman-Wunsch algorithm</h3> 
+           <!-- Crayon Syntax Highlighter v_2.7.2_beta --> 
+           <div id="crayon-59d394565e0f8889286035" class="crayon-syntax crayon-theme-classic crayon-font-monaco crayon-os-pc print-yes notranslate" data-settings=" minimize scroll-mouseover" style=" margin-top: 12px; margin-bottom: 12px; font-size: 12px !important; line-height: 15px !important;"> 
+            <div class="crayon-toolbar" data-settings=" mouseover overlay hide delay" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+             <span class="crayon-title"></span> 
+             <div class="crayon-tools" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+              <div class="crayon-button crayon-nums-button" title="Toggle Line Numbers">
+               <div class="crayon-button-icon"></div>
+              </div>
+              <div class="crayon-button crayon-plain-button" title="Toggle Plain Code">
+               <div class="crayon-button-icon"></div>
+              </div>
+              <div class="crayon-button crayon-wrap-button" title="Toggle Line Wrap">
+               <div class="crayon-button-icon"></div>
+              </div>
+              <div class="crayon-button crayon-expand-button" title="Expand Code">
+               <div class="crayon-button-icon"></div>
+              </div>
+              <div class="crayon-button crayon-copy-button" title="Copy">
+               <div class="crayon-button-icon"></div>
+              </div>
+              <div class="crayon-button crayon-popup-button" title="Open Code In New Window">
+               <div class="crayon-button-icon"></div>
+              </div>
+             </div>
+            </div> 
+            <div class="crayon-info" style="min-height: 16.8px !important; line-height: 16.8px !important;"></div> 
+            <div class="crayon-plain-wrap">
+             <textarea wrap="soft" class="crayon-plain print-no" data-settings="dblclick" readonly style="-moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4; font-size: 12px !important; line-height: 15px !important;">
+&lt;a href="https://en.wikipedia.org/wiki/Needleman-Wunsch" lang="en" class="a-keywords" target="_blank"&gt;Needleman-Wunsch&lt;/a&gt; algorithm helps us to align two different words
+in order to find the optimal alignment between them.
+
+Would you like to see what am I talking about? [Y/N]y
+Enter the 1st word : LEVENSHTEIN
+Enter the 2nd word : LEVENSHMIT
+We assume the following params:
+  - insert score = 0
+  - delete score = 0
+  - substitute score = 0
+  - match score = 1
+  - similarity factor = 0.5 (i.e the words should be &gt;= 50% alike)
+
+Testing Needleman-Wunsch algorithm
+  - word 1 = LEVENSHTEIN
+  - word 2 = LEVENSHMIT
+
+      | L | E | V | E | N | S | H | T | E | I | N |
+  +++++++++++++++++++++++++++++++++++++++++++++++++
+  | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+L | 0 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 |
+E | 0 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 |
+V | 0 | 1 | 2 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 | 3 |
+E | 0 | 1 | 2 | 3 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+N | 0 | 1 | 2 | 3 | 4 | 5 | 5 | 5 | 5 | 5 | 5 | 5 |
+S | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 6 | 6 | 6 | 6 | 6 |
+H | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 7 | 7 | 7 | 7 |
+M | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 7 | 7 | 7 | 7 |
+I | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 7 | 7 | 8 | 8 |
+T | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 8 | 8 | 8 |
+   +++++++++++++++++++++++++++++++++++++++++++++++++
+   dist(Needleman-Wunsch)[10][11]=8
+
+   The strings's alignment is:
+
+     LEVENSH+MIT
+     |||||||   | 
+     LEVENSHTEIN
+     ----------
+     mmmmmmmisms
++########################################################+</textarea>
+            </div> 
+            <div class="crayon-main" style=""> 
+             <table class="crayon-table">
+              <tbody>
+               <tr class="crayon-row">
+                <td class="crayon-nums " data-settings="show"> 
+                 <div class="crayon-nums-content" style="font-size: 12px !important; line-height: 15px !important;">
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-1">
+                   1
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-2">
+                   2
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-3">
+                   3
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-4">
+                   4
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-5">
+                   5
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-6">
+                   6
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-7">
+                   7
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-8">
+                   8
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-9">
+                   9
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-10">
+                   10
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-11">
+                   11
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-12">
+                   12
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-13">
+                   13
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-14">
+                   14
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-15">
+                   15
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-16">
+                   16
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-17">
+                   17
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-18">
+                   18
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-19">
+                   19
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-20">
+                   20
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-21">
+                   21
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-22">
+                   22
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-23">
+                   23
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-24">
+                   24
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-25">
+                   25
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-26">
+                   26
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-27">
+                   27
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-28">
+                   28
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-29">
+                   29
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-30">
+                   30
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-31">
+                   31
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-32">
+                   32
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-33">
+                   33
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-34">
+                   34
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-35">
+                   35
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-36">
+                   36
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-37">
+                   37
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-38">
+                   38
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-39">
+                   39
+                  </div>
+                  <div class="crayon-num crayon-striped-num" data-line="crayon-59d394565e0f8889286035-40">
+                   40
+                  </div>
+                  <div class="crayon-num" data-line="crayon-59d394565e0f8889286035-41">
+                   41
+                  </div>
+                 </div> </td> 
+                <td class="crayon-code">
+                 <div class="crayon-pre" style="font-size: 12px !important; line-height: 15px !important; -moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4;">
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-1">
+                   <span class="crayon-v"><a href="https://en.wikipedia.org/wiki/Needleman" lang="en" class="a-keywords" target="_blank">Needleman</a></span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-e"><a href="https://en.wikipedia.org/wiki/Wunsch" lang="en" class="a-keywords" target="_blank">Wunsch</a> </span>
+                   <span class="crayon-e">algorithm </span>
+                   <span class="crayon-e">helps </span>
+                   <span class="crayon-e">us </span>
+                   <span class="crayon-st">to</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">align </span>
+                   <span class="crayon-e">two </span>
+                   <span class="crayon-e">different </span>
+                   <span class="crayon-e">words</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-2">
+                   <span class="crayon-st">in</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">order </span>
+                   <span class="crayon-st">to</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">find </span>
+                   <span class="crayon-e">the </span>
+                   <span class="crayon-e">optimal </span>
+                   <span class="crayon-e">alignment </span>
+                   <span class="crayon-e">between </span>
+                   <span class="crayon-v">them</span>
+                   <span class="crayon-sy">.</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-3">
+                   &nbsp;
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-4">
+                   <span class="crayon-e">Would </span>
+                   <span class="crayon-e">you </span>
+                   <span class="crayon-e">like </span>
+                   <span class="crayon-st">to</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">see </span>
+                   <span class="crayon-e">what </span>
+                   <span class="crayon-i">am</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-i">I</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">talking </span>
+                   <span class="crayon-v">about</span>
+                   <span class="crayon-sy">?</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-sy">[</span>
+                   <span class="crayon-v">Y</span>
+                   <span class="crayon-o">/</span>
+                   <span class="crayon-v">N</span>
+                   <span class="crayon-sy">]</span>
+                   <span class="crayon-i">y</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-5">
+                   <span class="crayon-e">Enter </span>
+                   <span class="crayon-i">the</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1st</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-t">word</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">:</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">LEVENSHTEIN</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-6">
+                   <span class="crayon-e">Enter </span>
+                   <span class="crayon-i">the</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2nd</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-t">word</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">:</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">LEVENSHMIT</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-7">
+                   <span class="crayon-e">We </span>
+                   <span class="crayon-e">assume </span>
+                   <span class="crayon-e">the </span>
+                   <span class="crayon-e">following </span>
+                   <span class="crayon-v">params</span>
+                   <span class="crayon-o">:</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-8">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">insert </span>
+                   <span class="crayon-v">score</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-9">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">delete </span>
+                   <span class="crayon-v">score</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-10">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">substitute </span>
+                   <span class="crayon-v">score</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-11">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">match </span>
+                   <span class="crayon-v">score</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-12">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">similarity </span>
+                   <span class="crayon-v">factor</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0.5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-sy">(</span>
+                   <span class="crayon-v">i</span>
+                   <span class="crayon-sy">.</span>
+                   <span class="crayon-i">e</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">the </span>
+                   <span class="crayon-e">words </span>
+                   <span class="crayon-e">should </span>
+                   <span class="crayon-v">be</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">&gt;=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">50</span>
+                   <span class="crayon-o">%</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">alike</span>
+                   <span class="crayon-sy">)</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-13">
+                   &nbsp;
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-14">
+                   <span class="crayon-e"><a href="https://en.wikipedia.org/wiki/Testing" lang="en" class="a-keywords" target="_blank">Testing</a> </span>
+                   <span class="crayon-v"><a href="https://en.wikipedia.org/wiki/Needleman" lang="en" class="a-keywords" target="_blank">Needleman</a></span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-e"><a href="https://en.wikipedia.org/wiki/Wunsch" lang="en" class="a-keywords" target="_blank">Wunsch</a> </span>
+                   <span class="crayon-v">algorithm</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-15">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-t">word</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">LEVENSHTEIN</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-16">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-t">word</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">LEVENSHMIT</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-17">
+                   &nbsp;
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-18">
+                   <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">L</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">E</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">V</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">E</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">N</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">S</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">H</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">T</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">E</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">I</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-v">N</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-19">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">+</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-20">
+                   <span class="crayon-h">&nbsp;&nbsp;</span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-21">
+                   <span class="crayon-v">L</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-22">
+                   <span class="crayon-v">E</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-23">
+                   <span class="crayon-v">V</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-24">
+                   <span class="crayon-v">E</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-25">
+                   <span class="crayon-v">N</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-26">
+                   <span class="crayon-v">S</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-27">
+                   <span class="crayon-v">H</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-28">
+                   <span class="crayon-v">M</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-29">
+                   <span class="crayon-v">I</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">8</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">8</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-30">
+                   <span class="crayon-v">T</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">0</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">1</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">2</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">3</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">4</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">5</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">6</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">7</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">8</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">8</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">8</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-cn">8</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-o">|</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-31">
+                   <span class="crayon-h">&nbsp;&nbsp; </span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">++</span>
+                   <span class="crayon-o">+</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-32">
+                   <span class="crayon-h">&nbsp;&nbsp; </span>
+                   <span class="crayon-e">dist</span>
+                   <span class="crayon-sy">(</span>
+                   <span class="crayon-v"><a href="https://en.wikipedia.org/wiki/Needleman" lang="en" class="a-keywords" target="_blank">Needleman</a></span>
+                   <span class="crayon-o">-</span>
+                   <span class="crayon-v"><a href="https://en.wikipedia.org/wiki/Wunsch" lang="en" class="a-keywords" target="_blank">Wunsch</a></span>
+                   <span class="crayon-sy">)</span>
+                   <span class="crayon-sy">[</span>
+                   <span class="crayon-cn">10</span>
+                   <span class="crayon-sy">]</span>
+                   <span class="crayon-sy">[</span>
+                   <span class="crayon-cn">11</span>
+                   <span class="crayon-sy">]</span>
+                   <span class="crayon-o">=</span>
+                   <span class="crayon-cn">8</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-33">
+                   &nbsp;
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-34">
+                   <span class="crayon-h">&nbsp;&nbsp; </span>
+                   <span class="crayon-e">The </span>
+                   <span class="crayon-i">strings</span>'
+                   <span class="crayon-i">s</span>
+                   <span class="crayon-h"> </span>
+                   <span class="crayon-e">alignment </span>
+                   <span class="crayon-st">is</span>
+                   <span class="crayon-o">:</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-35">
+                   &nbsp;
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-36">
+                   <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp; </span>
+                   <span class="crayon-v">LEVENSH</span>
+                   <span class="crayon-o">+</span>
+                   <span class="crayon-v"><a href="https://en.wikipedia.org/wiki/MIT" lang="en" class="a-keywords" target="_blank">MIT</a></span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-37">
+                   <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp; </span>
+                   <span class="crayon-o">||</span>
+                   <span class="crayon-o">||</span>
+                   <span class="crayon-o">||</span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h">&nbsp;&nbsp; </span>
+                   <span class="crayon-o">|</span>
+                   <span class="crayon-h"> </span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-38">
+                   <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp; </span>
+                   <span class="crayon-v">LEVENSHTEIN</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-39">
+                   <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp; </span>
+                   <span class="crayon-o">--</span>
+                   <span class="crayon-o">--</span>
+                   <span class="crayon-o">--</span>
+                   <span class="crayon-o">--</span>
+                   <span class="crayon-o">--</span>
+                  </div>
+                  <div class="crayon-line crayon-striped-line" id="crayon-59d394565e0f8889286035-40">
+                   <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp; </span>
+                   <span class="crayon-v">mmmmmmmisms</span>
+                  </div>
+                  <div class="crayon-line" id="crayon-59d394565e0f8889286035-41">
+                   <span class="crayon-o">+</span>
+                   <span class="crayon-p">########################################################+</span>
+                  </div>
+                 </div></td> 
+               </tr>
+              </tbody>
+             </table>
+            </div> 
+           </div> 
+           <!-- [Format Time: 0.0096 seconds] --> 
+           <p style="text-align: justify;">The code above is an capture from the stdout of my Java implementation of the Levenshtein and Needleman-Wunsch algorithms. I made it available for the public and can be downloaded from:</p> 
+           <p style="text-align: justify;"><a href="https://docs.google.com/folder/d/0B95k2kr1bG9fRHN6VGZPakc2SjQ/edit" target="_blank">https://docs.google.com/folder/d/0B95k2kr1bG9fRHN6VGZPakc2SjQ/edit</a></p> 
+           <p style="text-align: justify;">Besides Wikipedia I've found other useful information about this subject at:</p> 
+           <ul>
+            <li>http://www-igm.univ-mlv.fr/~lecroq/seqcomp/index.html</li> 
+            <li>http://www.let.rug.nl/kleiweg/lev/</li> 
+            <li>the back-trace algorithm: http://de.wikipedia.org/wiki/Levenshtein-Distanz</li> 
+            <li>http://www.avatar.se/molbioinfo2001/multali.html</li> 
+           </ul>
+           <blockquote>
+            <p style="text-align: justify;">Now, if you think that this article was interesting don't forget to rate it. It shows me that you care and thus I will continue write about these things.</p>
+           </blockquote> 
+          </div> 
+          <div id="wps-seo-booster-874" class="wps-seo-booster-star-ratings open bottom-left">
+           <span style="display:none;" id="874"></span>
+           <div class="seo-booster-stars-turned-on">
+            &nbsp;
+           </div>
+           <div class="seo-booster-hover-panel">
+            <a href="javascript:void();" rel="star-1"></a>
+            <a href="javascript:void();" rel="star-2"></a>
+            <a href="javascript:void();" rel="star-3"></a>
+            <a href="javascript:void();" rel="star-4"></a>
+            <a href="javascript:void();" rel="star-5"></a>
+           </div>
+           <div class="seo-booster-casting-desc">
+            <div class="wps-seo-booster-rating-clear"> 
+             <div itemprop="aggregateRating" itemscope itemtype="http://schema.org/AggregateRating"> 
+              <meta itemprop="ratingValue" content="5">
+              <meta itemprop="ratingCount" content="2">
+             </div> 
+            </div>
+           </div>
+           <!--.seo-booster-casting-desc--> 
+           <div class="seo-booster-casting-thanks" style="display:none;"></div> 
+          </div>
+          <!--.wps-seo-booster-star-ratings-->
+          <div id="ts-fab-below" class="ts-fab-wrapper">
+           <span class="screen-reader-text">The following two tabs change content below.</span>
+           <ul class="ts-fab-list">
+            <li class="ts-fab-bio-link"><a href="#ts-fab-bio-below">Bio</a></li>
+            <li class="ts-fab-latest-posts-link"><a href="#ts-fab-latest-posts-below">Latest Posts</a></li>
+           </ul>
+           <div class="ts-fab-tabs"> 
+            <div class="ts-fab-tab" id="ts-fab-bio-below"> 
+             <div class="ts-fab-avatar">
+              <img alt="How to measure the similarity between two words" src="http://0.gravatar.com/avatar/94c11d8ec52ede3fcaa6bdc7feeb413a?s=80&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/94c11d8ec52ede3fcaa6bdc7feeb413a?s=160&amp;d=mm&amp;r=g 2x" class="avatar avatar-80 photo" height="80" width="80">
+              <div class="ts-fab-social-links">
+               <a href="http://twitter.com/eugenmihailescu" title="Twitter" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/twitter.png" width="24" height="24" alt="My Twitter profile"></a>
+               <a href="http://facebook.com/eugenmihailescu" title="Facebook" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/facebook.png" width="24" height="24" alt="My Facebook profile"></a>
+               <a href="http://plus.google.com/+EugenMihailescu?rel=author" title="Google+"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/googleplus.png" width="24" height="24" alt="My Google+ profile"></a>
+               <a href="http://www.linkedin.com/in/eugenmihailescu" title="LinkedIn" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/linkedin.png" width="24" height="24" alt="My LinkedIn profile"></a>
+              </div> 
+             </div> 
+             <div class="ts-fab-text"> 
+              <div class="ts-fab-header">
+               <h4><a href="http://www.cubique.ro/" rel="nofollow">Eugen Mihailescu</a></h4>
+               <div class="ts-fab-description">
+                <span>Founder/programmer/one-man-show</span> at 
+                <a href="http://www.cubique.ro/" rel="nofollow"><span>Cubique Software</span></a>
+               </div>
+              </div>
+              <!-- /.ts-fab-header --> 
+              <div class="ts-fab-content">
+               Always looking to learn more about *nix world, about the fundamental concepts of math, physics, electronics. I am also passionate about programming, database and systems administration. 16+ yrs experience in software development, designing enterprise systems, IT support and troubleshooting.
+              </div> 
+             </div> 
+            </div> 
+            <div class="ts-fab-tab" id="ts-fab-latest-posts-below"> 
+             <div class="ts-fab-avatar">
+              <img alt="How to measure the similarity between two words" src="http://0.gravatar.com/avatar/94c11d8ec52ede3fcaa6bdc7feeb413a?s=80&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/94c11d8ec52ede3fcaa6bdc7feeb413a?s=160&amp;d=mm&amp;r=g 2x" class="avatar avatar-80 photo" height="80" width="80">
+              <div class="ts-fab-social-links">
+               <a href="http://twitter.com/eugenmihailescu" title="Twitter" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/twitter.png" width="24" height="24" alt="My Twitter profile"></a>
+               <a href="http://facebook.com/eugenmihailescu" title="Facebook" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/facebook.png" width="24" height="24" alt="My Facebook profile"></a>
+               <a href="http://plus.google.com/+EugenMihailescu?rel=author" title="Google+" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/googleplus.png" width="24" height="24" alt="My Google+ profile"></a>
+               <a href="http://www.linkedin.com/in/eugenmihailescu" title="LinkedIn" rel="nofollow"><img src="http://mynixworld.info/wp-content/plugins/fancier-author-box/images/linkedin.png" width="24" height="24" alt="My LinkedIn profile"></a>
+              </div> 
+             </div> 
+             <div class="ts-fab-text"> 
+              <div class="ts-fab-header"> 
+               <h4>Latest posts by Eugen Mihailescu <span class="latest-see-all">(<a href="http://mynixworld.info/author/eugen/" rel="nofollow">see all</a>)</span></h4> 
+              </div> 
+              <ul class="ts-fab-latest">
+               <li> <a href="http://mynixworld.info/2017/09/26/emerging-perl-without-perl-gentoo/">Emerging Perl without Perl in Gentoo</a><span> - September 26, 2017</span> </li> 
+               <li> <a href="http://mynixworld.info/2017/09/09/how-to-choose-your-decoupling-capacitor/">How to choose your decoupling capacitor</a><span> - September 9, 2017</span> </li> 
+               <li> <a href="http://mynixworld.info/2017/09/01/simple-electret-microphone-circuit/">Simple electret microphone circuit</a><span> - September 1, 2017</span> </li> 
+              </ul>
+             </div> 
+            </div> 
+           </div> 
+          </div>
+          <!-- AddThis Advanced Settings above via filter on the_content -->
+          <!-- AddThis Advanced Settings below via filter on the_content -->
+          <!-- AddThis Advanced Settings generic via filter on the_content -->
+          <!-- AddThis Share Buttons above via filter on the_content -->
+          <!-- AddThis Share Buttons below via filter on the_content -->
+          <div class="at-below-post addthis_tool" data-url="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/"></div>
+          <!-- AddThis Share Buttons generic via filter on the_content -->
+          <!-- AddThis Related Posts below via filter on the_content -->
+          <div class="at-below-post-recommended addthis_tool"></div>
+          <!-- AddThis Related Posts generic via filter on the_content -->
+          <div class="yarpp-related"> 
+           <h3>Related posts:</h3>
+           <ol style="list-style-image: url('/images/favicon_16x16.png');list-style-position: inside;">
+            <li><a href="http://mynixworld.info/2014/06/20/finding-lexicographic-order-permutation/" rel="bookmark" title="Finding the lexicographic order of permutations">Finding the lexicographic order of permutations </a></li> 
+            <li><a href="http://mynixworld.info/2014/02/12/link-keywords-wordpress/" rel="bookmark" title="How to link keywords to Wikipedia automatically">How to link keywords to Wikipedia automatically </a></li> 
+           </ol>
+          </div> 
+          <div class="tags">
+            Tagged on: 
+           <a href="http://mynixworld.info/tag/bioinformatics/" rel="tag">bioinformatics</a>, 
+           <a href="http://mynixworld.info/tag/hamming/" rel="tag">hamming</a>, 
+           <a href="http://mynixworld.info/tag/levenshtein/" rel="tag">levenshtein</a>, 
+           <a href="http://mynixworld.info/tag/needleman-wunsch/" rel="tag">needleman-wunsch</a>, 
+           <a href="http://mynixworld.info/tag/word-similarity/" rel="tag">word similarity</a> 
+          </div> 
+         </div> 
+         <div class="entry-meta-bar clearfix"> 
+          <div class="entry-meta"> 
+           <span class="by-author vcard author"><span class="fn">By <a href="http://mynixworld.info/author/eugen/">Eugen Mihailescu</a></span></span> | 
+           <span class="date updated"><a href="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/" title="02:06">September 24, 2012</a></span> | 
+           <span class="category"><a href="http://mynixworld.info/category/programming/eclipse-2/" rel="category tag">Eclipse</a>, <a href="http://mynixworld.info/category/programming/java-2/" rel="category tag">Java</a></span> | 
+           <span class="comments"><a href="http://mynixworld.info/2012/09/24/how-to-measure-the-similarity-between-two-words/#respond">No Comments</a></span> | 
+          </div>
+          <!-- .entry-meta --> 
+         </div> 
+         <ul class="default-wp-page clearfix"> 
+          <li class="previous"><a href="http://mynixworld.info/2012/09/22/fix-the-dvisvgm-1-0-8-ebuild/" rel="prev"><span class="meta-nav">?</span> Fix the dvisvgm-1.0.8.ebuild</a></li> 
+          <li class="next"><a href="http://mynixworld.info/2012/09/25/java-string-concatenation-can-be-a-nightmare/" rel="next">Java string concatenation can be a nightmare <span class="meta-nav">?</span></a></li> 
+         </ul> 
+         <div id="comments" class="comments-area"> 
+          <div id="respond" class="comment-respond"> 
+           <h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/2012/09/24/how-to-measure-the-similarity-between-two-words/#respond" style="display:none;">Cancel reply</a></small></h3> 
+           <form action="http://mynixworld.info/wp-comments-post.php" method="post" id="commentform" class="comment-form"> 
+            <p class="comment-notes"><span id="email-notes">Your email address will not be published.</span> Required fields are marked <span class="required">*</span></p>
+            <p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required></textarea></p>
+            <p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" maxlength="245" aria-required="true" required></p> 
+            <p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" type="text" value="" size="30" maxlength="100" aria-describedby="email-notes" aria-required="true" required></p> 
+            <p class="comment-form-url"><label for="url">Website</label> <input id="url" name="url" type="text" value="" size="30" maxlength="200"></p> 
+            <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="874" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"> </p>
+            <p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="d64b1de480"></p>
+            <p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="81"></p> 
+           </form> 
+          </div>
+          <!-- #respond --> 
+         </div>
+         <!-- #comments .comments-area --> 
+        </article> 
+       </section> 
+      </div>
+      <!-- #content -->
+     </div>
+     <!-- #primary --> 
+     <div id="secondary"> 
+      <aside id="search-3" class="widget widget_search"> 
+       <form action="http://mynixworld.info/" class="searchform clearfix" method="get"> 
+        <label class="assistive-text" for="s">Search</label> 
+        <input type="text" placeholder="Search" class="s field" name="s"> 
+       </form>
+       <!-- .searchform --> 
+      </aside>
+      <aside id="adrotate_widgets-4" class="widget adrotate_widgets">
+       <div class="g g-4">
+        <div class="g-dyn a-8 c-1">
+         <iframe id="wpmybackup-banner-sidebar" scrolling="no" src="http://mynixworld.info/sandbox/adds/add-banner.php?bannerid=sidebar" style="border: 0px none; vertical-align: bottom; width: 200px; height: 610px;" frameborder="0" height="610px" width="200x"></iframe>
+        </div>
+        <div class="g-dyn a-10 c-2">
+         <iframe id="woomynixbraintree-banner-sidebar" scrolling="no" src="http://mynixworld.info/sandbox/adds/add-banner.php?bannerid=woo_sidebar" style="border: 0px none; vertical-align: bottom; width: 200px; height: 610px;" frameborder="0" height="610px" width="200x"></iframe>
+        </div>
+        <div class="g-dyn a-1 c-3">
+         <span style="text-align:center;display: block;"> <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+          <!-- Banner right sidebar --> <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px" data-ad-client="ca-pub-4811916629840399" data-ad-slot="9006536667"></ins> <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> </span>
+        </div>
+       </div>
+      </aside> 
+     </div>
+     <!-- #secondary -->
+    </div>
+    <!-- #container --> 
+   </div>
+   <!-- #main --> 
+   <footer id="colophon" class="clearfix"> 
+    <div class="widget-wrap"> 
+     <div class="container"> 
+      <div class="widget-area clearfix"> 
+       <aside id="adrotate_widgets-5" class="widget adrotate_widgets">
+        <div class="g g-2">
+         <div class="g-dyn a-7 c-1">
+          <iframe id="wpmybackup-banner-footer" scrolling="no" src="http://mynixworld.info/sandbox/adds/add-banner.php?bannerid=footer" style="border: 0px none; vertical-align: bottom; width: 980px; height: 104px;" frameborder="0" height="104px" width="980px"></iframe> 
+          <script>var e=document.getElementById('adrotate_widgets-5'); if(e)e.style.width="100%";</script>
+         </div>
+         <div class="g-dyn a-4 c-2">
+          <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+          <!-- Banner bottom full size --> 
+          <ins class="adsbygoogle" style="display:inline-block;width:970px;height:90px;margin-left:auto;margin-right:auto;background: #F9F9F9;" data-ad-client="ca-pub-4811916629840399" data-ad-slot="1483269860"></ins> 
+          <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+         </div>
+         <div class="g-dyn a-11 c-3">
+          <iframe id="woomynixbraintree-banner-footer" scrolling="no" src="http://mynixworld.info/sandbox/adds/add-banner.php?bannerid=woo_footer" style="border: 0px none; vertical-align: bottom; width: 980px; height: 104px;" frameborder="0" height="104px" width="980px"></iframe> 
+          <script>var e=document.getElementById('adrotate_widgets-5'); if(e)e.style.width="100%";</script>
+         </div>
+        </div>
+       </aside> 
+      </div>
+      <!-- .widget-area --> 
+     </div>
+     <!-- .container --> 
+    </div>
+    <!-- .widget-wrap --> 
+    <div id="site-generator" class="clearfix"> 
+     <div class="container"> 
+      <div class="social-profiles clearfix"> 
+       <ul> 
+       </ul> 
+      </div>
+      <!-- .social-profiles -->
+      <div class="copyright">
+       Copyright © 2017 
+       <a href="http://mynixworld.info/" title="My *nix world"><span>My *nix world</span></a> | Theme by: 
+       <a href="http://themehorse.com" target="_blank" title="Theme Horse"><span>Theme Horse</span></a> | Powered by: 
+       <a href="http://wordpress.org" target="_blank" title="WordPress"><span>WordPress</span></a>
+      </div>
+      <!-- .copyright -->
+     </div>
+     <!-- .container --> 
+    </div>
+    <!-- #site-generator -->
+    <div class="back-to-top">
+     <a href="#branding"></a>
+    </div> 
+   </footer> 
+  </div>
+  <!-- .wrapper --> 
+  <!-- 
+            Lockers: user tracker for visibility filters
+            OnePress, bizpanda.com
+        --> 
+  <script>
+            window.__bp_session_timeout = '900';
+            window.__bp_session_freezing = 0;
+            !function(){window.bizpanda||(window.bizpanda={}),window.bizpanda.bp_can_store_localy=function(){return!1},window.bizpanda.bp_ut_get_cookie=function(e){for(var n=e+"=",i=document.cookie.split(";"),o=0;o<i.length;o++){for(var t=i[o];" "==t.charAt(0);)t=t.substring(1);if(0==t.indexOf(n))return decodeURIComponent(t.substring(n.length,t.length))}return!1},window.bizpanda.bp_ut_set_cookie=function(e,n,i){var o=new Date;o.setTime(o.getTime()+24*i*60*60*1e3);var t="expires="+o.toUTCString();document.cookie=e+"="+encodeURIComponent(n)+"; "+t+"; path=/"},window.bizpanda.bp_ut_get_obj=function(e){var n=null;return(n=window.bizpanda.bp_can_store_localy()?window.localStorage.getItem("bp_ut_session"):window.bizpanda.bp_ut_get_cookie("bp_ut_session"))?(n=n.replace(/\-c\-/g,","),n=n.replace(/\-q\-/g,'"'),n=JSON.parse(n),n.started+1e3*e<(new Date).getTime()&&(n=null),n):!1},window.bizpanda.bp_ut_set_obj=function(e,n){e.started&&window.__bp_session_freezing||(e.started=(new Date).getTime());var e=JSON.stringify(e);e&&(e=e.replace(/\"/g,"-q-"),e=e.replace(/\,/g,"-c-")),window.bizpanda.bp_can_store_localy()?window.localStorage.setItem("bp_ut_session",e):window.bizpanda.bp_ut_set_cookie("bp_ut_session",e,5e3)},window.bizpanda.bp_ut_count_pageview=function(){var e=window.bizpanda.bp_ut_get_obj(window.__bp_session_timeout);e||(e={}),e.pageviews||(e.pageviews=0),0===e.pageviews&&(e.referrer=document.referrer,e.landingPage=window.location.href,e.pageviews=0),e.pageviews++,window.bizpanda.bp_ut_set_obj(e)},window.bizpanda.bp_ut_count_locker_pageview=function(){var e=window.bizpanda.bp_ut_get_obj(window.__bp_timeout);e||(e={}),e.lockerPageviews||(e.lockerPageviews=0),e.lockerPageviews++,window.bizpanda.bp_ut_set_obj(e)},window.bizpanda.bp_ut_count_pageview()}();
+        </script> 
+  <!-- / --> 
+  <style type="text/css" media="screen">
+  #bit, #bit * {}
+  #bit {
+      bottom: -300px;
+      font: 13px "Helvetica Neue",sans-serif;
+      position: fixed;
+      right: 10px;
+      z-index: 999999;
+  }
+  
+  .loggedout-follow-typekit {
+      margin-right: 4.5em;
+  }
+  
+  #bit a.bsub {
+      background-color: #464646;
+      background-image: -moz-linear-gradient(center bottom , #3F3F3F, #464646 5px);
+      border: 0 none;
+      box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.2);
+      color: #CCCCCC;
+      display: block;
+      float: right;
+      font: 13px/28px "Helvetica Neue",sans-serif;
+      letter-spacing: normal;
+      outline-style: none;
+      outline-width: 0;
+      overflow: hidden;
+      padding: 0 10px 0 8px;
+      text-decoration: none !important;
+      text-shadow: 0 -1px 0 #444444;
+  }
+  
+  #bit a.bsub {
+      border-radius: 2px 2px 0 0;
+  }
+  
+  #bit a.bsub span {
+      background-attachment: scroll;
+      background-clip: border-box;
+      background-color: transparent;
+      background-image: url(http://mynixworld.info/wp-content/plugins/follow/include/star.png);
+      background-origin: padding-box;
+      background-position: 2px 3px;
+      background-repeat: no-repeat;
+      background-size: 20% auto;
+      padding-left: 18px;
+  }
+  
+  #bit a:hover span, #bit a.bsub.open span {
+      /*background-position: 0 -117px;*/
+      color: #FFFFFF !important;
+  }
+  
+  #bit a.bsub.open {
+      background: none repeat scroll 0 0 #333333;
+  }
+  
+  #bitsubscribe {
+      background: none repeat scroll 0 0 #464646;
+      border-radius: 2px 0 0 0;
+      color: #FFFFFF;
+      margin-top: 27px;
+      padding: 15px;
+      width: 200px;
+  }
+  
+  div#bitsubscribe.open {
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  }
+  
+  #bitsubscribe div {
+      overflow: hidden;
+  }
+  
+  #bit h3, #bit #bitsubscribe h3 {
+      color: #FFFFFF;
+      font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+      font-size: 20px;
+      font-weight: 300;
+      margin: 0 0 0.5em !important;
+      text-align: left;
+      text-shadow: 0 1px 0 #333333;
+  }
+  
+  #bit #bitsubscribe p {
+      color: #FFFFFF;
+      font: 300 15px/1.3em "Helvetica Neue",Helvetica,Arial,sans-serif;
+      margin: 0 0 1em;
+      text-shadow: 0 1px 0 #333333;
+  }
+  
+  #bitsubscribe p a {
+      margin: 20px 0 0;
+  }
+  
+  #bit #bitsubscribe p.bit-follow-count {
+      font-size: 13px;
+  }
+  
+  #bitsubscribe input[type="submit"] {
+      -moz-transition: all 0.25s ease-in-out 0s;
+      background: -moz-linear-gradient(center top , #333333 0%, #111111 100%) repeat scroll 0 0 transparent;
+      border: 0px solid #282828;
+      border-radius: 11px 11px 11px 11px;
+      box-shadow: 0 1px 0 #444444 inset;
+      color: #000000;
+      padding: 0.4px 20px;
+      text-decoration: none;
+      text-shadow: 0 1px 0 #CCCCCC;
+  }
+  
+  #bitsubscribe input[type="submit"]:hover {
+      background: -moz-linear-gradient(center top , #333333 0%, #222222 100%) repeat scroll 0 0 transparent;
+      box-shadow: 0 1px 0 #4F4F4F inset;
+      color: #FFFFFF;
+      text-decoration: none;
+  }
+  
+  #bitsubscribe input[type="submit"]:active {
+      background: -moz-linear-gradient(center top , #111111 0%, #222222 100%) repeat scroll 0 0 transparent;
+      box-shadow: 0 -1px 0 #333333 inset;
+      color: #AAAAAA;
+      text-decoration: none;
+  }
+  
+  #bitsubscribe input[type="text"] {
+      border-radius: 3px 3px 3px 3px;
+      font: 300 15px "Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+  
+  #bitsubscribe input[type="text"]:focus {
+      border: 1px solid #000000;
+  }
+  
+  #bitsubscribe.open {
+      display: block;
+  }
+  
+  #bsub-subscribe-button {
+      margin: 0 auto;
+      text-align: center;
+  }
+  
+  #bitsubscribe #bsub-credit {
+      border-top: 1px solid #3C3C3C;
+      font: 11px "Helvetica Neue",sans-serif;
+      margin: 0 0 -15px;
+      padding: 7px 0;
+      text-align: center;
+  }
+  
+  #bitsubscribe #bsub-credit a {
+      background: none repeat scroll 0 0 transparent;
+      color: #AAAAAA;
+      text-decoration: none;
+      text-shadow: 0 1px 0 #262626;
+  }
+  
+  #bitsubscribe #bsub-credit a:hover {
+      background: none repeat scroll 0 0 transparent;
+      color: #FFFFFF;
+  }
+</style> 
+  <script type="text/javascript" charset="utf-8">
+  jQuery.extend(jQuery.easing, {
+      easeOutCubic: function (x, t, b, c, d) {
+          return c * ((t = t / d - 1) * t * t + 1) + b;
+      }
+  });
+  jQuery(document).ready(function () {
+      var isopen = false,
+          bitHeight = jQuery('#bitsubscribe').height();
+      setTimeout(function () {
+          jQuery('#bit').animate({
+              bottom: '-' + bitHeight - 30 + 'px'
+          }, 200);
+      }, 300);
+      jQuery('#bit a.bsub').click(function () {
+          if (!isopen) {
+              isopen = true;
+              jQuery('#bit a.bsub').addClass('open');
+              jQuery('#bit #bitsubscribe').addClass('open')
+              jQuery('#bit').stop();
+              jQuery('#bit').animate({
+                  bottom: '0px'
+              }, {
+                  duration: 400,
+                  easing: "easeOutCubic"
+              });
+          } else {
+              isopen = false;
+              jQuery('#bit').stop();
+              jQuery('#bit').animate({
+                  bottom: '-' + bitHeight - 30 + 'px'
+              }, 200, function () {
+                  jQuery('#bit a.bsub').removeClass('open');
+                  jQuery('#bit #bitsubscribe').removeClass('open');
+              });
+          }
+      });
+  });
+</script> 
+  <div id="bit" class=""> 
+   <a class="bsub" href="javascript:void(0)"><span id="bsub-text">Follow</span></a> 
+   <div id="bitsubscribe"> 
+    <h3><label for="loggedout-follow-field">Follow My *nix world</label></h3> 
+    <form action="http://mynixworld.info/subscribe/" method="post" accept-charset="utf-8" id="loggedout-follow"> 
+     <p>Get every new post on this blog delivered to your Inbox.</p> 
+     <p class="bit-follow-count">Join other followers:</p> 
+     <p> <input type="text" name="email" id="loggedout-follow-field" style="width: 95%; padding: 1px 2px" value="Enter email address" onfocus="this.value=(this.value==&quot;Enter email address&quot;) ? &quot;&quot; : this.value;" onblur="this.value=(this.value==&quot;&quot;) ? &quot;Enter email address&quot; : this.value;"> </p> 
+     <input type="hidden" name="ip" value="152.170.26.191"> 
+     <p id="bsub-subscribe-button"> <input type="submit" name="subscribe" value="Sign me up!"> </p> 
+    </form> 
+   </div> 
+  </div> 
+  <!-- Powered by WPtouch: 4.3.19 --> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-47078104-3', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+  <script type="text/javascript">
+
+          var pfHeaderImgUrl = '';
+          var pfHeaderTagline = '';
+          var pfdisableClickToDel = '0';
+          var pfImagesSize = 'full-size';
+          var pfImageDisplayStyle = 'right';
+          var pfDisableEmail = '0';
+          var pfDisablePDF = '0';
+          var pfDisablePrint = '0';
+          var pfCustomCSS = '';
+          var pfPlatform = 'Wordpress';
+      (function() {
+            var e = document.createElement('script'); e.type="text/javascript";
+            e.src = 'https://cdn.printfriendly.com/printfriendly.js';
+            document.getElementsByTagName('head')[0].appendChild(e);
+        })();
+      </script> 
+  <link rel="stylesheet" id="yarppRelatedCss-css" href="http://mynixworld.info/wp-content/plugins/yet-another-related-posts-plugin/style/related.css?ver=54a4194dfa251ca8893e113f23d3f89c" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/mynixworld/js/mynixworld-popup.js?ver=0.2.2-1%20$"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/comment-reply.min.js?ver=54a4194dfa251ca8893e113f23d3f89c"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/core.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/widget.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/mouse.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/resizable.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/draggable.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/button.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/position.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/jquery/ui/dialog.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-includes/js/wp-embed.min.js?ver=54a4194dfa251ca8893e113f23d3f89c"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var Wps_Seo_Ratings = {"successmsg":"Thanks!"};
+var star_ratings = {"path":"http:\/\/mynixworld.info\/wp-content\/plugins\/wp-social-seo-booster\/","pos":"bottom-left"};
+var ajaxurl = "http:\/\/mynixworld.info\/wp-admin\/admin-ajax.php";
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/wp-social-seo-booster/includes/js/wps-seo-booster-star-ratings.js"></script> 
+  <script type="text/javascript" src="http://mynixworld.info/wp-content/plugins/akismet/_inc/form.js?ver=4.0"></script>  
+ </body>
+</html>

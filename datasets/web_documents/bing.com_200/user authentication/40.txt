@@ -1,0 +1,470 @@
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <meta id="MetaDescription" name="description" content=""> 
+  <meta id="MetaKeywords" name="keywords" content=""> 
+  <meta id="MetaAuthor" name="author" content="Peter Borissow"> 
+  <meta name="RESOURCE-TYPE" content="DOCUMENT"> 
+  <meta name="DISTRIBUTION" content="GLOBAL"> 
+  <meta id="MetaRobots" name="ROBOTS" content="INDEX, FOLLOW"> 
+  <meta id="MetaGenerator" name="GENERATOR" content="JavaXT"> 
+  <meta id="MetaCopyright" name="COPYRIGHT" content="Copyright © 2006-2017, Peter Borissow"> 
+  <title>How To Authenticate Users With Active Directory</title> 
+  <link rel="stylesheet" type="text/css" href="/style/javaxt.css"> 
+  <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico"> 
+  <script type="text/javascript" src="/javascript/syntax_highlighter/compact.js"></script> 
+ </head> 
+ <body marginheight="0" marginwidth="0" background="/images/back_gry.gif"> 
+  <table id="OuterTable" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#FF0000" align="center" width="900" height="100%"> 
+   <tbody>
+    <tr> 
+     <td valign="top" class="left_border"></td> 
+     <td valign="top" bgcolor="FFFFFF" height="100%"> 
+      <table id="HeaderTable" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse;" bordercolor="#111111" width="100%" align="center"> 
+       <tbody>
+        <tr> 
+         <td bgcolor="CA6E22" style="padding-bottom:10px;"><a href="/"><img alt="JavaXT" border="0" src="/images/javaxt.jpg"></a></td> 
+         <td bgcolor="CA6E22" width="100%" valign="middle"> 
+          <form name="search" method="get" action="/search/">
+           <table align="right">
+            <tbody>
+             <tr>
+              <td valign="bottom"><img border="0" src="/images/Search.gif"></td>
+              <td><input name="searchtext" type="text" class="search"></td>
+              <td><input name="Action" type="image" src="/images/go_button.gif" alt="Go" border="0"></td>
+             </tr>
+            </tbody>
+           </table>
+          </form> </td> 
+        </tr> 
+       </tbody>
+      </table> 
+      <div class="nav-bar"> 
+       <div class="tabs"> 
+        <ul id="tablist"> 
+         <li class="unremovable"><a href="/"><b>HOME</b></a></li>
+         <li class="unremovable"><a href="/downloads/"><b>DOWNLOADS</b></a></li>
+         <li class="unremovable"><a href="/documentation/"><b>DOCUMENTATION</b></a></li>
+         <li class="unremovable active"><a href="/wiki/"><b>WIKI</b></a></li>
+         <li class="unremovable"><a href="/about/"><b>ABOUT</b></a></li> 
+        </ul> 
+       </div> 
+      </div> 
+      <div class="subnav-bar"></div> 
+      <div class="content">
+       <table border="0" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;border-collapse:collapse;margin-left:0px;margin-right: 0px;" bordercolor="#111111" width="100%" align="center" height="100%">
+        <tbody>
+         <tr>
+          <td valign="top"><h1>How To Authenticate Users With Active Directory</h1> <p>I recently needed to write an app to authenticate users via Active Directory. For this, I used the native LDAP classes in Java and rolled my own "ActiveDirectory" class. The class provides several static methods used to authenticate users and change passwords. </p> <h2>Authentication Example</h2> Here's a really simple example of how to authenticate a user using a username and password. The ActiveDirectory class actually provides 3 different getConnection() methods for for authenticating users. <pre>
+    try{
+        LdapContext ctx = ActiveDirectory.getConnection("bob", "password");
+        ctx.close();
+    }
+    catch(Exception e){
+        //Failed to authenticate user!
+        e.printStackTrace();
+    }
+</pre> <h2>Change Password</h2> <p>In addition to authenticating users, the ActiveDirectory class can be used to change a user's password. Here's an example:</p> <pre>
+    try{
+        LdapContext conn = ActiveDirectory.getConnection("bob", "password");
+        ActiveDirectory.getUser("bob", conn).changePassword("password", "NewPassword!", true, conn);
+        conn.close();
+        System.out.println("Success!");
+    }
+    catch(Exception e){
+        //Failed to authenticate user or change password...
+        e.printStackTrace();
+    }
+</pre> Note that there are several possible errors that you may encounter when changing a password. For starters, the Active Directory server must be <a href="How_to_Enable_LDAPS_in_Active_Directory">LDAPS enabled</a>. Secondly, the new password must meet certain requirements (e.g. password complexity, length, minimum password age, password history, etc.). Unfortunately, the Java/LDAP API doesn't tell you exactly what's wrong. It simply spits out a generic error: <pre>
+LDAP: error code 19 - 0000052D: AtrErr: DSID-03190F00, #1:
+        0: 0000052D: DSID-03190F00, problem 1005 (CONSTRAINT_ATT_TYPE), data 0, Att 9005a (unicodePwd)
+</pre> <p> If you are a domain administrator, you can view/update the password requirements on the Active Directory server via Administrative Tools-&gt;Domain Securitty Policy-&gt;Account Policies-&gt;Password Policy </p> The one policy that bit me in the ass when developing/testing the change password feature was the <a href="http://technet.microsoft.com/en-us/library/cc779758%28v=ws.10%29.aspx">Minimum Password Age</a>. For testing purposes, I changed the setting on my domain controller from "Undefined" to "0". After changing this, or any other password policy, remember to refresh the domain controller by running "gpupdate": <pre>
+gpupdate /force
+</pre> <h2>ActiveDirectory Class</h2> Here's the source code for the ActiveDirectory Class. This is a standalone class and does not have any 3rd party dependencies. <pre>
+package javaxt.security;
+import java.util.Hashtable;
+import javax.naming.Context;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import static javax.naming.directory.SearchControls.SUBTREE_SCOPE;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.InitialLdapContext;
+
+//Imports for changing password
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.ldap.StartTlsResponse;
+import javax.naming.ldap.StartTlsRequest;
+import javax.net.ssl.*;
+
+//******************************************************************************
+//**  ActiveDirectory
+//*****************************************************************************/
+/**
+ *   Provides static methods to authenticate users, change passwords, etc. 
+ *
+ ******************************************************************************/
+
+public class ActiveDirectory {
+
+    private static String[] userAttributes = {
+        "distinguishedName","cn","name","uid",
+        "sn","givenname","memberOf","samaccountname",
+        "userPrincipalName"
+    };
+
+    private ActiveDirectory(){}
+
+
+  //**************************************************************************
+  //** getConnection
+  //*************************************************************************/
+  /**  Used to authenticate a user given a username/password. Domain name is
+   *   derived from the fully qualified domain name of the host machine.
+   */
+    public static LdapContext getConnection(String username, String password) throws NamingException {
+        return getConnection(username, password, null, null);
+    }
+
+
+  //**************************************************************************
+  //** getConnection
+  //*************************************************************************/
+  /**  Used to authenticate a user given a username/password and domain name.
+   */
+    public static LdapContext getConnection(String username, String password, String domainName) throws NamingException {
+        return getConnection(username, password, domainName, null);
+    }
+
+
+  //**************************************************************************
+  //** getConnection
+  //*************************************************************************/
+  /** Used to authenticate a user given a username/password and domain name.
+   *  Provides an option to identify a specific a Active Directory server.
+   */
+    public static LdapContext getConnection(String username, String password, String domainName, String serverName) throws NamingException {
+
+        if (domainName==null){
+            try{
+                String fqdn = java.net.InetAddress.getLocalHost().getCanonicalHostName();
+                if (fqdn.split("\\.").length&gt;1) domainName = fqdn.substring(fqdn.indexOf(".")+1);
+            }
+            catch(java.net.UnknownHostException e){}
+        }
+        
+        //System.out.println("Authenticating " + username + "@" + domainName + " through " + serverName);
+
+        if (password!=null){
+            password = password.trim();
+            if (password.length()==0) password = null;
+        }
+
+        //bind by using the specified username/password
+        Hashtable props = new Hashtable();
+        String principalName = username + "@" + domainName;
+        props.put(Context.SECURITY_PRINCIPAL, principalName);
+        if (password!=null) props.put(Context.SECURITY_CREDENTIALS, password);
+
+
+        String ldapURL = "ldap://" + ((serverName==null)? domainName : serverName + "." + domainName) + '/';
+        props.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
+        props.put(Context.PROVIDER_URL, ldapURL);
+        try{
+            return new InitialLdapContext(props, null);
+        }
+        catch(javax.naming.CommunicationException e){
+            throw new NamingException("Failed to connect to " + domainName + ((serverName==null)? "" : " through " + serverName));
+        }
+        catch(NamingException e){
+            throw new NamingException("Failed to authenticate " + username + "@" + domainName + ((serverName==null)? "" : " through " + serverName));
+        }
+    }
+
+
+  //**************************************************************************
+  //** getUser
+  //*************************************************************************/
+  /** Used to check whether a username is valid.
+   *  @param username A username to validate (e.g. "peter", "peter@acme.com",
+   *  or "ACME\peter").
+   */
+    public static User getUser(String username, LdapContext context) {
+        try{
+            String domainName = null;
+            if (username.contains("@")){
+                username = username.substring(0, username.indexOf("@"));
+                domainName = username.substring(username.indexOf("@")+1);
+            }
+            else if(username.contains("\\")){
+                username = username.substring(0, username.indexOf("\\"));
+                domainName = username.substring(username.indexOf("\\")+1);
+            }
+            else{
+                String authenticatedUser = (String) context.getEnvironment().get(Context.SECURITY_PRINCIPAL);
+                if (authenticatedUser.contains("@")){
+                    domainName = authenticatedUser.substring(authenticatedUser.indexOf("@")+1);
+                }
+            }
+
+            if (domainName!=null){
+                String principalName = username + "@" + domainName;
+                SearchControls controls = new SearchControls();
+                controls.setSearchScope(SUBTREE_SCOPE);
+                controls.setReturningAttributes(userAttributes);
+                NamingEnumeration&lt;SearchResult&gt; answer = context.search( toDC(domainName), "(&amp; (userPrincipalName="+principalName+")(objectClass=user))", controls);
+                if (answer.hasMore()) {
+                    Attributes attr = answer.next().getAttributes();
+                    Attribute user = attr.get("userPrincipalName");
+                    if (user!=null) return new User(attr);
+                }
+            }
+        }
+        catch(NamingException e){
+            //e.printStackTrace();
+        }
+        return null;
+    }
+
+
+  //**************************************************************************
+  //** getUsers
+  //*************************************************************************/
+  /** Returns a list of users in the domain.
+   */
+    public static User[] getUsers(LdapContext context) throws NamingException {
+
+        java.util.ArrayList&lt;User&gt; users = new java.util.ArrayList&lt;User&gt;();
+        String authenticatedUser = (String) context.getEnvironment().get(Context.SECURITY_PRINCIPAL);
+        if (authenticatedUser.contains("@")){
+            String domainName = authenticatedUser.substring(authenticatedUser.indexOf("@")+1);
+            SearchControls controls = new SearchControls();
+            controls.setSearchScope(SUBTREE_SCOPE);
+            controls.setReturningAttributes(userAttributes);
+            NamingEnumeration answer = context.search( toDC(domainName), "(objectClass=user)", controls);
+            try{
+                while(answer.hasMore()) {
+                    Attributes attr = ((SearchResult) answer.next()).getAttributes();
+                    Attribute user = attr.get("userPrincipalName");
+                    if (user!=null){
+                        users.add(new User(attr));
+                    }
+                }
+            }
+            catch(Exception e){}
+        }
+        return users.toArray(new User[users.size()]);
+    }
+
+
+    private static String toDC(String domainName) {
+        StringBuilder buf = new StringBuilder();
+        for (String token : domainName.split("\\.")) {
+            if(token.length()==0)   continue;   // defensive check
+            if(buf.length()&gt;0)  buf.append(",");
+            buf.append("DC=").append(token);
+        }
+        return buf.toString();
+    }
+
+
+  //**************************************************************************
+  //** User Class
+  //*************************************************************************/
+  /** Used to represent a User in Active Directory
+   */
+    public static class User {
+        private String distinguishedName;
+        private String userPrincipal;
+        private String commonName;
+        public User(Attributes attr) throws javax.naming.NamingException {
+            userPrincipal = (String) attr.get("userPrincipalName").get();
+            commonName = (String) attr.get("cn").get();
+            distinguishedName = (String) attr.get("distinguishedName").get();
+
+        }
+
+        public String getUserPrincipal(){
+            return userPrincipal;
+        }
+
+        public String getCommonName(){
+            return commonName;
+        }
+
+        public String getDistinguishedName(){
+            return distinguishedName;
+        }
+
+        public String toString(){
+            return getDistinguishedName();
+        }
+
+      /** Used to change the user password. Throws an IOException if the Domain
+       *  Controller is not LDAPS enabled.
+       *  @param trustAllCerts If true, bypasses all certificate and host name
+       *  validation. If false, ensure that the LDAPS certificate has been
+       *  imported into a trust store and sourced before calling this method.
+       *  Example:
+          String keystore = "/usr/java/jdk1.5.0_01/jre/lib/security/cacerts";
+          System.setProperty("javax.net.ssl.trustStore",keystore);
+       */
+        public void changePassword(String oldPass, String newPass, boolean trustAllCerts, LdapContext context) 
+        throws java.io.IOException, NamingException {
+            String dn = getDistinguishedName();
+
+
+          //Switch to SSL/TLS
+            StartTlsResponse tls = null;
+            try{
+                tls = (StartTlsResponse) context.extendedOperation(new StartTlsRequest());
+            }
+            catch(Exception e){
+                //"Problem creating object: javax.naming.ServiceUnavailableException: [LDAP: error code 52 - 00000000: LdapErr: DSID-0C090E09, comment: Error initializing SSL/TLS, data 0, v1db0"
+                throw new java.io.IOException("Failed to establish SSL connection to the Domain Controller. Is LDAPS enabled?");
+            }
+
+
+          //Exchange certificates
+            if (trustAllCerts){
+                tls.setHostnameVerifier(DO_NOT_VERIFY);
+                SSLSocketFactory sf = null;
+                try {
+                    SSLContext sc = SSLContext.getInstance("TLS");
+                    sc.init(null, TRUST_ALL_CERTS, null);
+                    sf = sc.getSocketFactory();
+                }
+                catch(java.security.NoSuchAlgorithmException e) {}
+                catch(java.security.KeyManagementException e) {}
+                tls.negotiate(sf);
+            }
+            else{
+                tls.negotiate();
+            }
+
+
+          //Change password
+            try {
+                //ModificationItem[] modificationItems = new ModificationItem[1];
+                //modificationItems[0] = new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("unicodePwd", getPassword(newPass)));
+
+                ModificationItem[] modificationItems = new ModificationItem[2];
+                modificationItems[0] = new ModificationItem(DirContext.REMOVE_ATTRIBUTE, new BasicAttribute("unicodePwd", getPassword(oldPass)) );
+                modificationItems[1] = new ModificationItem(DirContext.ADD_ATTRIBUTE, new BasicAttribute("unicodePwd", getPassword(newPass)) );
+                context.modifyAttributes(dn, modificationItems);
+            }
+            catch(javax.naming.directory.InvalidAttributeValueException e){
+                String error = e.getMessage().trim();
+                if (error.startsWith("[") &amp;&amp; error.endsWith("]")){
+                    error = error.substring(1, error.length()-1);
+                }
+                System.err.println(error);
+                //e.printStackTrace();
+                tls.close();
+                throw new NamingException(
+                    "New password does not meet Active Directory requirements. " +
+                    "Please ensure that the new password meets password complexity, " +
+                    "length, minimum password age, and password history requirements."
+                );
+            }
+            catch(NamingException e) {
+                tls.close();
+                throw e;
+            }
+
+          //Close the TLS/SSL session
+            tls.close();
+        }
+
+        private static final HostnameVerifier DO_NOT_VERIFY = new HostnameVerifier() {
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        };
+
+        private static TrustManager[] TRUST_ALL_CERTS = new TrustManager[]{
+        new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+            public void checkClientTrusted(
+                java.security.cert.X509Certificate[] certs, String authType) {
+            }
+            public void checkServerTrusted(
+                java.security.cert.X509Certificate[] certs, String authType) {
+            }
+        }
+        };
+
+
+        private byte[] getPassword(String newPass){
+            String quotedPassword = "\"" + newPass + "\"";
+            //return quotedPassword.getBytes("UTF-16LE");
+            char unicodePwd[] = quotedPassword.toCharArray();
+            byte pwdArray[] = new byte[unicodePwd.length * 2];
+            for (int i=0; i&lt;unicodePwd.length; i++) {
+                pwdArray[i*2 + 1] = (byte) (unicodePwd[i] &gt;&gt;&gt; 8);
+                pwdArray[i*2 + 0] = (byte) (unicodePwd[i] &amp; 0xff);
+            }
+            return pwdArray;
+        }
+    }
+}
+</pre> <h2>Acknowledgment</h2> This code is based on work posted by <a target="_blank" href="http://stackoverflow.com/users/18406/dv">DV</a> on StackOverflow. 
+           <ul> 
+            <li><a target="_blank" href="http://stackoverflow.com/a/394193/777443">http://stackoverflow.com/a/394193/777443</a></li> 
+           </ul> 
+           <!--
+Additional Reading:
+http://weblogs.java.net/blog/kohsuke/archive/2008/06/more_active_dir.html
+--> </td>
+         </tr>
+        </tbody>
+       </table>
+      </div> </td> 
+     <td valign="top" class="right_border"></td> 
+    </tr> 
+    <tr> 
+     <td class="ll_border"></td> 
+     <td> 
+      <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse" width="100%"> 
+       <tbody>
+        <tr> 
+         <td class="ll2_border"></td> 
+         <td class="bottom_border"></td> 
+         <td class="lr2_border"></td> 
+        </tr> 
+       </tbody>
+      </table> </td> 
+     <td class="lr_border"></td> 
+    </tr> 
+    <tr> 
+     <td colspan="3"> 
+      <div class="copyright" align="center">
+       Copyright © 2006-2017, Peter Borissow
+      </div> </td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <script type="text/javascript">
+
+      //Hack to setup default brush
+        var nodes = document.getElementsByTagName("pre");
+        for (var i=0; i<nodes.length; i++){
+            var pre = nodes[i];
+            if (pre.className==""){ pre.className = "brush: java;"; }
+        }
+
+        SyntaxHighlighter.defaults['class-name'] = 'code-block';
+        SyntaxHighlighter.defaults['toolbar'] = false;
+        SyntaxHighlighter.defaults['gutter'] = false;
+        SyntaxHighlighter.all();
+
+    </script>   
+ </body>
+</html>

@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+ <head> 
+  <title>HTTP Authentication with HTML Forms</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge"> 
+  <link href="http://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css"> 
+  <link rel="stylesheet" href="/style.css" type="text/css"> 
+ </head> 
+ <body> 
+  <h1>HTTP Authentication with HTML Forms</h1> 
+  <p>Authentication in Web applications has been highjacked, HTTP defines a standard way of providing authentication but most apps use the evil spawn of Netscape, otherwise known as cookies. Why is this? Cookies aren't designed for authentication, they're a pain to use for it, insecure unless you know what you're doing, non-standard, and unRESTful.</p> 
+  <p><strong>Warning:</strong> The solution outlined in this article is experimental and might be a complete lie, be warned that your mileage may/will vary.</p> 
+  <p>The main reason people walk away from using HTTP authentication is that they want control over the look of the login form and most browsers display an awful looking dialog box. So what we need is a way for HTML forms to pass HTTP auth data when it's submitted. The HTML spec provides HTML forms as a way to create queries and to POST urlencoded data to a URL, but can we subvert it?</p> 
+  <h2>With the power of Javascript we can</h2> 
+  <p>We could add an <code>onsubmit</code> event to our login form that pushes the username and password values within our form into the URL in the forms <code>action</code> attribute. That way our login request would supply the users credentials in the URL and avoid the server returning a 401 response and causing our browser from showing the HTTP auth box.</p> 
+  <p>Great, and pretty easy. We could even write the HTML form out with Javascript and provide a simple link to non-Javascript enabled browsers. But there's a problem, IE doesn't support usernames and passwords in URLs, <a href="http://support.microsoft.com/kb/834489">they were removed due to a security scare</a>, and anyway, the HTTP spec doesn't say we're allowed to have URLs with usernames and passwords in them so we can't guarentee that they work anywhere else either.</p> 
+  <p>So is there an alternative way that doesn't require us to mung the username and password into the URL? Yes, our new friend, XMLHTTPRequest, it can submit the correct HTTP auth headers for us. Rather than adjusting the URL the form submits to, we can use XMLHTTPRequest to do a request before the form submits supplying the entered username and password. This will set up the browser with the HTTP auth credentials so it'll also send them with our actual form submission login request.</p> 
+  <h2>An example</h2> 
+  <p>Enough talking, here's some code. This is our login function that we bind to our form submission:</p> 
+  <div class="highlight">
+   <pre><code class="text language-text" data-lang="text">function login() {
+    var username = document.getElementById(this.id + "-username").value;
+    var password = document.getElementById(this.id + "-password").value;
+    this.http.open("get", this.action, false, username, password);
+    this.http.send("");
+    if (http.status == 200) {
+        document.location = this.action;
+    } else {
+        alert("Incorrect username and/or password.");
+    }
+    return false;
+}
+</code></pre>
+  </div> 
+  <p>It sends our XHR request with the given username and password, and then redirects the client on success or displays a Javascript alert on error. We need our standard <code>getHTTPObject()</code> function <a href="/articles/rich-user-experience.html">that I introduced here</a>, and then some code to create our login form and set everything up:</p> 
+  <div class="highlight">
+   <pre><code class="text language-text" data-lang="text">window.onload = function() {
+    var http = getHTTPObject();
+    if (http) {
+        var anchors = document.getElementsByTagName("a");
+        for (var foo = 0; foo &lt; anchors.length; foo++) {
+            if (anchors[foo].className == "httpauth") {
+                createForm(anchors[foo]);
+            }
+        }
+    }
+}
+function createForm(jshttpauth) {
+    var form = document.createElement("form");
+    form.action = jshttpauth.href;
+    form.method = "get";
+    form.onsubmit = login;
+    form.id = httpauth.id;
+    var username = document.createElement("label");
+    var usernameInput = document.createElement("input");
+    usernameInput.name = "username";
+    usernameInput.type = "text";
+    usernameInput.id = httpauth.id + "-username";
+    username.appendChild(document.createTextNode("Username:"));
+    username.appendChild(usernameInput);
+    var password = document.createElement("label");
+    var passwordInput = document.createElement("input");
+    passwordInput.name = "password";
+    passwordInput.type = "password";
+    passwordInput.id = httpauth.id + "-password";
+    password.appendChild(document.createTextNode("Password:"));
+    password.appendChild(passwordInput);
+    var submit = document.createElement("input");
+    submit.type = "submit";
+    submit.value = "Log in";
+    form.appendChild(username);
+    form.appendChild(password);
+    form.appendChild(submit);
+    jshttpauth.parentNode.replaceChild(form, jshttpauth);
+}
+</code></pre>
+  </div> 
+  <p>This looks for all anchors with the class of <code>httpauth</code> and replaces it with a nice HTML form with the <code>login()</code> function bound to it's <code>onsubmit</code> event.</p> 
+  <p>So now if we set up a HTML page like the following, the login link will be replaced with a login form (if the user has Javascript support) but authenticate the user using HTTP auth:</p> 
+  <div class="highlight">
+   <pre><code class="text language-text" data-lang="text">&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"&gt;
+&lt;html lang="en"&gt;
+    &lt;head&gt;
+        &lt;title&gt;Javascript HTTP Auth Test&lt;/title&gt;
+        &lt;script type="text/javascript" src="jshttpauth.js"&gt;&lt;/script&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;a class="httpauth" id="private" href="private.php"&gt;Log in&lt;/a&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+  </div> 
+  <p>If our <code>private.php</code> looks like this, then we'll see that everything works as we'd like:</p> 
+  <div class="highlight">
+   <pre><code class="text language-text" data-lang="text">&lt;?php
+    define('USER', 'user');
+    define('PASSWORD', 'password');
+    if (!isset($_SERVER['PHP_AUTH_USER']) || !isset($_SERVER['PHP_AUTH_PW'])) {
+        header('WWW-Authenticate: Basic realm="My Realm"');
+        header('HTTP/1.0 401 Unauthorized');
+        echo 'You hit cancel, good on you.';
+    } elseif (isset($_SERVER['PHP_AUTH_USER']) &amp;&amp; $_SERVER['PHP_AUTH_USER'] == USER &amp;&amp; isset($_SERVER['PHP_AUTH_PW']) &amp;&amp; $_SERVER['PHP_AUTH_PW'] == PASSWORD) {
+        echo "&lt;p&gt;Hello {$_SERVER['PHP_AUTH_USER']}.&lt;/p&gt;";
+        echo "&lt;p&gt;You entered '{$_SERVER['PHP_AUTH_PW']}' as your password.&lt;/p&gt;";
+    } else {
+        header('HTTP/1.0 400 Bad Request');
+        echo "&lt;p&gt;You shall not pass!&lt;/p&gt;";
+    }
+?&gt;
+</code></pre>
+  </div> 
+  <p>The thing to notice about this script is the third part of the 'if' statement. If the request doesn't have any auth details we send a standard auth response, if it does and the details are correct then we let them in, otherwise we send back a 400 error. This stops the clients browser from asking the user for details again allowing the Javascript to process the failure.</p> 
+  <p>This also means that if the client doesn't have Javascript and fails to authenticate correctly, it will never be asked for new credentials as long as it keeps sending the bad auth data (which browsers will do).</p> 
+  <h2>Problems</h2> 
+  <p>It's not all good just yet, this technique works in IE6 and Firefox but is known not to work in both Opera and Safari, so if you care about those browsers you may want to think again about using this (or to spend some time investigating why it fails in those browsers).</p> 
+  <h2>HTTP Digest Auth</h2> 
+  <p>HTTP Digest is a way of authenticating a client while never sending the clients password over the wire. To use Digest rather than Basic HTTP Auth, we only need to adjust our PHP script to implement digest:</p> 
+  <div class="highlight">
+   <pre><code class="text language-text" data-lang="text">&lt;?php
+    include 'digest.php';
+    $HTTPDigest =&amp; new HTTPDigest();
+    $users = array(
+        'user' =&gt; md5('user:'.$HTTPDigest-&gt;getRealm().':password')
+    );
+    if (!$HTTPDigest-&gt;getAuthHeader()) {
+        $HTTPDigest-\&gt;send();
+        echo 'You hit cancel, good on you.';
+    } elseif ($username = $HTTPDigest-&gt;authenticate($users)) {
+        echo "&lt;p&gt;Hello $username.&lt;/p&gt;";
+        echo "&lt;p&gt;This resource is protected by HTTP digest.&lt;/p&gt;";
+    } else {
+        header('HTTP/1.0 400 Bad Request');
+        echo "&lt;p&gt;You shall not pass!&lt;/p&gt;";
+    }
+?&gt;
+</code></pre>
+  </div> 
+  <h2>Conclusion</h2> 
+  <p>So there we have it, there is no need for HTTP authentication to be shunned, even for aesthetic reasons. HTTP auth offers lots of advantages over using cookies:</p> 
+  <ul> 
+   <li> It's simple to implement and no hassle to use, and clients love it.</li> 
+   <li> It carries no baggage unlike cookies.</li> 
+   <li> It's tried and tested, it's a standard and it works, your cookie based security model won't be as good.</li> 
+   <li> We can use HTTP Digest which is pretty secure.</li> 
+   <li> It's about as RESTful as you can get with authentication.</li> 
+  </ul> 
+  <p>So we should be using it, there's no excuses anymore.</p> 
+  <p><a href="/sandbox/htmlhttpauth/">I have put up an example of this code as a demonstration</a>.</p> 
+  <p><strong>Note:</strong> I was first introduced to this idea by Christian Jensen and Jan Algermissen on <a href="http://groups.yahoo.com/group/rest-discuss/message/5623">the REST Discuss mailing list</a>, so credit should be sent their way.</p> 
+  <p><strong>Update:</strong> <a href="http://glazkov.com/">Dimitri Glazkov</a> made me revisit using HTTP Digest with this technique and realise that it does actually work, thanks Dimitri.</p> 
+  <p><strong>Update:</strong> Travis Estill and <a href="http://david.kleinschmidt.name">David Kleinschmidt</a> reminded me that 401 responses shouldn't be returned without an Auth header and so a 403 is a better response code. This also helps to make Safari behave too.</p> 
+  <div class="footer">
+   Feb 3, 2006 | 
+   <a href="/">Home</a>
+  </div>  
+ </body>
+</html>

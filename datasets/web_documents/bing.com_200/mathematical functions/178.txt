@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <title>JavaScript Module Pattern: In-Depth</title> 
+  <!-- CSS, including Blueprint, jQuery w/Smoothness, and AG CSS --> 
+  <link rel="stylesheet" href="/css/blueprint/blueprint.min.css" media="screen, projection"> 
+  <link rel="stylesheet" href="/css/blueprint/print.min.css" media="print"> 
+  <!--[if lt IE 8]>
+      <link rel="stylesheet" href="/css/blueprint/ie.min.css" media="screen, projection">
+    <![endif]--> 
+  <link rel="stylesheet" href="/css/ag.css" media="screen"> 
+  <!-- Extra <head> Links --> 
+  <link rel="alternate" type="application/atom+xml" title="Adequately Good Atom Feed" href="http://www.adequatelygood.com/feeds/atom.xml"> 
+  <!-- TODO: favicon --> 
+  <!-- IE HTML5 Compatibility --> 
+  <!--[if IE]>
+      <script type="text/javascript">
+        (function () {
+          var tags = "header hgroup nav article time footer".split(" "),
+            i = 0,
+            l = tags.length;
+          for (; i < l; i += 1) {
+            document.createElement(tags[i]);
+          }
+        }());
+      </script>
+    <![endif]--> 
+ </head> 
+ <body> 
+  <a name="top"></a> 
+  <div id="container" class="container"> 
+   <!-- Header --> 
+   <header class="span-24 last"> 
+    <!-- Title --> 
+    <div id="title" class="span-24 last"> 
+     <div class="span-17 colborder prepend-top append-bottom"> 
+      <hgroup> 
+       <h1> <a href="/">adequately good</a> </h1> 
+       <h3 class="prepend-2 alt">decent programming advice</h3> 
+      </hgroup> 
+     </div> 
+     <div class="span-6 last prepend-top append-bottom"> 
+      <h2> written by <a href="http://twitter.com/bcherry">ben cherry</a> </h2> 
+     </div> 
+    </div> 
+    <hr> 
+    <!-- Navigation Bar --> 
+    <nav class="prepend-2 span-20 append-2 last append-bottom"> 
+     <div class="span-5"> 
+      <a href="/">home</a> 
+     </div> 
+     <div class="span-5"> 
+      <a href="#" id="archiveLink">archives</a> 
+     </div> 
+     <div class="span-5"> 
+      <a href="/about.html">about</a> 
+     </div> 
+     <div class="span-5 last"> 
+      <a href="/feeds/atom.xml">feed</a> 
+     </div> 
+    </nav> 
+    <!-- Archives Links --> 
+    <div id="archives" class="span-24 last smallalts"> 
+     <hr> 
+     <div class="archivelinks"> 
+      <span class="alt">posts by year</span> 
+      <a class="tight" href="/2009">2009</a> 
+      <a class="tight" href="/2010">2010</a> 
+      <a class="tight" href="/2011">2011</a> 
+     </div> 
+    </div> 
+    <hr> 
+   </header> 
+   <div id="colcontainer" class="span-24 last"> 
+    <!-- Main content: Posts, etc. --> 
+    <div id="content" class="span-17 colborder"> 
+     <a name="main"></a> 
+     <article class="span-17 last"> 
+      <header class="span-17 last"> 
+       <time class="alt" datetime="2010-03-12" pubdate>2010-03-12</time> 
+       <h1><a href="/JavaScript-Module-Pattern-In-Depth.html">JavaScript Module Pattern: In-Depth</a></h1> 
+      </header> 
+      <div id="blogbody" class="span-17 last entry"> 
+       <p>The module pattern is a common JavaScript coding pattern. It’s generally well understood, but there are a number of advanced uses that have not gotten a lot of attention. In this article, I’ll review the basics and cover some truly remarkable advanced topics, including one which I think is original.</p> 
+       <h2 id="the_basics">The Basics</h2> 
+       <p>We’ll start out with a simple overview of the module pattern, which has been well-known since Eric Miraglia (of YUI) first <a href="http://yuiblog.com/blog/2007/06/12/module-pattern/">blogged about it</a> three years ago. If you’re already familiar with the module pattern, feel free to skip ahead to “Advanced Patterns”.</p> 
+       <h3 id="anonymous_closures">Anonymous Closures</h3> 
+       <p>This is the fundamental construct that makes it all possible, and really is the single <strong>best feature of JavaScript</strong>. We’ll simply create an anonymous function, and execute it immediately. All of the code that runs inside the function lives in a <strong>closure</strong>, which provides <strong>privacy</strong> and <strong>state</strong> throughout the lifetime of our application.</p> 
+       <pre><code>(function () {
+	// ... all vars and functions are in this scope only
+	// still maintains access to all globals
+}());</code></pre> 
+       <p>Notice the <code>()</code> around the anonymous function. This is required by the language, since statements that begin with the token <code>function</code> are always considered to be <strong>function declarations</strong>. Including <code>()</code> creates a <strong>function expression</strong> instead.</p> 
+       <h3 id="global_import">Global Import</h3> 
+       <p>JavaScript has a feature known as <strong>implied globals</strong>. Whenever a name is used, the interpreter walks the scope chain backwards looking for a <code>var</code> statement for that name. If none is found, that variable is assumed to be global. If it’s used in an assignment, the global is created if it doesn’t already exist. This means that using or creating global variables in an anonymous closure is easy. Unfortunately, this leads to hard-to-manage code, as it’s not obvious (to humans) which variables are global in a given file.</p> 
+       <p>Luckily, our anonymous function provides an easy alternative. By passing globals as parameters to our anonymous function, we <strong>import</strong> them into our code, which is both <strong>clearer</strong> and <strong>faster</strong> than implied globals. Here’s an example:</p> 
+       <pre><code>(function ($, YAHOO) {
+	// now have access to globals jQuery (as $) and YAHOO in this code
+}(jQuery, YAHOO));</code></pre> 
+       <h3 id="module_export">Module Export</h3> 
+       <p>Sometimes you don’t just want to <em>use</em> globals, but you want to <em>declare</em> them. We can easily do this by exporting them, using the anonymous function’s <strong>return value</strong>. Doing so will complete the basic module pattern, so here’s a complete example:</p> 
+       <pre><code>var MODULE = (function () {
+	var my = {},
+		privateVariable = 1;
+
+	function privateMethod() {
+		// ...
+	}
+
+	my.moduleProperty = 1;
+	my.moduleMethod = function () {
+		// ...
+	};
+
+	return my;
+}());</code></pre> 
+       <p>Notice that we’ve declared a global module named <code>MODULE</code>, with two public properties: a method named <code>MODULE.moduleMethod</code> and a variable named <code>MODULE.moduleProperty</code>. In addition, it maintains <strong>private internal state</strong> using the closure of the anonymous function. Also, we can easily import needed globals, using the pattern we learned above.</p> 
+       <h2 id="advanced_patterns">Advanced Patterns</h2> 
+       <p>While the above is enough for many uses, we can take this pattern farther and create some very powerful, extensible constructs. Lets work through them one-by-one, continuing with our module named <code>MODULE</code>.</p> 
+       <h3 id="augmentation">Augmentation</h3> 
+       <p>One limitation of the module pattern so far is that the entire module must be in one file. Anyone who has worked in a large code-base understands the value of splitting among multiple files. Luckily, we have a nice solution to <strong>augment modules</strong>. First, we import the module, then we add properties, then we export it. Here’s an example, augmenting our <code>MODULE</code> from above:</p> 
+       <pre><code>var MODULE = (function (my) {
+	my.anotherMethod = function () {
+		// added method...
+	};
+
+	return my;
+}(MODULE));</code></pre> 
+       <p>We use the <code>var</code> keyword again for consistency, even though it’s not necessary. After this code has run, our module will have gained a new public method named <code>MODULE.anotherMethod</code>. This augmentation file will also maintain its own private internal state and imports.</p> 
+       <h3 id="loose_augmentation">Loose Augmentation</h3> 
+       <p>While our example above requires our initial module creation to be first, and the augmentation to happen second, that isn’t always necessary. One of the best things a JavaScript application can do for performance is to load scripts asynchronously. We can create flexible multi-part modules that can load themselves in any order with <strong>loose augmentation</strong>. Each file should have the following structure:</p> 
+       <pre><code>var MODULE = (function (my) {
+	// add capabilities...
+
+	return my;
+}(MODULE || {}));</code></pre> 
+       <p>In this pattern, the <code>var</code> statement is always necessary. Note that the import will create the module if it does not already exist. This means you can use a tool like <a href="http://labjs.com/">LABjs</a> and load all of your module files in parallel, without needing to block.</p> 
+       <h3 id="tight_augmentation">Tight Augmentation</h3> 
+       <p>While loose augmentation is great, it does place some limitations on your module. Most importantly, you cannot override module properties safely. You also cannot use module properties from other files during initialization (but you can at run-time after intialization). <strong>Tight augmentation</strong> implies a set loading order, but allows <strong>overrides</strong>. Here is a simple example (augmenting our original <code>MODULE</code>):</p> 
+       <pre><code>var MODULE = (function (my) {
+	var old_moduleMethod = my.moduleMethod;
+
+	my.moduleMethod = function () {
+		// method override, has access to old through old_moduleMethod...
+	};
+
+	return my;
+}(MODULE));</code></pre> 
+       <p>Here we’ve overridden <code>MODULE.moduleMethod</code>, but maintain a reference to the original method, if needed.</p> 
+       <h3 id="cloning_and_inheritance">Cloning and Inheritance</h3> 
+       <pre><code>var MODULE_TWO = (function (old) {
+	var my = {},
+		key;
+
+	for (key in old) {
+		if (old.hasOwnProperty(key)) {
+			my[key] = old[key];
+		}
+	}
+
+	var super_moduleMethod = old.moduleMethod;
+	my.moduleMethod = function () {
+		// override method on the clone, access to super through super_moduleMethod
+	};
+
+	return my;
+}(MODULE));</code></pre> 
+       <p>This pattern is perhaps the <strong>least flexible</strong> option. It does allow some neat compositions, but that comes at the expense of flexibility. As I’ve written it, properties which are objects or functions will <em>not</em> be duplicated, they will exist as one object with two references. Changing one will change the other. This could be fixed for objects with a recursive cloning process, but probably cannot be fixed for functions, except perhaps with <code>eval</code>. Nevertheless, I’ve included it for completeness.</p> 
+       <h3 id="crossfile_private_state">Cross-File Private State</h3> 
+       <p>One severe limitation of splitting a module across multiple files is that each file maintains its own private state, and does not get access to the private state of the other files. This can be fixed. Here is an example of a loosely augmented module that will <strong>maintain private state</strong> across all augmentations:</p> 
+       <pre><code>var MODULE = (function (my) {
+	var _private = my._private = my._private || {},
+		_seal = my._seal = my._seal || function () {
+			delete my._private;
+			delete my._seal;
+			delete my._unseal;
+		},
+		_unseal = my._unseal = my._unseal || function () {
+			my._private = _private;
+			my._seal = _seal;
+			my._unseal = _unseal;
+		};
+
+	// permanent access to _private, _seal, and _unseal
+
+	return my;
+}(MODULE || {}));</code></pre> 
+       <p>Any file can set properties on their local variable <code>_private</code>, and it will be immediately available to the others. Once this module has loaded completely, the application should call <code>MODULE._seal()</code>, which will prevent external access to the internal <code> _private</code>. If this module were to be augmented again, further in the application’s lifetime, one of the internal methods, in any file, can call <code> _unseal()</code> before loading the new file, and call <code> _seal()</code> again after it has been executed. This pattern occurred to me today while I was at work, I have not seen this elsewhere. I think this is a very useful pattern, and would have been worth writing about all on its own.</p> 
+       <h3 id="submodules">Sub-modules</h3> 
+       <p>Our final advanced pattern is actually the simplest. There are many good cases for creating sub-modules. It is just like creating regular modules:</p> 
+       <pre><code>MODULE.sub = (function () {
+	var my = {};
+	// ...
+
+	return my;
+}());</code></pre> 
+       <p>While this may have been obvious, I thought it worth including. Sub-modules have all the advanced capabilities of normal modules, including augmentation and private state.</p> 
+       <h2 id="conclusions">Conclusions</h2> 
+       <p>Most of the advanced patterns can be combined with each other to create more useful patterns. If I had to advocate a route to take in designing a complex application, I’d combine <strong>loose augmentation</strong>, <strong>private state</strong>, and <strong>sub-modules</strong>.</p> 
+       <p>I haven’t touched on performance here at all, but I’d like to put in one quick note: The module pattern is <strong>good for performance</strong>. It minifies really well, which makes downloading the code faster. Using <strong>loose augmentation</strong> allows easy non-blocking parallel downloads, which also speeds up download speeds. Initialization time is probably a bit slower than other methods, but worth the trade-off. Run-time performance should suffer no penalties so long as globals are imported correctly, and will probably gain speed in sub-modules by shortening the reference chain with local variables.</p> 
+       <p>To close, here’s an example of a sub-module that loads itself dynamically to its parent (creating it if it does not exist). I’ve left out private state for brevity, but including it would be simple. This code pattern allows an entire complex heirarchical code-base to be loaded completely in parallel with itself, sub-modules and all.</p> 
+       <pre><code>var UTIL = (function (parent, $) {
+	var my = parent.ajax = parent.ajax || {};
+
+	my.get = function (url, params, callback) {
+		// ok, so I'm cheating a bit :)
+		return $.getJSON(url, params, callback);
+	};
+
+	// etc...
+
+	return parent;
+}(UTIL || {}, jQuery));</code></pre> 
+       <p>I hope this has been useful, and please leave a comment to share your thoughts. Now, go forth and write better, more modular JavaScript!</p> 
+       <p><strong><em>This post was <a href="http://ajaxian.com/archives/a-deep-dive-and-analysis-of-the-javascript-module-pattern">featured on Ajaxian.com</a>, and there is a little bit more discussion going on there as well, which is worth reading in addition to the comments below.</em></strong></p> 
+      </div> 
+     </article> 
+     <div id="more_reading" class="span-17 last"> 
+      <p class="smallalts tags"> <span class="alt">filed under</span> <a class="tight" href="/tag/javascript">javascript</a><span class="alt"> and</span> <a class="tight" href="/tag/module pattern">module pattern</a> </p> 
+     </div> 
+     <div id="comments_wrapper" class="span-17 last"> 
+      <div id="disqus_thread"></div> 
+      <script type="text/javascript">
+      var disqus_shortname = 'adequatelygood';
+      var disqus_identifier = "http://www.adequatelygood.com/2010/3/JavaScript-Module-Pattern-In-Depth";
+      var disqus_title = "JavaScript Module Pattern: In-Depth";
+      var disqus_url = "http://www.adequatelygood.com/JavaScript-Module-Pattern-In-Depth.html";
+
+      /* * * DON'T EDIT BELOW THIS LINE * * */
+      (function() {
+          var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+          dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      })();
+  </script> 
+      <noscript> 
+       <a href="http://disqus.com/forums/adequatelygood/?url=ref">View the discussion thread.</a> 
+      </noscript> 
+     </div> 
+    </div> 
+    <!-- Sidebar: Search, links, etc. --> 
+    <div id="sidebar" class="span-6 last"> 
+     <hr class="space"> 
+     <div id="links"> 
+      <h3>the author</h3> 
+      <p> Ben is a 25 year-old software engineer. He lives and works in San Francisco. Many people think he invented the term "hoisting" in JavaScript, but this is untrue. </p> 
+      <ul> 
+       <li><a href="http://twitter.com/bcherry">Twitter</a> - @<a class="twitter-anywhere-user" href="http://twitter.com/bcherry">bcherry</a></li> 
+       <li><a href="http://github.com/bcherry">GitHub</a> - My Code</li> 
+       <li><a href="http://www.linkedin.com/in/bcherryprogrammer">LinkedIn</a> - Professional Profile</li> 
+       <li><a href="http://www.facebook.com/bcherry">Facebook</a> - That Other Social Network</li> 
+       <li><a href="http://www.bcherry.net/talks/">Presentations</a> - Slides From My Talks</li> 
+      </ul> 
+      <iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/follow_button.html?screen_name=bcherry&amp;button=grey&amp;text_color=7F7F7F&amp;link_color=666666" style="width:300px; height:20px;"></iframe> 
+     </div> 
+     <hr> 
+     <div id="tags"> 
+      <h3>categories</h3> 
+      <ul> 
+       <li> <a href="/tag/javascript">javascript</a> (21) </li> 
+       <li> <a href="/tag/social%20gaming">social gaming</a> (1) </li> 
+       <li> <a href="/tag/css">css</a> (1) </li> 
+       <li> <a href="/tag/jquery">jquery</a> (2) </li> 
+       <li> <a href="/tag/performance">performance</a> (5) </li> 
+       <li> <a href="/tag/tools">tools</a> (2) </li> 
+       <li> <a href="/tag/html5">html5</a> (3) </li> 
+       <li> <a href="/tag/adequatelygood">adequatelygood</a> (1) </li> 
+       <li> <a href="/tag/timers">timers</a> (2) </li> 
+       <li> <a href="/tag/module%20pattern">module pattern</a> (3) </li> 
+       <li> <a href="/tag/talks">talks</a> (1) </li> 
+       <li> <a href="/tag/slide">slide</a> (1) </li> 
+       <li> <a href="/tag/python">python</a> (1) </li> 
+       <li> <a href="/tag/debugging">debugging</a> (1) </li> 
+       <li> <a href="/tag/testing">testing</a> (2) </li> 
+       <li> <a href="/tag/hashbang">hashbang</a> (1) </li> 
+      </ul> 
+     </div> 
+     <hr> 
+    </div> 
+   </div> 
+  </div> 
+  <script>
+      (function() {
+        var archiveLink = document.getElementById("archiveLink"),
+            archives = document.getElementById("archives");
+
+        archiveLink.onclick = function() {
+          if (archives.className.match(/\bexpanded\b/)) {
+            archives.className = archives.className.replace(/\bexpanded\b/g, '');
+          } else {
+            archives.className += ' expanded';
+          }
+          return false;
+        };
+      }());
+    </script> 
+  <!-- Google Analytics --> 
+  <script type="text/javascript">var _gaq =_gaq||[]; _gaq.push(['_setAccount','UA-251077-4']);_gaq.push(['_trackPageview']);(function(){var ga=document.createElement('script');ga.type='text/javascript';ga.async=true;ga.src=('https:'==document.location.protocol?'https://ssl':'http://www')+'.google-analytics.com/ga.js';(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(ga);})();</script>   
+ </body>
+</html>

@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en-US">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="x-ua-compatible" content="ie=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <!-- Start: Favicon code --> 
+  <link rel="apple-touch-icon" sizes="57x57" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-57x57.png"> 
+  <link rel="apple-touch-icon" sizes="60x60" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-60x60.png"> 
+  <link rel="apple-touch-icon" sizes="72x72" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-72x72.png"> 
+  <link rel="apple-touch-icon" sizes="76x76" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-76x76.png"> 
+  <link rel="apple-touch-icon" sizes="114x114" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-114x114.png"> 
+  <link rel="apple-touch-icon" sizes="120x120" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-120x120.png"> 
+  <link rel="apple-touch-icon" sizes="144x144" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-144x144.png"> 
+  <link rel="apple-touch-icon" sizes="152x152" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-152x152.png"> 
+  <link rel="apple-touch-icon" sizes="180x180" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/apple-touch-icon-180x180.png"> 
+  <link rel="icon" type="image/png" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/favicon-32x32.png" sizes="32x32"> 
+  <link rel="icon" type="image/png" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/android-chrome-192x192.png" sizes="192x192"> 
+  <link rel="icon" type="image/png" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/favicon-96x96.png" sizes="96x96"> 
+  <link rel="icon" type="image/png" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/favicon-16x16.png" sizes="16x16"> 
+  <link rel="manifest" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/manifest.json"> 
+  <link rel="shortcut icon" href="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/favicon.ico"> 
+  <meta name="msapplication-TileColor" content="#da532c"> 
+  <meta name="msapplication-TileImage" content="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/mstile-144x144.png"> 
+  <meta name="msapplication-config" content="https://blog.flowroute.com/wp-content/themes/flowroute/favicons/browserconfig.xml"> 
+  <meta name="theme-color" content="#ffffff"> 
+  <!-- End: Favicon code --> 
+  <title>Securely Send Mass SMS in Node.js | Flowroute Blog</title> 
+  <!-- All in One SEO Pack 2.3.16 by Michael Torbert of Semper Fi Web Design[2711,2774] --> 
+  <meta name="description" content="The Flowroute messaging API enables developers to programmatically send mass SMS text messages to a list of opt-in recipients."> 
+  <link rel="canonical" href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/"> 
+  <!-- /all in one seo pack --> 
+  <link rel="dns-prefetch" href="//use.fontawesome.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Flowroute Blog » Securely Send Mass SMS in Node.js Comments Feed" href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"wpemoji":"https:\/\/s3.amazonaws.com\/wordpress-cdn-cache\/static\/core\/20170913150608\/js\/wp-emoji.js","twemoji":"https:\/\/s3.amazonaws.com\/wordpress-cdn-cache\/static\/core\/20170913150608\/js\/twemoji.js"}};
+			( function( window, document, settings ) {
+	var src, ready, ii, tests;
+
+	/*
+	 * Create a canvas element for testing native browser support
+	 * of emoji.
+	 */
+	var canvas = document.createElement( 'canvas' );
+	var context = canvas.getContext && canvas.getContext( '2d' );
+
+	/**
+	 * Detect if the browser supports rendering emoji or flag emoji. Flag emoji are a single glyph
+	 * made of two characters, so some browsers (notably, Firefox OS X) don't support them.
+	 *
+	 * @since 4.2.0
+	 *
+	 * @param type {String} Whether to test for support of "flag" or "emoji4" emoji.
+	 * @return {Boolean} True if the browser can render emoji, false if it cannot.
+	 */
+	function browserSupportsEmoji( type ) {
+		var stringFromCharCode = String.fromCharCode,
+			flag, flag2, emoji41, emoji42;
+
+		if ( ! context || ! context.fillText ) {
+			return false;
+		}
+
+		// Cleanup from previous test.
+		context.clearRect( 0, 0, canvas.width, canvas.height );
+
+		/*
+		 * Chrome on OS X added native emoji rendering in M41. Unfortunately,
+		 * it doesn't work when the font is bolder than 500 weight. So, we
+		 * check for bold rendering support to avoid invisible emoji in Chrome.
+		 */
+		context.textBaseline = 'top';
+		context.font = '600 32px Arial';
+
+		switch ( type ) {
+			case 'flag':
+				/*
+				 * Test for UN flag compatibility. This is the least supported of the letter locale flags,
+				 * so gives us an easy test for full support.
+				 *
+				 * To test for support, we try to render it, and compare the rendering to how it would look if
+				 * the browser doesn't render it correctly ([U] + [N]).
+				 */
+				context.fillText( stringFromCharCode( 55356, 56826, 55356, 56819 ), 0, 0 );
+				flag = canvas.toDataURL();
+
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				// Add a zero width space between the characters, to force rendering as characters.
+				context.fillText( stringFromCharCode( 55356, 56826, 8203, 55356, 56819 ), 0, 0 );
+				flag2 = canvas.toDataURL();
+
+				if ( flag !== flag2 ) {
+					return false;
+				}
+
+				/*
+				 * Test for English flag compatibility. England is a country in the United Kingdom, it
+				 * does not have a two letter locale code but rather an five letter sub-division code.
+				 *
+				 * To test for support, we try to render it, and compare the rendering to how it would look if
+				 * the browser doesn't render it correctly (black flag emoji + [G] + [B] + [E] + [N] + [G]).
+				 */
+				// Cleanup from previous test.
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				context.fillText( stringFromCharCode( 55356, 57332, 56128, 56423, 56128, 56418, 56128, 56421, 56128, 56430, 56128, 56423, 56128, 56447 ), 0, 0 );
+				flag = canvas.toDataURL();
+
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				context.fillText( stringFromCharCode( 55356, 57332, 8203, 56128, 56423, 8203, 56128, 56418, 8203, 56128, 56421, 8203, 56128, 56430, 8203, 56128, 56423, 8203, 56128, 56447 ), 0, 0 );
+				flag2 = canvas.toDataURL();
+
+				return flag !== flag2;
+			case 'emoji4':
+				/*
+				 * Emoji 5 has faries of all genders.
+				 *
+				 * To test for support, try to render a new emoji (fairy, male), then compares
+				 * it to how it would look if the browser doesn't render it correctly
+				 * (fairy + male sign).
+				 */
+				context.fillText( stringFromCharCode( 55358, 56794, 8205, 9794, 65039 ), 0, 0 );
+				emoji41 = canvas.toDataURL();
+
+				context.clearRect( 0, 0, canvas.width, canvas.height );
+
+				context.fillText( stringFromCharCode( 55358, 56794, 8203, 9794, 65039 ), 0, 0 );
+				emoji42 = canvas.toDataURL();
+
+				return emoji41 !== emoji42;
+		}
+
+		return false;
+	}
+
+	function addScript( src ) {
+		var script = document.createElement( 'script' );
+
+		script.src = src;
+		script.defer = script.type = 'text/javascript';
+		document.getElementsByTagName( 'head' )[0].appendChild( script );
+	}
+
+	tests = Array( 'flag', 'emoji4' );
+
+	settings.supports = {
+		everything: true,
+		everythingExceptFlag: true
+	};
+
+	for( ii = 0; ii < tests.length; ii++ ) {
+		settings.supports[ tests[ ii ] ] = browserSupportsEmoji( tests[ ii ] );
+
+		settings.supports.everything = settings.supports.everything && settings.supports[ tests[ ii ] ];
+
+		if ( 'flag' !== tests[ ii ] ) {
+			settings.supports.everythingExceptFlag = settings.supports.everythingExceptFlag && settings.supports[ tests[ ii ] ];
+		}
+	}
+
+	settings.supports.everythingExceptFlag = settings.supports.everythingExceptFlag && ! settings.supports.flag;
+
+	settings.DOMReady = false;
+	settings.readyCallback = function() {
+		settings.DOMReady = true;
+	};
+
+	if ( ! settings.supports.everything ) {
+		ready = function() {
+			settings.readyCallback();
+		};
+
+		if ( document.addEventListener ) {
+			document.addEventListener( 'DOMContentLoaded', ready, false );
+			window.addEventListener( 'load', ready, false );
+		} else {
+			window.attachEvent( 'onload', ready );
+			document.attachEvent( 'onreadystatechange', function() {
+				if ( 'complete' === document.readyState ) {
+					settings.readyCallback();
+				}
+			} );
+		}
+
+		src = settings.source || {};
+
+		if ( src.concatemoji ) {
+			addScript( src.concatemoji );
+		} else if ( src.wpemoji && src.twemoji ) {
+			addScript( src.twemoji );
+			addScript( src.wpemoji );
+		}
+	}
+
+} )( window, document, window._wpemojiSettings );
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="fontawesome-css" href="https://use.fontawesome.com/2307834a21.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="sage/css-css" href="https://s3.amazonaws.com/wordpress-cdn-cache/static/themes/flowroute/20170913150609/dist/styles/main.css" type="text/css" media="all"> 
+  <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/jquery.js"></script> 
+  <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/jquery-migrate.js"></script> 
+  <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/themes/flowroute/20170913150609/assets/scripts/jquery-mobile.js"></script> 
+  <link rel="https://api.w.org/" href="https://blog.flowroute.com/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://blog.flowroute.com/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://blog.flowroute.com/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Taking Communications to the Cloud" href="https://blog.flowroute.com/2017/03/09/taking-communications-to-the-cloud/"> 
+  <link rel="next" title="Enterprise Connect 2017: Transforming business with cloud communications" href="https://blog.flowroute.com/2017/04/06/enterprise-connect-2017/"> 
+  <meta name="generator" content="WordPress 4.8.1"> 
+  <link rel="shortlink" href="https://blog.flowroute.com/?p=4732"> 
+  <link rel="alternate" type="application/json+oembed" href="https://blog.flowroute.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fblog.flowroute.com%2F2017%2F03%2F22%2Fsecure-mass-sms-in-nodejs%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="https://blog.flowroute.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fblog.flowroute.com%2F2017%2F03%2F22%2Fsecure-mass-sms-in-nodejs%2F&amp;format=xml"> 
+  <script type="text/javascript">
+(function(url){
+	if(/(?:Chrome\/26\.0\.1410\.63 Safari\/537\.31|WordfenceTestMonBot)/.test(navigator.userAgent)){ return; }
+	var addEvent = function(evt, handler) {
+		if (window.addEventListener) {
+			document.addEventListener(evt, handler, false);
+		} else if (window.attachEvent) {
+			document.attachEvent('on' + evt, handler);
+		}
+	};
+	var removeEvent = function(evt, handler) {
+		if (window.removeEventListener) {
+			document.removeEventListener(evt, handler, false);
+		} else if (window.detachEvent) {
+			document.detachEvent('on' + evt, handler);
+		}
+	};
+	var evts = 'contextmenu dblclick drag dragend dragenter dragleave dragover dragstart drop keydown keypress keyup mousedown mousemove mouseout mouseover mouseup mousewheel scroll'.split(' ');
+	var logHuman = function() {
+		var wfscr = document.createElement('script');
+		wfscr.type = 'text/javascript';
+		wfscr.async = true;
+		wfscr.src = url + '&r=' + Math.random();
+		(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(wfscr);
+		for (var i = 0; i < evts.length; i++) {
+			removeEvent(evts[i], logHuman);
+		}
+	};
+	for (var i = 0; i < evts.length; i++) {
+		addEvent(evts[i], logHuman);
+	}
+})('//blog.flowroute.com/?wordfence_logHuman=1&hid=F5A863A85FE6DDB6A2674089FEEE74A9');
+</script> 
+  <style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style> 
+  <!-- Google Tag Manager --> 
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-5FHXFD');</script> 
+  <!-- End Google Tag Manager --> 
+ </head> 
+ <body class="post-template-default single single-post postid-4732 single-format-standard secure-mass-sms-in-nodejs sidebar-primary"> 
+  <!-- Google Tag Manager (noscript) --> 
+  <noscript>
+   <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5FHXFD" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript> 
+  <!-- End Google Tag Manager (noscript) --> 
+  <div class="widewrap"> 
+   <!--[if IE]>
+      <div class="alert alert-warning">
+        You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.      </div>
+    <![endif]--> 
+   <style>
+        .blog .hero-sec {
+            height: auto;
+            min-height: auto;
+        }
+    </style> 
+   <header class="hero-sec "> 
+    <nav class="navbar navbar-default"> 
+     <div class=""> 
+      <div class="navbar-header"> 
+       <a class="navbar-brand" href="https://www.flowroute.com/"> 
+        <div class="normal"></div> 
+        <div class="alt"></div> </a> 
+      </div> 
+      <div class="hidden-lg-up openNavWrap"> 
+       <a href="#" id="openNavigation"> <i class="fa fa-bars mob-nav hidden-lg-up" aria-hidden="true"></i> </a> 
+      </div> 
+      <div id="navbar" class="navbar-collapse"> 
+       <div class="hidden-lg-up closeNavWrap"> 
+        <a href="#" id="closeNavigation"> <img src="https://blog.flowroute.com/wp-content/themes/flowroute/dist/images/close.png"> </a> 
+       </div> 
+       <div class="menu-primary-navigation-container"> 
+        <ul id="menu-primary-navigation" class="nav"> 
+         <li id="menu-item-27" class="menu-item "> <a class="has-dropdown" href="http://flowroute.com/products"> Products <i class="fa fa-angle-down hidden-lg-up"></i> </a> 
+          <div class="nav-dropdown-menu large"> 
+           <span class="caret-arrow"></span> 
+           <div class="nav-columns-row"> 
+            <div class="nav-column white"> 
+             <p class="nav-column-header">Products</p> 
+             <ul class="list-unstyled nav-submenu"> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/voice"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150703/nav-voice.png"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Voice</span> 
+                  <span class="description">Scalable, carrier grade cloud-based voice services.</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/sms"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150703/nav-messaging.png"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Messaging</span> 
+                  <span class="description">Next generation messaging solutions for demanding business.</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/voice/#numbers"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/08/13150641/numbers-icon.png"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Phone Numbers</span> 
+                  <span class="description">Flowroute provides one of the largest pools of local, toll-free, and vanity numbers in the US and Canada.</span> 
+                 </div> 
+                </div> </a> </li> 
+             </ul> 
+            </div> 
+            <div class="nav-column gray"> 
+             <p class="nav-column-header">Solutions</p> 
+             <ul class="list-unstyled nav-submenu"> 
+              <li> <a href="https://www.flowroute.com/onboarding/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Customer Onboarding</span> 
+                  <span class="description">Remove the complexity of onboarding your customers.</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li> <a href="https://www.flowroute.com/hypernetwork/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Adaptive Call Routing</span> 
+                  <span class="description">Leverage unparalleled network scale to provide communication reliability, quality and unique control.</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li> <a href="https://www.flowroute.com/instant-scaling/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">On-demand Scale</span> 
+                  <span class="description">Scale your communications solution without breaking the bank.</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li> <a href="https://www.flowroute.com/speedy-resolution/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Issue Resolution</span> 
+                  <span class="description">Our team of telecom support engineers are experts in all aspects of our network.</span> 
+                 </div> 
+                </div> </a> </li> 
+             </ul> 
+            </div> 
+            <div class="clearfix"></div> 
+           </div> 
+          </div> </li> 
+         <li id="menu-item-27" class="menu-item "> <a href="http://http://flowroute.com/pricing"> Pricing </a> </li> 
+         <li id="menu-item-27" class="menu-item "> <a href="https://flowroute.com/api-docs/"> APIs &amp; Docs </a> </li> 
+         <li id="menu-item-27" class="menu-item "> <a class="has-dropdown" href="http://http://flowroute.com/company"> Company <i class="fa fa-angle-down hidden-lg-up"></i> </a> 
+          <div class="nav-dropdown-menu companydrop"> 
+           <span class="caret-arrow"></span> 
+           <div class="nav-columns-row"> 
+            <div class="nav-column white"> 
+             <ul class="list-unstyled nav-submenu align-center"> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/company/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/04/13150703/swirl-icon%402x.png" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">About Flowroute</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/flowroute-partners"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150703/nav-partners.png" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Partners</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/flowroute-careers/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150703/nav-careers.png" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Careers</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li class="has-icon"> <a href="http://blog.flowroute.com"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150703/nav-blog.png" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Blog</span> 
+                 </div> 
+                </div> </a> </li> 
+              <li class="has-icon"> <a href="https://www.flowroute.com/press-room/"> 
+                <div class="list-content-wrap"> 
+                 <div class="icon"> 
+                  <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150703/nav-press.png" class="twox"> 
+                 </div> 
+                 <div class="text"> 
+                  <span class="head">Press room</span> 
+                 </div> 
+                </div> </a> </li> 
+             </ul> 
+            </div> 
+            <div class="nav-column gray center"> 
+             <div class="questions"> 
+              <div class="questions-content"> 
+               <p class="questions-main">Have Questions?</p> 
+               <p class="questions-sub">We're ready to help you with any questions you have.</p> 
+               <a href="#sales" class="sales" data-target="sales">Contact Flowroute</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="clearfix"></div> 
+           </div> 
+          </div> </li> 
+         <li id="menu-item-27" class="menu-item "> <a href="https://manage.flowroute.com/accounts/login/"> Login </a> </li> 
+         <li id="menu-item-27" class="menu-item btn btn-login"> <a href="https://manage.flowroute.com/signup/"> Sign Up </a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </nav> 
+   </header> 
+   <div class="wrap" role="document"> 
+    <div class="content"> 
+     <main class=""> 
+      <div class="single-wrap"> 
+       <div class="container"> 
+        <div class="single-header"> 
+         <div class="header-pagination"> 
+          <ul class="list-inline"> 
+           <li class="list-inline-item"> <a href="https://blog.flowroute.com/2017/04/06/enterprise-connect-2017/"> <img src="https://blog.flowroute.com/wp-content/themes/flowroute/dist/images/left.png"> </a> </li> 
+           <li class="list-inline-item"> <a href="https://blog.flowroute.com"> <img src="https://blog.flowroute.com/wp-content/themes/flowroute/dist/images/home.png"> </a> </li> 
+           <li class="list-inline-item"> <a href="https://blog.flowroute.com/2017/03/09/taking-communications-to-the-cloud/"> <img src="https://blog.flowroute.com/wp-content/themes/flowroute/dist/images/right.png"> </a> </li> 
+          </ul> 
+         </div> 
+         <div class="header-meta"> 
+          <h1>Securely Send Mass SMS in Node.js</h1> 
+          <p class="author">By <a href="28">flowroute</a> on March 22, 2017</p> 
+          <ul class="list-inline tags"> 
+           <li class="list-inline-item"><a href="https://blog.flowroute.com/tag/sms/">SMS</a></li> 
+           <li class="list-inline-item"><a href="https://blog.flowroute.com/tag/sms-api/">SMS API</a></li> 
+           <li class="list-inline-item"><a href="https://blog.flowroute.com/tag/text-messaging/">Text messaging</a></li> 
+          </ul> 
+          <ul class="list-inline social"> 
+           <li class="list-inline-item"><a target="_blank" href="https://twitter.com/intent/tweet?url=https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/&amp;text=Securely+Send+Mass+SMS+in+Node.js"><i class="fa fa-twitter"></i></a></li> 
+           <li class="list-inline-item"><a target="_blank" href="https://www.facebook.com/sharer.php?u=https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/"><i class="fa fa-facebook"></i></a></li> 
+           <li class="list-inline-item"><a target="_blank" href="https://plus.google.com/share?url=https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/"><i class="fa fa-google-plus"></i></a></li> 
+          </ul> 
+         </div> 
+        </div> 
+        <div class="article-content"> 
+         <p>The Flowroute messaging API enables developers to programmatically send and receive SMS text messages. Many scenarios require the ability to provide notifications by sending mass messages to a list of opt-in recipients. The cloud provides the services and components necessary to securely authenticate a user with administrative privileges, persist the recipient numbers, and send the SMS texts. It also enables a secure store for secrets such as database connection strings and API keys. For smaller projects, these resources are open source and free to use.</p> 
+         <p>To get started, ensure you have met the following prerequisites:</p> 
+         <p style="padding-left: 60px;">– Installed the latest stable version of Node.js: <a href="https://nodejs.org/">https://nodejs.org/</a></p> 
+         <p style="padding-left: 60px;">– Have access to a functional Docker engine: <a href="https://www.docker.com/">https://www.docker.com/</a></p> 
+         <p style="padding-left: 60px;">– Activated your Flowroute account</p> 
+         <h2>Database in the Cloud</h2> 
+         <p>A simple option for hosting MongoDB in the cloud is a service called mLab (<a href="http://www.mlab.com/">http://www.mlab.com/</a>). Sign up for an account and opt for the free 0.5 GB database. Figure 1 shows the button to tap on the web-based UI.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/mlabcreate/" rel="attachment wp-att-4733"><img class="alignnone size-full wp-image-4733" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150725/mlabcreate.jpg" alt="Create new MongoDB" width="1139" height="335" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150725/mlabcreate.jpg 1139w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150725/mlabcreate-300x88.jpg 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150725/mlabcreate-768x226.jpg 768w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150725/mlabcreate-1024x301.jpg 1024w" sizes="(max-width: 1139px) 100vw, 1139px"></a></p> 
+         <h6>Figure 1: Create&nbsp;new Mongo DB Deployment</h6> 
+         <p>After you choose to create the deployment, you are given the option to choose your cloud provider. Pick whichever one you are comfortable working with (this does not require that you have an existing account with the cloud provider and simply gives you the option to choose where mLab will host your database). Use the single-node plan for the free sandbox, and give it the name <em>telephony</em> as shown in Figure 2. Tap the button in the lower right to create your database.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/mlabnewdeployment/" rel="attachment wp-att-4734"><img class="alignnone size-full wp-image-4734" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/mlabnewdeployment.jpg" alt="Deployment Options" width="703" height="939" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/mlabnewdeployment.jpg 703w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/mlabnewdeployment-225x300.jpg 225w" sizes="(max-width: 703px) 100vw, 703px"></a></p> 
+         <h6>Figure 2: Deployment options</h6> 
+         <p>After the database is created, navigate to the “Users” tab and tap the “add database user” button. &nbsp;This example used the name “telephony-user.” Choose a password for the user. At the top of the UI is a connection string as shown in Figure 3. Write this down (the connection string you’ll use is everything after the two slashes) with the appropriate username and password, i.e.:</p> 
+         <h6>telephony-user:mysecretpwd@ds012345.mlab.com:58369/telephony</h6> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/connectionstring/" rel="attachment wp-att-4735"><img class="alignnone size-full wp-image-4735" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionstring.jpg" alt="Connection String" width="1110" height="168" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionstring.jpg 1110w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionstring-300x45.jpg 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionstring-768x116.jpg 768w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionstring-1024x155.jpg 1024w" sizes="(max-width: 1110px) 100vw, 1110px"></a><br> Figure 3: Connection String</p> 
+         <p>The database will contain two collections, one for a list of authorized users and another with a list of approved telephone numbers. This will be populated once you have a user-id for authentication.</p> 
+         <h2>Authentication as a Service</h2> 
+         <p>Authentication is required to identify users who are authorized to send the SMS texts. Without this crucial step, anyone could potentially blast the service with spam text messages. A convenient and free way to handle authentication is provided by Auth0 at <a href="http://auth0.com">http://auth0.com</a>. After you sign up, you are given the option to use your GitHub, Google, LinkedIn, or Microsoft Account credentials. There is also an option for a work email and password if you don’t want to use a third-party provider. The provider you choose to login with is important because it must match what you will set as an “approved user” to send SMS emails.</p> 
+         <p>After logging in, Auth0 will create a default “client” app so that you can build authentication into your own software. For now, choose the “Clients” option, tap “Default App” and note:</p> 
+         <p style="padding-left: 60px;">– Your domain (for example, user.auth0.com)</p> 
+         <p style="padding-left: 60px;">– Your client id</p> 
+         <p style="padding-left: 60px;">– Your client secret (you can click the checkbox to reveal the secret or use the copy icon to copy it to the clipboard)</p> 
+         <p>There is one more important piece of information. In the navigation bar, tap on “Users” and you will see your own account listed. Click on the link with your name to grab the user details, then tap the “Raw JSON” tab. This will list various properties in JSON format that look like this:</p> 
+         <pre><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-43-34-am/" rel="attachment wp-att-4770"><img class="alignnone size-full wp-image-4770" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150709/Screen-Shot-2017-03-17-at-10.43.34-AM.png" alt="Bulk text code" width="496" height="451" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150709/Screen-Shot-2017-03-17-at-10.43.34-AM.png 496w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150709/Screen-Shot-2017-03-17-at-10.43.34-AM-300x273.png 300w" sizes="(max-width: 496px) 100vw, 496px"></a></pre> 
+         <p>The credentials may be different depending on what provider you used, but all should give you a value for “user id” <em>with</em> the provider. Note this value down. In the example, this value is:</p> 
+         <pre>google-oauth2|199999---------------</pre> 
+         <p>You will use this in a minute.</p> 
+         <h2>Database Client</h2> 
+         <p>A simple way to manage your database is to use the Mongoclient management tool: <a href="https://hub.docker.com/r/mongoclient/mongoclient/">https://hub.docker.com/r/mongoclient/mongoclient/</a>. Follow the Docker instructions to pull the container down and run it, then browse to <a href="http://localhost:3000">http://localhost:3000</a>. Tap “Connect” in the upper right to open the connection dialog, then “Create New.” Give it the name “mLab” and paste the connection URL you saved earlier for your MongoDB (for this dialog, you will need to prefix it with mongodb://). After you tab out of the field, it will auto-populate the rest of the form as shown in Figure 4.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/connectionclient/" rel="attachment wp-att-4737"><img class="alignnone size-full wp-image-4737" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionclient.jpg" alt="Connection Client" width="1117" height="677" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionclient.jpg 1117w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionclient-300x182.jpg 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionclient-768x465.jpg 768w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150724/connectionclient-1024x621.jpg 1024w" sizes="(max-width: 1117px) 100vw, 1117px"></a></p> 
+         <h6>Figure 4: The Connection Client</h6> 
+         <p>Save your changes and tap “Connect Now.” If all goes well, you should be taken to the main screen.</p> 
+         <h3>Add the Authorized User</h3> 
+         <p>The next step is to add the authorized user that you created with Auth0. Tap “Tools” then “Shell” in the navigation. In the input box, type:</p> 
+         <pre>db.authorized.insertOne({"user": "google-oauth2|199999---------------", "source": "19995551212"});</pre> 
+         <p>Replace the property for “user” with the one you copied earlier from the raw JSON of your Auth0 account. For “source” use a valid phone number registered with your Flowroute account. This will be the number used to send out your mass SMS texts. You should see an acknowledgment. The command created the collection called “authorized” and inserted the first record that is your user identity.</p> 
+         <p>Next, you can insert some phone numbers to target:</p> 
+         <pre>db.users.insertOne({ "phone" : "19995551212" , "verified" : true });</pre> 
+         <p>Repeat the command as many times as needed. For your production system, you will likely use a similar method to the one described in “Fast and Easy Two-Factor Authentication in Node.js” (<a href="https://blog.flowroute.com/2016/11/10/easy-two-factor-authentication-in-node-js/">https://blog.flowroute.com/2016/11/10/easy-two-factor-authentication-in-node-js/</a>) for users to opt-in to receive SMS messages. When they confirm, the entry is flagged as “verified” and able to receive texts. Now that your authentication and database are set up you can build a simple UI to send the text messages.</p> 
+         <h2>The Angular App</h2> 
+         <p>Install the Angular Command Line Interface (CLI) with the command:</p> 
+         <pre>npm i -g @angular/cli</pre> 
+         <p>Once installed, create a new project:</p> 
+         <pre>ng new sms-mailer</pre> 
+         <p>Navigate to the project and install the helper libraries for authentication:</p> 
+         <pre>npm install --save auth0-lock angular2-jwt</pre> 
+         <p>Also, save the type definitions to provide IntelliSense:</p> 
+         <pre>npm install –save-dev @types/auth0-lock</pre> 
+         <p>Finally, create the shell for the authentication service:</p> 
+         <pre>ng g service auth</pre> 
+         <p>Now the UI is ready for code. The service (auth.service.ts) uses the existing libraries to manage authentication. The login experience is completely controlled by the third-party library. The service simply indicates how to store the token (in local storage) and makes a second call to the email to greet the user. Here is the code for the service:</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-40-02-am/" rel="attachment wp-att-4738"><img class="alignnone size-full wp-image-4738" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.02-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.02-AM.png 878w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.02-AM-247x300.png 247w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.02-AM-768x934.png 768w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.02-AM-842x1024.png 842w" sizes="(max-width: 878px) 100vw, 878px"></a></p> 
+         <p>The next step is to configure the authentication provider and provision the service. This is done in the app.module.ts file. A factory is used to provide the authentication library and is configured in the providers for the module along with the service:</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-40-19-am/" rel="attachment wp-att-4740"><img class="alignnone size-full wp-image-4740" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.19-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.19-AM.png 878w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.19-AM-291x300.png 291w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150722/Screen-Shot-2017-03-17-at-10.40.19-AM-768x792.png 768w" sizes="(max-width: 878px) 100vw, 878px"></a></p> 
+         <p>Now you can update the application component for the UI. In this example, the UI is very basic. Normally you would create a custom component and reference it from the app component, but to keep the example simple you can update the HTML directly in app.component.html:</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-40-44-am/" rel="attachment wp-att-4742"><img class="alignnone size-full wp-image-4742" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150721/Screen-Shot-2017-03-17-at-10.40.44-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150721/Screen-Shot-2017-03-17-at-10.40.44-AM.png 879w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150721/Screen-Shot-2017-03-17-at-10.40.44-AM-300x182.png 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150721/Screen-Shot-2017-03-17-at-10.40.44-AM-768x466.png 768w" sizes="(max-width: 879px) 100vw, 879px"></a></p> 
+         <p>For the component code in app.component.ts, start with some basic properties and stub out the methods for the service calls:</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-41-02-am/" rel="attachment wp-att-4744"><img class="alignnone size-full wp-image-4744" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/Screen-Shot-2017-03-17-at-10.41.02-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/Screen-Shot-2017-03-17-at-10.41.02-AM.png 878w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/Screen-Shot-2017-03-17-at-10.41.02-AM-291x300.png 291w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/Screen-Shot-2017-03-17-at-10.41.02-AM-768x792.png 768w" sizes="(max-width: 878px) 100vw, 878px"></a></p> 
+         <p>At this stage, you should be able to run the app and authenticate. Create a folder under src called webtasks. The Flowroute messaging SDK for Node.js (<a href="https://github.com/flowroute/flowroute-messaging-nodejs">https://github.com/flowroute/flowroute-messaging-nodejs</a>) creates a directory named lib under flowroutemessaginglib. Copy this under the webtasks directory and rename it to flowroutelib so your final directory structure looks like Figure 5.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/directory/" rel="attachment wp-att-4746"><img class="alignnone size-full wp-image-4746" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/directory.jpg" alt="directory for sms" width="245" height="474" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/directory.jpg 245w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150720/directory-155x300.jpg 155w" sizes="(max-width: 245px) 100vw, 245px"></a></p> 
+         <h6>Figure 5: Folder Structure</h6> 
+         <p>Create a file in the root of the webtasks directory named index.js. This will be the serverless task that is used to both confirm the identity of the user and connect to the database to retrieve phone numbers. The basic shell references dependent libraries and uses <em>express</em> to set up handlers for secured HTTP operations on the API endpoint:</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-41-26-am/" rel="attachment wp-att-4747"><img class="alignnone size-full wp-image-4747" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150716/Screen-Shot-2017-03-17-at-10.41.26-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150716/Screen-Shot-2017-03-17-at-10.41.26-AM.png 877w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150716/Screen-Shot-2017-03-17-at-10.41.26-AM-300x255.png 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150716/Screen-Shot-2017-03-17-at-10.41.26-AM-768x653.png 768w" sizes="(max-width: 877px) 100vw, 877px"></a></p> 
+         <p>The getToken method is reused to parse the user’s claim for identity. If the token is valid based on the secret, the “sub” claim which represents the user is used to query the database. If a record is found, the phone number is passed back as the “source” for the user. Otherwise, the user is considered unauthorized and unable to use the API for sending SMS. One important aspect of this approach is that the secrets for the authentication and database connection are all stored in the API host and not as part of the source code. This means you will configure the secrets when you publish the API. This allows you to manage secrets in a secure way without having to put them inside your code base (the only exception is the client id stored as part of the Angular app).</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-41-50-am/" rel="attachment wp-att-4749"><img class="alignnone size-full wp-image-4749" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150715/Screen-Shot-2017-03-17-at-10.41.50-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150715/Screen-Shot-2017-03-17-at-10.41.50-AM.png 878w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150715/Screen-Shot-2017-03-17-at-10.41.50-AM-219x300.png 219w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150715/Screen-Shot-2017-03-17-at-10.41.50-AM-768x1051.png 768w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150715/Screen-Shot-2017-03-17-at-10.41.50-AM-749x1024.png 749w" sizes="(max-width: 878px) 100vw, 878px"></a></p> 
+         <p>When the API is called with the get verb, and the user is authorized, it will return the list of verified phone numbers:</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-42-11-am/" rel="attachment wp-att-4751"><img class="alignnone size-full wp-image-4751" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150715/Screen-Shot-2017-03-17-at-10.42.11-AM.png" alt=""></a></p> 
+         <p>When it is called with a post verb, it parses the body of the post for a “to” phone and message, uses the source phone based on the user’s identity, then calls the Flowroute API to send the SMS.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-42-24-am/" rel="attachment wp-att-4753"><img class="alignnone size-full wp-image-4753" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.24-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.24-AM.png 878w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.24-AM-300x264.png 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.24-AM-768x677.png 768w" sizes="(max-width: 878px) 100vw, 878px"></a></p> 
+         <p>Now the service is ready to publish. This example uses webtask (<a href="https://webtask.io/">https://webtask.io/</a>), a service that works in conjunction with Auth0. First, install the web task command line interface (CLI):</p> 
+         <pre>npm i -g wt-cli</pre> 
+         <p>Next, initialize with your Auth0 email:</p> 
+         <pre>wt init myemail@myemail.com</pre> 
+         <p>You will be prompted for a code that is sent to the email address, and then you are activated.</p> 
+         <p>The next step is typically to publish the service using a create command. This will work for most cases, but in this example, the custom Flowroute SDK is included, so the service must be bundled before getting published. Bundle the service by installing the bundler and then typing this from the root of the sms-mailer project:</p> 
+         <pre>npm i -g wt-bundle
+
+wt-bundle --output src/webtasks/sms.js src/webtasks/index.js</pre> 
+         <p>This will bundle all dependencies into a single file. Now you can publish the service:</p> 
+         <pre>wt create src/webtasks/sms.js --meta wt-compiler=webtask-tools/express -s AUTH0_CLIENT_SECRET=&lt;Auth0 client secret&gt; -s MONGO_URL=&lt;Mongo URL without the mongodb:// portion&gt; -s FLOWROUTE_ACCESS_KEY=&lt;flowroute access key&gt; -s FLOWROUTE_SECRET_KEY=&lt;flowroute secret key&gt;</pre> 
+         <p>The command takes the bundled file, notes that it uses <em>express, </em>then passes secrets for authentication, the database, and the Flowroute API. If it is successful, you will receive a success message with the API endpoint. Update this in the “URL” property in your app.component.ts.</p> 
+         <p>With the proper URL in place, it is now possible to implement the method to get the list of phones. Notice it uses AuthHttp instead of Angular’s built-in Http. This will automatically secure the API endpoint call with the identity of the signed-in user using encrypted JSON Web Tokens (JWT).</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-42-37-am/" rel="attachment wp-att-4755"><img class="alignnone size-full wp-image-4755" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.37-AM.png" alt="" width="877" height="212" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.37-AM.png 877w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.37-AM-300x73.png 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150713/Screen-Shot-2017-03-17-at-10.42.37-AM-768x186.png 768w" sizes="(max-width: 877px) 100vw, 877px"></a></p> 
+         <p>The post method iterates the phones and calls to send the message. It uses some basic logic to keep track of success and failure. In a production project, you could leverage Reactive Extensions (RxJS) to better manage the stream of asynchronous calls rather than having to keep a count on the component, but the approach in the example is a simple way to demonstrate the API call.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-42-50-am/" rel="attachment wp-att-4757"><img class="alignnone size-full wp-image-4757" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150712/Screen-Shot-2017-03-17-at-10.42.50-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150712/Screen-Shot-2017-03-17-at-10.42.50-AM.png 878w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150712/Screen-Shot-2017-03-17-at-10.42.50-AM-300x283.png 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150712/Screen-Shot-2017-03-17-at-10.42.50-AM-768x723.png 768w" sizes="(max-width: 878px) 100vw, 878px"></a></p> 
+         <p>Now everything is in place! You should be able to run the app with:</p> 
+         <p>ng serve</p> 
+         <p>Then navigate to <a href="http://localhost:4200">http://localhost:4200</a> and perform the three steps:</p> 
+         <p style="padding-left: 60px;">1. Authenticate/log in with Auth0</p> 
+         <p style="padding-left: 60px;">2. Retrieve the list of phones</p> 
+         <p style="padding-left: 60px;">3. Send the mass SMS</p> 
+         <p>Figure 6 shows a sample run.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/ui/" rel="attachment wp-att-4759"><img class="alignnone size-full wp-image-4759" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150711/ui.jpg" alt="" width="632" height="161" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150711/ui.jpg 632w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150711/ui-300x76.jpg 300w" sizes="(max-width: 632px) 100vw, 632px"></a></p> 
+         <h6>Figure 6: Sample Execution</h6> 
+         <p>If the services don’t appear to be working, you can troubleshoot them using a live stream. From a shell prompt, type:</p> 
+         <pre>wt logs</pre> 
+         <p>This will start the live log display as shown in . From there, you can read the console to troubleshoot your issue.</p> 
+         <p><a href="https://blog.flowroute.com/2017/03/22/secure-mass-sms-in-nodejs/screen-shot-2017-03-17-at-10-43-07-am/" rel="attachment wp-att-4760"><img class="alignnone size-full wp-image-4760" src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150710/Screen-Shot-2017-03-17-at-10.43.07-AM.png" alt="" srcset="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150710/Screen-Shot-2017-03-17-at-10.43.07-AM.png 879w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150710/Screen-Shot-2017-03-17-at-10.43.07-AM-300x158.png 300w, https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/03/13150710/Screen-Shot-2017-03-17-at-10.43.07-AM-768x405.png 768w" sizes="(max-width: 879px) 100vw, 879px"></a></p> 
+         <h6>&nbsp;Figure 7: Webtask logs</h6> 
+         <p>There are a few ways you can approach the architecture for the app. For example, if your system must send out massive numbers of SMS messages, it may not be feasible to wait for the messages to send from the UI. Although one approach would be to create a single service that iterates the phone numbers and sends out the messages (so the numbers are iterated in the service and not from the UI). Another approach is to write to a collection as a “queue” of messages to send, and create a regularly scheduled job that reads from the collection and sends out the messages.</p> 
+         <h2>Conclusion</h2> 
+         <p>Leveraging free, open party solutions, you can architect a cloud-based application to securely send a&nbsp;message through the Flowroute API. This example leveraged:</p> 
+         <p style="padding-left: 60px;">– Auth0 – authentication as a service</p> 
+         <p style="padding-left: 60px;">– WebTask – serverless code as a service and secure secret management</p> 
+         <p style="padding-left: 60px;">– mLab – database as a service</p> 
+         <p>Most importantly, it leveraged the powerful telephony-as-a-service features of Flowroute to enable sending mass SMS messages in a secure manner to verified, opt-in end users.</p> 
+         <p>&nbsp;</p> 
+        </div> 
+       </div> 
+       <div class="related"> 
+        <div class="blog-content container"> 
+         <h2>Related Articles from Flowroute</h2> 
+         <div class="row"> 
+          <div class="col-lg-4 col-md-6 blog-feed-wrapper "> 
+           <div class="blog-feed-item"> 
+            <a class="featured" href="https://blog.flowroute.com/2017/08/30/receive-sms-messages-via-email-from-flowroute-phone-numbers/"> <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/02/13150728/DevContent-3-2-500x230.png"> </a> 
+            <div class="blog-feed-text"> 
+             <a class="category" href="https://blog.flowroute.com/category/articles/">Articles</a> 
+             <a class="title" href="https://blog.flowroute.com/2017/08/30/receive-sms-messages-via-email-from-flowroute-phone-numbers/">Receive SMS Messages Via Email from Flowroute Phone Numbers</a> 
+             <span class="date">August 30, 2017</span> 
+             <div class="description">
+              <p>This article was created and published by Fred Lackey on…</p> 
+             </div> 
+             <a href="https://blog.flowroute.com/2017/08/30/receive-sms-messages-via-email-from-flowroute-phone-numbers/">Read more <i class="fa fa-angle-double-right"></i></a> 
+            </div> 
+           </div> 
+          </div> 
+          <div class="col-lg-4 col-md-6 blog-feed-wrapper "> 
+           <div class="blog-feed-item"> 
+            <a class="featured" href="https://blog.flowroute.com/2017/08/23/learn-how-to-receive-inbound-flowroute-sms-with-slack/"> <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/08/13150641/Frost-Logo-16-500x230.png"> </a> 
+            <div class="blog-feed-text"> 
+             <a class="category" href="https://blog.flowroute.com/category/developers/">Developers</a> 
+             <a class="title" href="https://blog.flowroute.com/2017/08/23/learn-how-to-receive-inbound-flowroute-sms-with-slack/">Learn how to Receive Inbound Flowroute SMS with Slack</a> 
+             <span class="date">August 23, 2017</span> 
+             <div class="description">
+              <p>This article describes how to run a simple Python app…</p> 
+             </div> 
+             <a href="https://blog.flowroute.com/2017/08/23/learn-how-to-receive-inbound-flowroute-sms-with-slack/">Read more <i class="fa fa-angle-double-right"></i></a> 
+            </div> 
+           </div> 
+          </div> 
+          <div class="col-lg-4 col-md-6 blog-feed-wrapper  hidden-md-down"> 
+           <div class="blog-feed-item"> 
+            <a class="featured" href="https://blog.flowroute.com/2017/06/12/cluecon-coder-game-are-you-ready/"> <img src="https://s3.amazonaws.com/wordpress-cdn-cache/wp-content/uploads/sites/2/2017/06/13150656/ClueCon-Logo-Blog-500x230.png"> </a> 
+            <div class="blog-feed-text"> 
+             <a class="category" href="https://blog.flowroute.com/category/articles/">Articles</a> 
+             <a class="title" href="https://blog.flowroute.com/2017/06/12/cluecon-coder-game-are-you-ready/">Are You Ready for the ClueCon Coder Games?</a> 
+             <span class="date">June 12, 2017</span> 
+             <div class="description">
+              <p>The ClueCon Coder Games, happening August 7 in Chicago, is…</p> 
+             </div> 
+             <a href="https://blog.flowroute.com/2017/06/12/cluecon-coder-game-are-you-ready/">Read more <i class="fa fa-angle-double-right"></i></a> 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </main>
+     <!-- /.main --> 
+    </div>
+    <!-- /.content --> 
+   </div>
+   <!-- /.wrap --> 
+   <footer class="content-info"> 
+    <div class="container"> 
+     <div class="row footer-colored-bg"> 
+      <div class="col-lg-8 col-12"> 
+       <ul class="footer-nav"> 
+        <div class="row"> 
+         <li class="col-sm"> <span class="mini-title">Contact us</span> 
+          <ul class="child"> 
+           <li> <a href="//support.flowroute.com/customer/portal/emails/new/">Submit a ticket</a> </li> 
+           <li><a href="tel:+18553569768">+1 (855) 356 9768</a></li> 
+           <li><a href="#sales">Sales</a></li> 
+          </ul> </li> 
+         <li class="col-sm"> <span class="mini-title">Company</span> 
+          <ul class="child"> 
+           <li><a href="https://www.flowroute.com/company/">About</a></li> 
+           <li><a href="https://www.flowroute.com/flowroute-careers/">Careers</a></li> 
+           <li><a href="https://www.flowroute.com/press-room/">Press Room</a></li> 
+           <li><a href="https://www.flowroute.com/company/#teammembers">Executive Team</a></li> 
+          </ul> </li> 
+         <li class="col-sm"> <span class="mini-title">Products</span> 
+          <ul class="child"> 
+           <li><a href="https://www.flowroute.com/voice/">Voice</a></li> 
+           <li><a href="https://www.flowroute.com/sms/">SMS</a></li> 
+           <li><a href="https://www.flowroute.com/voice/#numbers">Phone numbers</a></li> 
+          </ul> </li> 
+         <li class="col-sm"> <span class="mini-title">Resources</span> 
+          <ul class="child"> 
+           <li><a href="//support.flowroute.com">Help center</a></li> 
+           <li><a href="//status.flowroute.com">Status page</a></li> 
+           <li><a href="https://blog.flowroute.com">Blog</a></li> 
+           <li><a href="https://www.flowroute.com/case-studies/">Case Studies</a></li> 
+           <li><a href="https://www.flowroute.com/flowroute-partners/">Partners</a></li> 
+          </ul> </li> 
+         <li class="col-sm"> <span class="mini-title">Legal</span> 
+          <ul class="child"> 
+           <li><a href="https://www.flowroute.com/pricing-details/">Pricing Schedule</a> </li> 
+           <li><a href="https://www.flowroute.com/legal/privacy/">Privacy Policy</a> </li> 
+           <li><a href="https://www.flowroute.com/legal/terms-of-use/">Terms of Use</a> </li> 
+           <li><a href="https://www.flowroute.com/sitemap/">Site map</a></li> 
+          </ul> </li> 
+        </div> 
+       </ul> 
+      </div> 
+      <!-- /col-md-8 --> 
+      <div class="col-lg-4 col-12 footer-privacy"> 
+       <div class="signup-head mini-title">
+        Get Flowroute email updates
+       </div> 
+       <iframe class="pardotform footer-newsletter" src="https://go.pardot.com/l/48002/2015-03-02/gvg7w" width="100%" height="90" type="text/html" frameborder="0" allowtransparency="true" style="border: 0" scrolling="no"></iframe> 
+       <div class="footer-social"> 
+        <div class="footer-social-head mini-title">
+         Follow us
+        </div> 
+        <ul class="footer-social-list"> 
+         <li class="tw"><a href="https://www.twitter.com/flowroute" target="_blank"><i class="fa fa-twitter"></i></a></li> 
+         <li class="li"><a href="https://www.linkedin.com/company/flowroute" target="_blank"><i class="fa fa-linkedin-square"></i></a></li> 
+         <li class="fb"><a href="https://www.facebook.com/flowroute" target="_blank"><i class="fa fa-facebook-square"></i></a></li> 
+         <li class="ig"><a href="https://www.instagram.com/flowroute" target="_blank"><i class="fa fa-instagram"></i></a></li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <!-- /container --> 
+    <!--<div class="container footer-copyright">
+		&copy; Copyright  Flowroute Inc. All rights reserved. FLOWROUTE and the swirl design logo are trademarks of Flowroute Inc.
+		<p class="text-center">1218 3rd Avenue, Floor 6, Seattle, WA 98101</p>
+	</div>--> 
+   </footer> 
+   <!-- Modal Contact Forms --> 
+   <div class="about-overlay partner-overlay sales"> 
+    <div class="about-modal-content partner-modal"> 
+     <a href="#" class="closeAboutModal closePartnerForm"><img src="https://blog.flowroute.com/wp-content/themes/flowroute/dist/images/close.png"></a> 
+     <div class="row modal-c"> 
+      <div class="col-md-6 light-bg"> 
+       <h3>Contact Us</h3> 
+       <p> Flowroute provides cloud-based communications service providers with direct access to phone numbers, number porting, call routing, signaling data, and messaging capabilities through an API and online portal. Flowroute enables users to scale their solutions by programmatically integrating communication services into their offerings to create unique user experiences. </p> 
+      </div> 
+      <!-- /col-md-6 --> 
+      <div class="col-md-6"> 
+       <div class="row"> 
+        <iframe src="https://go.pardot.com/l/48002/2015-08-18/282crt" width="100%" height="700" type="text/html" frameborder="0" allowtransparency="true" style="border: 0"></iframe> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <!-- partner-modal --> 
+   </div> 
+   <!-- about-overlay --> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/comment-reply.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/themes/flowroute/20170913150609/assets/scripts/syntax-h.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/themes/flowroute/20170913150609/dist/scripts/main.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/ui/core.min.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/ui/widget.min.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/ui/position.min.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/ui/menu.min.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/wp-a11y.js"></script> 
+   <script type="text/javascript">
+/* <![CDATA[ */
+var uiAutocompleteL10n = {"noResults":"No results found.","oneResult":"1 result found. Use up and down arrow keys to navigate.","manyResults":"%d results found. Use up and down arrow keys to navigate.","itemSelected":"Item selected."};
+/* ]]> */
+</script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/jquery/ui/autocomplete.min.js"></script> 
+   <script type="text/javascript" src="https://s3.amazonaws.com/wordpress-cdn-cache/static/core/20170913150608/js/wp-embed.js"></script> 
+  </div> 
+  <!-- /widewrap --> 
+  <!-- Ad Roll --> 
+  <script type="text/javascript">
+    adroll_adv_id = "O7Q3MKXCCVB55F5HPCZDBF";
+    adroll_pix_id = "N6NNWW5FGBALPMIHDEWPVS";
+    /* OPTIONAL: provide email to improve user identification */
+    /* adroll_email = "username@example.com"; */
+    (function () {
+        var _onload = function(){
+            if (document.readyState && !/loaded|complete/.test(document.readyState)){setTimeout(_onload, 10);return}
+            if (!window.__adroll_loaded){__adroll_loaded=true;setTimeout(_onload, 50);return}
+            var scr = document.createElement("script");
+            var host = (("https:" == document.location.protocol) ? "https://s.adroll.com" : "http://a.adroll.com");
+            scr.setAttribute('async', 'true');
+            scr.type = "text/javascript";
+            scr.src = host + "/j/roundtrip.js";
+            ((document.getElementsByTagName('head') || [null])[0] ||
+                document.getElementsByTagName('script')[0].parentNode).appendChild(scr);
+        };
+        if (window.addEventListener) {window.addEventListener('load', _onload, false);}
+        else {window.attachEvent('onload', _onload)}
+    }());
+  </script>   
+  <!-- Dynamic page generated in 0.911 seconds. --> 
+  <!-- Cached page generated by WP-Super-Cache on 2017-09-17 18:15:41 --> 
+  <!-- Compression = gzip -->
+ </body>
+</html>

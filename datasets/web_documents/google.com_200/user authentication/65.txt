@@ -1,0 +1,620 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Refactoring a Basic, Authenticated API with Node, Express, and Mongo</title> 
+  <meta name="description" content=""> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="shortcut icon" href="/favicon.ico"> 
+  <link rel="stylesheet" type="text/css" href="/assets/css/screen.css?v=3efdc0984b"> 
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400"> 
+  <link rel="canonical" href="http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/"> 
+  <meta name="referrer" content="origin"> 
+  <meta property="og:site_name" content="SlatePeak"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Refactoring a Basic, Authenticated API with Node, Express, and Mongo"> 
+  <meta property="og:description" content="In a previous series, I was attempting to break down building a full stack JavaScript application. I have since learned a great deal, and I want to go back and make improvements upon what was already covered before moving forward. This means the whole app will be restructured, so it"> 
+  <meta property="og:url" content="http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/"> 
+  <meta property="article:published_time" content="2016-07-20T16:44:29.849Z"> 
+  <meta property="article:modified_time" content="2016-08-10T13:08:27.085Z"> 
+  <meta property="article:publisher" content="https://www.facebook.com/slatepeak"> 
+  <meta property="article:author" content="https://www.facebook.com/JoshuaSlate91"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:title" content="Refactoring a Basic, Authenticated API with Node, Express, and Mongo"> 
+  <meta name="twitter:description" content="In a previous series, I was attempting to break down building a full stack JavaScript application. I have since learned a great deal, and I want to go back and make improvements upon what was already covered before moving forward. This means the whole app will be restructured, so it"> 
+  <meta name="twitter:url" content="http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/"> 
+  <meta name="twitter:label1" content="Written by"> 
+  <meta name="twitter:data1" content="Joshua Slate"> 
+  <meta name="twitter:site" content="@slatepeak"> 
+  <meta name="twitter:creator" content="@joshuaslate"> 
+  <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "SlatePeak",
+        "logo": "http://blog.slatepeak.com/content/images/2016/07/slatepeak-logo-white.svg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Joshua Slate",
+        "image": "//www.gravatar.com/avatar/1fff5e8b2141e96621cdfe3e2e676d35?s=250&d=mm&r=x",
+        "url": "http://blog.slatepeak.com/author/joshua/",
+        "sameAs": [
+            "https://www.facebook.com/JoshuaSlate91",
+            "https://twitter.com/joshuaslate"
+        ],
+        "description": "Entrepreneur. Rock climber. Software engineer. Founder of @SlatePeak and others."
+    },
+    "headline": "Refactoring a Basic, Authenticated API with Node, Express, and Mongo",
+    "url": "http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/",
+    "datePublished": "2016-07-20T16:44:29.849Z",
+    "dateModified": "2016-08-10T13:08:27.085Z",
+    "description": "In a previous series, I was attempting to break down building a full stack JavaScript application. I have since learned a great deal, and I want to go back and make improvements upon what was already covered before moving forward. This means the whole app will be restructured, so it"
+}
+    </script> 
+  <meta name="generator" content="Ghost 0.8"> 
+  <link rel="alternate" type="application/rss+xml" title="SlatePeak" href="http://blog.slatepeak.com/rss/"> 
+  <!-- http://prismjs.com/index.html#languages-list --> 
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/themes/prism-okaidia.min.css" rel="stylesheet"> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/prism.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-core.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-javascript.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-jsx.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.5.1/components/prism-css.min.js"></script> 
+  <style>  
+  pre {
+    word-wrap: normal;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    -webkit-hyphens: none;
+    hyphens: none;
+    font-size: 0.7em;
+    line-height: 1.3em;
+}
+pre code, pre tt {  
+    white-space: pre;
+}
+code[class*="language-"], pre[class*="language-"] {  
+    line-height: 1.2em;
+}
+</style> 
+ </head> 
+ <body class="post-template nav-closed"> 
+  <div class="nav"> 
+   <h3 class="nav-title">Menu</h3> 
+   <a href="#" class="nav-close"> <span class="hidden">Close</span> </a> 
+   <ul> 
+    <li class="nav-home" role="presentation"><a href="https://slatepeak.com">Home</a></li> 
+    <li class="nav-blog-home" role="presentation"><a href="http://blog.slatepeak.com/">Blog Home</a></li> 
+    <li class="nav-twitter" role="presentation"><a href="http://twitter.com/slatepeak">Twitter</a></li> 
+    <li class="nav-facebook" role="presentation"><a href="http://facebook.com/slatepeak">Facebook</a></li> 
+   </ul> 
+   <a class="subscribe-button" href="http://blog.slatepeak.com/subscribe/">Subscribe</a> 
+  </div> 
+  <span class="nav-cover"></span> 
+  <div class="site-wrapper"> 
+   <header class="main-header post-head no-cover"> 
+    <nav class="main-nav  clearfix"> 
+     <a class="blog-logo" href="http://blog.slatepeak.com"><img src="/content/images/2016/07/slatepeak-logo-white.svg" alt="SlatePeak"></a> 
+     <a class="menu-button icon-menu" href="#"><span class="word">Menu</span></a> 
+    </nav> 
+   </header> 
+   <main class="content" role="main"> 
+    <article class="post"> 
+     <header class="post-header"> 
+      <h1 class="post-title">Refactoring a Basic, Authenticated API with Node, Express, and Mongo</h1> 
+      <section class="post-meta"> 
+       <time class="post-date" datetime="2016-07-20">20 July 2016</time> 
+      </section> 
+     </header> 
+     <section class="post-content"> 
+      <p>In a previous series, I was attempting to break down building a full stack JavaScript application. I have since learned a great deal, and I want to go back and make improvements upon what was already covered before moving forward. This means the whole app will be restructured, so it might behoove you to start from scratch. This post will be at a slightly quicker pace than the previous three guides I wrote, so reference those if need be.</p> 
+      <p>Once again, our chosen stack for development will be: Node, Express, React (with Redux), and MongoDB.</p> 
+      <h4 id="step1scaffolding">Step 1: Scaffolding</h4> 
+      <p>Open up a new folder and call it saas-tutorial. Run <code>git init</code>. Feel free to add your license of choice and add a README.md if you'd like. I recommend adding a .gitignore file here as well. For the most part, I used the <a href="https://github.com/github/gitignore/blob/master/Node.gitignore">standard GitHub Node.js boilerplate</a>, but I added the following under "#Dependency directory": </p> 
+      <pre><code class="language-text">client/node_modules  
+server/node_modules  
+</code></pre> 
+      <p>Next, create a folder called client and a folder called server. We will go ahead and get our directory structure in place for the client-side of the app now, but we won't touch that in this part of the tutorial. Within the client folder, create the following: </p> 
+      <pre><code class="language-text">/src
+|----/actions
+|----/components
+|----/public
+     |----/stylesheets
+     |----/img
+|----/reducers
+</code></pre> 
+      <p>Now in the server folder, create the following: </p> 
+      <pre><code class="language-text">/config
+|----/main.js
+/controllers
+/models
+index.js  
+package.json  
+router.js  
+</code></pre> 
+      <p>That's it for step one. Let's start our server. </p> 
+      <h4 id="step2startinganodeexpressserver">Step 2: Starting a Node/Express Server</h4> 
+      <p>Navigate to the server folder and run <code>npm init</code>. Answer the questions when you are prompted. Name the package in a way that signifies this is your server-side code. Next, run: </p> 
+      <pre><code class="language-text">npm install -g nodemon  
+</code></pre> 
+      <p>This will globally install nodemon, which you will use to reload your server when changes have been made. Now we can install the local packages we will need:</p> 
+      <pre><code class="language-text">npm install --save express morgan  
+</code></pre> 
+      <p>The --save tells NPM to add those packages to your package.json file automatically. Now, open config/main.js and add the following: </p> 
+      <pre><code class="language-javascript">module.exports = {  
+'port': process.env.PORT || 3000  
+}
+</code></pre> 
+      <p>Save the file, then move onto index.js. The first step is to import the packages we'll need in addition to the config file we just created.</p> 
+      <pre><code class="language-javascript">// Importing Node modules and initializing Express
+const express = require('express'),  
+      app = express(),
+      logger = require('morgan'),
+      config = require('./config/main');
+</code></pre> 
+      <p>Now we can start the server by adding this just below the imports: </p> 
+      <pre><code class="language-javascript">// Start the server
+const server = app.listen(config.port);  
+console.log('Your server is running on port ' + config.port + '.');  
+</code></pre> 
+      <p>We will also want to set up basic middleware for all our server requests. Underneath where we started the server, add:</p> 
+      <pre><code class="language-javascript">// Setting up basic middleware for all Express requests
+app.use(logger('dev')); // Log requests to API using morgan
+
+// Enable CORS from client-side
+app.use(function(req, res, next) {  
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Allow-Credentials");
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+</code></pre> 
+      <p>Now if you run <code>nodemon index.js</code>, you'll be running a server! This was all covered in more depth in <a href="http://blog.slatepeak.com/starting-your-first-node-express-javascript-server-2/">this post</a>. Please refer there or leave a comment if you want a deeper understanding of what we are doing in this step. Please note, there will be differences in code. This guide is making improvements to the old one.</p> 
+      <h4 id="step3addingjwtauthenticationandconnectingtomongodb">Step 3: Adding JWT Authentication and Connecting to MongoDB</h4> 
+      <p>This step is going to be similar to <a href="http://blog.slatepeak.com/creating-a-simple-node-express-api-authentication-system-with-passport-and-jwt/">this post</a>, so please refer there if you want more information or get confused along the way.</p> 
+      <p>For this step, we will need to add more packages. Run: </p> 
+      <pre><code class="language-text">npm install --save body-parser mongoose  
+</code></pre> 
+      <p>Now open up config/main.js again and add your MongoDB connection details. I recommend using <a href="https://mlab.com/">mLab</a> for a free MongoDB sandbox, but you can also set a local MongoDB instance up if you choose.</p> 
+      <p>We are also going to add the secret we will use for signing our JSON Web Tokens (JWT) down the road) while we are already in this file. You should now have something like this:</p> 
+      <pre><code class="language-javascript">module.exports = {  
+  // Secret key for JWT signing and encryption
+  'secret': 'super secret passphrase',
+  // Database connection information
+  'database': 'mongodb://localhost:27017',
+  // Setting port for server
+  'port': process.env.PORT || 3000
+}
+</code></pre> 
+      <p>Now we'll go back into index.js and add imports for mongoose and body-parser. Your import section should now look like this: </p> 
+      <pre><code class="language-javascript">const express = require('express'),  
+      app = express(),
+      bodyParser = require('body-parser'),
+      logger = require('morgan'),
+      mongoose = require('mongoose'),
+      config = require('./config/main');
+</code></pre> 
+      <p>Since we have imported mongoose and our config, we can connect our server to our database by adding this below the imports: </p> 
+      <pre><code class="language-javascript">// Database Connection
+mongoose.connect(config.database);  
+</code></pre> 
+      <p>In our middleware section, we will want to add body-parser, so we can parse urlencoded bodies to JSON and expose the object in req.body when we start building endpoints.</p> 
+      <pre><code class="language-javascript">app.use(bodyParser.urlencoded({ extended: false }));  
+app.use(bodyParser.json());  
+</code></pre> 
+      <p>Now let's think about how we'll structure our user information. Let's move over to the models folder and create a new file, user.js. In this file, we will be defining the schema by which our user data will be saved.</p> 
+      <p>First, we will need to run: </p> 
+      <pre><code class="language-text">npm install --save bcrypt-nodejs  
+</code></pre> 
+      <p>Import the following: </p> 
+      <pre><code class="language-javascript">const mongoose = require('mongoose'),  
+      Schema = mongoose.Schema,
+      bcrypt = require('bcrypt-nodejs');
+</code></pre> 
+      <p>Now we can actually start building our schema. To gain a deeper understanding of what we can do with schemas, take a look at the <a href="http://mongoosejs.com/docs/guide.html">mongoose documentation</a>.</p> 
+      <p>Enter the following below the imports: </p> 
+      <pre><code class="language-javascript">//================================
+// User Schema
+//================================
+const UserSchema = new Schema({  
+  email: {
+    type: String,
+    lowercase: true,
+    unique: true,
+    required: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  profile: {
+    firstName: { type: String },
+    lastName: { type: String }
+  },
+  role: {
+    type: String,
+    enum: ['Member', 'Client', 'Owner', 'Admin'],
+    default: 'Member'
+  },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date }
+},
+{
+  timestamps: true
+});
+</code></pre> 
+      <p>Hopefully you can start to figure out what we're accomplishing here. We are saying that the user objects we create and save will follow this structure. If a field is required, a new user cannot be saved without it. The "enum" key means that field can only be saved with one of the specified values. Likewise, with type, only data of the specified type can be saved for that field.</p> 
+      <p>Next, we need to handle password hashing. A plain-text password should never be stored in a database. That's a security problem just waiting to happen. We will use bcrypt to take care of this:</p> 
+      <pre><code class="language-javascript">// Pre-save of user to database, hash password if password is modified or new
+UserSchema.pre('save', function(next) {  
+  const user = this,
+        SALT_FACTOR = 5;
+
+  if (!user.isModified('password')) return next();
+
+  bcrypt.genSalt(SALT_FACTOR, function(err, salt) {
+    if (err) return next(err);
+
+    bcrypt.hash(user.password, salt, null, function(err, hash) {
+      if (err) return next(err);
+      user.password = hash;
+      next();
+    });
+  });
+});
+</code></pre> 
+      <p>Now we need to create a method to check a user's password (on a login attempt) against the hashed password we have stored.</p> 
+      <p>Fortunately, bcrypt makes this simple: </p> 
+      <pre><code class="language-javascript">// Method to compare password for login
+UserSchema.methods.comparePassword = function(candidatePassword, cb) {  
+  bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
+    if (err) { return cb(err); }
+
+    cb(null, isMatch);
+  });
+}
+</code></pre> 
+      <p>Finally, we can export the model and move onto our next task.</p> 
+      <pre><code class="language-javascript">module.exports = mongoose.model('User', UserSchema);  
+</code></pre> 
+      <p>Next up, we'll configure passport, which is a very popular and flexible authentication library. We will need to install several more packages. </p> 
+      <pre><code class="language-text">npm install --save passport passport-jwt passport-local`  
+</code></pre> 
+      <p>Now, let's import passport, our main config, and our user model into a new file, config/passport.js: </p> 
+      <pre><code class="language-javascript">// Importing Passport, strategies, and config
+const passport = require('passport'),  
+      User = require('../models/user'),
+      config = require('./main'),
+      JwtStrategy = require('passport-jwt').Strategy,
+      ExtractJwt = require('passport-jwt').ExtractJwt,
+      LocalStrategy = require('passport-local');
+</code></pre> 
+      <p>Underneath that, we will tell passport that we have opted to use the email field rather than the username field:</p> 
+      <pre><code class="language-javascript">const localOptions = { usernameField: 'email' };  
+</code></pre> 
+      <p>Now, we will set up the local login strategy, which will be used to authenticate users with an email address and password. A successful local login will yield the user a JSON Web Token to use to authenticate future requests automatically.</p> 
+      <p>This next portion is essentially straight from the passport documentation: </p> 
+      <pre><code class="language-javascript">// Setting up local login strategy
+const localLogin = new LocalStrategy(localOptions, function(email, password, done) {  
+  User.findOne({ email: email }, function(err, user) {
+    if(err) { return done(err); }
+    if(!user) { return done(null, false, { error: 'Your login details could not be verified. Please try again.' }); }
+
+    user.comparePassword(password, function(err, isMatch) {
+      if (err) { return done(err); }
+      if (!isMatch) { return done(null, false, { error: "Your login details could not be verified. Please try again." }); }
+
+      return done(null, user);
+    });
+  });
+});
+</code></pre> 
+      <p>Now, let's set up the JWT authentication options: </p> 
+      <pre><code class="language-javascript">const jwtOptions = {  
+  // Telling Passport to check authorization headers for JWT
+  jwtFromRequest: ExtractJwt.fromAuthHeader(),
+  // Telling Passport where to find the secret
+  secretOrKey: config.secret
+};
+</code></pre> 
+      <p>Now, we can set up our JWT login strategy and pass our options through:</p> 
+      <pre><code class="language-javascript">// Setting up JWT login strategy
+const jwtLogin = new JwtStrategy(jwtOptions, function(payload, done) {  
+  User.findById(payload._id, function(err, user) {
+    if (err) { return done(err, false); }
+
+    if (user) {
+      done(null, user);
+    } else {
+      done(null, false);
+    }
+  });
+});
+</code></pre> 
+      <p><em>Please note, some people have had issues with this step. Depending on your setup, you might need to replace payload._id with payload.doc._id or payload.document._id. When in doubt, add <code>console.log(payload);</code> to your code and search the console for the right user ID if you are always getting the same user back when logging in different user accounts.</em></p> 
+      <p>And finally, allow passport to use the strategies we defined: </p> 
+      <pre><code class="language-javascript">passport.use(jwtLogin);  
+passport.use(localLogin);  
+</code></pre> 
+      <p>We have made some great progress, but now we need to build our authentication controller. Create and open controllers/authentication.js. I thought we could have some fun here and use some (very light) ES6 to start familiarizing with it. We will use ES6 heavily when we get to the client-side portion of this app. We will use "let" and "const" rather than "var". Add <code>"use strict"</code> to the top of the file. Now we need to install a couple more packages. </p> 
+      <pre><code class="language-text">npm install --save jsonwebtoken crypto  
+</code></pre> 
+      <p>Let's import them, as well as our main config and our user model: </p> 
+      <pre><code class="language-javascript">const jwt = require('jsonwebtoken'),  
+      crypto = require('crypto'),
+      User = require('../models/user'),
+      config = require('../config/main');
+</code></pre> 
+      <p>We need to create a function to generate a JSON web token from the user object we pass in. </p> 
+      <pre><code class="language-javascript">function generateToken(user) {  
+  return jwt.sign(user, config.secret, {
+    expiresIn: 10080 // in seconds
+  });
+}
+</code></pre> 
+      <p>We don't want to use the entire user object to sign our JWTs-- that's a lot of information to eventually store in a cookie. Plus, we don't want to be returning huge blocks of what could be sensitive user information. We need control. Let's create a function to select the user information we want to pass through: </p> 
+      <pre><code class="language-javascript">// Set user info from request
+function setUserInfo(request) {  
+  return {
+    _id: request._id,
+    firstName: request.profile.firstName,
+    lastName: request.profile.lastName,
+    email: request.email,
+    role: request.role,
+  };
+</code></pre> 
+      <p>Now we need to create handlers for the login and registration routes. There's a lot of error checking involved. It's a decent amount of code, but it's pretty easy to follow, so don't be scared: </p> 
+      <pre><code class="language-javascript">//========================================
+// Login Route
+//========================================
+exports.login = function(req, res, next) {
+
+  let userInfo = setUserInfo(req.user);
+
+  res.status(200).json({
+    token: 'JWT ' + generateToken(userInfo),
+    user: userInfo
+  });
+}
+
+
+//========================================
+// Registration Route
+//========================================
+exports.register = function(req, res, next) {  
+  // Check for registration errors
+  const email = req.body.email;
+  const firstName = req.body.firstName;
+  const lastName = req.body.lastName;
+  const password = req.body.password;
+
+  // Return error if no email provided
+  if (!email) {
+    return res.status(422).send({ error: 'You must enter an email address.'});
+  }
+
+  // Return error if full name not provided
+  if (!firstName || !lastName) {
+    return res.status(422).send({ error: 'You must enter your full name.'});
+  }
+
+  // Return error if no password provided
+  if (!password) {
+    return res.status(422).send({ error: 'You must enter a password.' });
+  }
+
+  User.findOne({ email: email }, function(err, existingUser) {
+      if (err) { return next(err); }
+
+      // If user is not unique, return error
+      if (existingUser) {
+        return res.status(422).send({ error: 'That email address is already in use.' });
+      }
+
+      // If email is unique and password was provided, create account
+      let user = new User({
+        email: email,
+        password: password,
+        profile: { firstName: firstName, lastName: lastName }
+      });
+
+      user.save(function(err, user) {
+        if (err) { return next(err); }
+
+        // Subscribe member to Mailchimp list
+        // mailchimp.subscribeToNewsletter(user.email);
+
+        // Respond with JWT if user was created
+
+        let userInfo = setUserInfo(user);
+
+        res.status(201).json({
+          token: 'JWT ' + generateToken(userInfo),
+          user: userInfo
+        });
+      });
+  });
+}
+</code></pre> 
+      <p>For some added fun, we can prepare the authorization/role check handler too: </p> 
+      <pre><code class="language-javascript">//========================================
+// Authorization Middleware
+//========================================
+
+// Role authorization check
+exports.roleAuthorization = function(role) {  
+  return function(req, res, next) {
+    const user = req.user;
+
+    User.findById(user._id, function(err, foundUser) {
+      if (err) {
+        res.status(422).json({ error: 'No user was found.' });
+        return next(err);
+      }
+
+      // If user is found, check role.
+      if (foundUser.role == role) {
+        return next();
+      }
+
+      res.status(401).json({ error: 'You are not authorized to view this content.' });
+      return next('Unauthorized');
+    })
+  }
+}
+</code></pre> 
+      <p>We will have to create "forgot password" and "reset password" routes in the future, but we'll worry about that when we need to.</p> 
+      <p>The last step for the authentication in this guide will be to create some routes. Back in the main server folder, create a new file, router.js. We need to import our controller, express, passport, and our passport config file here.</p> 
+      <pre><code class="language-javascript">const AuthenticationController = require('./controllers/authentication'),  
+      express = require('express'),
+      passportService = require('./config/passport'),
+      passport = require('passport');
+</code></pre> 
+      <p>Next, we need to setup our passport middleware: </p> 
+      <pre><code class="language-javascript">// Middleware to require login/auth
+const requireAuth = passport.authenticate('jwt', { session: false });  
+const requireLogin = passport.authenticate('local', { session: false });  
+</code></pre> 
+      <p>If you'd like to add a role-based authorization system, you could create constant references for the role names: </p> 
+      <pre><code class="language-javascript">// Constants for role types
+const REQUIRE_ADMIN = "Admin",  
+      REQUIRE_OWNER = "Owner",
+      REQUIRE_CLIENT = "Client",
+      REQUIRE_MEMBER = "Member";
+</code></pre> 
+      <p>And finally, we set up the routes: </p> 
+      <pre><code class="language-javascript">module.exports = function(app) {  
+  // Initializing route groups
+  const apiRoutes = express.Router(),
+        authRoutes = express.Router();
+
+  //=========================
+  // Auth Routes
+  //=========================
+
+  // Set auth routes as subgroup/middleware to apiRoutes
+  apiRoutes.use('/auth', authRoutes);
+
+  // Registration route
+  authRoutes.post('/register', AuthenticationController.register);
+
+  // Login route
+  authRoutes.post('/login', requireLogin, AuthenticationController.login);
+
+// Set url for API group routes
+  app.use('/api', apiRoutes);
+};
+</code></pre> 
+      <p>Now we just need to give our app access to these routes. In index.js, import your routes: </p> 
+      <pre><code class="language-javascript">const router = require('./router');  
+</code></pre> 
+      <p>Lastly, add this at the very bottom of the index.js file: </p> 
+      <pre><code class="language-javascript">router(app);  
+</code></pre> 
+      <p>Using Postman, you should now be able to test these endpoints. Instructions for running these tests using Postman can be found in the original post <a href="http://blog.slatepeak.com/creating-a-simple-node-express-api-authentication-system-with-passport-and-jwt/">here</a>.</p> 
+      <p>The next part (a RESTful API for a chat system) will be broken into another post. We are going to refactor what I originally put together pretty thoroughly, and this feels like a pretty good breaking point. For anyone who would like to see a sample of what we are going to put together, I am a little further along on <a href="https://github.com/joshuaslate/mern-starter">this repository</a>, though I have more refactoring to do there as well.</p> 
+      <p>Here is the React/Redux (client side) portion of this tutorial: <a href="http://blog.slatepeak.com/build-a-react-redux-app-with-json-web-token-jwt-authentication/">http://blog.slatepeak.com/build-a-react-redux-app-with-json-web-token-jwt-authentication/</a></p> 
+     </section> 
+     <footer class="post-footer"> 
+      <figure class="author-image"> 
+       <a class="img" href="/author/joshua/" style="background-image: url(//www.gravatar.com/avatar/1fff5e8b2141e96621cdfe3e2e676d35?s=250&amp;d=mm&amp;r=x)"><span class="hidden">Joshua Slate's Picture</span></a> 
+      </figure> 
+      <section class="author"> 
+       <h4><a href="/author/joshua/">Joshua Slate</a></h4> 
+       <p>Entrepreneur. Rock climber. Software engineer. Founder of @SlatePeak and others.</p> 
+       <div class="author-meta"> 
+        <span class="author-location icon-location">Saint Paul, MN</span> 
+       </div> 
+      </section> 
+      <section class="share"> 
+       <h4>Share this post</h4> 
+       <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=Refactoring%20a%20Basic%2C%20Authenticated%20API%20with%20Node%2C%20Express%2C%20and%20Mongo&amp;url=http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"> <span class="hidden">Twitter</span> </a> 
+       <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;"> <span class="hidden">Facebook</span> </a> 
+       <a class="icon-google-plus" href="https://plus.google.com/share?url=http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;"> <span class="hidden">Google+</span> </a> 
+      </section> 
+      <section class="gh-subscribe"> 
+       <h3 class="gh-subscribe-title">Subscribe to SlatePeak</h3> 
+       <p>Get the latest posts delivered right to your inbox.</p> 
+       <form method="post" action="/subscribe/" class=""> 
+        <input class="confirm" type="hidden" name="confirm">
+        <input class="location" type="hidden" name="location">
+        <input class="referrer" type="hidden" name="referrer"> 
+        <div class="form-group"> 
+         <input class="subscribe-email" type="email" name="email" placeholder="Your email address"> 
+        </div> 
+        <button class="" type="submit">Subscribe</button> 
+        <script type="text/javascript">(function(g,h,o,s,t){h[o]('.location')[s]=h[o]('.location')[s] || g.location.href;h[o]('.referrer')[s]=h[o]('.referrer')[s] || h.referrer;})(window,document,'querySelector','value');</script> 
+       </form> 
+       <span class="gh-subscribe-rss">or subscribe <a href="http://cloud.feedly.com/#subscription/feed/http://blog.slatepeak.com/rss/">via RSS</a> with Feedly!</span> 
+      </section> 
+     </footer> 
+     <div id="disqus_thread"></div> 
+     <script>
+    /**
+     *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+     *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+     */
+    /*
+    var disqus_config = function () {
+        this.page.url = 'http://blog.slatepeak.com/refactoring-a-basic-authenticated-api-with-node-express-and-mongo/';
+        this.page.identifier = 'ghost-11';
+    };
+    */
+    (function() {  // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+        
+        s.src = '//slatepeak.disqus.com/embed.js';
+        
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+     </noscript> 
+    </article> 
+   </main> 
+   <aside class="read-next"> 
+    <a class="read-next-story " style="background-image: url(/content/images/2016/07/real-time-chat-api-1.jpg)" href="/creating-a-real-time-chat-api-with-node-express-socket-io-and-mongodb/"> 
+     <section class="post"> 
+      <h2>Creating a Real Time Chat API with Node, Express, Socket.io, and MongoDB</h2> 
+      <p>In my last post, I broke down creating an API with JWT authentication. In this post, we are going…</p> 
+     </section> </a> 
+    <a class="read-next-story prev no-cover" href="/how-to-start-a-business-with-no-money/"> 
+     <section class="post"> 
+      <h2>How to Start a Business with No Money</h2> 
+      <p>The internet is a beautiful thing. It opens new entrepreneurial possibilities up to anyone with a good idea and…</p> 
+     </section> </a> 
+   </aside> 
+   <footer class="site-footer clearfix"> 
+    <section class="copyright">
+     <a href="http://blog.slatepeak.com">SlatePeak</a> © 2017
+    </section> 
+    <section class="poweredby">
+     Proudly published with 
+     <a href="https://ghost.org">Ghost</a>
+    </section> 
+   </footer> 
+  </div> 
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-68283126-1', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+  <script type="text/javascript" src="/assets/js/jquery.fitvids.js?v=3efdc0984b"></script> 
+  <script type="text/javascript" src="/assets/js/index.js?v=3efdc0984b"></script>   
+ </body>
+</html>

@@ -1,0 +1,868 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html dir="ltr">
+ <head> 
+  <link href="https://www.blogger.com/static/v1/widgets/3730162741-widget_css_bundle.css" rel="stylesheet" type="text/css"> 
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"> 
+  <meta content="blogger" name="generator"> 
+  <link href="http://sthen.blogspot.com.ar/favicon.ico" rel="icon" type="image/x-icon"> 
+  <link href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html" rel="canonical"> 
+  <link rel="alternate" type="application/atom+xml" title="On Software Development - Atom" href="http://sthen.blogspot.com/feeds/posts/default"> 
+  <link rel="alternate" type="application/rss+xml" title="On Software Development - RSS" href="http://sthen.blogspot.com/feeds/posts/default?alt=rss"> 
+  <link rel="service.post" type="application/atom+xml" title="On Software Development - Atom" href="https://www.blogger.com/feeds/5841903314797592940/posts/default"> 
+  <link rel="alternate" type="application/atom+xml" title="On Software Development - Atom" href="http://sthen.blogspot.com/feeds/6059384167116550858/comments/default"> 
+  <!--Can't find substitution for tag [blog.ieCssRetrofitLinks]--> 
+  <meta content="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html" property="og:url"> 
+  <meta content="SFTP in Java with JSch Using Private Key Authentication" property="og:title"> 
+  <meta content="JSch  is an excellent library for ssh in Java. One bad thing is that there is no real documentation - or rather, the source itself is the do..." property="og:description"> 
+  <!--[if IE]> <script> (function() { var html5 = ("abbr,article,aside,audio,canvas,datalist,details," + "figure,footer,header,hgroup,mark,menu,meter,nav,output," + "progress,section,time,video").split(','); for (var i = 0; i < html5.length; i++) { document.createElement(html5[i]); } try { document.execCommand('BackgroundImageCache', false, true); } catch(e) {} })(); </script> <![endif]--> 
+  <title>On Software Development: SFTP in Java with JSch Using Private Key Authentication</title> 
+  <style id="page-skin-1" type="text/css"><!--
+/*
+-----------------------------------------------
+Blogger Template Style
+Name:     Minima Stretch
+Date:     26 Feb 2004
+----------------------------------------------- */
+
+/* Use this with templates/template-twocol.html */
+body {
+background:#ffffff;
+margin:0;
+color:#333333;
+font:x-small Georgia Serif;
+font-size/* */:/**/small;
+font-size: /**/small;
+text-align: center;
+}
+a:link {
+color:#5588aa;
+text-decoration:none;
+}
+a:visited {
+color:#999999;
+text-decoration:none;
+}
+a:hover {
+color:#cc6600;
+text-decoration:underline;
+}
+a img {
+border-width:0;
+}
+/* Header
+-----------------------------------------------
+*/
+#header-wrapper {
+margin:0 2% 10px;
+border:1px solid #cccccc;
+}
+#header {
+margin: 5px;
+border: 1px solid #cccccc;
+text-align: center;
+color:#666666;
+}
+#header-inner {
+background-position: center;
+margin-left: auto;
+margin-right: auto;
+}
+#header h1 {
+margin:5px 5px 0;
+padding:15px 20px .25em;
+line-height:1.2em;
+text-transform:uppercase;
+letter-spacing:.2em;
+font: normal normal 200% Georgia, Serif;
+}
+#header a {
+color:#666666;
+text-decoration:none;
+}
+#header a:hover {
+color:#666666;
+}
+#header .description {
+margin:0 5px 5px;
+padding:0 20px 15px;
+text-transform:uppercase;
+letter-spacing:.2em;
+line-height: 1.4em;
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+color: #999999;
+}
+#header img {
+margin-left: auto;
+margin-right: auto;
+}
+/* Outer-Wrapper
+----------------------------------------------- */
+#outer-wrapper {
+margin:0;
+padding:10px;
+text-align:left;
+font: normal normal 100% Georgia, Serif;
+}
+#main-wrapper {
+margin-left: 2%;
+width: 67%;
+float: left;
+display: inline;       /* fix for doubling margin in IE */
+word-wrap: break-word; /* fix for long text breaking sidebar float in IE */
+overflow: hidden;      /* fix for long non-text content breaking IE sidebar float */
+}
+#sidebar-wrapper {
+margin-right: 2%;
+width: 25%;
+float: right;
+display: inline;       /* fix for doubling margin in IE */
+word-wrap: break-word; /* fix for long text breaking sidebar float in IE */
+overflow: hidden;      /* fix for long non-text content breaking IE sidebar float */
+}
+/* Headings
+----------------------------------------------- */
+h2 {
+margin:1.5em 0 .75em;
+font:normal normal 78% 'Trebuchet MS',Trebuchet,Arial,Verdana,Sans-serif;
+line-height: 1.4em;
+text-transform:uppercase;
+letter-spacing:.2em;
+color:#999999;
+}
+/* Posts
+-----------------------------------------------
+*/
+h2.date-header {
+margin:1.5em 0 .5em;
+}
+.post {
+margin:.5em 0 1.5em;
+border-bottom:1px dotted #cccccc;
+padding-bottom:1.5em;
+}
+.post h3 {
+margin:.25em 0 0;
+padding:0 0 4px;
+font-size:140%;
+font-weight:normal;
+line-height:1.4em;
+color:#cc6600;
+}
+.post h3 a, .post h3 a:visited, .post h3 strong {
+display:block;
+text-decoration:none;
+color:#cc6600;
+font-weight:normal;
+}
+.post h3 strong, .post h3 a:hover {
+color:#333333;
+}
+.post-body {
+margin:0 0 .75em;
+line-height:1.6em;
+}
+.post-body blockquote {
+line-height:1.3em;
+}
+.post-footer {
+margin: .75em 0;
+color:#999999;
+text-transform:uppercase;
+letter-spacing:.1em;
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+line-height: 1.4em;
+}
+.comment-link {
+margin-left:.6em;
+}
+.post img, table.tr-caption-container {
+padding:4px;
+border:1px solid #cccccc;
+}
+.tr-caption-container img {
+border: none;
+padding: 0;
+}
+.post blockquote {
+margin:1em 20px;
+}
+.post blockquote p {
+margin:.75em 0;
+}
+/* Comments
+----------------------------------------------- */
+#comments h4 {
+margin:1em 0;
+font-weight: bold;
+line-height: 1.4em;
+text-transform:uppercase;
+letter-spacing:.2em;
+color: #999999;
+}
+#comments-block {
+margin:1em 0 1.5em;
+line-height:1.6em;
+}
+#comments-block .comment-author {
+margin:.5em 0;
+}
+#comments-block .comment-body {
+margin:.25em 0 0;
+}
+#comments-block .comment-footer {
+margin:-.25em 0 2em;
+line-height: 1.4em;
+text-transform:uppercase;
+letter-spacing:.1em;
+}
+#comments-block .comment-body p {
+margin:0 0 .75em;
+}
+.deleted-comment {
+font-style:italic;
+color:gray;
+}
+.feed-links {
+clear: both;
+line-height: 2.5em;
+}
+#blog-pager-newer-link {
+float: left;
+}
+#blog-pager-older-link {
+float: right;
+}
+#blog-pager {
+text-align: center;
+}
+/* Sidebar Content
+----------------------------------------------- */
+.sidebar {
+color: #666666;
+line-height: 1.5em;
+}
+.sidebar ul {
+list-style:none;
+margin:0 0 0;
+padding:0 0 0;
+}
+.sidebar li {
+margin:0;
+padding-top:0;
+padding-right:0;
+padding-bottom:.25em;
+padding-left:15px;
+text-indent:-15px;
+line-height:1.5em;
+}
+.sidebar .widget, .main .widget {
+border-bottom:1px dotted #cccccc;
+margin:0 0 1.5em;
+padding:0 0 1.5em;
+}
+.main .Blog {
+border-bottom-width: 0;
+}
+/* Profile
+----------------------------------------------- */
+.profile-img {
+float: left;
+margin-top: 0;
+margin-right: 5px;
+margin-bottom: 5px;
+margin-left: 0;
+padding: 4px;
+border: 1px solid #cccccc;
+}
+.profile-data {
+margin:0;
+text-transform:uppercase;
+letter-spacing:.1em;
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+color: #999999;
+font-weight: bold;
+line-height: 1.6em;
+}
+.profile-datablock {
+margin:.5em 0 .5em;
+}
+.profile-textblock {
+margin: 0.5em 0;
+line-height: 1.6em;
+}
+.profile-link {
+font: normal normal 78% 'Trebuchet MS', Trebuchet, Arial, Verdana, Sans-serif;
+text-transform: uppercase;
+letter-spacing: .1em;
+}
+/* Footer
+----------------------------------------------- */
+#footer {
+width:660px;
+clear:both;
+margin:0 auto;
+padding-top:15px;
+line-height: 1.6em;
+text-transform:uppercase;
+letter-spacing:.1em;
+text-align: center;
+}
+
+--></style> 
+  <link href="https://www.blogger.com/dyn-css/authorization.css?targetBlogID=5841903314797592940&amp;zx=0a6e7f7b-8488-47eb-8cb7-e197fef8bf0c" media="none" onload="if(media!='all')media='all'" rel="stylesheet">
+  <noscript>
+   <link href="https://www.blogger.com/dyn-css/authorization.css?targetBlogID=5841903314797592940&amp;zx=0a6e7f7b-8488-47eb-8cb7-e197fef8bf0c" rel="stylesheet">
+  </noscript> 
+ </head> 
+ <body> 
+  <div class="navbar section" id="navbar">
+   <div class="widget Navbar" data-version="1" id="Navbar1">
+    <script type="text/javascript">
+    function setAttributeOnload(object, attribute, val) {
+      if(window.addEventListener) {
+        window.addEventListener('load',
+          function(){ object[attribute] = val; }, false);
+      } else {
+        window.attachEvent('onload', function(){ object[attribute] = val; });
+      }
+    }
+  </script> 
+    <div id="navbar-iframe-container"></div> 
+    <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script> 
+    <script type="text/javascript">
+      gapi.load("gapi.iframes:gapi.iframes.style.bubble", function() {
+        if (gapi.iframes && gapi.iframes.getContext) {
+          gapi.iframes.getContext().openChild({
+              url: 'https://www.blogger.com/navbar.g?targetBlogID\x3d5841903314797592940\x26blogName\x3dOn+Software+Development\x26publishMode\x3dPUBLISH_MODE_BLOGSPOT\x26navbarType\x3dBLUE\x26layoutType\x3dLAYOUTS\x26searchRoot\x3dhttp://sthen.blogspot.com/search\x26blogLocale\x3den_US\x26v\x3d2\x26homepageUrl\x3dhttp://sthen.blogspot.com/\x26targetPostID\x3d6059384167116550858\x26blogPostOrPageUrl\x3dhttp://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html\x26vt\x3d-2838929393697051241',
+              where: document.getElementById("navbar-iframe-container"),
+              id: "navbar-iframe"
+          });
+        }
+      });
+    </script>
+    <script type="text/javascript">
+(function() {
+var script = document.createElement('script');
+script.type = 'text/javascript';
+script.src = '//pagead2.googlesyndication.com/pagead/js/google_top_exp.js';
+var head = document.getElementsByTagName('head')[0];
+if (head) {
+head.appendChild(script);
+}})();
+</script> 
+   </div>
+  </div> 
+  <div id="outer-wrapper">
+   <div id="wrap2"> 
+    <!-- skip links for text browsers --> 
+    <span id="skiplinks" style="display:none;"> <a href="#main">skip to main </a> | <a href="#sidebar">skip to sidebar</a> </span> 
+    <div id="header-wrapper"> 
+     <div class="header section" id="header">
+      <div class="widget Header" data-version="1" id="Header1"> 
+       <div id="header-inner"> 
+        <div class="titlewrapper"> 
+         <h1 class="title"> <a href="http://sthen.blogspot.com.ar/"> On Software Development </a> </h1> 
+        </div> 
+        <div class="descriptionwrapper"> 
+         <p class="description"><span> </span></p> 
+        </div> 
+       </div> 
+      </div>
+     </div> 
+    </div> 
+    <div id="content-wrapper"> 
+     <div id="crosscol-wrapper" style="text-align:center"> 
+      <div class="crosscol no-items section" id="crosscol"></div> 
+     </div> 
+     <div id="main-wrapper"> 
+      <div class="main section" id="main">
+       <div class="widget HTML" data-version="1" id="HTML4"> 
+        <div class="widget-content"> 
+         <script type="text/javascript"><!--
+google_ad_client = "pub-1687451292169705";
+google_ad_host = "pub-1556223355139109";
+google_ad_host_channel="00000";
+google_ad_width = 728;
+google_ad_height = 90;
+google_ad_format = "728x90_as";
+google_ad_type = "text";
+//2007-05-31: leaderboard
+google_ad_channel = "4372238788";
+//-->
+</script> 
+         <script src="http://pagead2.googlesyndication.com/pagead/show_ads.js" type="text/javascript">
+</script> 
+        </div> 
+        <div class="clear"></div> 
+        <span class="widget-item-control"> <span class="item-control blog-admin"> <a class="quickedit" href="//www.blogger.com/rearrange?blogID=5841903314797592940&amp;widgetType=HTML&amp;widgetId=HTML4&amp;action=editWidget&amp;sectionId=main" onclick="return _WidgetManager._PopupConfig(document.getElementById(&quot;HTML4&quot;));" target="configHTML4" title="Edit"> <img alt="" height="18" src="https://resources.blogblog.com/img/icon18_wrench_allbkg.png" width="18"> </a> </span> </span> 
+        <div class="clear"></div> 
+       </div>
+       <div class="widget Blog" data-version="1" id="Blog1"> 
+        <div class="blog-posts hfeed"> 
+         <div class="date-outer"> 
+          <h2 class="date-header"><span>Friday, March 14, 2008</span></h2> 
+          <div class="date-posts"> 
+           <div class="post-outer"> 
+            <div class="post hentry uncustomized-post-template" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting"> 
+             <meta content="5841903314797592940" itemprop="blogId"> 
+             <meta content="6059384167116550858" itemprop="postId"> 
+             <a name="6059384167116550858"></a> 
+             <h3 class="post-title entry-title" itemprop="name"> SFTP in Java with JSch Using Private Key Authentication </h3> 
+             <div class="post-header"> 
+              <div class="post-header-line-1"></div> 
+             </div> 
+             <div class="post-body entry-content" id="post-body-6059384167116550858" itemprop="description articleBody"> 
+              <a href="http://www.jcraft.com/jsch/">JSch</a> is an excellent library for ssh in Java. One bad thing is that there is no real documentation - or rather, the source itself is the documentation. And the good news is of course that the source code is available along with a nice collection of examples.
+              <br>
+              <br>I recently had to use SFTP from a Java application and it did take some source-diving to figure out exactly how it works (specifically to get the parameters for JSch.addIdentity right). It turned out to be rather straight-forward:
+              <br>
+              <pre style="color: #0000ff;"><br>    ...<br><br>    private void execute() throws JSchException, SftpException {<br>        JSch jSch = new JSch();<br>        final byte[] prvkey = readMyPrivateKeyFromFile(); // Private key must be byte array<br>        final byte[] emptyPassPhrase = new byte[0]; // Empty passphrase for now, get real passphrase from MyUserInfo<br><br>        jSch.addIdentity(<br>            "myusername",    // String userName<br>            prvkey,          // byte[] privateKey <br>            null,            // byte[] publicKey<br>            emptyPassPhrase  // byte[] passPhrase<br>        );<br>        Session session = jSch.getSession("myusername", "hostname.com", 22);<br>        UserInfo ui = new MyUserInfo(); // MyUserInfo implements UserInfo<br>        session.setUserInfo(ui);<br>        session.connect();<br>        Channel channel = session.openChannel("sftp");<br>        ChannelSftp sftp = (ChannelSftp) channel;<br>        sftp.connect();<br><br>        final Vector files = sftp.ls(".");<br>        for (Object obj : files) {<br>            // Do stuff with files<br>        }<br>        sftp.disconnect();<br>        session.disconnect();<br>    }<br><br>    ...<br></pre>
+              <br>The MyUserInfo class must implement the UserInfo interface. There are a number of good examples of this in the jsch distribution. 
+              <div style="clear: both;"></div> 
+             </div> 
+             <div class="post-footer"> 
+              <div class="post-footer-line post-footer-line-1"> 
+               <span class="post-author vcard"> Posted by <span class="fn" itemprop="author" itemscope itemtype="http://schema.org/Person"> 
+                 <meta content="https://www.blogger.com/profile/00498372835096023136" itemprop="url"> <a class="g-profile" href="https://www.blogger.com/profile/00498372835096023136" rel="author" title="author profile"> <span itemprop="name">Niels Sthen Hansen</span> </a> </span> </span> 
+               <span class="post-timestamp"> at 
+                <meta content="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html" itemprop="url"> <a class="timestamp-link" href="http://sthen.blogspot.com.ar/2008/03/sftp-i-java-with-jsch-using-private-key.html" rel="bookmark" title="permanent link"><abbr class="published" itemprop="datePublished" title="2008-03-14T13:56:00Z">1:56 PM</abbr></a> </span> 
+               <span class="reaction-buttons"> </span> 
+               <span class="post-comment-link"> </span> 
+               <span class="post-backlinks post-comment-link"> </span> 
+               <span class="post-icons"> <span class="item-control blog-admin pid-1624905078"> <a href="https://www.blogger.com/post-edit.g?blogID=5841903314797592940&amp;postID=6059384167116550858&amp;from=pencil" title="Edit Post"> <img alt="" class="icon-action" height="18" src="https://resources.blogblog.com/img/icon18_edit_allbkg.gif" width="18"> </a> </span> </span> 
+               <div class="post-share-buttons goog-inline-block"> 
+               </div> 
+              </div> 
+              <div class="post-footer-line post-footer-line-2"> 
+               <span class="post-labels"> Labels: <a href="http://sthen.blogspot.com.ar/search/label/Java" rel="tag">Java</a>, <a href="http://sthen.blogspot.com.ar/search/label/SFTP" rel="tag">SFTP</a>, <a href="http://sthen.blogspot.com.ar/search/label/SSH" rel="tag">SSH</a> </span> 
+              </div> 
+              <div class="post-footer-line post-footer-line-3"> 
+               <span class="post-location"> </span> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="comments" id="comments"> 
+             <a name="comments"></a> 
+             <h4>17 comments:</h4> 
+             <div id="Blog1_comments-block-wrapper"> 
+              <dl class="avatar-comment-indent" id="comments-block"> 
+               <dt class="comment-author " id="c8097884940852536316"> 
+                <a name="c8097884940852536316"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/06629335881860002018" rel="nofollow" onclick="" class="avatar-hovercard" id="av-8097884940852536316-06629335881860002018"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="T"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/06629335881860002018" rel="nofollow">T</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-8097884940852536316"> 
+                <p> Another handy SFTP applet in Java is Loelink. It used JScape. [www.loelink.com] A big advantage is that I don't have to install anything! </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1210599360000#c8097884940852536316" title="comment permalink"> May 12, 2008 at 2:36 PM </a> <span class="item-control blog-admin pid-440307031"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=8097884940852536316" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author blog-author" id="c6617624262887082517"> 
+                <a name="c6617624262887082517"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow" onclick="" class="avatar-hovercard" id="av-6617624262887082517-00498372835096023136"><img src="https://img1.blogblog.com/img/blank.gif" width="29" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//bp3.blogger.com/_4E_zmGHw3rY/Rl8O4vyAxNI/AAAAAAAAAAs/QVDgTb1LKDQ/s35/nsh.jpg" title="Niels Sthen Hansen"> 
+                   <noscript>
+                    <img src="//bp3.blogger.com/_4E_zmGHw3rY/Rl8O4vyAxNI/AAAAAAAAAAs/QVDgTb1LKDQ/s35/nsh.jpg" width="29" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow">Niels Sthen Hansen</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-6617624262887082517"> 
+                <p> Hi T,<br><br>It actually looks like a really neat sftp client! <br><br>The application I was working on was server side with no gui so in our case jsch was more appropriate. But thank you for your comment and for the link. </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1210601880000#c6617624262887082517" title="comment permalink"> May 12, 2008 at 3:18 PM </a> <span class="item-control blog-admin pid-1624905078"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=6617624262887082517" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c9143511370441915262"> 
+                <a name="c9143511370441915262"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/02992085007657757748" rel="nofollow" onclick="" class="avatar-hovercard" id="av-9143511370441915262-02992085007657757748"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="RaviShankar"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/02992085007657757748" rel="nofollow">RaviShankar</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-9143511370441915262"> 
+                <p> Hi, Can you post the contents of readMyPrivateKeyFromFile(). I am having trouble passing the byte stream to the addIdentity. Keep coming back with java.lang.ArrayIndexOutOfBoundsException. I am using jsch-0.1.42. </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1266601194559#c9143511370441915262" title="comment permalink"> February 19, 2010 at 5:39 PM </a> <span class="item-control blog-admin pid-1005248842"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=9143511370441915262" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author blog-author" id="c6865977394200142199"> 
+                <a name="c6865977394200142199"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow" onclick="" class="avatar-hovercard" id="av-6865977394200142199-00498372835096023136"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" title="Niels Sthen Hansen"> 
+                   <noscript>
+                    <img src="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow">Niels Sthen Hansen</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-6865977394200142199"> 
+                <p> Hi RaviShankar,<br><br>Its been a while since I posted this and I seem to have misplaced the original source from back then.<br><br>As far as I remember readMyPrivateKeyFile() simply used FileUtils.readFileToByteArray() (from commons-io, http://commons.apache.org/io/).<br><br>Do you get the exception when reading the file or when you are passing it to jsch? Also, have you verified that the key file works, e.g. by using it from a command line ssh -i keyfile user@host ? </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1266749475823#c6865977394200142199" title="comment permalink"> February 21, 2010 at 10:51 AM </a> <span class="item-control blog-admin pid-1624905078"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=6865977394200142199" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c5312799394980709146"> 
+                <a name="c5312799394980709146"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00443017551840762668" rel="nofollow" onclick="" class="avatar-hovercard" id="av-5312799394980709146-00443017551840762668"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="Andi"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00443017551840762668" rel="nofollow">Andi</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-5312799394980709146"> 
+                <p> removing files on the sftp-server does not work. Also renaming files does not work too.<br><br>Any ideas please???<br><br>Andy </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1267358622953#c5312799394980709146" title="comment permalink"> February 28, 2010 at 12:03 PM </a> <span class="item-control blog-admin pid-1736808131"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=5312799394980709146" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author blog-author" id="c4761781933685531707"> 
+                <a name="c4761781933685531707"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow" onclick="" class="avatar-hovercard" id="av-4761781933685531707-00498372835096023136"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" title="Niels Sthen Hansen"> 
+                   <noscript>
+                    <img src="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow">Niels Sthen Hansen</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-4761781933685531707"> 
+                <p> Hi Andy<br>Have you made sure that your sftp user has sufficient permissions to remove the file? Also, what kind of error message/exception are you getting ? </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1267361674310#c4761781933685531707" title="comment permalink"> February 28, 2010 at 12:54 PM </a> <span class="item-control blog-admin pid-1624905078"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=4761781933685531707" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c3544502521042616424"> 
+                <a name="c3544502521042616424"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/14554015223069760080" rel="nofollow" onclick="" class="avatar-hovercard" id="av-3544502521042616424-14554015223069760080"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//3.bp.blogspot.com/_t7MJZZxXG1U/SaxtQvB6l7I/AAAAAAAAA98/AFJEpQ_3jW4/S45-s35/173734410.jpg" title="Geminine"> 
+                   <noscript>
+                    <img src="//3.bp.blogspot.com/_t7MJZZxXG1U/SaxtQvB6l7I/AAAAAAAAA98/AFJEpQ_3jW4/S45-s35/173734410.jpg" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/14554015223069760080" rel="nofollow">Geminine</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-3544502521042616424"> 
+                <p> Hi,<br>I'm getting "invalid private key" error when I use<br><br>jSch.addIdentity( "myusername",prvkey,null,emptyPassPhrase);<br><br>I have both private &amp; public keys available and even pass both but still same error.<br><br>What I would like to understand is the purpose of "myusername". Is this the actual username used to connect to server, right? B'cos I checked the code &amp; it is just used to report error.<br><br>I'm able to SCP file from command prompt, but from code I can't even connect to remote server.<br><br>I don't have password. All I have is User Id, Host, Private &amp; Public keys (generated using Putty).<br><br>Can you please help me in resolving this issue? </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1268254103438#c3544502521042616424" title="comment permalink"> March 10, 2010 at 8:48 PM </a> <span class="item-control blog-admin pid-932137783"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=3544502521042616424" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author blog-author" id="c7865766784056527780"> 
+                <a name="c7865766784056527780"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow" onclick="" class="avatar-hovercard" id="av-7865766784056527780-00498372835096023136"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" title="Niels Sthen Hansen"> 
+                   <noscript>
+                    <img src="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow">Niels Sthen Hansen</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-7865766784056527780"> 
+                <p> Hi Geminine<br><br>It is true that the "myusername" in addIdentity is never sent to server. It is used only in reporting and as an identifier in the internal IdentifyFile collection in JSch.<br><br>The "myusername" in jSch.getSession("myusername", "hostname.com", 22) is the one that is being used in the authentication.<br><br>It is quite puzzling that you cannot even connect to the server from your code. <br><br>The things that I can think of off the top of my head (which you probably already thought of yourself, but anyway...) are:<br>- Do you use the correct username/host in jSch.getSession ?<br>- Is your ssh server using port 22 ?<br>- How are you reading the private key file? Is the private key at any point being converted to a java.lang.String ?<br>- Do you have a passphrase on your private key? And if so, how are you passing it to jsch (read from file, String constant in code or something else?) </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1268390933762#c7865766784056527780" title="comment permalink"> March 12, 2010 at 10:48 AM </a> <span class="item-control blog-admin pid-1624905078"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=7865766784056527780" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c2123894797445678046"> 
+                <a name="c2123894797445678046"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/11617460251623528188" rel="nofollow" onclick="" class="avatar-hovercard" id="av-2123894797445678046-11617460251623528188"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="AJ"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/11617460251623528188" rel="nofollow">AJ</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-2123894797445678046"> 
+                <p> Hi<br><br>I am tryint to SFTP a file programmatically without any prompt.<br>I have the following credentials<br>servername,username and password.<br>However when I try connecting, the programs stops for a while and then gives the error as follows<br>11:12:55,356 ERROR [GSIFTPFeedTransporter] JSchException occured...<br>com.jcraft.jsch.JSchException: connection is closed by foreign host<br><br>Any inputs into this.<br>Thanks in advance!<br><br>Ansu </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1270619372074#c2123894797445678046" title="comment permalink"> April 7, 2010 at 6:49 AM </a> <span class="item-control blog-admin pid-1470793453"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=2123894797445678046" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author blog-author" id="c1220214657210212141"> 
+                <a name="c1220214657210212141"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow" onclick="" class="avatar-hovercard" id="av-1220214657210212141-00498372835096023136"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" title="Niels Sthen Hansen"> 
+                   <noscript>
+                    <img src="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow">Niels Sthen Hansen</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-1220214657210212141"> 
+                <p> Hi AJ<br><br>It looks like a socket timeout. Can you connect to the server with command line ssh/sftp from the same machine ? </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1270632049829#c1220214657210212141" title="comment permalink"> April 7, 2010 at 10:20 AM </a> <span class="item-control blog-admin pid-1624905078"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=1220214657210212141" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c5295530123546850984"> 
+                <a name="c5295530123546850984"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/11617460251623528188" rel="nofollow" onclick="" class="avatar-hovercard" id="av-5295530123546850984-11617460251623528188"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="AJ"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/11617460251623528188" rel="nofollow">AJ</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-5295530123546850984"> 
+                <p> Hi <br>I am trying to use Jsch for SFTP ing a file to a server. Following is the code:<br>JSch jsch = new JSch();<br>Session session = jsch.getSession(getUsername(), getServerName(), getPort());<br><br>UserInfo ui = new FTPUserInfo(getPassword());<br><br>Properties config = new Properties(); <br>config.put("StrictHostKeyChecking", "no"); <br>session.setConfig(config); <br> <br>session.setUserInfo(ui);<br>session.connect();<br><br>However i get the following error<br><br>com.jcraft.jsch.JSchException: Auth cancel<br><br><br>Any ideas why its happening?<br><br>Thanks </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1270634690029#c5295530123546850984" title="comment permalink"> April 7, 2010 at 11:04 AM </a> <span class="item-control blog-admin pid-1470793453"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=5295530123546850984" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c5981286178603312864"> 
+                <a name="c5981286178603312864"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/02221678965563098000" rel="nofollow" onclick="" class="avatar-hovercard" id="av-5981286178603312864-02221678965563098000"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="Sandeep Kumar"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/02221678965563098000" rel="nofollow">Sandeep Kumar</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-5981286178603312864"> 
+                <p> Hi Niels,<br>I am working on the JSch SFTP implementation in Java with authentication using public and private key pair.<br>I am getting the error of invalid private key which I see most of the Jsch SFTP users have reported.I see that Jsch library cannot handle private key of the format extension .ppk(putty private key).<br>Looks like .ppk format is the general format of private key.<br>Do you have any solution in using .ppk extension file.<br>Please respond soon if possible.<br><br>Thanks.<br><br>Regards,<br>Sandeep </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1276785716735#c5981286178603312864" title="comment permalink"> June 17, 2010 at 3:41 PM </a> <span class="item-control blog-admin pid-62054743"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=5981286178603312864" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author blog-author" id="c7189219252962574641"> 
+                <a name="c7189219252962574641"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow" onclick="" class="avatar-hovercard" id="av-7189219252962574641-00498372835096023136"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" title="Niels Sthen Hansen"> 
+                   <noscript>
+                    <img src="//1.bp.blogspot.com/_4E_zmGHw3rY/SasvuffqHGI/AAAAAAAAAB0/kL8GFJM1cQg/S45-s35/nsh.jpg" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/00498372835096023136" rel="nofollow">Niels Sthen Hansen</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-7189219252962574641"> 
+                <p> Hi Sandeep,<br><br>I believe that PuTTYgen can convert a .ppk file to OpenSSH format (http://the.earth.li/~sgtatham/putty/0.60/htmldoc/Chapter8.html#pubkey-puttygen). Have you tried to do this ?<br><br>I think the main (only?) difference in the .ppk and openssh is a set of header lines above the encoded key content, so it should not be too difficult to write a converter if you need to be able to use arbitrary .ppk files on the fly. </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1276853319884#c7189219252962574641" title="comment permalink"> June 18, 2010 at 10:28 AM </a> <span class="item-control blog-admin pid-1624905078"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=7189219252962574641" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c3285003187154570601"> 
+                <a name="c3285003187154570601"></a> 
+                <div class="avatar-image-container vcard">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/09297117227745631874" rel="nofollow" onclick="" class="avatar-hovercard" id="av-3285003187154570601-09297117227745631874"><img src="https://img1.blogblog.com/img/blank.gif" width="35" height="35" alt="" class="delayLoad" style="display: none;" longdesc="//2.bp.blogspot.com/_ElbLsJy0BhE/SwWOIFDSe5I/AAAAAAAAAX4/4gy1WFh3TtA/S45-s35/DSC01065.JPG" title="Sharath"> 
+                   <noscript>
+                    <img src="//2.bp.blogspot.com/_ElbLsJy0BhE/SwWOIFDSe5I/AAAAAAAAAX4/4gy1WFh3TtA/S45-s35/DSC01065.JPG" width="35" height="35" class="photo" alt="">
+                   </noscript></a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/09297117227745631874" rel="nofollow">Sharath</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-3285003187154570601"> 
+                <p> Hi Sandeep,<br>do not use a *.ppk for SFTP; use a *.key file generated for your private key (*.ppk).<br><br>Try this it may help. </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1289372257840#c3285003187154570601" title="comment permalink"> November 10, 2010 at 6:57 AM </a> <span class="item-control blog-admin pid-945856825"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=3285003187154570601" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c5182444454053432224"> 
+                <a name="c5182444454053432224"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/06467085441160912402" rel="nofollow" onclick="" class="avatar-hovercard" id="av-5182444454053432224-06467085441160912402"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="???????"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/06467085441160912402" rel="nofollow">???????</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-5182444454053432224"> 
+                <p> Thanks! Useful post. </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1295804069809#c5182444454053432224" title="comment permalink"> January 23, 2011 at 5:34 PM </a> <span class="item-control blog-admin pid-387513777"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=5182444454053432224" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c8543320765370364019"> 
+                <a name="c8543320765370364019"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/18266427451474082579" rel="nofollow" onclick="" class="avatar-hovercard" id="av-8543320765370364019-18266427451474082579"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="sandy"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/18266427451474082579" rel="nofollow">sandy</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-8543320765370364019"> 
+                <p> Hi,<br><br>I am unable to get .ZIP files from a sftp server. The get method is throwing the error but it just gives java.lang.exception 4:<br><br>Any idea what could be the issue?<br><br>Thanks,<br>Sandeep </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1297827763925#c8543320765370364019" title="comment permalink"> February 16, 2011 at 3:42 AM </a> <span class="item-control blog-admin pid-2016613395"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=8543320765370364019" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+               <dt class="comment-author " id="c3071185902114977380"> 
+                <a name="c3071185902114977380"></a> 
+                <div class="avatar-image-container avatar-stock">
+                 <span dir="ltr"><a href="https://www.blogger.com/profile/11664496829041933714" rel="nofollow" onclick="" class="avatar-hovercard" id="av-3071185902114977380-11664496829041933714"><img src="//lh3.googleusercontent.com/zFdxGE77vvD2w5xHy6jkVuElKv-U9_9qLkRYK8OnbDeJPtjSZ82UPq5w6hJ-SA=s35" width="35" height="35" alt="" title="RockIng on Life"> </a></span>
+                </div> 
+                <a href="https://www.blogger.com/profile/11664496829041933714" rel="nofollow">RockIng on Life</a> said... 
+               </dt> 
+               <dd class="comment-body" id="Blog1_cmt-3071185902114977380"> 
+                <p> if ur getting auth fail error,<br>then take the putty gen private key and convert it to open ssh format by using import functionality of putty gen.Then use this open ssh format file in java code instead of private key. and also use pass phrase by putting in a file and read as byte array. use it in addIdentity(String,bytearrayof ssh format file,null,byte array of passphrase file)<br><br>use proper userid,hostname and port no<br><br><br>This is working </p> 
+               </dd> 
+               <dd class="comment-footer"> 
+                <span class="comment-timestamp"> <a href="http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html?showComment=1310708205147#c3071185902114977380" title="comment permalink"> July 15, 2011 at 6:36 AM </a> <span class="item-control blog-admin pid-127079589"> <a class="comment-delete" href="https://www.blogger.com/delete-comment.g?blogID=5841903314797592940&amp;postID=3071185902114977380" title="Delete Comment"> <img src="https://resources.blogblog.com/img/icon_delete13.gif"> </a> </span> </span> 
+               </dd> 
+              </dl> 
+             </div> 
+             <p class="comment-footer"> <a href="https://www.blogger.com/comment.g?blogID=5841903314797592940&amp;postID=6059384167116550858" onclick="">Post a Comment</a> </p> 
+             <div id="backlinks-container"> 
+              <div id="Blog1_backlinks-container"> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+          </div>
+         </div> 
+        </div> 
+        <div class="blog-pager" id="blog-pager"> 
+         <span id="blog-pager-newer-link"> <a class="blog-pager-newer-link" href="http://sthen.blogspot.com.ar/2009/05/dont-think-just-write-tests-right.html" id="Blog1_blog-pager-newer-link" title="Newer Post">Newer Post</a> </span> 
+         <span id="blog-pager-older-link"> <a class="blog-pager-older-link" href="http://sthen.blogspot.com.ar/2007/06/lean-and-metaphors.html" id="Blog1_blog-pager-older-link" title="Older Post">Older Post</a> </span> 
+         <a class="home-link" href="http://sthen.blogspot.com.ar/">Home</a> 
+        </div> 
+        <div class="clear"></div> 
+        <div class="post-feeds"> 
+         <div class="feed-links">
+           Subscribe to: 
+          <a class="feed-link" href="http://sthen.blogspot.com/feeds/6059384167116550858/comments/default" target="_blank" type="application/atom+xml">Post Comments (Atom)</a> 
+         </div> 
+        </div> 
+        <script type="text/javascript">
+    window.___gcfg = { 'lang': 'en-US' };
+  </script> 
+       </div>
+      </div> 
+     </div> 
+     <div id="sidebar-wrapper"> 
+      <div class="sidebar section" id="sidebar">
+       <div class="widget Profile" data-version="1" id="Profile1"> 
+        <h2>About Me</h2> 
+        <div class="widget-content"> 
+         <a href="https://www.blogger.com/profile/00498372835096023136"><img alt="My photo" class="profile-img" height="80" src="//bp3.blogger.com/_4E_zmGHw3rY/Rl8O4vyAxNI/AAAAAAAAAAs/QVDgTb1LKDQ/s80/nsh.jpg" width="67"></a> 
+         <dl class="profile-datablock"> 
+          <dt class="profile-data"> 
+           <a class="profile-name-link g-profile" href="https://www.blogger.com/profile/00498372835096023136" rel="author" style="background-image: url(//www.blogger.com/img/logo-16.png);"> Niels Sthen Hansen </a> 
+          </dt> 
+         </dl> 
+         <a class="profile-link" href="https://www.blogger.com/profile/00498372835096023136" rel="author">View my complete profile</a> 
+         <div class="clear"></div> 
+         <span class="widget-item-control"> <span class="item-control blog-admin"> <a class="quickedit" href="//www.blogger.com/rearrange?blogID=5841903314797592940&amp;widgetType=Profile&amp;widgetId=Profile1&amp;action=editWidget&amp;sectionId=sidebar" onclick="return _WidgetManager._PopupConfig(document.getElementById(&quot;Profile1&quot;));" target="configProfile1" title="Edit"> <img alt="" height="18" src="https://resources.blogblog.com/img/icon18_wrench_allbkg.png" width="18"> </a> </span> </span> 
+         <div class="clear"></div> 
+        </div> 
+       </div>
+       <div class="widget HTML" data-version="1" id="HTML3"> 
+        <div class="widget-content"> 
+         <a href="http://www.linkedin.com/in/nsthen"><img border="0" width="80" alt="View Niels Sthen Hansen's profile on LinkedIn" src="http://www.linkedin.com/img/webpromo/btn_profile_bluetxt_80x15.gif" height="15"></a> 
+        </div> 
+        <div class="clear"></div> 
+        <span class="widget-item-control"> <span class="item-control blog-admin"> <a class="quickedit" href="//www.blogger.com/rearrange?blogID=5841903314797592940&amp;widgetType=HTML&amp;widgetId=HTML3&amp;action=editWidget&amp;sectionId=sidebar" onclick="return _WidgetManager._PopupConfig(document.getElementById(&quot;HTML3&quot;));" target="configHTML3" title="Edit"> <img alt="" height="18" src="https://resources.blogblog.com/img/icon18_wrench_allbkg.png" width="18"> </a> </span> </span> 
+        <div class="clear"></div> 
+       </div>
+       <div class="widget BlogArchive" data-version="1" id="BlogArchive1"> 
+        <h2>Blog Archive</h2> 
+        <div class="widget-content"> 
+         <div id="ArchiveList"> 
+          <div id="BlogArchive1_ArchiveList"> 
+           <ul class="hierarchy"> 
+            <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2015/"> 2015 </a> <span class="post-count" dir="ltr">(1)</span> 
+             <ul class="hierarchy"> 
+              <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2015/02/"> February </a> <span class="post-count" dir="ltr">(1)</span> </li> 
+             </ul> </li> 
+           </ul> 
+           <ul class="hierarchy"> 
+            <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2011/"> 2011 </a> <span class="post-count" dir="ltr">(2)</span> 
+             <ul class="hierarchy"> 
+              <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2011/10/"> October </a> <span class="post-count" dir="ltr">(2)</span> </li> 
+             </ul> </li> 
+           </ul> 
+           <ul class="hierarchy"> 
+            <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2010/"> 2010 </a> <span class="post-count" dir="ltr">(1)</span> 
+             <ul class="hierarchy"> 
+              <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2010/05/"> May </a> <span class="post-count" dir="ltr">(1)</span> </li> 
+             </ul> </li> 
+           </ul> 
+           <ul class="hierarchy"> 
+            <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2009/"> 2009 </a> <span class="post-count" dir="ltr">(1)</span> 
+             <ul class="hierarchy"> 
+              <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2009/05/"> May </a> <span class="post-count" dir="ltr">(1)</span> </li> 
+             </ul> </li> 
+           </ul> 
+           <ul class="hierarchy"> 
+            <li class="archivedate expanded"> <a class="toggle" href="javascript:void(0)"> <span class="zippy toggle-open"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2008/"> 2008 </a> <span class="post-count" dir="ltr">(1)</span> 
+             <ul class="hierarchy"> 
+              <li class="archivedate expanded"> <a class="toggle" href="javascript:void(0)"> <span class="zippy toggle-open"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2008/03/"> March </a> <span class="post-count" dir="ltr">(1)</span> 
+               <ul class="posts"> 
+                <li><a href="http://sthen.blogspot.com.ar/2008/03/sftp-i-java-with-jsch-using-private-key.html">SFTP in Java with JSch Using Private Key Authentic...</a></li> 
+               </ul> </li> 
+             </ul> </li> 
+           </ul> 
+           <ul class="hierarchy"> 
+            <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2007/"> 2007 </a> <span class="post-count" dir="ltr">(3)</span> 
+             <ul class="hierarchy"> 
+              <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2007/06/"> June </a> <span class="post-count" dir="ltr">(1)</span> </li> 
+             </ul> 
+             <ul class="hierarchy"> 
+              <li class="archivedate collapsed"> <a class="toggle" href="javascript:void(0)"> <span class="zippy"> ?&nbsp; </span> </a> <a class="post-count-link" href="http://sthen.blogspot.com.ar/2007/05/"> May </a> <span class="post-count" dir="ltr">(2)</span> </li> 
+             </ul> </li> 
+           </ul> 
+          </div> 
+         </div> 
+         <div class="clear"></div> 
+         <span class="widget-item-control"> <span class="item-control blog-admin"> <a class="quickedit" href="//www.blogger.com/rearrange?blogID=5841903314797592940&amp;widgetType=BlogArchive&amp;widgetId=BlogArchive1&amp;action=editWidget&amp;sectionId=sidebar" onclick="return _WidgetManager._PopupConfig(document.getElementById(&quot;BlogArchive1&quot;));" target="configBlogArchive1" title="Edit"> <img alt="" height="18" src="https://resources.blogblog.com/img/icon18_wrench_allbkg.png" width="18"> </a> </span> </span> 
+         <div class="clear"></div> 
+        </div> 
+       </div>
+       <div class="widget HTML" data-version="1" id="HTML1"> 
+        <div class="widget-content"> 
+         <script type="text/javascript"><!--
+google_ad_client = "pub-1687451292169705";
+google_ad_host = "pub-1556223355139109";
+google_ad_host_channel="00000";
+google_ad_width = 250;
+google_ad_height = 250;
+google_ad_format = "250x250_as";
+google_ad_type = "text";
+//2007-05-27: square
+google_ad_channel = "9056918296";
+//-->
+</script> 
+         <script src="http://pagead2.googlesyndication.com/pagead/show_ads.js" type="text/javascript">
+</script> 
+        </div> 
+        <div class="clear"></div> 
+        <span class="widget-item-control"> <span class="item-control blog-admin"> <a class="quickedit" href="//www.blogger.com/rearrange?blogID=5841903314797592940&amp;widgetType=HTML&amp;widgetId=HTML1&amp;action=editWidget&amp;sectionId=sidebar" onclick="return _WidgetManager._PopupConfig(document.getElementById(&quot;HTML1&quot;));" target="configHTML1" title="Edit"> <img alt="" height="18" src="https://resources.blogblog.com/img/icon18_wrench_allbkg.png" width="18"> </a> </span> </span> 
+        <div class="clear"></div> 
+       </div>
+      </div> 
+     </div> 
+     <!-- spacer for skins that want sidebar and main to be the same height--> 
+     <div class="clear">
+      &nbsp;
+     </div> 
+    </div> 
+    <!-- end content-wrapper --> 
+    <div id="footer-wrapper"> 
+     <div class="footer section" id="footer">
+      <div class="widget HTML" data-version="1" id="HTML5"> 
+       <div class="widget-content"> 
+        <script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+</script> 
+        <script type="text/javascript">
+_uacct = "UA-1936321-1";
+urchinTracker();
+</script> 
+       </div> 
+       <div class="clear"></div> 
+       <span class="widget-item-control"> <span class="item-control blog-admin"> <a class="quickedit" href="//www.blogger.com/rearrange?blogID=5841903314797592940&amp;widgetType=HTML&amp;widgetId=HTML5&amp;action=editWidget&amp;sectionId=footer" onclick="return _WidgetManager._PopupConfig(document.getElementById(&quot;HTML5&quot;));" target="configHTML5" title="Edit"> <img alt="" height="18" src="https://resources.blogblog.com/img/icon18_wrench_allbkg.png" width="18"> </a> </span> </span> 
+       <div class="clear"></div> 
+      </div>
+     </div> 
+    </div> 
+   </div>
+  </div> 
+  <!-- end outer-wrapper --> 
+  <script src="https://apis.google.com/js/plusone.js" type="text/javascript"></script> 
+  <script type="text/javascript" src="https://www.blogger.com/static/v1/widgets/3392677022-widgets.js"></script> 
+  <script type="text/javascript">
+window['__wavt'] = 'AOuZoY5HGGIAqIrC-zPzWNyjDEbNjAgCJQ:1505429215210';_WidgetManager._Init('//www.blogger.com/rearrange?blogID\x3d5841903314797592940','//sthen.blogspot.com.ar/2008/03/sftp-i-java-with-jsch-using-private-key.html','5841903314797592940');
+_WidgetManager._SetDataContext([{'name': 'blog', 'data': {'blogId': '5841903314797592940', 'title': 'On Software Development', 'url': 'http://sthen.blogspot.com.ar/2008/03/sftp-i-java-with-jsch-using-private-key.html', 'canonicalUrl': 'http://sthen.blogspot.com/2008/03/sftp-i-java-with-jsch-using-private-key.html', 'homepageUrl': 'http://sthen.blogspot.com.ar/', 'searchUrl': 'http://sthen.blogspot.com.ar/search', 'canonicalHomepageUrl': 'http://sthen.blogspot.com/', 'blogspotFaviconUrl': 'http://sthen.blogspot.com.ar/favicon.ico', 'bloggerUrl': 'https://www.blogger.com', 'hasCustomDomain': false, 'httpsEnabled': true, 'enabledCommentProfileImages': true, 'gPlusViewType': 'FILTERED_POSTMOD', 'adultContent': false, 'analyticsAccountNumber': '', 'encoding': 'UTF-8', 'locale': 'en-US', 'localeUnderscoreDelimited': 'en', 'languageDirection': 'ltr', 'isPrivate': false, 'isMobile': false, 'isMobileRequest': false, 'mobileClass': '', 'isPrivateBlog': false, 'feedLinks': '\x3clink rel\x3d\x22alternate\x22 type\x3d\x22application/atom+xml\x22 title\x3d\x22On Software Development - Atom\x22 href\x3d\x22http://sthen.blogspot.com/feeds/posts/default\x22 /\x3e\n\x3clink rel\x3d\x22alternate\x22 type\x3d\x22application/rss+xml\x22 title\x3d\x22On Software Development - RSS\x22 href\x3d\x22http://sthen.blogspot.com/feeds/posts/default?alt\x3drss\x22 /\x3e\n\x3clink rel\x3d\x22service.post\x22 type\x3d\x22application/atom+xml\x22 title\x3d\x22On Software Development - Atom\x22 href\x3d\x22https://www.blogger.com/feeds/5841903314797592940/posts/default\x22 /\x3e\n\n\x3clink rel\x3d\x22alternate\x22 type\x3d\x22application/atom+xml\x22 title\x3d\x22On Software Development - Atom\x22 href\x3d\x22http://sthen.blogspot.com/feeds/6059384167116550858/comments/default\x22 /\x3e\n', 'meTag': '', 'openIdOpTag': '', 'adsenseClientId': 'pub-1687451292169705', 'adsenseHostId': 'ca-host-pub-1556223355139109', 'adsenseHasAds': false, 'view': '', 'dynamicViewsCommentsSrc': '//www.blogblog.com/dynamicviews/4224c15c4e7c9321/js/comments.js', 'dynamicViewsScriptSrc': '//www.blogblog.com/dynamicviews/c4bb9df366c0abf7', 'plusOneApiSrc': 'https://apis.google.com/js/plusone.js', 'sharing': {'platforms': [{'name': 'Get link', 'key': 'link', 'shareMessage': 'Get link', 'target': ''}, {'name': 'Facebook', 'key': 'facebook', 'shareMessage': 'Share to Facebook', 'target': 'facebook'}, {'name': 'BlogThis!', 'key': 'blogThis', 'shareMessage': 'BlogThis!', 'target': 'blog'}, {'name': 'Twitter', 'key': 'twitter', 'shareMessage': 'Share to Twitter', 'target': 'twitter'}, {'name': 'Pinterest', 'key': 'pinterest', 'shareMessage': 'Share to Pinterest', 'target': 'pinterest'}, {'name': 'Google+', 'key': 'googlePlus', 'shareMessage': 'Share to Google+', 'target': 'googleplus'}, {'name': 'Email', 'key': 'email', 'shareMessage': 'Email', 'target': 'email'}], 'googlePlusShareButtonWidth': 300, 'googlePlusBootstrap': '\x3cscript type\x3d\x22text/javascript\x22\x3ewindow.___gcfg \x3d {\x27lang\x27: \x27en\x27};\x3c/script\x3e'}, 'hasCustomJumpLinkMessage': false, 'jumpLinkMessage': 'Read more', 'pageType': 'item', 'postId': '6059384167116550858', 'pageName': 'SFTP in Java with JSch Using Private Key Authentication', 'pageTitle': 'On Software Development: SFTP in Java with JSch Using Private Key Authentication'}}, {'name': 'features', 'data': {'lazy_images': 'false', 'unsupported_browser_message': 'false', 'lightbox_img_parsing': 'false', 'video_theatre_support': 'false', 'sharing_get_link_dialog': 'false'}}, {'name': 'messages', 'data': {'edit': 'Edit', 'linkCopiedToClipboard': 'Link copied to clipboard!', 'ok': 'Ok', 'postLink': 'Post Link'}}, {'name': 'template', 'data': {'isResponsive': false, 'isAlternateRendering': false, 'isCustom': false}}, {'name': 'view', 'data': {'classic': {'name': 'classic', 'url': '?view\x3dclassic'}, 'flipcard': {'name': 'flipcard', 'url': '?view\x3dflipcard'}, 'magazine': {'name': 'magazine', 'url': '?view\x3dmagazine'}, 'mosaic': {'name': 'mosaic', 'url': '?view\x3dmosaic'}, 'sidebar': {'name': 'sidebar', 'url': '?view\x3dsidebar'}, 'snapshot': {'name': 'snapshot', 'url': '?view\x3dsnapshot'}, 'timeslide': {'name': 'timeslide', 'url': '?view\x3dtimeslide'}, 'isMobile': false, 'title': 'SFTP in Java with JSch Using Private Key Authentication', 'description': 'JSch  is an excellent library for ssh in Java. One bad thing is that there is no real documentation - or rather, the source itself is the do...', 'url': 'http://sthen.blogspot.com.ar/2008/03/sftp-i-java-with-jsch-using-private-key.html', 'type': 'item', 'isSingleItem': true, 'isMultipleItems': false, 'isError': false, 'isPage': false, 'isPost': true, 'isHomepage': false, 'isArchive': false, 'isLabelSearch': false, 'postId': 6059384167116550858}}]);
+_WidgetManager._RegisterWidget('_NavbarView', new _WidgetInfo('Navbar1', 'navbar', null, document.getElementById('Navbar1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HeaderView', new _WidgetInfo('Header1', 'header', null, document.getElementById('Header1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HTMLView', new _WidgetInfo('HTML4', 'main', null, document.getElementById('HTML4'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_BlogView', new _WidgetInfo('Blog1', 'main', null, document.getElementById('Blog1'), {'cmtInteractionsEnabled': false, 'lightboxEnabled': true, 'lightboxModuleUrl': 'https://www.blogger.com/static/v1/jsbin/658758296-lbx.js', 'lightboxCssUrl': 'https://www.blogger.com/static/v1/v-css/368954415-lightbox_bundle.css'}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_ProfileView', new _WidgetInfo('Profile1', 'sidebar', null, document.getElementById('Profile1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HTMLView', new _WidgetInfo('HTML3', 'sidebar', null, document.getElementById('HTML3'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_BlogArchiveView', new _WidgetInfo('BlogArchive1', 'sidebar', null, document.getElementById('BlogArchive1'), {'languageDirection': 'ltr', 'loadingMessage': 'Loading\x26hellip;'}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HTMLView', new _WidgetInfo('HTML1', 'sidebar', null, document.getElementById('HTML1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HTMLView', new _WidgetInfo('HTML5', 'footer', null, document.getElementById('HTML5'), {}, 'displayModeFull'));
+</script>  
+ </body>
+</html>

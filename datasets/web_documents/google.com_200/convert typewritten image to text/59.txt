@@ -1,0 +1,970 @@
+<!DOCTYPE html SYSTEM "http://www.cs.tut.fi/~jkorpela/html/loosewbr.dtd">
+<html lang="en">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"> 
+  <link rel="stylesheet" type="text/css" title="Yucca's style" href="basic.css"> 
+  <title>
+Character code tutorial
+</title> 
+  <meta NAME="description" CONTENT="A tutorial on character code issues in digital processing and
+transfer of text data (on the Internet or otherwise).
+This document tries to clarify the concepts of character repertoire,
+character code, and character encoding (avoiding the term character set,
+which is used confusingly).
+ASCII, ISO 646, ISO 8859 (ISO Latin), Windows character set,
+ISO 10646 (UCS), Unicode,
+UTF-8, and UTF-7 are used as examples."> 
+  <!--LINK REL="alternate" MEDIA="print" TYPE="application/postscript"
+ HREF="chars.ps"--> 
+  <style type="text/css">
+.minitoc {width:25em; font-size: 90%; }
+p.summary { font-size: 100%; margin-left: 0; }
+</style> 
+ </head> 
+ <body> 
+  <h1>A tutorial on character code issues</h1> 
+  <div class="minitoc"> 
+   <h2 class="toc"><a name="toc">Contents</a></h2> 
+   <ul class="toc"> 
+    <li><a href="#basics">The basics</a></li> 
+    <li><a href="#defs">Definitions</a>: <a href="#repertoire">character repertoire</a>, <a href="#code">character code</a>, <a href="#encoding">character encoding</a> </li> 
+    <li><a href="#examples">Examples of character codes</a> 
+     <ul> 
+      <li><a href="#ascii">Good old ASCII</a></li> 
+      <li><a href="#latin1">Another example: ISO Latin&nbsp;1 alias ISO 8859-1</a></li> 
+      <li><a href="#win">More examples: the Windows character 
+        <nobr>
+         set(s)
+        </nobr></a></li> 
+      <li><a href="#asciiext">The ISO 8859 family</a></li> 
+      <li><a href="#other-extensions-to-ascii">Other "extensions to ASCII"</a></li> 
+      <li><a href="#8bit">Other "8-bit codes"</a></li> 
+      <li><a href="#10646">ISO 10646 (UCS) and Unicode</a></li> 
+     </ul></li> 
+    <li><a href="#characters">More about the character concept</a> 
+     <ul> 
+      <li><a href="#unicode-view">The Unicode view</a></li> 
+      <li><a href="#control">Control characters (control codes)</a></li> 
+      <li><a href="#glyph">A glyph - a visual appearance</a></li> 
+      <li><a href="#names">What's in a name?</a></li> 
+      <li><a href="#repdef">Glyph variation</a></li> 
+      <li><a href="#font">Fonts</a></li> 
+      <li><a href="#identity">Identity of characters: a matter of definition</a></li> 
+      <li><a href="#display">Failures to display a character</a></li> 
+      <li><a href="#math">Linear text vs. mathematical notations</a></li> 
+      <li><a href="#compat">Compatibility characters</a></li> 
+      <li><a href="#compose">Compositions and decompositions</a></li> 
+     </ul> </li> 
+    <li><a href="#typing">Typing characters</a> 
+     <ul> 
+      <li><a href="#key">Just pressing a key?</a></li> 
+      <li><a href="#pgm">Program-specific methods for typing characters</a></li> 
+      <li><a href="#esc">"Escape" notations ("meta notations") for characters</a></li> 
+      <li><a href="#identify">How to mention (identify) a character</a></li> 
+     </ul> </li> 
+    <li><a href="#encinfo">Information about encoding</a> 
+     <ul> 
+      <li><a href="#whyencinfo">The need for information about encoding</a></li> 
+      <li><a href="#MIME">The MIME solution</a></li> 
+      <li><a href="#qp">An auxiliary encoding: Quoted-Printable (QP)</a></li> 
+      <li><a href="#MIMEatwork">How MIME should work in practice</a></li> 
+      <li><a href="#problems">Problems with implementations - examples</a></li> 
+     </ul> </li> 
+    <li><a href="#concl">Practical conclusions</a></li> 
+    <li><a href="#more">Further reading</a></li> 
+   </ul> 
+  </div> 
+  <p class="summary"> This document tries to clarify the concepts of <em><a href="#repertoire">character repertoire</a></em>, <em><a href="#code">character code</a></em>, and <em><a href="#encoding">character encoding</a></em> especially in the Internet context. It specifically avoids the term <em>character set</em>, which is confusingly used to denote repertoire <em>or</em> code <em>or</em> encoding. <a href="#ascii">ASCII</a>, <a href="#646">ISO 646</a>, <a href="#8859">ISO 8859</a> (ISO Latin, especially <a href="#latin1">ISO Latin 1</a>), <a href="#win">Windows character set</a>, <a href="#10646">ISO 10646, UCS, and Unicode</a>, <a href="#utf">UTF-8, UTF-7</a>, <a title="Multipurpose Internet Mail Extensions" href="#MIME">MIME</a>, and <a title="Quoted-Printable encoding" href="#qp">QP</a> are used as examples. This document in itself does not contain solutions to practical problems with character codes (but see section <a href="#more"><cite>Further reading</cite></a>). Rather, it gives background information needed for understanding what solutions there might be, what the different solutions do - and what's really the problem in the first place. </p> 
+  <!--
+[P class="noprint"]
+This document is also available
+[A TITLE=
+'The PostScript version of "A tutorial on character code issues"'
+HREF="chars.ps"]
+in Postscript form[/A]
+(generated by
+[A TITLE=
+"info about html2ps, a Perl script for converting HTML to PostScript"
+ HREF="http://www.tdb.uu.se/%7ejan/html2ps.html"]html2ps[/A]).[/P]--> 
+  <p>If you are looking for some quick help in using a large character repertoire in HTML authoring, see the document <a href="html/chars.html"><cite>Using national and special characters in HTML</cite></a>.</p> 
+  <p> Several <em>technical terms</em> related to character sets (e.g. glyph, encoding) can be difficult to understand, due to various confusions and due to having different names in different languages and contexts. The <a href="http://iate.europa.eu" title="InterActive Terminology for Europe">IATE</a> online database can be useful: it contains translations and definitions for several technical terms used here. 
+   <!--
+<span class="noprint">You may wish to use the following simplified search form
+to access EuroDicAutom:</span></p>
+
+<form lang="en"
+ name="EXPERT" method="POST" class="noprint"
+ action="http://europa.eu.int/eurodicautom/Controller">
+<div class="noprint">Looking for equivalents of
+<input type="text" name="query" maxLength="255" size="30" value="">
+<input type="hidden" NAME="display_term" VALUE="HITALL">
+<input type="hidden" name="CURRENTSCREEN" value="EXPERT2">
+<input type="hidden" name="source" value="EN">
+in
+<select name="target" size="1" multiple>
+<option value="S" selected>all available languages</option> 
+<option value="DA"> Danish (DA)</option><option value="NL"> Dutch (NL)</option><option value="EN"> English (EN)</option><option value="FI"> Finnish (FI)</option><option value="FR"> French (FR)</option><option value="DE"> German (DE)</option><option value="EL"> Greek (EL)</option><option value="IT"> Italian (IT)</option><option value="LA"> Latin (LA)</option><option value="PT"> Portuguese (PT)</option><option value="ES"> Spanish (ES)</option><option value="SV"> Swedish (SV)</option>
+	    </select>
+<input type="submit" value="Search"></div>
+</form>
+--> </p>
+  <h2><a name="basics">The basics</a></h2> 
+  <p> <a name="octet">In computers and in data transmission between them, i.e. in digital data processing and transfer, data is internally presented as octets, as a rule. An <dfn>octet</dfn> is a small unit of data with a numerical value between 0 and 255, inclusively.</a> The numerical values are presented in the normal (decimal) notation here, but notice that other presentations are used too, especially <a title="description of octal notation (in Free On-line Dictionary of Computing)" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=octal&amp;action=Search">octal</a> (base 8) or <a title="description of hexadecimal notation (in Free On-line Dictionary of Computing)" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=hexadecimal&amp;action=Search">hexadecimal</a> (base 16) notation. Octets are often called <dfn>bytes</dfn>, but in principle, octet is a more definite concept than <a title="definition of &quot;byte&quot; in Free On-line Dictionary of Computing" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=byte&amp;action=Search">byte</a>. Internally, octets consist of eight <a title="definition of &quot;bit&quot; in Free On-line Dictionary of Computing" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=bit&amp;action=Search">bit</a>s (hence the name, from Latin <i lang="la">octo</i> 'eight'), but we need not go into bit level here. However, you might need to know what the phrase "first bit set" or "sign bit set" means, since it is often used. In terms of numerical values of octets, it means that the value is greater than 127. In various contexts, such octets are sometimes interpreted as <em>negative</em> numbers, and this may cause various problems. </p> 
+  <p> Different conventions can be established as regards to how an octet or a sequence of octets presents some data. For instance, four consecutive octets often form a unit that presents a real number according to a specific standard. We are here interested in the presentation of character data (or string data; a <dfn>string</dfn> is a sequence of characters) only. </p> 
+  <p> In the simplest case, which is still widely used, one octet corresponds to one character according to some mapping table (encoding). Naturally, this allows at most 256 different characters being represented. There are several different encodings, such as the well-known <a href="#ascii">ASCII</a> encoding and the <a href="#8859">ISO Latin family</a> of encodings. The correct interpretation and processing of character data of course requires knowledge about the encoding used. For HTML documents, such information should be sent by the Web server along with the document itself, using so-called <a href="http.html" title="Quick reference to HTTP headers"><abbr title="Hypertext Transfer Protocol">HTTP</abbr> headers</a> (cf. to <a href="#headers">MIME headers</a>). </p> 
+  <p> Previously the <a href="#ascii">ASCII</a> encoding was usually assumed by default (and it is still very common). Nowadays <a href="#latin1">ISO Latin&nbsp;1</a>, which can be regarded as an <a href="#ascii8">extension of ASCII</a>, is often the default. The current trend is to avoid giving such a special position to ISO Latin&nbsp;1 among the variety of encodings. </p> 
+  <h2><a name="defs">Definitions</a></h2> 
+  <p> The following definitions are not universally accepted and used. In fact, one of the greatest causes of confusion around character set issues is that terminology varies and is sometimes misleading. </p> 
+  <dl> 
+   <dt> 
+    <a name="repertoire">character repertoire</a> 
+   </dt>
+   <dd>
+     A set of distinct characters. No specific internal presentation in computers or data transfer is assumed. The repertoire per se does not even define an ordering for the characters; ordering for sorting and other purposes is to be specified separately. A character repertoire is usually defined by specifying 
+    <a href="#names">names</a> of characters and a sample (or reference) presentation of characters in visible form. Notice that a character repertoire may contain characters which 
+    <em>look</em> the same in some presentations but are regarded as logically distinct, such as Latin uppercase A, Cyrillic uppercase A, and Greek uppercase alpha. For more about this, see 
+    <a href="#characters">a discussion of the character concept</a> later in this document. 
+   </dd> 
+   <dt> 
+    <a name="code">character code</a> 
+   </dt>
+   <dd>
+     A mapping, often presented in tabular form, which defines a one-to-one correspondence between characters in a character 
+    <a href="#repertoire">repertoire</a> and a set of nonnegative integers. That is, it assigns a unique numerical code, a 
+    <dfn>code position</dfn>, to each character in the repertoire. In addition to being often presented as one or more tables, the code as a whole can be regarded as a single table and the code positions as indexes. As synonyms for "code position", the following terms are also in use: 
+    <dfn>code number</dfn>, 
+    <dfn>code value</dfn>, 
+    <dfn>code element</dfn>, 
+    <dfn>code point</dfn>, 
+    <dfn>code set value</dfn>&nbsp;- and just 
+    <dfn>code</dfn>. Note: The set of nonnegative integers corresponding to characters need not consist of consecutive numbers; in fact, most character codes have "holes", such as code positions reserved for 
+    <a href="#control">control functions</a> or for eventual future use to be defined later. 
+   </dd> 
+   <dt> 
+    <a name="encoding">character encoding</a> 
+   </dt>
+   <dd>
+     A method (algorithm) for presenting characters in digital form by mapping sequences of 
+    <a href="#code">code numbers</a> of characters into sequences of 
+    <a href="#octet">octets</a>. In the simplest case, each character is mapped to an integer in the range 0 - 255 according to a character code and these are used as such as octets. Naturally, this only works for character 
+    <a href="#repertoire">repertoire</a>s with at most 256 characters. For larger sets, more complicated encodings are needed. 
+    <a href="#charsetreg">Encodings have names, which can be registered</a>. 
+   </dd> 
+  </dl> 
+  <p> Notice that a character code assumes or implicitly defines a character repertoire. A character encoding could, in principle, be viewed purely as a method of mapping a sequence of integers to a sequence of octets. However, quite often an encoding is specified in terms of a character code (and the implied character repertoire). The <em>logical</em> structure is still the following: </p> 
+  <ol> 
+   <li>A character <em>repertoire</em> specifies a collection of characters, such as "a", "!", and "ä".</li> 
+   <li>A character <em>code</em> defines numeric codes for characters in a repertoire. For example, in the <a href="#10646">ISO 10646</a> character code the numeric codes for "a", "!", "ä", and "‰" (per mille sign) are 97, 33, 228, and 8240. (Note: Especially the per mille sign, presenting <small><sup>0</sup>/<sub>00</sub></small> as a single character, can be shown incorrectly on display or on paper. That would be an illustration of the symptoms of the problems we are discussing.) </li> 
+   <li>A character <em>encoding</em> defines how sequences of numeric codes are presented as (i.e., mapped to) sequences of octets. In one possible encoding for <a href="#10646">ISO 10646</a>, the string a!ä‰ is presented as the following sequence of octets (using two octets for each character): 0, 97, 0, 33, 0, 228, 32, 48. </li> 
+  </ol> 
+  <p>For a more rigorous explanation of these basic concepts, see <cite><a href="http://www.unicode.org/unicode/reports/tr17/">Unicode Technical Report&nbsp;#17: Character Encoding Model</a></cite>.</p> 
+  <p> The phrase <dfn>character set</dfn> is used in a variety of meanings. It might denotes just a character repertoire but it may also refer to a character code, and quite often a particular character encoding is implied too. </p> 
+  <p>Unfortunately the word <dfn>charset</dfn> is used to refer to an encoding, causing much confusion. It is even the official term to be used in several contexts by Internet protocols, in <a href="#MIME">MIME</a> headers.</p> 
+  <p> Quite often the choice of a character repertoire, code, or encoding is presented as the choice of a <em>language</em>. For example, Web browsers typically confuse things quite a lot in this area. A&nbsp;pulldown menu in a program might be labeled "Languages", yet consist of character encoding choices (only). A language setting is quite distinct from character issues, although naturally each language has its own requirements on character repertoire. Even more seriously, programs and their documentation very often confuse the above-mentioned issues with the selection of a <a href="#font">font</a>. </p> 
+  <h2><a name="examples">Examples of character codes</a></h2> 
+  <h3><a name="ascii">Good old ASCII</a></h3> 
+  <h4>The basics of ASCII</h4> 
+  <p> The name <dfn>ASCII</dfn>, originally an abbreviation for "American Standard Code for Information Interchange", denotes an old character <a href="#repertoire">repertoire</a>, <a href="#code">code</a>, and <a href="#encoding">encoding</a>.</p> 
+  <p class="summary">Most character codes currently in use contain ASCII as their subset in some sense. ASCII is the safest character repertoire to be used in data transfer. However, <a href="#safe-ascii" title="Subsets of ASCII for safety"> not even all ASCII characters are "safe"!</a></p> 
+  <p> ASCII has been used and is used so widely that often the word <i>ASCII</i> refers to "text" or "plain text" in general, even if the character code is something else! The words "ASCII file" quite often mean any text file as opposite to a binary file. </p> 
+  <p> The definition of ASCII also specifies a set of <a href="#control">control codes</a> ("control characters") such as linefeed (LF) and escape (ESC). But the <em>character repertoire</em> proper, consisting of the <em>printable</em> characters of ASCII, is the following (where the first item is the blank, or space, character): </p> 
+  <pre>
+  ! " # $ % &amp; ' ( ) * + , - . /
+0 1 2 3 4 5 6 7 8 9 : ; &lt; = &gt; ?
+@ A B C D E F G H I J K L M N O
+P Q R S T U V W X Y Z [ \ ] ^ _
+` a b c d e f g h i j k l m n o
+p q r s t u v w x y z { | } ~ 
+</pre> 
+  <p>The <em>appearance</em> of characters varies, of course, especially for some special characters. Some of the variation and other details are explained in <cite><a href="latin1/index.html">The ISO Latin 1 character repertoire - a description with usage notes</a></cite>.</p> 
+  <h4>A formal view on ASCII</h4> 
+  <p> The <em>character code</em> defined by the ASCII standard is the following: code values are assigned to characters consecutively in the order in which the characters are listed above (rowwise), starting from 32 (assigned to the blank) and ending up with 126 (assigned to the tilde character <code>~</code>). Positions 0 through 31 and 127 are reserved for <a href="#control">control codes</a>. They have standardized <a href="chars/c0.html" title="Ascii control codes (control characters, C0 controls)">names and descriptions</a>, but in fact their usage varies a lot. </p> 
+  <p> The <em>character encoding</em> specified by the ASCII standard is very simple, and the most obvious one for any character code where the code numbers do not exceed 255: each code number is presented as an octet with the same value. </p> 
+  <p> Octets 128 - 255 are not used in ASCII. (This allows programs to use the first, most significant bit of an octet as a <a href="http://webopedia.internet.com/TERM/p/parity.html">parity</a> bit, for example.) </p> 
+  <h4><a name="national-ascii">National variants of ASCII</a></h4> 
+  <p> There are several national variants of ASCII. In such variants, some special characters have been replaced by national letters (and other symbols). There is great variation here, and even within one country and for one language there might be different variants. The original ASCII is therefore often referred to as <dfn>US-ASCII</dfn>; the formal standard (by <a href="http://www.ansi.org/" title="American National Standards Institute">ANSI</a>) is <cite>ANSI X3.4-1986</cite>.</p> 
+  <p><small>The phrase "original ASCII" is perhaps not quite adequate, since the creation of ASCII started in late 1950s, and several additions and modifications were made in the 1960s. The <a href="http://www.wps.com/projects/codes/index.html#ASCII-1963">1963 version</a> had several unassigned code positions. The ANSI standard, where those positions were assigned, mainly to accommodate lower case letters, was approved in 1967/1968, later modified slightly. For the early history, including pre-ASCII character codes, see Steven J. Searle's <cite><a href="http://tronweb.super-nova.co.jp/characcodehist.html">A Brief History of Character Codes in North America, Europe, and East Asia</a></cite> and Tom Jennings' <cite><a href="http://www.wps.com/projects/codes/index.html">ASCII: American Standard Code for Information Infiltration</a></cite>. See also <a href="http://www.jimprice.com/">Jim Price</a>'s <cite><a href="http://jimprice.com/jim-asc.htm">ASCII Chart</a></cite>, Mary Brandel's <cite><a href="http://web.archive.org/web/20041012084602/http://www.bobbemer.com/brandela.htm">1963: ASCII Debuts</a></cite>, and the <a href="http://web.archive.org/web/20041012084602/http://www.bobbemer.com/HISTORY.HTM">computer history documents</a>, including the background and creation of ASCII, written by <a href="http://web.archive.org/web/20041012084602/http://www.bobbemer.com/">Bob Bemer</a>, "father of ASCII".</small></p> 
+  <p> <a name="646">The international standard</a> <a title="Basic facts and references about ISO 646" href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/chars.html#ISO646"><cite>ISO 646</cite></a> defines a character set similar to <a href="#ascii">US-ASCII</a> but with <a href="#code">code positions</a> corresponding to US-ASCII characters <tt>@[\]{|}</tt> as "national use positions". It also gives some liberties with characters <tt>#$^`~</tt>. The standard also defines "international reference version (IRV)", which is (in the 1991 edition of ISO 646) identical to US-ASCII. <a href="http://www.ecma-international.org/">Ecma International</a> has issued the <a href="http://www.ecma-international.org/publications/standards/Ecma-006.htm" title="7-Bit Coded Character Set (ECMA-6 standard)" class="nobr">ECMA-6</a> standard, which is equivalent to ISO&nbsp;646 and is freely available on the Web.</p> 
+  <p> Within the framework of ISO 646, and partly otherwise too, several "national variants of ASCII" have been defined, assigning different letters and symbols to the "national use" positions. Thus, the characters that appear in those positions&nbsp;- including those in US-ASCII&nbsp;- are somewhat "unsafe" in international data transfer, although this problem is losing significance. The trend is towards using the corresponding codes strictly for US-ASCII meanings; national characters are handled otherwise, giving them their own, unique and universal code positions in character codes larger than ASCII. But old software and devices may still reflect various "national variants of ASCII". </p>
+  <p> The following table lists ASCII characters which might be replaced by other characters in national variants of ASCII. (That is, the code positions of these US-ASCII characters might be occupied by other characters needed for national use.) The lists of characters appearing in national variants are not intended to be exhaustive, just typical <em>examples</em>. </p> 
+  <table border="1" class="normal"> 
+   <thead> 
+    <tr align="LEFT">
+     <th>dec&nbsp;</th>
+     <th>oct&nbsp;</th>
+     <th>hex&nbsp;</th>
+     <th><a title="General description of the glyph concept" href="#glyph">glyph</a> </th>
+     <th>official <a href="#10646">Unicode</a> name </th>
+     <th>National variants</th>
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr>
+     <th> </th>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;35&nbsp;</td>
+     <td align="right">&nbsp;43&nbsp;</td>
+     <td align="right">23&nbsp;&nbsp;</td>
+     <th>#&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#23"><span class="charname">number&nbsp;sign</span></a> </td>
+     <td>£ Ù </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;36&nbsp;</td>
+     <td align="right">&nbsp;44&nbsp;</td>
+     <td align="right">24&nbsp;&nbsp;</td>
+     <th>$&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#24"><span class="charname">dollar&nbsp;sign</span></a> </td>
+     <td>¤ </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;64&nbsp;</td>
+     <td align="right">100&nbsp;</td>
+     <td align="right">40&nbsp;&nbsp;</td>
+     <th>@&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#40"><span class="charname">commercial&nbsp;at</span></a> </td>
+     <td>É § Ä à ³ </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;91&nbsp;</td>
+     <td align="right">133&nbsp;</td>
+     <td align="right">5B&nbsp;&nbsp;</td>
+     <th>[&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#5B"><span class="charname">left&nbsp;square&nbsp;bracket</span></a> </td>
+     <td>Ä Æ ° â ¡ ÿ é </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;92&nbsp;</td>
+     <td align="right">134&nbsp;</td>
+     <td align="right">5C&nbsp;&nbsp;</td>
+     <th>\&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#5C"><span class="charname">reverse&nbsp;solidus</span></a> </td>
+     <td>Ö Ø ç Ñ ½ ¥ </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;93&nbsp;</td>
+     <td align="right">135&nbsp;</td>
+     <td align="right">5D&nbsp;&nbsp;</td>
+     <th>]&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#5D"><span class="charname">right&nbsp;square&nbsp;bracket</span></a> </td>
+     <td>Å Ü § ê é ¿ | </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;94&nbsp;</td>
+     <td align="right">136&nbsp;</td>
+     <td align="right">5E&nbsp;&nbsp;</td>
+     <th>^&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#5E"><span class="charname">circumflex&nbsp;accent</span></a> </td>
+     <td>Ü î </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;95&nbsp;</td>
+     <td align="right">137&nbsp;</td>
+     <td align="right">5F&nbsp;&nbsp;</td>
+     <th>_&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#5F"><span class="charname">low&nbsp;line</span></a> </td>
+     <td>è </td>
+    </tr>
+    <tr>
+     <td align="right">&nbsp;96&nbsp;</td>
+     <td align="right">140&nbsp;</td>
+     <td align="right">60&nbsp;&nbsp;</td>
+     <th>`&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#60"><span class="charname">grave&nbsp;accent</span></a> </td>
+     <td>é ä µ ô ù </td>
+    </tr>
+    <tr>
+     <td align="right">123&nbsp;</td>
+     <td align="right">173&nbsp;</td>
+     <td align="right">7B&nbsp;&nbsp;</td>
+     <th>{&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#7B"><span class="charname">left&nbsp;curly&nbsp;bracket</span></a> </td>
+     <td>ä æ é à ° ¨ </td>
+    </tr>
+    <tr>
+     <td align="right">124&nbsp;</td>
+     <td align="right">174&nbsp;</td>
+     <td align="right">7C&nbsp;&nbsp;</td>
+     <th>|&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#7C"><span class="charname">vertical&nbsp;line</span></a> </td>
+     <td>ö ø ù ò ñ <i>f</i> </td>
+    </tr>
+    <tr>
+     <td align="right">125&nbsp;</td>
+     <td align="right">175&nbsp;</td>
+     <td align="right">7D&nbsp;&nbsp;</td>
+     <th>}&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#7D"><span class="charname">right&nbsp;curly&nbsp;bracket</span></a> </td>
+     <td>å ü è ç ¼ </td>
+    </tr>
+    <tr>
+     <td align="right">126&nbsp;</td>
+     <td align="right">176&nbsp;</td>
+     <td align="right">7E&nbsp;&nbsp;</td>
+     <th>~&nbsp;&nbsp;</th>
+     <td><a href="latin1/3.html#7E"><span class="charname">tilde</span></a> </td>
+     <td>ü ¯ ß ¨ û ì ´ _ </td>
+    </tr>
+   </tbody> 
+  </table> 
+  <p>Almost all of the characters used in the national variants have been incorporated into <a href="#latin1">ISO Latin 1</a>. Systems that support ISO Latin 1 in principle may still reflect the use of national variants of ASCII in some details; for example, an ASCII character might get <em>printed</em> or <em>displayed</em> according to some national variant. Thus, even "plain ASCII text" is thereby not always portable from one system or application to another.</p> 
+  <p>More information about national variants and their impact: </p>
+  <ul> 
+   <li> <a href="http://www.terena.nl/library/multiling/euroml/JWvanWingen.html">Johan van Wingen</a>: <cite><a href="http://www.terena.nl/library/multiling/euroml/section04.html">International standardization of 7-bit codes, ISO 646</a></cite>; contains a comparison table of national variants </li>
+   <li><a href="http://www.alanflavell.org.uk//iso8859/digress.html#national"><cite>Digression on national 7-bit codes</cite></a> by <a href="http://www.alanflavell.org.uk//">Alan&nbsp;J.&nbsp;Flavell</a> </li>
+   <li> The <a href="http://www.unicodecharacter.com/charsets/iso646.html">ISO 646 page</a> by Roman Czyborra </li>
+   <li> <a href="http://www.kudpc.kyoto-u.ac.jp/%7eyasuoka/CJK.html">Character tables</a> by <a href="http://www.kudpc.kyoto-u.ac.jp/%7eyasuoka/index.html">Koichi Yasuoka</a>. </li>
+  </ul> 
+  <h4><a name="safe-ascii">Subsets of ASCII for safety</a></h4> 
+  <p>Mainly due to the <a href="#national-ascii">"national variants"</a> discussed above, some characters are less "safe" than others, i.e. more often transferred or interpreted incorrectly.</p> 
+  <p>In addition to the letters of the English alphabet ("A"&nbsp;to&nbsp;"Z", and "a"&nbsp;to&nbsp;"z"), the digits ("0"&nbsp;to&nbsp;"9") and the space ("&nbsp;"), only the following characters can be regarded as really "safe" in data transmission: </p>
+  <pre>! " % &amp; ' ( ) * + , - . / : ; &lt; = &gt; ?</pre> 
+  <p>Even these characters might eventually be <em>interpreted</em> wrongly by the recipient, e.g. by a human reader seeing a <a href="#glyph">glyph</a> for "&amp;" as something else than what it is intended to denote, or by a program interpreting "&lt;" as starting some special <a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=markup" title="What is markup (a definition)">markup</a>, "?" as being a so-called <a href="http://webopedia.internet.com/TERM/w/wildcard_character.html">wildcard</a> character, etc.</p> 
+  <p>When you need to <em>name</em> things (e.g. files, variables, data fields, etc.), it is often best to use only the characters listed above, even if a wider character repertoire is possible. Naturally you need to take into account any additional restrictions imposed by the applicable syntax. For example, the rules of a programming language might restrict the character repertoire in identifier names to letters, digits and one or two other characters.</p> 
+  <h4><a name="ascii8">The misnomer "8-bit ASCII"</a></h4> 
+  <p> Sometimes the phrase "8-bit ASCII" is used. It follows from the discussion above that in reality <em>ASCII is strictly and unambiguously a 7-bit code</em> in the sense that all code positions are in the range 0&nbsp;-&nbsp;127. </p>
+  <p> It is a misnomer used to refer to <em>various</em> character <a href="#code">codes</a> which are <dfn>extensions of <a href="#ascii">ASCII</a></dfn> in the following sense: the character repertoire contains ASCII as a subset, the code numbers are in the range 0 - 255, and the code numbers of ASCII characters equal their ASCII codes. </p> 
+  <h3><a name="latin1">Another example: ISO Latin&nbsp;1 alias ISO 8859-1</a></h3> 
+  <p> The ISO 8859-1 standard (which is part of the <a href="#8859">ISO 8859 family</a> of standards) defines a <em>character <a href="#repertoire">repertoire</a></em> identified as "Latin alphabet No. 1", commonly called "ISO Latin&nbsp;1", as well as a <em>character <a href="#code">code</a></em> for it. The repertoire contains the <a href="#ascii">ASCII</a> repertoire as a subset, and the code numbers for those characters are the same as in ASCII. The standard also specifies an <em><a href="#encoding">encoding</a></em>, which is similar to that of ASCII: each code number is presented simply as one octet. </p> 
+  <p> In addition to the ASCII characters, ISO Latin&nbsp;1 contains various accented characters and other letters needed for writing languages of Western Europe, and some special characters. These characters occupy code positions 160 - 255, and they are: </p> 
+  <pre>
+&nbsp; ¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯
+° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿
+À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï
+Ð Ñ Ò Ó Ô Õ Ö × Ø Ù Ú Û Ü Ý Þ ß
+à á â ã ä å æ ç è é ê ë ì í î ï
+ð ñ ò ó ô õ ö ÷ ø ù ú û ü ý þ ÿ
+</pre> 
+  <p>Notes:</p> 
+  <ul class="emb"> 
+   <li>The first of the characters above appears as space; it is the so-called <a title="A description of the NO-BREAK SPACE character" href="latin1/3.html#A0">no-break space</a>.</li> 
+   <li> The presentation of some characters in copies of this document may be defective e.g. due to lack of <a href="#font">font</a> support. You may wish to compare the presentation of the characters on your browser with the <a href="http://www.unicodecharacter.com/charsets/iso8859-1.gif">character table presented as a GIF image</a> in the famous <a href="http://www.unicodecharacter.com/charsets/iso8859.html"> <cite>ISO 8859 Alphabet Soup</cite></a> document. (In text only mode, you may wish to use my simple <a href="ISO-table.html">table of ISO Latin 1</a> which contains the names of the characters.) </li> 
+   <li> Naturally, the appearance of characters varies from one <a href="#font">font</a> to another. </li> 
+  </ul> 
+  <p>See also: <a href="latin1/index.html"><cite>The ISO Latin 1 character repertoire - a description with usage notes</cite></a>, which presents detailed characterizations of the <em>meanings</em> of the characters and comments on their usage in various contexts. </p> 
+  <h3><a name="win">More examples: the Windows character 
+    <nobr>
+     set(s)
+    </nobr></a></h3> 
+  <p> In <a href="#latin1">ISO 8859-1</a>, code positions 128 - 159 are explicitly reserved for <a href="#control">control purposes</a>; they "correspond to bit combinations that do not represent graphic characters". The so-called 
+   <!--"http://voyager.cns.ohiou.edu/%7esadkins/web_library/fonts/font_specs/5-3ch.html"--> <a href="http://www.microsoft.com/globaldev/reference/sbcs/1252.htm" title="Microsoft Windows Codepage : 1252 (Latin I)">Windows character set</a> (WinLatin1, or <a title="cp1252_WinLatin1 to Unicode table" href="http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP1252.TXT">Windows code page 1252</a>, to be exact) uses some of those positions for printable characters. Thus, the Windows character set <strong>is not identical with <a href="#latin1">ISO 8859-1</a></strong>. It is, however, true that the Windows character set is much more similar to ISO 8859-1 than the so-called <a href="#cp">DOS character sets</a> are. The Windows character set is often called "ANSI character set", but this is seriously misleading. It has <em>not</em> been approved by <a href="http://www.ansi.org/" title="American National Standards Institute">ANSI</a>. (Historical background: Microsoft based the design of the set on a <em>draft</em> for an ANSI standard. <a href="http://www.microsoft.com/globaldev/reference/glossary.mspx">A glossary</a> by Microsoft explicitly admits this.)</p> 
+  <p><small>Note that programs used on Windows systems may use a DOS character set; for example, if you create a text file using a Windows program and then use the <code>type</code> command on DOS prompt to see its content, strange things may happen, since the DOS command interprets the data according to a DOS character code.</small></p> 
+  <p> In the Windows character set, some positions in the range 128 - 159 are assigned to printable characters, such as "smart quotes", em dash, en dash, and trademark symbol. Thus, the character repertoire is larger than <a href="#latin1">ISO Latin&nbsp;1</a>. The use of octets in the range 128&nbsp;- 159 in any data to be processed by a program that expects ISO 8859-1 encoded data is an error which might cause just anything. They might for example get ignored, or be processed in a manner which looks meaningful, or be interpreted as <a href="#control">control characters</a>. See my document <a href="www/windows-chars.html"> <cite>On the use of some MS Windows characters in HTML</cite></a> for a discussion of the problems of using these characters. </p> 
+  <p> The Windows character set exists in different variations, or <strong>"code pages"</strong> (CP), which generally differ from the corresponding ISO 8859 standard so that it contains same characters in positions 128&nbsp;- 159 as code page 1252. (However, there are some more <a href="unicode/greek.html">differences between ISO 8859-7 and win-1253 (WinGreek)</a>.) See <a href="http://www.unicodecharacter.com/charsets/codepages.html"><cite>Code page &amp;Co.</cite></a> by Roman Czyborra and <a href="http://www.microsoft.com/globaldev/reference/WinCP.asp"><cite>Windows codepages</cite></a> by <a href="http://www.microsoft.com/">Microsoft</a>. See also <a href="http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/" title="Windows code page to Unicode mapping tables">CP to Unicode mappings</a>. What we have discussed here is the most usual one, resembling ISO 8859-1. Its status in the <a title="Information about charset registration procedure" href="#charsetreg">officially IANA registry</a> was unclear; an encoding had been registered under the name <code>ISO-8859-1-Windows-3.1-Latin-1</code> by Hewlett-Packard&nbsp;(!), assumably intending to refer to WinLatin1, but in 1999-12 <a href="http://www.isi.edu/in-notes/iana/assignments/character-set-info/windows-1252">Microsoft finally registered</a> it under the name <code>windows-1252</code>. That name has in fact been widely used for it. (The name <code>cp-1252</code> has been used too, but it isn't officially registered even as an alias name.)</p> 
+  <h3><a name="asciiext">The ISO 8859 family</a></h3> 
+  <p> There are several character codes which are extensions to <a href="#ascii">ASCII</a> in the same <a href="#ascii8" title="What does &quot;extension to ASCII&quot; mean?">sense</a> as <a href="#latin1">ISO 8859-1</a> and the <a href="#win">Windows character set</a>. </p>
+  <p> <a name="8859">ISO 8859-1 itself is just a member of the</a> ISO 8859 family of character codes, which is nicely overviewed in Roman Czyborra's famous document <a href="http://www.unicodecharacter.com/charsets/iso8859.html"><cite>The ISO 8859 Alphabet Soup</cite></a>. The ISO 8859 codes extend the <a href="#ascii">ASCII</a> repertoire in different ways with different special characters (used in different languages and cultures). Just as ISO 8859-1 contains ASCII characters and a collection of characters needed in languages of western (and northern) Europe, there is ISO 8859-2 alias ISO Latin 2 constructed similarly for languages of central/eastern Europe, etc. The ISO 8859 character codes are <em>isomorphic</em> in the following sense: code positions 0 - 127 contain the same character as in ASCII, positions 128 - 159 are unused (reserved for <a href="#control">control characters</a>), and positions 160 - 255 are the varying part, used differently in different members of the ISO 8859 family. </p>
+  <p> The ISO 8859 character codes are normally presented using the obvious encoding: each code position is presented as one octet. Such encodings have several alternative names in the official <a href="#charsetreg">registry of character encodings</a>, but the preferred ones are of the form 
+   <nobr>
+    ISO-8859-
+    <var>n</var>.
+   </nobr> </p>
+  <p> Although ISO 8859-1 has been a de facto default encoding in many contexts, it has in principle no special role. <a href="latin9.html" title="ISO Latin 9 as compared with ISO Latin 1">ISO 8859-15 alias ISO Latin 9 (!)</a> was expected to replace ISO 8859-1 to a great extent, since it contains the politically important symbol for <a href="http://europa.eu.int/euro/html/entry.html" title="Official EU information about euro (multilingual site)">euro</a>, but it seems to have little practical use. </p> 
+  <p> The following table lists the ISO 8859 alphabets, with links to more detailed descriptions. There is a separate document <a href="8859.html"> <cite>Coverage of European languages by ISO Latin alphabets</cite></a> which you might use to determine which (if any) of the alphabets are suitable for a document in a given language or combination of languages. My <a href="iso8859/">other material on ISO 8859</a> contains a combined character table, too. </p> 
+  <table border="1" cellpadding="4" cellspacing="0"> 
+   <caption>
+    The parts of ISO 8859
+    <br>
+   </caption> 
+   <tbody>
+    <tr>
+     <th>standard </th>
+     <th>name of alphabet </th>
+     <th>characterization<br></th>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-1" title="Short description with code table (upper half)">ISO&nbsp;8859-1</a> </td>
+     <td> <a href="latin1/index.html" title="The ISO Latin 1 character repertoire - a&nbsp;description with usage notes"> Latin alphabet No. 1</a> </td>
+     <td> "Western", "West European"<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-2" title="Short description with code table (upper half)">ISO&nbsp;8859-2</a> </td>
+     <td>Latin alphabet No. 2 </td>
+     <td>"Central European", "East European"<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-3" title="Short description with code table (upper half)">ISO&nbsp;8859-3</a> </td>
+     <td>Latin alphabet No. 3 </td>
+     <td>"South European"; "Maltese &amp; Esperanto"<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-4" title="Short description with code table (upper half)">ISO&nbsp;8859-4</a> </td>
+     <td>Latin alphabet No. 4 </td>
+     <td>"North European"<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-5" title="Short description with code table (upper half)">ISO&nbsp;8859-5</a> </td>
+     <td>Latin/Cyrillic alphabet </td>
+     <td>(for Slavic languages)<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-6" title="Short description with code table (upper half)">ISO&nbsp;8859-6</a> </td>
+     <td>Latin/Arabic alphabet </td>
+     <td>(for the Arabic language)<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-7" title="Short description with code table (upper half)">ISO&nbsp;8859-7</a> </td>
+     <td>Latin/Greek alphabet </td>
+     <td>(for modern Greek)<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-8" title="Short description with code table (upper half)">ISO&nbsp;8859-8</a> </td>
+     <td>Latin/Hebrew alphabet </td>
+     <td>(for Hebrew and Yiddish)<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-9" title="Short description with code table (upper half)">ISO&nbsp;8859-9</a> </td>
+     <td>Latin alphabet No. 5 </td>
+     <td>"Turkish"<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-10" title="Short description with code table (upper half)">ISO&nbsp;8859-10</a> </td>
+     <td>Latin alphabet No. 6 </td>
+     <td>"Nordic" (Sámi, Inuit, Icelandic)<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-11" title="Short description with code table (upper half)">ISO&nbsp;8859-11</a> </td>
+     <td>Latin/Thai alphabet </td>
+     <td>(for the Thai language)<br></td>
+    </tr> 
+    <tr>
+     <td colspan="3"> <a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-12" title="Information about this gap"><small>(Part 12 has not been defined.)</small></a><br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-13" title="Short description with code table (upper half)">ISO&nbsp;8859-13</a> </td>
+     <td>Latin alphabet No. 7 </td>
+     <td>Baltic Rim<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-14" title="Short description with code table (upper half)">ISO&nbsp;8859-14</a> </td>
+     <td>Latin alphabet No. 8 </td>
+     <td>Celtic<br></td>
+    </tr> 
+    <tr>
+     <td><a href="http://www.unicodecharacter.com/charsets/iso8859.html#ISO-8859-15" title="Short description with code table (upper half)">ISO&nbsp;8859-15</a> </td>
+     <td><a href="latin9.html" title="ISO Latin 9 as compared with ISO Latin 1"> Latin alphabet No. 9</a> </td>
+     <td>"euro"<br></td>
+    </tr> 
+    <tr>
+     <td> ISO&nbsp;8859-16 </td>
+     <td> Latin alphabet No. 10 </td>
+     <td> for South-Eastern Europe (see below) <br></td>
+    </tr> 
+   </tbody>
+  </table> 
+  <p><small>Notes: ISO 8859-<var>n</var> is Latin alphabet <abbr title="number">no.</abbr> <var>n</var> for <var>n</var>=1,2,3,4, but this correspondence is broken for the other Latin alphabets. <strong><a name="8859-16" href="http://www.evertype.com/standards/iso8859/fdis8859-16-en.pdf" title="Committee Draft for Latin alphabet No. 10 (PDF format)">ISO 8859-16</a></strong> is for use in Albanian, Croatian, English, Finnish, French, German, Hungarian, Irish Gaelic (new orthography), Italian, Latin, Polish, Romanian, and Slovenian. In particular, it contains letters s and t with comma below, in order to address <a href="8859.html#IX">an issue of writing Romanian</a>. See the <a href="http://anubis.dkuug.dk/jtc1/sc2/">ISO/IEC JTC 1/ SC 2</a> site for the current status and proposed changes to the ISO 8859 set of standards.</small></p> 
+  <h3><a name="other-extensions-to-ascii">Other "extensions to ASCII"</a></h3> 
+  <p>In addition to the codes discussed above, there are other extensions to ASCII which utilize the code range 0&nbsp;-&nbsp;255 (<a title="Explanation of the misnomer &quot;8-bit ASCII&quot;" href="#ascii8">"8-bit ASCII codes"</a>), such as </p> 
+  <dl> 
+   <dt> 
+    <a name="cp"><strong>DOS</strong> character codes</a>, or "code pages" (CP) 
+   </dt>
+   <dd>
+     In 
+    <a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?MS-DOS">MS DOS</a> systems, different character codes are used; they are called "code pages". The original American code page was CP 437, which has e.g. some Greek letters, mathematical symbols, and characters which can be used as elements in simple pseudo-graphics. Later CP 850 became popular, since it contains letters needed for West European languages - largely the same letters as 
+    <a href="#latin1">ISO 8859-1</a>, but in different code positions. See 
+    <a href="http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/PC/">DOS code page to Unicode mapping tables</a> for detailed information. Note that DOS code pages are quite different from 
+    <a href="#win">Windows character codes</a>, though the latter are sometimes called with names like 
+    <code>cp-1252</code> (=&nbsp;
+    <code>windows-1252</code>)! For further confusion, Microsoft now prefers to use the notion "OEM code page" for the DOS character set used in a particular country. 
+   </dd> 
+   <dt> 
+    <a name="maccode"><strong>Macintosh</strong> character code</a> 
+   </dt>
+   <dd>
+     On the 
+    <a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=macintosh&amp;action=Search">Macs</a>, the character code is more uniform than on PCs (although there are some 
+    <a title="Mac OS Encoding Variants" href="http://developer.apple.com/techpubs/macos8/TextIntlSvcs/TextEncodingConversionManager/TEC1.5/TEC.b1.html">national variants</a>). The Mac character repertoire is a mixed combination of ASCII, accented letters, mathematical symbols, and other ingredients. See section 
+    <a href="http://developer.apple.com/techpubs/mac/Text/Text-2.html"> <cite>Text</cite></a> in 
+    <!--"http://gemma.apple.com/dev/techsupport/insidemac/"--> 
+    <a href="http://developer.apple.com/techpubs/macos8/mac8.html"> <cite>Mac OS 8 and 9 Developer Documentation</cite></a>. 
+   </dd> 
+  </dl> 
+  <p> Notice that many of these are very different from ISO 8859-1. They may have different character repertoires, and the same character often has different code values in different codes. For example, code position 228 is occupied by ä (letter a with dieresis, or umlaut) in ISO 8859-1, by ð (Icelandic letter eth) in HP's 
+   <!--"http://hpcc920.external.hp.com/cposupport/printers/support_doc/bpl02461.html"--> <a title="Roman 8 Character Conversion Table" href="http://www.robelle.com/library/smugbook/roman8.html">Roman-8</a>, by õ (letter o with tilde) in DOS code page 850, and per mille sign&nbsp;(‰) in Macintosh character code. </p> 
+  <p>For information about several code pages, see <a href="http://www.unicodecharacter.com/charsets/codepages.html"><cite>Code page &amp;Co.</cite></a> by Roman Czyborra. See also his excellent <a href="http://www.unicodecharacter.com/charsets/cyrillic.html" title="The Cyrillic Charset Soup">description of various <strong>Cyrillic</strong> encodings</a>, such as different variants of KOI-8; most of them are extensions to ASCII, too. </p> 
+  <p> In general, full <strong>conversions</strong> between the character codes mentioned above are not possible. For example, the Macintosh character repertoire contains the Greek letter pi, which does not exist in <a href="#latin1">ISO Latin&nbsp;1</a> at all. Naturally, a text can be converted (by a simple program which uses a conversion table) from Macintosh character code to ISO 8859-1 if the text contains only those characters which belong to the ISO Latin&nbsp;1 character repertoire. Text presented in <a href="#win">Windows character code</a> can be used as such as ISO 8859-1 encoded data <em>if</em> it contains only those characters which belong to the ISO Latin&nbsp;1 character repertoire. </p> 
+  <h3><a name="8bit">Other "8-bit codes"</a></h3> 
+  <p>All the character codes discussed above are "8-bit codes", eight bits are sufficient for presenting the <a href="#code">code numbers</a> and in practice the <a href="#encoding">encoding</a> (at least the normal encoding) is the obvious (trivial) one where each code position (thereby, each character) is presented as one octet (byte). This means that there are 256 code positions, but several positions are reserved for <a href="#control">control codes</a> or left unused (unassigned, undefined). </p> 
+  <p>Although currently most "8-bit codes" are <a href="#ascii8">extensions to ASCII</a> in the sense described above, this is just a practical matter caused by the widespread use of <a href="#ascii">ASCII</a>. It was practical to make the "lower halves" of the character codes the same, for several reasons.</p> 
+  <p><a name="2022">The standards</a> <a href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/oii/en/chars.html#ISO2022">ISO 2022</a> 
+   <!--title="8-bit Character Sets - ISO/IEC 2022"
+"http://www.stri.is/TC304/GUIDE/gis2022.htm"--> and <a href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/chars.html#ISO4873">ISO 4873</a> define a <a href="http://developer.apple.com/techpubs/macos8/TextIntlSvcs/TextEncodingConversionManager/TEC1.5/TEC.a3.html" title="General Character Set Structure">general framework</a> for 8-bit codes (and 7-bit codes) and for switching between them. One of the basic ideas is that code positions 128&nbsp;-&nbsp;159 (decimal) are reserved for use as <a href="#control">control codes</a> ("C1&nbsp;controls"). Note that the <a href="#win">Windows</a> character sets do not comply with this principle.</p> 
+  <p> <a name="ebcdic">To illustrate that other kinds of 8-bit codes can be defined than extensions to Ascii, we briefly consider the</a> <strong><a href="http://webopedia.internet.com/TERM/E/EBCDIC.html" title="EBCDIC (a short description)">EBCDIC</a></strong> code, defined by <a href="http://www.ibm.com/">IBM</a> and once in widespread use on "<a href="http://webopedia.internet.com/TERM/m/mainframe.html">mainframes</a>" (and still in use). EBCDIC contains all ASCII characters but in quite different <a href="#code">code positions</a>. As an interesting detail, in EBCDIC normal letters A&nbsp;-&nbsp;Z do not all appear in consecutive code positions. EBCDIC exists in different national variants (cf. to <a href="#646">variants of ASCII</a>). For more information on EBCDIC, see section <a href="http://www.terena.nl/library/multiling/euroml/section05.html"><cite>IBM and EBCDIC</cite></a> in <a href="http://www.terena.nl/library/multiling/euroml/JWvanWingen.html">Johan W. van Wingen</a>'s <a href="http://www.terena.nl/library/multiling/euroml/mlcs5.html"><cite>Character sets. Letters, tokens and codes.</cite></a>. </p> 
+  <h3><a name="10646">ISO 10646, UCS, and Unicode</a></h3> 
+  <h4>ISO 10646, the standard</h4> 
+  <p> <dfn>ISO 10646</dfn> (officially: ISO/IEC 10646) is an international standard, by <a title="International Organization for Standardization" href="http://www.iso.org/">ISO</a> and <a href="http://www.iec.ch" title="International Electrotechnical Commission">IEC</a>. It defines UCS, Universal Character Set, which is a very large and growing <a href="#repertoire">character repertoire</a>, and a <a href="#code">character code</a> for it. Currently tens of thousands of characters have been defined, and new amendments are defined fairly often. 
+   <!-- see
+a href=
+"http://www.iso.ch/isob/switch-engine-cate.pl?searchtype=refnumber&amp;KEYWORDS=10646"
+information about ISO 10646 standard documents /a at ISO.--> It contains, among other things, all characters in the character repertoires discussed above. For a list of the character blocks in the repertoire, with examples of some of them, see the document <a href="ucs.html8"><cite>UCS (ISO 10646, Unicode) character blocks</cite></a>. </p> 
+  <p><small>The number of the standard intentionally reminds us of 646, the number of the ISO standard corresponding to <a href="#ascii">ASCII</a>.</small></p> 
+  <h4><a name="unicode">Unicode, the more practical definition of UCS</a></h4> 
+  <p> <dfn>Unicode</dfn> is a <a title="Information about Unicode standard" href="http://www.unicode.org/unicode/standard/standard.html">standard</a>, by the <a href="http://www.unicode.org/">Unicode Consortium</a>, which defines a character repertoire and character code intended to be fully compatible with ISO 10646, and an encoding for it. ISO 10646 is more general (abstract) in nature, whereas Unicode "imposes additional constraints on implementations to ensure that they treat characters uniformly across platforms and applications", as they say in section <cite><a href="http://www.unicode.org/unicode/faq/unicode_iso.html">Unicode&nbsp;&amp;&nbsp;ISO&nbsp;10646</a></cite> of the <cite><a href="http://www.unicode.org/unicode/faq/">Unicode FAQ</a></cite>.</p> 
+  <p>Unicode was originally designed to be a 16-bit code, but it was extended so that currently code positions are expressed as integers in the hexadecimal range 0..10FFFF (decimal 0..1&nbsp;114&nbsp;111). That space is divided into 16-bit 
+   <!--a href="http://www.nada.kth.se/i18n/ucs/unicode-iso10646-oview.html#2"
+title="The structure of the coding space"--> "planes". Until recently, the use of Unicode has mostly been limited to "Basic Multilingual Plane (BMP)" consisting of the range 0..FFFF.</p> 
+  <p>The ISO 10646 and Unicode <em>character repertoire</em> can be regarded as a <em>superset</em> of most character repertoires in use. However, the <em>code positions</em> of characters vary from one character code to another.</p> 
+  <h4><a name="unicode-name">"Unicode" is the commonly used name</a></h4> 
+  <p>In practice, people usually talk about Unicode rather than ISO 10646, partly because we prefer names to numbers, partly because Unicode is more explicit about the <em>meanings</em> of characters, partly because detailed information about Unicode is available on the Web (see below).</p> 
+  <p><small>Unicode version 1.0 used somewhat different <a href="#names">names</a> for some characters than ISO 10646. In Unicode version, 2.0, the names were made the same as in ISO 10646. New <a href="http://www.unicode.org/unicode/standard/versions/">versions</a> of Unicode are expected to add new characters mostly. <a href="http://www.unicode.org/unicode/standard/versions/Unicode3.0.html">Version&nbsp;3.0</a>, with a total number of 49,194 characters (38,887 in version&nbsp;2.1), was published in February 2000, and version 4.0 has 96,248 characters.</small></p> 
+  <p><small>Until recently, the ISO 10646 standard had not been put onto the Web. It is now available as a large (80 megabytes) zipped PDF file via the <a href="http://isotc.iso.ch/livelink/livelink/fetch/2000/2489/Ittf_Home/PubliclyAvailableStandards.htm">Publicly Available Standards</a> page of ISO/IEC JTC1. page. It is available in printed form from <a href="http://www.iso.ch/addresse/membodies.html" title="ISO members (contact info)">ISO member bodies</a>. But for most practical purposes, the same information is in the Unicode standard.</small></p> 
+  <h4><a name="unicode-info">General information about ISO 10646 and Unicode</a></h4> 
+  <p>For more information, see </p>
+  <ul> 
+   <li> <a href="http://www.unicode.org/unicode/faq/">Unicode FAQ</a> by the Unicode Consortium. It is fairly large but divided into sections rather logically, except that section <cite><a href="http://www.unicode.org/unicode/faq/basic_q.html"> Basic Questions</a></cite> would be better labeled as "Miscellaneous". </li>
+   <li> Roman Czyborra's material on Unicode, such as <a href="http://www.unicodecharacter.com/unicode/motivation.html"><cite>Why do we need Unicode?</cite></a> and <a href="http://www.unicodecharacter.com/unicode/characters.html" title="A look at Unicode as a coded character set: Unicode's character repertoire and character numbering"><cite>Unicode's characters</cite></a> </li>
+   <li> Olle Järnefors: <a href="http://www.nada.kth.se/i18n/ucs/unicode-iso10646-oview.html"> <cite>A short overview of ISO/IEC 10646 and Unicode</cite></a>. Very readable and informative, though somewhat outdated e.g. as regards to <a href="http://www.unicode.org/unicode/standard/versions/">versions of Unicode</a>. (It also contains a more detailed technical description of the UTF encodings than those given above.) </li>
+   <li> <a href="http://www.cl.cam.ac.uk/~mgk25/">Markus Kuhn</a>: <a href="http://www.cl.cam.ac.uk/~mgk25/unicode.html"><cite>UTF-8 and Unicode FAQ for Unix/Linux</cite></a>. Contains helpful general explanations as well as practical implementation considerations. </li>
+   <li> Steven J. Searle: <cite><a href="http://tronweb.super-nova.co.jp/characcodehist.html">A Brief History of Character Codes in North America, Europe, and East Asia</a></cite>. Contains a valuable historical review, including critical notes on the "unification" of Chinese, Japanese and Korean (CJK) characters. </li>
+   <li> <a href="http://www.alanwood.net/alan-wood.html">Alan Wood</a>: <cite><a href="http://www.alanwood.net/unicode/utilities_editors.html">Unicode and Multilingual Editors and Word Processors</a></cite>; some software tools for actually writing Unicode; I'd especially recommend taking a look at the free <a href="http://www.sharmahd.com/unipad/unipad.en.html">UniPad</a> editor (for Windows). </li>
+  </ul> 
+  <div>
+   There are also some 
+   <em>books</em> on Unicode:
+  </div> 
+  <ul> 
+   <li>Jukka K. Korpela: <a href="http://www.oreilly.com/catalog/unicode/" lang="en">Unicode Explained</a>. O’Reilly, 2006. </li>
+   <li>Tony Graham: <a href="http://www.adwarereport.com/books-plain/0764546252.html" title="Adware Report : Unicode: A Primer"> Unicode: A Primer</a>. Wiley, 2000. 
+    <!-- Available for viewing online
+page by page:
+<a href=
+"http://www.amazon.com/gp/reader/0764546252/ref=sib_dp_pt/104-3004196-5994368#reader-link">Viewing &quot;Unicode: A Primer</a>. --> </li>
+   <li>Richard Gillam: <a href="http://www.amazon.com/exec/obidos/tg/detail/-/0201700522/qid=1111476373/sr=8-2/ref=pd_csp_2/104-3004196-5994368?v=glance&amp;s=books&amp;n=507846" title="Info on &quot;Unicode Demystified...&quot; at Amazon">Unicode Demystified: A Practical Programmer's Guide to the Encoding Standard</a>. Addison-Wesley, 2002. </li>
+  </ul> 
+  <h4><a name="unicode-ref">Reference information about ISO 10646 and Unicode</a></h4> 
+  <ul> 
+   <li> <strong><a href="http://www.unicode.org/versions/Unicode4.0.0/">Unicode 4.0 online</a></strong>: the standard itself, mostly in PDF format; it's partly hard to read, so you might benefit from my <cite><a href="unicode/guide.html"> Guide to the Unicode standard</a></cite>, which briefly explains the structure of the standard and how to find information about a particular character there </li>
+   <li><a href="http://hapax.qc.ca/" lang="fr" hreflang="fr">Unicode et ISO 10646 en français</a>, the Unicode standard in French </li>
+   <li> <strong><a href="http://www.unicode.org/charts/" name="charts">Unicode charts</a></strong>, containing <a href="#name">names</a>, <a href="#code">code positions</a>, and representative <a href="#glyph">glyphs</a> for the characters and notes on their usage. Available in PDF format, containing the same information as in the corresponding parts of the printed standard. <small>(The charts were previously available in faster-access format too, as HTML documents containing the charts as GIF images. But this version seems to have been removed.)</small> </li>
+   <li> <a name="unidata" href="http://www.unicode.org/Public/UNIDATA/UnicodeData.txt">Unicode database</a>, a large (over 460&nbsp;000 <a href="#octet" title="octet = byte = 8 bits">octets</a>) plain text file listing Unicode character <a href="#code">code positions</a>, <a href="#names">names</a>, and defined character <a href="#prop">properties</a> in a compact <a href="http://www.unicode.org/Public/UNIDATA/UnicodeData.html" title="UnicodeData file format">notation</a> </li>
+   <li><a title="Title: ISO/IEC 10646-1 annex E as changed by technical corrigendum 1" href="http://osiris.dkuug.dk/JTC1/SC2/WG2/docs/annexe-r">Informative annex E</a> to ISO 10646-1:1993 (i.e., old version!), which lists, in alphabetic order, all character <a href="#names">names</a> (and the <a href="#code">code positions</a>) except Hangul and CJK ideographs; useful for finding out the code position when you know the (right!) name of a character. </li>
+   <li> <a href="http://www.eki.ee/letter/">An online character database</a> by Indrek Hein at the <a href="http://www.eki.ee/">Institute of the Estonian Language</a>. You can e.g. search for <a href="#10646">Unicode</a> characters by name or code position and get the Unicode equivalents of characters in many widely used character sets. 
+    <form action="http://www.eki.ee/letter/chardata.cgi" class="noprint"> 
+     <div>
+      This simple interface to the database lets you retrieve information about a Unicode character by code position (to be specified in hexadecimal, with four digits, as in 
+      <code>U+<var>nnnn</var></code>): 
+      <code>U+<input name="ucode" value="" size="10"></code> 
+      <input type="submit"> 
+     </div>
+    </form> </li>
+   <li><a href="html/unicode.html">How to find an &amp;#number; notation for a character</a>; contains some additional information on how to find a Unicode number for a character </li>
+  </ul> 
+  <h4><a name="ucs2">Encodings for Unicode</a></h4> 
+  <p>Originally, before extending the code range past 16 bits, the "native" Unicode encoding was <dfn>UCS-2</dfn>, which presents each code number as two consecutive octets <var>m</var> and <var>n</var> so that the number equals 256<var>m</var>+<var>n</var>. This means, to express it in computer jargon, that the code number is presented as a <strong>two-byte integer</strong>. According to the Unicode consortium, the term UCS-2 should now be avoided, as it is associated with the 16-bit limitations.</p> 
+  <p> <dfn>UTF-32</dfn> encodes each code position as a 32-bit binary integer, i.e. as four octets. This is a very obvious and simple encoding. However, it is inefficient in terms of the number of octets needed. If we have normal English text or other text which contains <a href="#latin1">ISO Latin&nbsp;1</a> characters only, the length of the Unicode encoded octet sequence is four times the length of the string in ISO 8859-1 encoding. UTF-32 is rarely used, except perhaps in internal operations (since it is very simple for the purposes of string processing).</p> 
+  <p><dfn>UTF-16</dfn> represents each code position in the Basic Multilingual Plane as two octets. Other code positions are presented using so-called <dfn>surrogate pairs</dfn>, utilizing some code positions in the BMP reserved for the purpose. This, too, is a very simple encoding when the data contains BMP characters only.</p> 
+  <!--
+It is somewhat debatable whether Unicode defines an encoding
+or just a character code. However, it refers to code values
+being presentable as 16-bit integers, and it seems to imply
+the corresponding two-octet representation.
+In principle, Unicode requires that "Unicode values can
+be stored in native 16-bit machine words" and "does not
+specify any order of bytes inside a Unicode value".
+Thus, it allows "<a href=
+"http://webopedia.internet.com/TERM/b/big_endian.html"
+title="Big-endian [and little-endian]"
+>little-endian</a>" presentation where the least
+significant byte precedes the most significant byte, if agreed on
+by higher-level protocols.
+--> 
+  <p> <a name="utf">Unicode</a> can be, and often is, encoded in other ways, too, such as the following encodings: </p> 
+  <dl> 
+   <dt> 
+    <a title="RFC 3629: UTF-8, a transformation format of ISO 10646" href="http://www.faqs.org/rfcs/rfc3629.html"> UTF-8</a>
+   </dt> 
+   <dd>
+     Character codes less than 128 (effectively, the 
+    <a href="#ascii">ASCII</a> repertoire) are presented "as such", using one octet for each code (character) All other codes are presented, according to a relatively complicated method, so that one code (character) is presented as a sequence of two to four octets, each of which is in the range 128 - 255. This means that in a sequence of octets, octets in the range 0 - 127 ("bytes with most significant bit set to 0") directly represent 
+    <a href="#ascii">ASCII</a> characters, whereas octets in the range 128 - 255 ("bytes with most significant bit set to 1") are to be interpreted as really encoded presentations of characters. 
+   </dd> 
+   <dt> 
+    <a name="utf7" title="RFC 2152: UTF-7 - A
+Mail-Safe Transformation Format of Unicode" href="ftp://nis.nsf.net/internet/documents/rfc/rfc2152.txt">UTF-7</a> 
+   </dt> 
+   <dd>
+     Each character code is presented as a sequence of one or more octets in the range 0 - 127 ("bytes with most significant bit set to 0", or "seven-bit bytes", hence the name). Most 
+    <a href="#ascii">ASCII</a> characters are presented as such, each as one octet, but for obvious reasons some octet values must be reserved for use as "escape" octets, specifying the octet together with a certain number of subsequent octets forms a multi-octet encoded presentation of one character. There is an 
+    <a href="#utf7ex">example of using UTF-7</a> later in this document. 
+   </dd> 
+  </dl> 
+  <p><cite>IETF Policy on Character Sets and Languages</cite> (<a href="ftp://ftp.isi.edu/in-notes/rfc2277.txt">RFC 2277</a>) clearly <strong>favors UTF-8</strong>. It requires support to it in Internet protocols (and doesn't even mention UTF-7). Note that UTF-8 is efficient, if the data consists dominantly of ASCII characters with just a few "special characters" in addition to them, and reasonably efficient for dominantly ISO Latin&nbsp;1 text.</p> 
+  <h4><a name="support">Support to Unicode characters</a></h4> 
+  <p> The <strong>implementation</strong> of Unicode support is a long and mostly gradual process. Unicode can be supported by programs on any operating systems, although some systems may allow much easier implementation than others; this mainly depends on whether the system uses Unicode internally so that support to Unicode is "built-in". </p> 
+  <p> <a name="mes">Even in circumstances where Unicode is supported in principle, the support usually does not cover <em>all</em> Unicode characters.</a> For example, a <a href="#font">font</a> available may cover just some part of Unicode which is practically important in some area. On the other hand, for data transfer it is essential to know which Unicode characters the recipient is able to handle. For such reasons, various <strong>subsets</strong> of the Unicode character repertoire have been and will be defined. For example, the <cite>Minimum European Subset</cite> specified by <a href="http://www.indigo.ie/egt/standards/mes.html" title="Technical contents of ENV 1973:1995">ENV 1973:1995</a> was intended to provide a first step towards the implementation of large character sets in Europe. It was replaced by <a href="http://www.evertype.com/standards/iso10646/pdf/cwa13873.pdf" title="Multilingual European Subsets in ISO/IEC 10646-1 (PDF format)">three <cite>Multilingual European Subsets</cite></a> (MES-1, MES-2, MES-3, with MES-2 based on the <cite>Minimum European Subset</cite>), defined in a 
+   <!--a href="http://www.cenorm.be/cenorm/businessdomains/businessdomains/informationsocietystandardizationsystem/published+cwas/cwa+download+area.asp"
+hreflang="en" title=
+"CWA Download area"
+-->CEN Workshop Agreement, namely CWA&nbsp;13873.</p> 
+  <!-- was: "http://www.cenorm.be/isss/CWAs/cwalist.htm" --> 
+  <p><small><a name="wgl4">In addition to international standards, there are company policies which define various subsets of the character repertoire.</a> A practically important one is Microsoft's <a href="http://www.eu.microsoft.com/typography/otspec/wgl4.htm" title="WGL4.0 Character Set">"Windows Glyph List&nbsp;4" (WGL4)</a>, or "PanEuropean" character set, characterized on Microsoft's page <cite><a href="http://www.microsoft.com/typography/unicode/cscp.htm">Character sets and codepages</a></cite> and excellently listed on page <cite><a href="http://www.alanwood.net/demos/wgl4.html">Using Special Characters from Windows Glyph List&nbsp;4 (WGL4) in HTML</a></cite> by <a href="http://www.alanwood.net/demos/index.html">Alan Wood</a>.</small></p> 
+  <h4><a name="U">The <strong><code>U+</code><var>nnnn</var></strong> notation</a></h4> 
+  <p> Unicode characters are often referred to using a notation of the form <strong><code>U+</code><var>nnnn</var></strong> where <var>nnnn</var> is a four-digit <a title="description of hexadecimal notation (in Free On-line Dictionary of Computing)" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=hexadecimal&amp;action=Search">hexadecimal</a> notation of the code value. For example, <code>U+0020</code> means the space character (with code value 20 in hexadecimal, 32 in decimal). Notice that such notations identify a character through its Unicode code value, without referring to any particular encoding. There are other <a href="#identify">ways to mention (identify) a character</a>, too. </p> 
+  <h2><a name="characters">More about the character concept</a></h2> 
+  <blockquote class="motto"> 
+   <div>
+    An "A" (or any other character) is something like a Platonic entity: it is the idea of an "A" and not the "A" itself.
+   </div> 
+   <div class="credit">
+    -- Michael E. Cohen: 
+    <cite><a href="http://www.humnet.ucla.edu/hcf/news/archive/fall1998/fontspart1.html">Text and Fonts in a Multi-lingual Cross-platform World</a></cite>. 
+   </div>
+  </blockquote> 
+  <p> The <dfn>character</dfn> concept is very fundamental for the issues discussed here but difficult to define exactly. The more fundamental concepts we use, the harder it is to give good definitions. (How would you define "life"? Or "structure"?) Here we will concentrate on clarifying the character concept by indicating what it does <em>not</em> imply. </p> 
+  <h3><a name="unicode-view">The Unicode view</a></h3> 
+  <p> The <a href="#10646">Unicode</a> standard describes characters as "the smallest components of written language that have semantic value", which is somewhat misleading. A character such as a letter can hardly be described as having a meaning (semantic value) in itself. Moreover, a character such as <a href="latin1/3.html#FA">ú</a> (letter u with acute accent), which belongs to Unicode, can often be regarded as consisting of smaller components: a letter and a <a href="#diacritic">diacritic</a>. And in fact the very definition of the character concept in Unicode is the following: </p> 
+  <blockquote> 
+   <div> 
+    <i>abstract character</i>: a unit of information used for the organization, control, or representation of textual data. 
+   </div> 
+  </blockquote> 
+  <p><small>(In Unicode terminology, "abstract character" is a character as an element of a character repertoire, whereas "character" refers to "coded character representation", which effectively means a code value. It would be natural to assume that the opposite of an abstract character is a concrete character, as something that actual appears in some physical form on paper or screen; but oh no, the Unicode concept "character" is more concrete than an "abstract character" only in the sense that it has a fixed code position! An actual physical form of an abstract character, with a specific shape and size, is a <a href="#glyph">glyph</a>. Confusing, isn't it?)</small></p> 
+  <h3><a name="control">Control characters (control codes)</a></h3> 
+  <p> The rôle of the so-called <dfn>control characters</dfn> in character codes is somewhat obscure. Character codes often contain code positions which are not assigned to any visible character but reserved for control purposes. For example, in communication between a terminal and a computer using the <a href="#ascii">ASCII</a> code, the computer could regard <a href="#octet">octet</a>&nbsp;3 as a request for terminating the currently running process. Some older character code standards contain <em>explicit descriptions</em> of such conventions whereas newer standards just <em>reserve some positions</em> for such usage, to be defined in <a href="http://www.itscj.ipsj.or.jp/ISO-IR/" title="International register of coded character sets to be used with escape sequences">separate standards or agreements</a> such as <a href="http://www.itscj.ipsj.or.jp/ISO-IR/2-5.htm">"C0 controls"</a> (tabulated in my document on <a href="chars/c0.html"> ASCII control codes</a>) and <a href="http://www.itscj.ipsj.or.jp/ISO-IR/2-6.htm">"C1 controls"</a>, or specifically <a href="http://www.itscj.ipsj.or.jp/ISO-IR/077.pdf" title="C1 Control Character Set of ISO 6429 (PDF format)">ISO 6429</a>. And although the definition quoted above suggests that "control characters" might be regarded as characters in the Unicode terminology, perhaps it is more natural to regard them as <dfn><a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=control+code" title="Def. of &quot;control code&quot; in Free On-Line Dictionary of Computing">control codes</a></dfn>.</p> 
+  <p>Control codes can be used for <strong>device control</strong> such as cursor movement, page eject, or changing colors. Quite often they are used in combination with codes for graphic characters, so that a device <a href="http://webopedia.internet.com/TERM/d/driver.html">driver</a> is expected to interpret the combination as a specific command and not display the graphic character(s) contained in it. For example, in the classical <a href="http://www.cs.utk.edu/~shuford/terminal/dec.html" title="The DEC VT100 and Its Successors...">VT100 controls</a>, ESC followed by the code corresponding to the letter "A" or something more complicated (depending on mode settings) moves the cursor up. To take a different example, the <a href="http://www.geek-girl.com/emacs/emacs.html" title="Emacs reference materials">Emacs</a> editor treats ESC&nbsp;A as a request to move to the beginning of a sentence. Note that the ESC control code is logically distinct from the ESC <em>key</em> in a keyboard, and many other things than pressing ESC might cause the ESC control code to be sent. Also note that phrases like <a href="#esc">"escape sequences"</a> are often used to refer to things that don't involve ESC at all and operate at a quite different level. <a href="http://web.archive.org/web/20041012084602/http://www.bobbemer.com/">Bob Bemer</a>, the inventor of ESC, has written a "vignette" about it: <cite><a href="http://web.archive.org/web/20041012084602/http://www.bobbemer.com/ESCAPE.HTM">That Powerful ESCAPE 
+     <nobr>
+      Character --
+     </nobr> Key and Sequences</a></cite>.</p> 
+  <p>One possible form of device control is changing the way a device interprets the data (octets) that it receives. For example, a control code followed by some data in a specific format might be interpreted so that any subsequent octets to be interpreted according to a table identified in some specific way. This is often called "code page switching", and it means that control codes could be used <strong>change the character encoding</strong>. And it is then more logical to consider the control codes and associated data at the level of fundamental interpretation of data rather than direct device control. The international standard <a href="http://www.stadlar.is/TC304/GUIDE/gis2022.htm" title="8-bit Character Sets - ISO/IEC 2022">ISO 2022</a> defines powerful facilities for using different 8-bit character codes in a document.</p> 
+  <p>Widely used <strong>formatting</strong> control codes include carriage return (CR), linefeed (LF), and horizontal tab (HT), which in <a href="#ascii">ASCII</a> occupy code positions 13, 10, and&nbsp;9. The names (or abbreviations) suggest generic meanings, but the actual meanings are defined partly in each character code definition, partly&nbsp;- and more importantly&nbsp;- by various other conventions "above" the character level. The "formatting" codes might be seen as a special case of device control, in a sense, but more naturally, a CR or a LF or a CR&nbsp;LF pair (to mention the most common conventions) when used in a text file simply indicates a new line. As regards to control codes used for line structuring, see Unicode technical report #13 <a href="http://www.unicode.org/unicode/reports/tr13/"><cite>Unicode Newline Guidelines</cite></a>. See also my <cite><a href="unicode/linebr.html">Unicode line breaking rules: explanations and criticism</a></cite>. The <a href="http://webopedia.internet.com/TERM/t/tab_character.html">HT (TAB) character</a> is often used for real "tabbing" to some predefined writing position. But it is also used e.g. for indicating data boundaries, without any particular presentational effect, for example in the widely used "tab separated values" (<a href="TSV.html" title="Tab Separated Values (TSV): a format for tabular data exchange">TSV</a>) data format.</p> 
+  <p class="deem"> A control code, or a "control character" cannot have a graphic presentation (a <a href="#glyph">glyph</a>) in the same way as normal characters have. However, in <a href="#10646">Unicode</a> there is a separate block <cite><a href="http://www.unicode.org/charts/PDF/U2400.pdf">Control Pictures</a></cite> which contains characters that can be used to indicate the presence of a control code. <img src="unicode/241B.gif" alt="For example, the symbol for escape contains the letters E, S, C in
+an descending sequence." border="1" align="right"> They are of course quite distinct from the control codes they symbolize&nbsp;- <a href="http://www.eki.ee/letter/chardata.cgi?ucode=241B"><code>U+241B</code></a> <span class="charname">symbol for escape</span> is not the same as <a href="http://www.eki.ee/letter/chardata.cgi?ucode=001B"><code>U+001B</code></a> <span class="charname">escape</span>! On the other hand, a control code might occasionally be displayed, by some programs, in a visible form, perhaps describing the control action rather than the code. For example, upon receiving octet 3 in the example situation above, a program might echo back (onto the terminal) <samp>***</samp> or <samp>INTERRUPT</samp> or <samp>^C</samp>. All such notations are program-specific conventions. Some control codes are sometimes <em>named</em> in a manner which seems to bind them to characters. In particular, control codes 1, 2, 3, ... are often called control-A, control-B, control-C, etc. (or CTRL-A or C-A or whatever). This is associated with the fact that on many keyboards, control codes can be produced (for sending to a computer) using a special key labeled "Control" or "Ctrl" or "CTR" or something like that together with letter keys A, B, C, ... This in turn is related to the fact that the <a href="#code">code numbers</a> of characters and control codes have been assigned so that the code of "Control-<var>X</var>" is obtained from the code of the upper case letter <var>X</var> by a simple operation (subtracting 64 decimal). But such things imply no real relationships between letters and control codes. The control code 3, or "Control-C", is <em>not</em> a variant of letter C at all, and its meaning is not associated with the meaning of&nbsp;C. </p> 
+  <table align="right" border="1" cellpadding="6" cellspacing="0" style="margin:1ex"> 
+   <caption>
+    <small>Example: a letter and different glyphs for it</small>
+   </caption> 
+   <tbody>
+    <tr>
+     <td colspan="5" align="center"> <span class="charname">latin capital letter z</span> <code>(U+00E9)</code> </td>
+    </tr>
+    <tr align="center"> 
+     <td>Z</td>
+     <td><i>Z</i></td>
+     <td><b>Z</b></td>
+     <td><tt>Z</tt> </td>
+     <td><big style="font-family : &quot;Lucida Handwriting&quot;,  Western, fantasy;">Z</big> </td>
+    </tr> 
+   </tbody>
+  </table> 
+  <h3><a name="glyph">A glyph - a visual appearance</a></h3> 
+  <p> It is important to distinguish the character concept from the glyph concept. A <dfn>glyph</dfn> is a presentation of a particular shape which a character may have when rendered or displayed. For example, the character Z might be presented as a boldface <b>Z</b> or as an italic <i>Z</i>, and it would still be a presentation of the same character. On the other hand, lower-case z is defined to be a separate character - which in turn may have different glyph presentations. </p>
+  <p> This is ultimately a <em>matter of definition</em>: a definition of a character repertoire specifies the "identity" of characters, among other things. One <em>could</em> define a repertoire where uppercase Z and lowercase z are just two glyphs for the same character. On the other hand, one <em>could</em> define that italic <i>Z</i> is a character different from normal Z, not just a different glyph for it. In fact, in <a href="#10646">Unicode</a> for example there are several characters which could be regarded as typographic variants of letters only, but for various reasons Unicode defines them as separate characters. For example, mathematicians use a variant of letter&nbsp;N to denote the set of natural numbers (0, 1, 2, ...), and this variant is defined as being a separate character ("double-struck capital&nbsp;N") in Unicode. There are some more <a href="#identity">notes on the identity of characters</a> below. </p>
+  <p>The design of glyphs has several aspects, both practical and esthetic. For an interesting review of a major company's description of its principles and practices, see Microsoft's <cite><a href="http://www.microsoft.com/typography/developers/fdsspec/default.htm">Character design standards</a></cite> (in its <a href="http://www.microsoft.com/typography/default.asp" title="Microsoft Typography">typography pages</a>).</p> 
+  <p><small>Some discussions, such as ISO 9541-1 and <a href="http://www.iso.ch/iso/en/ittf/PubliclyAvailableStandards/C027163e.zip" title="An operational model for characters and glyphs">ISO/EC TR 15285</a>, make a further distinction between "<dfn>glyph image</dfn>", which is an actual appearance of a glyph, and "glyph", which is a more abstract notion. In such an approach, "glyph" is close to the concept of "character", except that a glyph may present a combination of several characters. Thus, in that approach, the abstract characters "f" and "i" might be represented using an abstract glyph that combines the two characters into a ligature, which itself might have different physical manifestations. Such approaches need to be treated as different from the issue of treating ligatures as (compatibility) characters.</small></p> 
+  <h3><a name="names">What's in a name?</a></h3> 
+  <p>The <dfn>names</dfn> of characters are <strong>assigned identifiers</strong> rather than definitions. Typically the names are selected so that they contain only letters A&nbsp;-&nbsp;Z, spaces, and hyphens; often uppercase variant is the reference spelling of a character name. (See <a href="http://www.stadlar.is/TC304/guidecharactersets/guideannexb.html#_Toc443308172">naming guidelines of the UCS</a>.) 
+   <!--was: "http://www.stri.is/TC304/GUIDE/gucsch06.htm#naming"--> The same character may have different names in different definitions of character repertoires. Generally the name is intended to <strong>suggest a generic meaning and scope</strong> of use. But the <a href="#10646">Unicode</a> standard warns (mentioning <a href="latin1/3.html#2E"><span class="charname">full stop</span></a> as an example of a character with varying usage): </p>
+  <blockquote>
+   <div>
+    A character may have a broader range of use than the most literal interpretation of its name might indicate; coded representation, name, and representative glyph need to be taken in context when establishing the semantics of a character.
+   </div>
+  </blockquote> 
+  <h3><a name="repdef">Glyph variation</a></h3> 
+  <p> When a character repertoire is defined (e.g. in a standard), <em>some</em> particular glyph is often used to describe the appearance of each character, but this should be taken as an example only. The <a href="#10646">Unicode</a> standard specifically says (in section&nbsp;3.2) that great variation is allowed between "representative glyph" appearing in the standard and a glyph used for the corresponding character: </p>
+  <blockquote>
+   <p> Consistency with the representative glyph does not require that the images be identical or even graphically similar; rather, it means that both images are generally recognized to be representations of the same character. Representing the character U+0061 <span class="charname">Latin small letter a</span> by the glyph "X" would violate its character identity. </p>
+  </blockquote> 
+  <p>Thus, the definition of a repertoire is not a matter of just listing <em>glyphs</em>, but neither is it a matter of defining exactly the <em>meanings</em> of characters. It's actually an exception rather than a rule that a character repertoire definition explicitly says something about the meaning and use of a character. </p>
+  <p> <a name="prop">Possibly some <em>specific properties</em></a> (e.g. being classified as a letter or having numeric value in the sense that digits have) are defined, as in the <a href="#unidata">Unicode database</a>, but such properties are rather general in nature. </p>
+  <p> This vagueness may sound irritating, and it often is. But an essential point to be noted is that <strong>quite a lot of information is implied</strong>. You are expected to deduce what the character is, using both the character name and its representative glyph, and perhaps context too, like the grouping of characters under different headings like "currency symbols". </p> 
+  <p> For more information on the glyph concept, see the document <cite><a href="http://www.iso.ch/iso/en/ittf/PubliclyAvailableStandards/C027163e.zip">An operational model for characters and glyphs</a></cite> (ISO/IEC TR 15285:1998) and Apple's document 
+   <!--"http://developer.apple.com/techpubs/mac/TextEncodingCMgr/TECRefBook-141.html#HEADING141-12"--> <a href="http://developer.apple.com/techpubs/macos8/TextIntlSvcs/TextEncodingConversionManager/TEC1.5/TEC.a1.html">Characters, Glyphs, and Related Terms</a> 
+   <!-- http://www.stonehand.com/unicode/standard/cgmodel.html
+Character/Glyph Model --> </p> 
+  <h3><a name="font">Fonts</a></h3> 
+  <p> A repertoire of <a href="#glyph">glyph</a>s comprises a <dfn>font</dfn>. In a more technical sense, as the implementation of a font, a font is a <em>numbered</em> set of glyphs. The numbers correspond to <a href="#code">code positions</a> of the characters (presented by the glyphs). Thus, a font in that sense is character code dependent. An expression like "Unicode font" refers to such issues and does not imply that the font contains glyphs for <em>all</em> <a href="#10646">Unicode</a> characters. </p>
+  <p> It is possible that a font which is used for the presentation of some character repertoire does not contain a <em>different</em> glyph for each character. For example, although characters such as Latin uppercase A, Cyrillic uppercase A, and Greek uppercase alpha are regarded as distinct characters (with distinct code values) in <a href="#10646">Unicode</a>, a particular font might contain just one A which is used to present all of them. (For information about fonts, there is a very large <a href="http://www.faqs.org/faqs/by-newsgroup/comp/comp.fonts.html" title="Comp.fonts Newsgroup FAQs"><cite>comp.font FAQ</cite></a>, but it's rather old: last update in 1996. The 
+   <!--"http://www.faqs.org/faqs/internationalization/font-faq/"--> <a href="http://www.cs.uu.nl/wais/html/na-dir/internationalization/font-faq.html"><cite>Finding Fonts for Internationalization FAQ</cite></a> is dated, too.) </p> 
+  <p> <a name="look"> <em>You should never use a character just because it "looks right"</em> or "almost right".</a> Characters with quite different purposes and meanings may well look similar, or almost similar, in some <a href="#font">font</a>s at least. Using a character as a surrogate for another for the sake of apparent similarity may lead to great confusion. Consider, for example, the so-called sharp&nbsp;s (es-zed), which is used in the German language. Some people who have noticed such a character in the <a href="#latin1">ISO Latin 1</a> repertoire have thought "vow, here we have the beta character!". In many fonts, the sharp s (ß) really looks more or less like the Greek lowercase beta character (&#x3b2;). But it <em>must not</em> be used as a surrogate for beta. You wouldn't get very far with it, really; what's the big idea of having beta without alpha and all the other Greek letters? More seriously, the use of sharp s in place of beta would confuse text searches, spelling checkers, speech synthesizers, indexers, etc.; an automatic converter might well turn sharp s into ss; and some font might present sharp s in a manner which is very different from beta. </p> 
+  <p>For some more explanations on this, see <a href="latin1/5.html#why">section <cite>Why should we be so strict about meanings of characters?</cite></a> in <a href="latin1/"><cite>The ISO Latin 1 character repertoire - a&nbsp;description with usage notes</cite></a>. </p>
+  <h3><a name="identity">Identity of characters: a matter of definition</a></h3> 
+  <p> The <dfn>identity of characters</dfn> is defined by the <a href="#repdef" title="How character repertoires are defined">definition</a> of a <a href="#repertoire">character repertoire</a>. Thus, it is not an absolute concept but relative to the repertoire; some repertoire might contain a character with mixed usage while another defines distinct characters for the different uses. For instance, the <a href="#ascii">ASCII</a> repertoire has a character called <strong>hyphen</strong>. It is also used as a minus sign (as well as a substitute for a dash, since ASCII contains no dashes). Thus, that ASCII character is a generic, multipurpose character, and one can say that in ASCII hyphen and minus are identical. But in <a href="#10646">Unicode</a>, there are distinct characters named "hyphen" and "minus sign" (as well as different dash characters). For compatibility, the old ASCII character is preserved in Unicode, too (in the old code position, with the name <a href="latin1/3.html#2D"><span class="charname">hyphen-minus</span></a>).</p> 
+  <p> <a name="greek">Similarly, as a matter of definition,</a> <a href="#10646">Unicode</a> defines characters for <a href="latin1/3.html#B5"><span class="charname">micro sign</span></a>, <a href="http://www.eki.ee/letter/chardata.cgi?ucode=220F"><span class="charname">n-ary product</span></a>, etc., as distinct from the <strong>Greek letters</strong> (small mu, capital pi, etc.) they originate from. This is a logical distinction and does not necessarily imply that different glyphs are used. The distinction is important e.g. when textual data in digital form is processed by a program (which "sees" the code values, through some encoding, and not the glyphs at all). Notice that Unicode does not make any distinction e.g. between the <a href="http://www.eki.ee/letter/chardata.cgi?ucode=03C0"><span class="charname">greek small letter pi</span></a>&nbsp;(&#x3c0;), and the mathematical symbol pi denoting the well-known constant 3.14159... (i.e. there is no separate symbol for the latter). For the <a href="http://www.eki.ee/letter/chardata.cgi?ucode=2126"><span class="charname">ohm sign</span></a>&nbsp;(&#x2126;), there is a specific character (in the Symbols Area), but it is defined as being canonical equivalent to <a href="http://www.eki.ee/letter/chardata.cgi?ucode=03A9"><span class="charname">greek capital letter omega</span></a>&nbsp;(&#x3a9;), i.e. there are two separate characters but they are equivalent). On the other hand, it makes a distinction between <a href="http://www.eki.ee/letter/chardata.cgi?ucode=03A0"><span class="charname">greek capital letter pi</span></a>&nbsp;(&#x3a0;) and the mathematical symbol <a href="http://www.eki.ee/letter/chardata.cgi?ucode=220F"><span class="charname">n-ary product</span></a>&nbsp;(&#x220f;), so that they are <em>not</em> equivalents.</p> 
+  <p>If you think this doesn't sound quite logical, you are not the only one to think so. But the point is that for symbols resembling Greek letter and used in various contexts, there are three possibilities in Unicode: </p>
+  <ul class="emb"> 
+   <li> the symbol is regarded as identical to the Greek letter (just as its particular <em>usage</em>) </li>
+   <li> the symbol is included as a separate character but only for compatibility and as compatibility equivalent to the Greek letter </li>
+   <li> the symbol is regarded as a completely separate character. </li>
+  </ul> 
+  <p>You need to check the <a href="#unicode-ref">Unicode references</a> for information about each individual symbol. Note in particular that a query to Indrek Hein's <a href="http://www.eki.ee/letter/">online character database</a> will give such information in the <cite>decomposition info</cite> part (but only in the entries for compatibility characters!). As a rough <em>rule of thumb</em> about symbols looking like Greek letters, mathematical <em>operators</em> (like summation) exist as independent characters whereas symbols of <em>quantities and units</em> (like pi and ohm) are equivalent or identical to Greek letters. </p> 
+  <h3><a name="display">Failures to display a character</a></h3> 
+  <p>In addition to the fact that <a href="#glyph">the appearance of a character may vary</a>, it is quite possible that some program <strong>fails to display a character at all</strong>. Perhaps the program cannot interpret a particular way in which the character is presented. The reason might simply be that some <a href="#esc">program-specific way</a> had been used to denote the character and a different program is in use now. (This happens quite often even if "the same" program is used; for example, Internet Explorer version 4.0 is able to recognize <code>&amp;alpha;</code> as denoting the Greek letter alpha (&#x3b1;) but IE 3.0 is not and displays the notation literally.) And naturally it often occurs that a program does not recognize the basic <a href="#encoding">character encoding</a> of the data, either because it was not properly informed about the encoding according to which the data should be interpreted or because it has not been programmed to handle the particular encoding in use. </p> 
+  <p>But even if a program <em>recognizes</em> some data as denoting a character, it may well be unable to display it since it lacks a <a href="#glyph">glyph</a> for it. Often it will help if the user manually checks the <a href="#font">font</a> settings, perhaps manually trying to find a rich enough font. (Advanced programs could be expected to do this automatically and even to pick up glyphs from different fonts, but such expectations are mostly unrealistic at present.) But it's quite possible that no such font can be found. As an important detail, the possibility of seeing e.g. Greek characters on some Windows systems depends on whether "internationalization support" has been installed. </p> 
+  <p>A well-design program will in some appropriate way indicate its inability to display a character. For example, a small rectangular box, the size of a character, could be used to indicate that there is a character which was recognized but cannot be displayed. Some programs use a question mark, but this is risky&nbsp;- how is the reader expected to distinguish such usage from the real "?" character? </p> 
+  <h3><a name="math">Linear text vs. mathematical notations</a></h3> 
+  <p><img src="HTML3.2/integral.gif" title="A sample image: an integral, produced using TeX" alt="" align="right"> Although several character <a href="#repertoire">repertoires</a>, most notably that of <a href="#10646">ISO 10646 and Unicode</a>, contain <strong>mathematical</strong> and other symbols, the presentation of mathematical <strong>formulas</strong> is essentially not a character level problem. At the character level, symbols like integration or <var>n</var>-ary summation can be defined and their <a href="#code">code positions</a> and <a href="#encoding">encodings</a> defined, and representative <a href="#glyph">glyphs</a> shown, and perhaps some usage notes given. But the construction of real formulas, e.g. for a definite integral of a function, is a different thing, no matter whether one considers formulas abstractly (how the structure of the formula is given) or presentationally (how the formula is displayed on paper or on screen). To mention just a few approaches to such issues, the <a href="http://www.tex.ac.uk/cgi-bin/texfaq2html" title="TeX Frequently Asked Questions">TeX</a> system is widely used by mathematicians to produce high-quality presentations of formulas, and <a href="http://www.w3.org/Math/">MathML</a> is an ambitious project for creating a markup language for mathematics so that both structure and presentation can be handled. <br clear="all"> </p> 
+  <p><a name="plain">In other respects, too, character standards usually deal with <strong>plain text</strong> only.</a> Other structural or presentational aspects, such as <a href="#font">font</a> variation, are to be handled separately. However, there are characters which would <em>now</em> be considered as differing in font only but for historical reasons regarded as distinct. </p> 
+  <h3><a name="compat">Compatibility characters</a></h3> 
+  <p> There is a large number of <dfn>compatibility characters</dfn> in <a href="#10646">ISO 10646 and Unicode</a> which are variants of other characters. They were included for compatibility with other standards so that data presented using some other <a href="#code">code</a> can be converted to ISO 10646 and back without losing information. The Unicode standard says (in section&nbsp;2.4): </p>
+  <blockquote>
+    Compatibility characters are those that would not have been encoded except for compatibility and round-trip convertibility with other standards. They are variants of characters that already have encodings as 
+   <em>normal</em> (that is, non-compatibility) characters in the Unicode Standard. 
+  </blockquote> 
+  <p>There is a large number of compatibility characters in the <a href="ucs.html8#compat">Compatibility Area</a> but also scattered around the Unicode space.</p> 
+  <p>Many, but not all, compatibility characters have <em>compatibility decompositions</em>. The <a href="#unicode-ref" title="Reference information on ISO 10646 and Unicode">Unicode database</a> contains, for each character, a field (the sixth one) which specifies its eventual compatibility decomposition.</p> 
+  <p> Thus, to take a simple example, <a href="latin1/3.html#B2"><span class="charname">superscript two</span>&nbsp;(²)</a> is an <a href="#latin1">ISO Latin&nbsp;1</a> character with its own code position in that standard. In ISO 10646 way of thinking, it would have been treated as just a superscript variant of <span class="charname">digit two</span>. But since the character is contained in an important standard, it was included into ISO 10646, though only as a "compatibility character". The practical reason is that now one can convert from ISO Latin 1 to ISO 10646 and back and get the original data. This does not mean that in the ISO 10646 philosophy superscripting (or subscripting, italics, bolding etc.) would be irrelevant; rather, they are to be <em>handled at another level</em> of data presentation, such as some special <a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=markup" title="What is markup (a definition)">markup</a>. </p> 
+  <p>There is a document titled <cite><a href="http://www.w3.org/TR/unicode-xml/">Unicode in XML and other Markup Languages</a></cite> and produced jointly by the World Wide Web Consortium (<a href="http://www.w3.org">W3C</a>) and the Unicode Consortium. It discusses, among other things, <a href="http://www.w3.org/TR/unicode-xml/#Compatibility">characters with compatibility mappings</a>: should they be used, or should the corresponding non-compatibility characters be used, perhaps with some markup and/or style sheet that corresponds to the difference between them. The answers depend on the nature of the characters and the available markup and styling techniques. For example, for superscripts, the use of <code>sup</code> markup (as in HTML) is recommended, i.e. <code>&lt;sup&gt;2&lt;/sup&gt;</code> is preferred over&nbsp;sup2; This is a debatable issue; see my <a href="HTML3.2/SUBSUP.html">notes on <code>sup</code> and <code>sub</code> markup</a>.</p> 
+  <p>The definition of Unicode indicates our sample character, <a href="latin1/3.html#B2"><span class="charname">superscript two</span></a>, as a compatibility character with the <dfn>compatibility decomposition</dfn> "&lt;super&gt;&nbsp;+&nbsp;0032&nbsp;2". Here "&lt;super&gt;" is a semi-formal way of referring to what is considered as typographic variation, in this case superscript style, and "0032 2" shows the hexadecimal code of a character and the character itself. </p>
+  <p> <a name="ligature">Some</a> <a href="#compat">compatibility characters</a> have compatibility decompositions consisting of several characters. Due to this property, they can be said to represent <dfn>ligatures</dfn> in the broad sense. For example, <span class="charname">latin small ligature fi</span> (<a href="http://www.eki.ee/letter/chardata.cgi?ucode=FB01"><code>U+FB01</code></a>) has the obvious decomposition consisting of letters "f" and "i". It is still a distinct character in Unicode, but in the spirit of <a href="#10646">Unicode</a>, we should not use it except for storing and transmitting existing data which contains that character. Generally, ligature issues should be handled outside the character level, e.g. selected automatically by a formatting program or indicated using some suitable <a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=markup" title="What is markup (a definition)">markup</a>. </p>
+  <p> Note that the <em>word</em> ligature can be misleading when it appears in a character name. In particular, the old name of the character "æ", <span class="charname">latin small letter ae</span> (<a href="http://www.eki.ee/letter/chardata.cgi?ucode=00E6"><code>U+00E6</code></a>), is <span class="charname">latin small ligature ae</span>, but it is <em>not</em> a ligature of "a" and "e" in the sense described above. It has no compatibility decomposition. </p> 
+  <p>In <a href="http://www.faqs.org/faqs/fonts-faq/part2/"> <cite>comp.fonts FAQ, General Info (2/6)</cite></a> section <cite>1.15 Ligatures</cite>, the term <dfn>ligature</dfn> is defined as follows: </p>
+  <blockquote> 
+   <small> A ligature occurs where two or more letterforms are written or printed as a unit. Generally, ligatures replace characters that occur next to each other when they share common components. Ligatures are a subset of a more general class of figures called "contextual forms."</small>
+  </blockquote> 
+  <h3><a name="compose">Compositions and decompositions</a></h3> 
+  <p><a name="diacritic">A <dfn>diacritic mark</dfn></a>, i.e. an additional graphic such as an accent or cedilla attached to a character, can be treated in different ways when defining a character repertoire. See some <a href="latin1/4.html#diacr" title="Diacritics (accents etc.) and letters with them">historical notes</a> on this in my <a href="latin1/" title="The ISO Latin 1 character repertoire - a description with usage notes">description of ISO Latin&nbsp;1</a>. It also explains why the so-called <em>spacing</em> diacritic marks are of very limited usefulness, except when taken into some secondary usage. </p>
+  <p>In the <a href="#10646">Unicode</a> approach, there are separate characters called <dfn><a href="http://www.unicode.org/charts/U0300.pdf" title="Combining Diacritical Marks (Unicode block U+0300 to U+036F)">combining diacritical marks</a></dfn>. The general idea is that you can express a vast set of characters with diacritics by representing them so that a base character is followed by one or more&nbsp;(!) combining (non-spacing) diacritic marks. And a program which <em>displays</em> such a construct is expected to do rather clever things in formatting, e.g. selecting a particular shape for the diacritic according to the shape of the base character. This requires Unicode support at <a href="http://www.nada.kth.se/i18n/ucs/unicode-iso10646-oview.html#3">implementation level</a>&nbsp;3. Most programs currently in use are totally incapable of doing anything meaningful with combining diacritic marks. But there is some simple support to them in Internet Explorer for example, though you would need a font which contains the combining diacritics (such as 
+   <!--"http://office.microsoft.com/downloads/2000/aruniupd.aspx"--> Arial Unicode MS); then IE can handle simple combinations reasonably. See <a href="http://www.alanwood.net/unicode/combining_diacritical_marks.html">test page for combining diacritic marks</a> in <a href="http://www.alanwood.net/unicode/index.html">Alan Wood's Unicode resources</a>. Regarding advanced implementation of the rendering of characters with diacritic marks, consult Unicode Technical Note&nbsp;#2, <cite><a href="http://www.unicode.org/notes/tn2/">A General Method for Rendering Combining Marks</a></cite>.</p> 
+  <p>Using combining diacritic marks, we have wide range of possibilities. We can put, say, a diaeresis on a gamma, although "Greek small letter gamma with diaeresis" does not exist <em>as a character</em>. The combination <code>U+03B3 U+0308</code> consists of two characters, although its visual presentation looks like a single character in the same sense as "ä" looks like a single character. This is how your browser displays the combination: "&#x3b3;&#x308;". In most browsing situations at present, it probably isn't displayed correctly; you might see e.g. the letter gamma followed by a box that indicates a missing glyph, or you might see gamma followed by a diaeresis shown separately&nbsp;(¨).</p> 
+  <p>Thus, in practical terms, in order to use a character with a diacritic mark, you should primarily try to find it as a <dfn>precomposed</dfn> character. A&nbsp;precomposed character, also called <dfn>composite character</dfn> or <dfn>decomposable character</dfn>, is one that has a <a href="#code">code position</a> (and thereby <a href="#identity">identity</a>) of its own but is in some sense equivalent to a sequence of other characters. There are lots of them in Unicode, and they cover the needs of most (but not all) languages of the world, but not e.g. the presentation of the <a href="http://www.arts.gla.ac.uk/IPA/ipachart.html">International phonetic alphabet</a> by <a href="http://www.arts.gla.ac.uk/IPA/ipa.html" title="International Phonetic Association">IPA</a> which, in its general form, requires several different diacritic marks. For example, the character <span class="charname">latin small letter a with diaeresis</span> (<a href="latin1/3.html#E4"><code>U+00E4</code></a>,&nbsp;ä) is, by Unicode definition, decomposable to the sequence of the two characters <span class="charname">latin small letter a</span> (<a href="latin1/3.html#61"><code>U+0061</code></a>) and <span class="charname">combining diaeresis</span> (<a href="http://www.eki.ee/letter/chardata.cgi?ucode=0308"><code>U+0308</code></a>). This is at present mostly a theoretic possibility. Generally by decomposing all decomposable characters one could in many cases simplify the processing of textual data (and the resulting data might be converted back to a format using precomposed characters). See e.g. the working draft <a href="http://www.w3.org/TR/WD-charmod"><cite>Character Model for the World Wide Web</cite></a>. </p> 
+  <h2><a name="typing">Typing characters</a></h2> 
+  <h3><a name="key">Just pressing a key?</a></h3> 
+  <p> Typing characters on a computer may appear deceptively simple: you press a key labeled "A", and the character "A" appears on the screen. Well, you actually get uppercase "A" or lowercase "a" depending on whether you used the shift key or not, but that's common knowledge. You also expect "A" to be included into a disk file when you save what you are typing, you expect "A" to appear on paper if you print your text, and you expect "A" to be sent if you send your product by E-mail or something like that. And you expect the recipient to see an&nbsp;"A". </p> 
+  <p> Thus far, you should have learned that the presentation of a character in computer storage or disk or in data transfer may vary a lot. You have probably realized that especially if it's not the common "A" but something more special (say, an "A" with an accent), strange things might happen, especially if data is not accompanied with adequate <a href="#encinfo">information about its encoding</a>. </p> 
+  <p> But you might still be too confident. You probably expect that on <em>your</em> system at least things are simpler than that. If you use your very own very personal computer and press the key labeled "A" on <em>its</em> keyboard, then shouldn't it be evident that in <em>its</em> storage and processor, on <em>its</em> disk, on <em>its</em> screen it's invariably "A"? Can't you just ignore its internal character code and character encoding? Well, probably yes - with "A". I wouldn't be so sure about "Ä", for instance. (On Windows systems, for example, DOS mode programs differ from genuine Windows programs in this respect; they use a <a href="#cp">DOS character code</a>.) </p> 
+  <p> When you press a key on your <a href="http://webopedia.internet.com/TERM/k/keyboard.html" title="Webopedia entry for &quot;keyboard&quot;">keyboard</a>, then what actually happens is this. The keyboard sends the code of a character to the processor. The processor then, in addition to storing the data internally somewhere, normally sends it to the display device. (For more details on this, as regards to one common situation, see <cite><a href="http://www.pcguide.com/intro/works/exampl.htm">Example: What Happens When You Press A Key</a></cite> in <cite><a href="http://www.pcguide.com/index.htm">The PC Guide</a></cite>.) Now, the <em>keyboard settings</em> and the <em>display settings</em> might be different from what you expect. Even if a key is labeled "Ä", it might send something else than the code of "Ä" in the character code used in your computer. Similarly, the display device, upon receiving such a code, might be set to display something different. Such mismatches are usually undesirable, but they are definitely <em>possible</em>. </p> 
+  <p> <a name="kbd">Moreover, there are often <em>keyboard restrictions</em>.</a> If your computer uses internally, say, <a href="#latin1">ISO Latin 1</a> character repertoire, you probably won't find keys for all 191 characters in it on your keyboard. And for <a href="#10646">Unicode</a>, it would be quite impossible to have a key for each character! Different keyboards are used, often according to the needs of particular languages. For example, keyboards used in Sweden often have a key for the <a href="latin1/3.html#E5" title="letter a with ring above">å</a> character but seldom a key for&nbsp;<a href="latin1/3.html#F1" title="letter n with tilde">ñ</a>; in Spain the opposite is true. Quite often some keys have multiple uses via various <a href="#keycomb">"composition"</a> keys, as explained below. For an illustration of the variation, as well as to see what layout <em>might</em> be used in some environments, see </p>
+  <ul>
+   <li> <cite><a href="http://www.terena.nl/multiling/ml-mua/test/kbd-all.html">International Keyboards</a></cite> at <a href="http://www.terena.nl/" title="TERENA : Trans-European Research and Education Networking Association">Terena</a> (contains some errors) </li>
+   <li> <cite><a href="http://www.hermessoft.com/newproject/lang.html">Keyboard layouts</a></cite> by <a href="http://www.hermessoft.com/">HermesSOFT</a> 
+    <!--old: "http://www.hermessoft.com/lang.html"--> </li>
+   <li> <cite><a href="http://www.sussex.ac.uk/USCS/Software/Keyboards/">Alternative Keyboard Layouts</a></cite> at <a href="http://www.sussex.ac.uk/USCS/" title="SCS - University of Sussex Computing Service">USCC</a> </li>
+   <li> <cite><a href="http://crl.nmsu.edu/~mleisher/keyboards/index.html">Keyboard layouts</a></cite> documented by <a href="http://crl.nmsu.edu/~mleisher/">Mark Leisher</a>; contains several layouts for "exotic" languages too </li>
+   <li>The interactive <cite><a href="http://www.microsoft.com/globaldev/reference/keyboards.mspx">Windows Layouts</a></cite> page by <a href="http://www.microsoft.com">Microsoft</a>; requires Internet Explorer with JavaScript enabled. (Actually, using it I found out new features in the Finnish keyboard I have: I can use Alt&nbsp;Gr&nbsp;m to produce the micro sign&nbsp;µ, although there is no hint about this in the "m" key itself.) </li>
+  </ul> 
+  <p id="vkey">In several systems, including <abbr title="Microsoft">MS</abbr> Windows, it is possible to switch between different keyboard settings. This means that the effects of different keys do not necessarily correspond to the engravings in the key caps but to some other assignments. To ease typing in such situations, "virtual keyboards" can be used. This means that an image of a keyboard is visible on the screen, letting the user type characters by clicking on keys in it or using the information to see the current assignments of the keys of the physical keyboard. For the Office software on Windows systems, there is a free add-in available for this: <a href="http://office.microsoft.com/downloads/2002/VkeyInst.aspx">Microsoft Visual Keyboard</a>.</p> 
+  <h3><a name="pgm">Program-specific methods for typing characters</a></h3> 
+  <p> Thus, you often need program-specific ways of entering characters from a keyboard, either because there is no key for a character you need or there is but it does not work (properly). The program involved might be part of system software, or it might be an application program. Three important <em>examples</em> of such ways: </p> 
+  <ul> 
+   <li> <a name="alt">On <strong>Windows</strong> systems,</a> you can (usually&nbsp;- some application programs may override this) produce any character in the <a href="#win">Windows character set</a> (naturally, in its Windows encoding) as follows: Press down the (left) <a href="#altkeys">Alt&nbsp;key</a> and keep it down. Then type, using the separate <a href="http://webopedia.internet.com/TERM/n/numeric_keypad.html">numeric keypad</a> (not the numbers above the letter keys!), the four-digit code of the character in decimal. Finally release the Alt key. Notice that the first digit is always&nbsp;0, since the code values are in the range 32&nbsp;-&nbsp;255 (decimal). For instance, to produce the letter "Ä" (which has code 196 in decimal), you would press Alt down, type 0196 and then release Alt. Upon releasing Alt, the character should appear on the screen. In MS Word, the method works only if Num Lock is set. This method is often referred to as <dfn>Alt-<var>0nnn</var></dfn>. (If you omit the leading zero, i.e. use <dfn>Alt-<var>nnn</var></dfn>, the effect is <em>different</em>, since that way you insert the character in code position <var>nnn</var> in the <a href="#cp"><em>DOS character code</em></a>! For example, Alt-196 would probably insert a graphic character which looks somewhat like a hyphen. There are variations in the behavior of various Windows programs in this area, and using those DOS codes is best avoided.) </li>
+   <li> <a name="cq">In the</a> <a href="http://www.gnu.org/manual/emacs/index.html" title="GNU Emacs Manual - ToC"><strong>Emacs</strong></a> editor (which is popular especially on Unix systems), you can produce any <a href="#latin1">ISO Latin&nbsp;1</a> character by typing first control-Q, then its code as a three-digit <a title="description of octal notation (in Free On-line Dictionary of Computing)" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=octal&amp;action=Search">octal</a> number. To produce "Ä", you would thus type control-Q followed by the three digits 304 (and expect the "Ä" character to appear on screen). This method is often referred to as <dfn>C-Q-<var>nnn</var></dfn>. There are <a title="Using iso-accents-mode in Emacs" href="emacs-iso.html"> other ways of entering many ISO Latin 1 characters in Emacs</a>, too. From version 23, there are good tools for <a href="http://xahlee.org/emacs/emacs_n_unicode.html" title="Emacs and Unicode Tips, by Xah Lee">entering any character in Emacs</a>. </li>
+   <li> <a name="fix-change">Text processing programs</a> often <strong>modify user input</strong> e.g. so that when you have typed the three characters "(", "c", and ")", the program changes, both internally and visibly, that string to the single character&nbsp;"©". This is often convenient, especially if you can add your own rules for modifications, but it causes unpleasant surprises and problems when you actually meant what you wrote, e.g. wanted to write letter "c" in parentheses. </li>
+   <li> <a name="keycomb">Programs often process some <strong>keyboard key combinations</strong></a>, typically involving the use of an <a href="#altkeys">Alt or Alt&nbsp;Gr</a> key or some other "composition key", by converting them to special characters. In fact, even the well-known shift key is a composition key: it is used to modify the meaning of another key, e.g. by changing a letter to uppercase or turning a digit key to a special character key. Such things are not just "program-specific"; they also <em>depend on the program version and settings</em> (and on the keyboard, of course), and could well be user-modifiable. For example, in order to support the <a href="latin9.html#euro"><span class="charname">euro sign</span></a>, various methods have been developed, e.g. by Microsoft so that pressing the "e" key while keeping the Alt&nbsp;Gr key pressed down might produce the <span class="charname">euro sign</span>&nbsp;- in <em>some</em> <a href="#encoding">encoding</a>! But this may require a special "euro update", and <a href="http://www.microsoft.com/typography/faq/faq12.htm#kbd" title="The euro currency symbol: Accessing the symbol (on Windows systems)">the key combinations vary</a> even when we consider Microsoft products only. So it would be quite inappropriate to say e.g. "to type the euro, use AltGr+e" as general, unqualified advice. </li>
+  </ul> 
+  <p><small><a name="altkeys">The "Alt" and "Alt Gr" keys</a> mentioned above are not present on all keyboards, and often they both carry the text "Alt" but they can be functionally different! Typically, those keys are on the left and on the right of the space bar. It depends on the physical keyboard what the key cap texts are, and it depends on the keyboard settings whether the keys have the same effect or different effects. The name "Alt&nbsp;Gr" for "right Alt" is short for "alternate graphic", and it's mostly used to create additional characters, whereas (left) "Alt" is typically used for keyboard access to menus.</small></p> 
+  <p>The last method above could often be called "device dependent" rather than program specific, since the program that performs the conversion might be a keyboard <a href="http://webopedia.internet.com/TERM/d/driver.html">driver</a>. In that case, normal programs would have all their input from the keyboard processed that way. This method may also involve the use of auxiliary keys for typing characters with <strong><a href="#diacritic">diacritic marks</a></strong> such as&nbsp;"<a href="latin1/3.html#E1" title="letter a with acute accent">á</a>". Such an auxiliary key is often called <dfn>dead key</dfn>, since just pressing it causes nothing; it works only in combination with some other key. A more official name for a dead key is <dfn>modifier key</dfn>. For example, depending on the keyboard and the driver, you <em>might</em> be able to produce "á" by pressing first a key labeled with the acute accent&nbsp;(´), then the "a" key.</p> 
+  <p><small><em>My</em> keyboard has two keys for such purposes. There's the accent key, with the acute accent and the grave accent&nbsp;(`) as "upper case" character, meaning I need to use the <a href="http://webopedia.internet.com/TERM/S/Shift_key.html">shift key</a> for the grave. And there's a key with the dieresis&nbsp;(¨) and the circumflex&nbsp;(^) above it (i.e. as "upper case") and the tilde&nbsp;(~) below or left to it (meaning I need to use Alt&nbsp;Gr for it), so I can produce <a href="#latin1">ISO Latin&nbsp;1</a> characters with those diacritics. Note that this does <em>not</em> involve any operation on the <em>characters</em> 
+    <nobr>
+     ´`¨^~
+    </nobr>, and the keyboard does not send those characters at all in such situations. If I try to enter that way a character outside the ISO Latin&nbsp;1 repertoire, I get just the diacritic as a separate character followed by the normal character, e.g. "^j". To enter the diacritic itself, such as the <a href="latin1/3.html#7E">tilde&nbsp;(~)</a>, I may need to press the space bar so that the tilde diacritic combines with the blank (producing&nbsp;~) instead of a letter (producing e.g.&nbsp;"ã"). Your situation may well be different, in part or entirely. For example, a typical French keyboard has separate keys for those accented letters that are used in French (e.g.&nbsp;"à"), but the accents themselves can be difficult to produce. You might need to type AltGr&nbsp;è followed by a space to produce the grave accent&nbsp;`.</small></p> 
+  <h3><a name="esc">"Escape" notations ("meta notations") for characters</a></h3> 
+  <p>It is often possible to use various <dfn>"escape" notations</dfn> for characters. This rather vague term means notations which are <em>afterwards</em> converted to (or just displayed as) characters according to some specific rules by some programs. They depend on the markup, programming, or other <em>language</em> (in a broad but technical meaning for "language", so that data formats can be included but human languages are excluded). If different languages have similar conventions in this respect, a language designer may have picked up a notation from an existing language, or it might be a coincidence.</p> 
+  <p>The phrase "escape notations" or even "escapes" for short is rather widespread, and it reflects the general idea of escaping from the limitations of a character repertoire or device or protocol or something else. So it's used here, although a name like <dfn>meta notations</dfn> might be better. It is any case essential to distinguish these notations from the use of the ESC (escape) <a href="#control">control code</a> in <a href="#ascii">ASCII</a> and other character codes.</p> 
+  <p>Examples: </p>
+  <ul> 
+   <li> In the <a href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=postscript">PostScript</a> language, characters have <em>names</em>, such as <code>Adieresis</code> for&nbsp;<a href="latin1/3.html#C4" title="capital a with diaeresis">Ä</a>, which can be used to denote them according to certain rules. </li>
+   <li> In the <a href="http://webopedia.internet.com/TERM/r/rich_text_format_RTF.html" title="Rich Text Format">RTF</a> data format, the notation <code>\'c4</code> is used to denote&nbsp;<a href="latin1/3.html#C4" title="capital a with diaeresis">Ä</a>. </li>
+   <li> In <a href="http://www.tex.ac.uk/cgi-bin/texfaq2html" title="TeX Frequently Asked Questions">TeX</a> systems, there are different ways of producing characters, possibly depending on the "packages" used. Examples of ways to produce&nbsp;<a href="latin1/3.html#C4" title="capital a with diaeresis">Ä</a>: <code>\"A</code>, <code>\symbol{196}</code>, <code>\char'0304</code>, <code>\capitaldieresis{A}</code> (for a large list, consult <cite><a href="http://www.ctan.org/tex-archive/info/symbols/comprehensive/" title="The CTAN info/symbols/comprehensive/ directory">The Comprehensive LaTex Symbol List</a></cite> </li>
+   <li><a name="ent">In</a> the <a title="A primer on HTML, by Jukka Korpela" href="html-primer.html">HTML language</a> one can use the notation <code>&amp;Auml;</code> for <a href="latin1/3.html#C4" title="capital a with diaeresis">the character&nbsp;Ä</a>. In the official HTML terminology, such notations are called <a href="http://www.htmlhelp.org/reference/html40/entities/" title="Entities (in HTML 4.0 Reference)">entity references (denoting characters)</a>. It depends on HTML version which entities are defined, and it depends on a browser <a href="http://www.htmlhelp.com/faq/html/all.html#entity-or-number">which entities are actually supported</a>. </li>
+   <li><a name="numref">In HTML, one can also use the notation <code>&amp;#196;</code></a> for <a href="latin1/3.html#C4" title="capital a with diaeresis">the character&nbsp;Ä</a>. Generally, in any <a href="HTML3.2/2.3.html#sgml">SGML</a> based system, or "SGML application" as the jargon goes, a <dfn>numeric character reference</dfn> (or, actually, just <dfn><a href="chars/ref.html">character references</a></dfn>) of the form <code>&amp;#</code><var>number</var><code>;</code> can be used, and it refers to the character which is in code position <var>n</var> in the <a href="#code">character code</a> defined for the "SGML application" in question. This is actually very simple: you specify a character by its index (position, number). But in SGML terminology, the character code which determines the interpretation of <code>&amp;#</code><var>number</var><code>;</code> is called, quite confusingly, the <dfn>document character set.</dfn> For HTML, the "document character set" is <a href="#10646">ISO 10646</a> (or, to be exact, a subset thereof, depending on HTML version). A most essential point is that for HTML, the "document character set" is completely independent of the <a href="#encoding">encoding</a> of the document! (See <a href="http://www.alanflavell.org.uk//">Alan&nbsp;J.&nbsp;Flavell</a>'s <a href="http://www.alanflavell.org.uk//charset/internat.html"><cite>Notes on Internationalization</cite></a>.) The so-called <dfn><a href="http://www.htmlhelp.com/reference/html40/entities/">character entity references</a></dfn> like <code>&amp;Auml;</code> in HTML can be regarded as symbolic names defined for some numeric character references. In XML, character references use ISO&nbsp;10646 by language definition. Although both entity and character references are <em>markup</em>, to be used in markup languages, they often replaced by the corresponding characters, when a user types text on an Internet discussion forum. This might be a conscious decision by the forum designer, but quite often it is caused unintentionally. </li>
+   <li>In <a href="styles/howto.html" title="How to write style sheets (CSS) - basic resources"> <abbr title="Cascading Style Sheets">CSS</abbr></a>, you can present a character as <code>\</code><var>n</var><code>&nbsp;</code>, where <var>n</var> is the Unicode code position in hexadecimal. </li>
+   <li> In the <a title="comp.lang.c Frequently Asked Questions" href="http://www.eskimo.com/%7escs/C-faq/top.html">C programming language</a>, one can usually write <code>\0304</code> to denote Ä within a string constant, although this makes the program character code dependent. </li>
+  </ul> 
+  <p>As you can see, the notations typically involve some (semi-)mnemonic name or the <a href="#code">code number</a> of the character, in some <a href="http://www.cstc.org/data/resources/60/convexp.html">number system</a>. (The <a href="#latin">ISO 8859-1</a> code number for our example character <a href="latin1/3.html#C4" title="capital a with diaeresis">Ä</a> is 196 in decimal, 304 in octal, C4 in hexadecimal.) And there is some method of indicating that the letters or digits are not to be taken as such but as part of a special notation denoting a character. Often some specific character such as the <a href="latin1/3.html#5C">backslash&nbsp;\</a> is used as an "escape character". This implies that such a character cannot be used as such in the language or format but must itself be "escaped"; for example, to include the backslash itself into a string constant in C, you need to write it twice&nbsp;(<code>\\</code>).</p> 
+  <p>In cases like these, the character itself does not occur in a file (such as an HTML document or a C source program). Instead, the file contains the "escape" notation as a character sequence, which will then be <em>interpreted</em> in a specific way by programs like a Web browser or a C compiler. One can in a sense regard the "escape notations" as <a href="#encoding">encodings</a> used in specific contexts upon specific agreements.</p> 
+  <p><a name="human-escape">There are also "escape notations" which are to be interpreted by <strong>human readers</strong> directly.</a> For example, when sending E-mail one might use A" (letter A followed by a quotation mark) as a surrogate for Ä (letter A with dieresis), <em>or</em> one might use AE instead of Ä. The reader is assumed to understand that e.g. A" on display actually means&nbsp;Ä. Quite often the purpose is to use <a href="#ascii">ASCII</a> characters only, so that the typing, transmission, and display of the characters is "safe". But this typically means that text becomes very messy; the Finnish word <i>Hämäläinen</i> does not look too good or readable when written as <i>Ha"ma"la"inen</i> or <i>Haemaelaeinen</i>. Such usage is based on special (though often implicit) conventions and can cause a lot of confusion when there is no mutual agreement on the conventions, especially because there are so many of them. (For example, to denote letter a with acute accent, á, a convention might use the apostrophe, a', or the solidus, a/, or the acute accent, a´, or something else.) </p> 
+  <p><a name="rfc1345">There is an old proposal by K. Simonsen,</a> <cite>Character Mnemonics&nbsp;&amp; Character Sets</cite>, published as <a href="http://www.isi.edu/in-notes/rfc1345.txt">RFC&nbsp;1345</a>, which lists a large number of "escape notations" for characters. They are very short, typically two characters, e.g. A: for Ä and th for þ&nbsp;(thorn). Naturally there's the problem that the reader must know whether e.g. th is to be understood that way or as two letters t&nbsp;and&nbsp;h. So the system is primarily for <em>referring to</em> characters (see below), but under suitable circumstances it could also be used for actually writing texts, when the ambiguities can somehow be removed by additional conventions or by context. RFC&nbsp;1345 cannot be regarded as official or widely known, but if you need, for some applications, an "escape scheme", you might consider using those notations instead of reinventing the wheel.</p> 
+  <h3><a name="identify">How to mention (identify) a character</a></h3> 
+  <p>There are also various ways to <strong>identify</strong> a character when it cannot be used as such or when the appearance of a character is not sufficient identification. This might be regarded as a variant of the <a href="#human-escape">"escape notations for human readers"</a> discussed above, but the pragmatic view is different here. We are not primarily interested in <em>using</em> characters in running text but in <em>specifying</em> which character is being discussed.</p> 
+  <p>For example, when discussing the <a href="http://www.eki.ee/letter/chardata.cgi?ucode=0415">Cyrillic letter that resembles the Latin letter E</a> (and may have an identical or very similar <a href="#glyph">glyph</a>, and is transliterated as E according to <a href="iso9.html8">ISO&nbsp;9</a>), there are various options: </p>
+  <ul> 
+   <li>"Cyrillic E"; this is probably intuitively understandable in this case, and can be seen as referring <em>either</em> to the similarity of shape <em>or</em> to the transliteration equivalence; but in the general case these interpretations do not coincide, and the method is otherwise vague too </li>
+   <li>"<code>U+0415</code>"; this is a unique identification but requires the reader to know the idea of <a href="#U"><code>U</code>+<var>nnnn</var> notations</a> </li>
+   <li> "<span class="charname">cyrillic capital letter ie</span>" (using the official Unicode <a href="#names">name</a>) or "cyrillic IE" (using an abridged version); one problem with this is that the names can be long even if simplified, and they still cannot be assumed to be universally known even by people who recognize the character </li>
+   <li> "KE02", which uses the special notation system defined in <a href="http://www.terena.nl/library/multiling/euroml/section15.html" title="Character as object, identification methods, ISO 7350">ISO&nbsp;7350</a>; the system uses a compact notation and is marginally mnemonic (K&nbsp;=&nbsp;<i>kirillica</i> 'Cyrillics'; the numeric codes indicate small/capital letter variation and the use of <a href="#diacritic">diacritics</a>) </li>
+   <li> any of the <a href="#esc">"escape" notations</a> discussed above, such as "<code>E=</code>" by <a href="#rfc1345">RFC&nbsp;1345</a> or "<code>&amp;#1045;</code>" in HTML; this can be quite adequate in a context where the reader can be assumed to be familiar with the particular notation. </li>
+  </ul> 
+  <h2><a name="encinfo">Information about encoding</a></h2> 
+  <h3><a name="whyencinfo">The need for information about encoding</a></h3> 
+  <p> It is hopefully obvious from the preceding discussion that <em>a sequence of <a href="#octet">octets</a> can be interpreted in a multitude of ways</em> when processed as character data. By looking at the octet sequence only, you cannot even know whether each octet presents one character or just part of a two-octet presentation of a character, or something more complicated. Sometimes one can guess the encoding, but data processing and transfer shouldn't be guesswork. </p> 
+  <p> Naturally, a sequence of octets could be intended to present other than character data, too. It could be an image in a bitmap format, or a computer program in binary form, or numeric data in the internal format used in computers. </p> 
+  <p> This problem can be handled in different ways in different systems when data is stored and processed within one computer system. For <em>data transmission</em>, a platform-independent method of specifying the general format and the encoding and other relevant information is needed. Such methods exist, although they not always used widely enough. People still send each other data without specifying the encoding, and this may cause a lot of harm. Attaching a human-readable note, such as a few words of explanation in an E-mail message body, is better than nothing. But since data is processed by programs which cannot understand such notes, the encoding should be specified in a standardized computer-readable form. </p> 
+  <h3><a name="MIME">The MIME solution</a></h3> 
+  <h4><a name="mediatypes">Media types</a></h4> 
+  <p><dfn>Internet media types</dfn>, often called <dfn>MIME media types</dfn>, can be used to specify a major media type ("top level media type", such as <code>text</code>), a subtype (such as <code>html</code>), and an encoding (such as <code><a href="#latin1">iso-8859-1</a></code>). They were originally developed to allow sending other than plain <a href="#ascii">ASCII</a> data by E-mail. They can be (and should be) used for specifying the encoding when data is sent over a network, e.g. by E-mail or using the <a href="http://www.w3.org/pub/WWW/Protocols/" title="Hypertext Transfer Protocol">HTTP</a> protocol on the World Wide Web. </p> 
+  <p> The media type concept is defined in <a title="Multipurpose Internet Mail Extensions (MIME) Part Two: Media Types" href="http://www.oac.uci.edu/indiv/ehood/MIME/2046/rfc2046.html">RFC 2046</a>. The procedure for registering types in given in <a href="http://www.oac.uci.edu/indiv/ehood/MIME/2048/rfc2048.html">RFC 2048</a>; according to it, the registry is kept by <a title="Internet Assigned Numbers Authority" href="http://www.iana.org/">IANA</a> at 
+   <nobr> 
+    <code>ftp://ftp.isi.edu/in-notes/iana/assignments/media-types/</code>
+   </nobr> but it has in fact been moved to 
+   <nobr>
+    <code><a href="http://www.iana.org/assignments/media-types/">http://www.iana.org/assignments/media-types/</a></code>
+   </nobr> 
+   <!--
+<br>but you can also access it via<br>
+<nobr><a href="http://www.isi.edu/in-notes/iana/assignments/media-types/"><code>http://www.isi.edu/in-notes/iana/assignments/media-types/</code></a></nobr>
+--> </p> 
+  <h4><a name="charset">Character encoding ("charset") information</a></h4> 
+  <p> The technical term used to denote a <a href="#encoding">character <strong>encoding</strong></a> in the Internet media type context is "character set", abbreviated "charset". This has caused a lot of confusion, since "set" can easily be understood as <a href="#repertoire">repertoire</a>! </p> 
+  <p> Specifically, when data is sent in MIME format, the media type and encoding are specified in a manner illustrated by the following example:<br> <code>Content-Type: text/html; charset=iso-8859-1</code> <br> This specifies, in addition to saying that the media type is <code>text</code> and subtype is <code>html</code>, that the character encoding is <a href="latin1">ISO 8859-1</a>. </p> 
+  <p> <a name="charsetreg"> The official registry of "charset" (i.e., character encoding) names,</a> with references to documents defining their meanings, is kept by <a title="Internet Assigned Numbers Authority" href="http://www.iana.org/">IANA</a> at<br> <a href="http://www.iana.org/assignments/character-sets"> <code> http://www.iana.org/assignments/character-sets </code></a> <br>(According to the documentation of the registration procedure, <a href="ftp://ftp.isi.edu/in-notes/rfc2978.txt">RFC&nbsp;2978</a>, it should be elsewhere, but it has been moved.) I have composed a <a href="chars/sorted.html">tabular presentation of the registry</a>, ordered alphabetically by "charset" name and accompanied with some hypertext references. </p> 
+  <p> Several character encodings have alternate (alias) names in the registry. For example, the basic (ISO 646) variant of <a href="#ascii">ASCII</a> can be called "ASCII" or "ANSI_X3.4-1968" or "cp367" (plus a few other names); the preferred name in <a href="#MIME">MIME</a> context is, according to the registry, "US-ASCII". Similarly, <a href="#latin1">ISO 8859-1</a> has several names, the preferred MIME name being "ISO-8859-1". The "native" encoding for Unicode, <a href="#ucs2">UCS-2</a>, is named "ISO-10646-UCS-2" there.</p> 
+  <h4><a name="headers">MIME headers</a></h4> 
+  <p>The <code>Content-Type</code> information is an example of information in a <dfn>header</dfn>. Headers relate to some data, describing its presentation and other things, but are passed as logically separate from it. Possible headers and their contents are defined in <strong>the basic MIME specification</strong>, <a title="Multipurpose Internet Mail Extensions (MIME) Part One: Format of Internet Message Bodies" href="ftp://nis.nsf.net/internet/documents/rfc/rfc2045.txt"> RFC 2045</a>. Adequate headers should normally be generated automatically by the software which sends the data (such as a program for sending E-mail, or a Web server) and interpreted automatically by receiving software (such as a program for reading E-mail, or a Web browser). In E-mail messages, headers precede the message body; it depends on the E-mail program whether and how it displays the headers. For Web documents, a Web server is required to send headers when it delivers a document to a browser (or other user agent) which has sent a request for the document. </p> 
+  <p>In addition to media types and character encodings, MIME addresses several other aspects too. <a href="http://www.oac.uci.edu/indiv/ehood/">Earl Hood</a> has composed the documentation <cite><a href="http://www.oac.uci.edu/indiv/ehood/MIME/MIME.html">Multipurpose Internet Mail Extensions MIME</a></cite>, which contains the basic RFCs on MIME in hypertext format and <a href="http://www.oac.uci.edu/indiv/ehood/MIME/toc.html" title="(MIME) Table of Contents">a&nbsp;common table of contents</a> for them.</p> 
+  <h3><a name="qp">An auxiliary encoding: Quoted-Printable (QP)</a></h3> 
+  <p> <a href="#MIME">The MIME specification</a> defines, among many other things, the general purpose "Quoted-Printable" (QP) <a href="#encoding">encoding</a> which can be used to present any sequence of <a href="#octet">octets</a> as a sequence of such octets which correspond to <a href="#ASCII">ASCII</a> characters. This implies that the sequence of octets becomes longer, and if it is read as an ASCII string, it can be incomprehensible to humans. But what is gained is robustness in data transfer, since the encoding uses only "safe" ASCII characters which will most probably get through any component in the transfer unmodified. </p> 
+  <p> Basically, QP encoding means that most octets smaller than 128 are used as such, whereas larger octets and some of the small ones are presented as follows: octet <var>n</var> is presented as a sequence of three octets, corresponding to ASCII codes for the <code>=</code> sign and the two digits of the <a title="description of hexadecimal notation (in Free On-line Dictionary of Computing)" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=hexadecimal&amp;action=Search">hexadecimal</a> notation of <var>n</var>. If QP encoding is applied to a sequence of octets presenting character data according to <a href="#latin1">ISO 8859-1</a> character code, then effectively this means that most ASCII characters (including all ASCII letters) are preserved as such whereas e.g. the ISO 8859-1 character <a href="latin1/3.html#E4" title="SMALL LETTER A WITH DIAERESIS">ä</a> (code position 228 in decimal, E4 in hexadecimal) is encoded as <code>=E4</code>. (For obvious reasons, the equals sign <code>=</code> itself is among the few ASCII characters which are encoded. Being in code position 61 in decimal, 3D in hexadecimal, it is encoded as <code>=3D</code>.) </p> 
+  <p> Notice that encoding ISO 8859-1 data this way means that the <em>character code</em> is the one specified by the ISO 8859-1 standard, whereas the <em>character encoding</em> is different from the one specified (or at least suggested) in that standard. Since QP only specifies the mapping of a sequence of octets to another sequence of octets, it is a pure encoding and can be applied to any character data, or to any data for that matter. </p> 
+  <p> Naturally, Quoted-Printable encoding needs to be processed by a program which knows it and can convert it to human-readable form. It looks rather confusing when displayed as such. Roughly speaking, one can expect most <em>E-mail</em> programs to be able to handle QP, but the same does not apply to <em>newsreaders</em> (or Web browsers). Therefore, you should normally use QP in E-mail only. </p> 
+  <h3><a name="MIMEatwork">How MIME should work in practice</a></h3> 
+  <p> Basically, MIME should let people communicate smoothly without hindrances caused by character code and encoding differences. MIME should handle the necessary conversions automatically and invisibly. </p> 
+  <p> For example, when person <var>A</var> sends E-mail to person <var>B</var>, the following should happen: The E-mail program used by <var>A</var> encodes <var>A</var>'s message in some particular manner, probably according to some convention which is normal on the system where the program is used (such as <a href="#latin1">ISO 8859-1</a> encoding on a typical modern Unix system). The program automatically includes information about this encoding into an E-mail header, which is usually invisible both when sending and when reading the message. The message, with the headers, is then delivered, through network connections, to <var>B</var>'s system. When <var>B</var> uses his E-mail program (which may be very different from <var>A</var>'s) to read the message, the program should automatically pick up the information about the encoding as specified in a header and interpret the message body according to it. For example, if <var>B</var> is using a Macintosh computer, the program would automatically convert the message into <a href="#maccode">Mac's internal character encoding</a> and only then display it. Thus, if the message was <a href="#latin1">ISO 8859-1</a> encoded and contained the Ä (upper case A with dieresis) character, encoded as octet 196, the E-mail program used on the Mac should use a conversion table to map this to octet 128, which is the encoding for Ä on Mac. (If the program fails to do such a conversion, strange things will happen. <a href="#ascii">ASCII</a> characters would be displayed correctly, since they have the same codes in both encodings, but instead of Ä, the character corresponding to octet 196 in Mac encoding would appear - a symbol which looks like <i>f</i> in italics.) </p> 
+  <h3><a name="problems">Problems with implementations - examples</a></h3> 
+  <p> Unfortunately, there are deficiencies and errors in software so that <em>users</em> often have to struggle with character code conversion problems, perhaps correcting the actions taken by programs. It takes two to tango, and some more participants to get characters right. This section demonstrates different things which may happen, and do happen, when just <em>one</em> component is faulty, i.e. when <strong>MIME is not used or is inadequately supported by some "partner"</strong> (software involved in entering, storing, transferring, and displaying character data). </p> 
+  <p> Typical minor (!) problems which may occur in communication in Western European languages other than English is that most characters get interpreted and displayed correctly but some "national letters" don't. For example, character repertoire needed in German, Swedish, and Finnish is essentially <a href="#ascii">ASCII</a> plus a few letters like "ä" from the rest of <a href="#latin1">ISO Latin&nbsp;1</a>. If a text in such a language is processed so that a necessary conversion is not applied, or an incorrect conversion is applied, the result might be that e.g. the word "später" becomes "spter" or "spÌter" or "spdter" or "sp=E4ter". </p> 
+  <p> Sometimes you might be able to <em>guess</em> what has happened, and perhaps to determine which code conversion should be applied, and apply it more or less "by hand". To take an example (which may have some practical value in itself to people using languages mentioned) Assume that you have some text data which is expected to be, say, in German, Swedish or Finnish and which appears to be such text with some characters replaced by oddities in a somewhat systematic way. Locate some words which probably should contain <a href="latin1/3.html#e4" title="small a with diaeresis">the letter "ä"</a> but have something strange in place of it (see examples above). Assume further that the program you are using interprets text data according to <a href="#latin1">ISO 8859-1</a> by default and that the actual data is not accompanied with a suitable indication (like a <code>Content-Type</code> header) of the encoding, or such an indication is obviously in error. Now, <strong>looking at what appears instead of "ä", we might guess:</strong> </p> 
+  <table border="1" cellpadding="6"> 
+   <tbody>
+    <tr>
+     <th><samp>a</samp><br></th> 
+     <td> The person who wrote the text assumably just used "a" instead of&nbsp;"ä", probably because he thought that "ä" would not get through correctly. Although "ä" is surely problematic, the cure usually is worse than the disease: using "a" instead of "ä" loses information and may change the meanings of words. This usage, and the next two usages below, is (usually) not directly caused by incorrect implementations but by the human writer; however, it is <em>indirectly</em> caused by them. </td> 
+    </tr> 
+    <tr>
+     <th><samp>ae</samp><br></th> 
+     <td> Similarly to the above-mentioned case, this is usually an attempt to avoid writing "ä". For some languages (e.g. German), using "ae" as a surrogate for "ä" works to some extent, but it is much less applicable to Swedish or Finnish - and loses information, since the letter pair "ae" can genuinely occur in many words. </td> 
+    </tr> 
+    <tr>
+     <th><samp>a"</samp><br></th> 
+     <td> Yet another surrogate. It resembles an old (and generally outdated) <a href="latin1/4.html#diacr">idea of using the quotation mark as a diacritic mark too in ASCII</a> but it is probably expected to be understood by humans instead of being converted to an "ä" by a program. </td> 
+    </tr> 
+    <tr>
+     <th><samp>d</samp><br></th> 
+     <td> The original data was actually <a href="#latin1">ISO 8859-1</a> encoded or something similar (e.g. <a href="#win">Windows encoded</a>) but during data transfer the most significant <a title="definition of &quot;bit&quot; in Free On-line Dictionary of Computing" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=bit&amp;action=Search">bit</a> of each octet was lost. (Such things may happen in systems for transferring, or "gatewaying", data from one network to another. Sometimes it might be your <em>terminal</em> that has been configured to "mask out" the most significant bit!) This means that the octet representing "ä" in <a href="#latin1">ISO 8859-1</a>, i.e. 228, became 228 - 128 = 100, which is the ISO 8859-1 encoding of letter d. </td>
+    </tr>
+    <tr>
+     <th><samp>{</samp><br></th> 
+     <td> Obviously, the data is in <a href="#ascii">ASCII</a> encoding so that the character "{" is used in place of "ä". Earlier it was common to use various <a href="#national-ascii">national variants of ASCII</a>, with characters #$@[\]^_`{|}~ replaced by national characters according to the needs of a particular language. Thus they modified the character repertoire of ASCII by dropping out some special characters and introducing national characters into their ASCII code positions. It requires further study to determine the actual encoding used, since e.g. Swedish, German and Finnish ASCII variants all have "ä" as a replacement for "{", but there are differences in other replacements. </td>
+    </tr>
+    <tr>
+     <th><samp>Ã¤</samp><br></th> 
+     <td> The data is evidently in <a href="#utf">UTF-8</a> encoding. Notice that the characters Ã and ¤ stand here for octets 195 and 164, which might be displayed differently depending on program and device used. </td>
+    </tr>
+    <tr>
+     <th><samp>+AOQ-</samp><br></th> 
+     <td> The data is in <a href="#utf">UTF-7</a> encoding. </td>
+    </tr>
+    <tr>
+     <th><samp>Ì</samp><br></th> 
+     <td> The data is most probably in <a title="Roman 8 Character Conversion Table" href="http://www.robelle.com/library/smugbook/roman8.html">Roman-8</a> encoding (defined by Hewlett-Packard). </td>
+    </tr>
+    <tr>
+     <th><samp>=E4</samp><br></th> 
+     <td> The data is in <a href="#qp">Quoted-Printable</a> encoding. The original encoding, upon which the QP encoding was applied, might be <a href="#latin1">ISO 8859-1</a>, or any other encoding which represents character "ä" in the same way as ISO 8859-1 (i.e. as octet 228 decimal, E4 hexadecimal). </td>
+    </tr>
+    <tr>
+     <th><samp>&amp;auml;</samp><br></th> 
+     <td> The data is in <a title="A primer on the HTML language" href="html-primer.html">HTML</a> format; the encoding may vary. The notation <samp>&amp;auml;</samp> is a so-called <a href="http://www.htmlhelp.com/reference/html40/entities/">character entity reference</a>. </td>
+    </tr>
+    <tr>
+     <th><samp>&amp;#228;</samp><br></th> 
+     <td> The data is in <a title="A primer on the HTML language" href="html-primer.html">HTML</a> format; the encoding may vary. The notation <samp>&amp;#228;</samp> is a so-called <a href="http://www.htmlhelp.com/reference/html40/entities/">numeric character reference</a>. (Notice that 228 is the <a href="#code">code position</a> for ä in <a href="#10646">Unicode</a>.) </td>
+    </tr>
+    <tr>
+     <th>‰ (per mille sign, <sup>0</sup>/<sub>00</sub>)<br></th> 
+     <td> This character occupies code position 228 in the <a href="#maccode">Macintosh character code</a>. Thus, what has probably happened is that some program has received some ISO 8859-1 encoded data and interpreted it as if it were in Mac encoding, then performed some conversion based on that interpretation. Since <span class="charname"> <a href="http://www.eki.ee/letter/chardata.cgi?ucode=2030"> per mille sign</a></span> is not an ISO 8859-1 character, your program is actually not applying ISO 8859-1 interpretation. Perhaps an erroneous conversion turned 228 into 137, which is the code position of the per mille sign in the <a href="#win">Windows character code</a>. Windows programs usually interpret data according that code even when they are <em>said</em> to apply ISO 8859-1. </td> 
+    </tr> 
+    <tr>
+     <th>&#x3a3; (capital sigma)<br></th> 
+     <td> This character occupies code position 228 in <a href="#cp">DOS code page</a> 437. Since <span class="charname"> <a href="http://www.eki.ee/letter/chardata.cgi?ucode=03a3">greek capital letter sigma</a></span> is not an ISO 8859-1 character, your program is actually not applying ISO 8859-1 interpretation, for some reason. Perhaps it is interpreting the data according to DOS CP 437, or perhaps the data had been incorrectly converted to some encoding where sigma has a presentation. </td> 
+    </tr> 
+    <tr>
+     <th><i>nothing</i><br></th> 
+     <td> Perhaps the data was encoded in <a href="#cp">DOS encoding</a> (e.g. code page 850), where the code for "ä" is 132. In <a href="#latin1">ISO 8859-1</a>, octet 132 is in the area reserved for <a href="#control">control characters</a>; typically such octets are not displayed at all, or perhaps displayed as blank. If you can access the data in binary form, you could find evidence for this hypothesis by noticing that octets 132 actually appear there. (For instance, the <a href="emacs-iso.html" title="GNU Emacs Manual">Emacs</a> editor would display such an octet as <samp>\204</samp>, since 204 is the <a title="description of octal notation (in Free On-line Dictionary of Computing)" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=octal&amp;action=Search">octal</a> notation for 132.) If, on the other hand, it's not octet 132 but octet 138, then the data is most probably in <a href="#maccode">Macintosh encoding</a>. </td>
+    </tr>
+    <tr>
+     <th>„ (double low-9 quotation mark)<br></th> 
+     <td> Most probably the data was encoded in <a href="#cp">DOS encoding</a> (e.g. code page 850), where the code for "ä" is 132. Your program is not actually interpreting the data as ISO 8859-1 encoded but according to the so-called <a href="#win">Windows character code</a>, where this code position is occupied by the <a href="http://www.eki.ee/letter/chardata.cgi?ucode=201e"><span class="charname">double low-9 quotation mark</span></a>. </td>
+    </tr> 
+    <tr>
+     <th>Š (capital S with caron)<br></th> 
+     <td> Most probably the data was encoded in <a href="#maccode">Macintosh encoding</a>, where the code for "ä" is 138. Your program is not actually interpreting the data as ISO 8859-1 encoded but according to the so-called <a href="#win">Windows character code</a>, where this code position is occupied by the <a href="http://www.eki.ee/letter/chardata.cgi?ucode=0160"><span class="charname">latin capital letter s with caron</span></a>. </td>
+    </tr> 
+   </tbody>
+  </table> 
+  <p>To illustrate <strong>what may happen when text is sent in a grossly invalid form</strong>, consider the following example. I'm sending myself E-mail, using Netscape 4.0 (on Windows 95). In the mail composition window, I set the encoding to <a href="#utf">UTF-8</a>. The body of my message is simply<br> Tämä on testi.<br> (That's Finnish for 'This is a test'. The second and fourth character is letter a with umlaut.) Trying to read the mail on my Unix account, using the Pine E-mail program (popular among Unix users), I see the following (when in "full headers" mode; irrelevant headers omitted here): </p> 
+  <pre>
+X-Mailer: Mozilla 4.0 [en] (Win95; I)
+MIME-Version: 1.0
+To: jkorpela@cs.tut.fi
+Subject: Test
+X-Priority: 3 (Normal)
+Content-Type: text/plain; charset=x-UNICODE-2-0-UTF-7
+Content-Transfer-Encoding: 7bit
+
+    [The following text is in the "x-UNICODE-2-0-UTF-7" character set]
+    [Your display is set for the "ISO-8859-1" character set]
+    [Some characters may be displayed incorrectly]
+
+T+O6Q- on testi.
+</pre> 
+  <p> Interesting, isn't it? I specifically requested <a title="Information about UTF-8 and UTF-7 encodings" href="#utf">UTF-8</a> encoding, but Netscape used UTF-7. And it did not include a correct header, since <code>x-UNICODE-2-0-UTF-7</code> is not a <a title="Information about charset registration procedure" href="#charsetreg">registered "charset" name</a>. Even if the encoding had been a registered one, there would have been no guarantee that my E-mail program would have been able to handle the encoding. The example, "T+O6Q-" instead of "Tämä", illustrates what may happen when an octet sequence is interpreted according to another encoding than the intended one. In fact, it is difficult to say what Netscape was really doing, since it seems to encode incorrectly. </p>
+  <p> <a name="utf7ex">A <em>correct</em> UTF-7 encoding for "Tämä" would be "T+AOQ-m+AOQ-".</a> The "+" and "-" characters correspond to octets indicating a switch to "shifted encoding" and back from it. The shifted encoding is based on presenting <a href="#10646">Unicode</a> values first as 16-bit binary integers, then regrouping the bits and presenting the resulting six-<a title="definition of &quot;bit&quot; in Free On-line Dictionary of Computing" href="http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?query=bit&amp;action=Search">bit</a> groups as octets according to a table specified in <a title="Multipurpose Internet Mail Extensions (MIME) Part One: Format of Internet Message Bodies" href="ftp://nis.nsf.net/internet/documents/rfc/rfc2045.txt"> RFC 2045</a> in the section on Base64. See also <a title="UTF-7 - A Mail-Safe Transformation Format of Unicode" href="ftp://nis.nsf.net/internet/documents/rfc/rfc2152.txt">RFC 2152</a>. </p> 
+  <h2><a name="concl">Practical conclusions</a></h2> 
+  <p> Whenever text data is sent over a network, the sender and the recipient should have a joint <strong>agreement on the character encoding</strong> used. In the optimal case, this is handled by the software automatically, but in reality the users need to take some precautions. </p> 
+  <p> Most importantly, make sure that any <strong>Internet-related software</strong> that you use to send data <strong>specifies the encoding</strong> correctly in suitable headers. There are two things involved: the header must be there and it must reflect the actual encoding used; and the encoding used must be one that is widely understood by the (potential) recipients' software. One must often make compromises as regards to the latter aim: you may need to use an encoding which is not yet widely supported to get your message through at all. </p> 
+  <p> It is useful to find out how to make your Web browser, newsreader, and E-mail program so that you can display the encoding information for the page, article, or message you are reading. (For example, on Netscape use <code>View Page Info</code>; on News Xpress, use <code>View Raw Format</code>; on Pine, use <code>h</code>.) </p> 
+  <p> If you use, say, Netscape to send E-mail or to post to Usenet news, make sure it sends the message in a reasonable form. In particular, <a href="http://extra.newsguy.com/%7eschramm/nhtml.html" title="Posting News Using HTML (Please don't)">make sure it does not send the message as HTML</a> or duplicate it by sending it both as plain text and as HTML (select plain text only). As regards to character encoding, make sure it is something widely understood, such as <a href="#ascii">ASCII</a>, some <a title="The ISO 8859 Alphabet Soup, with code tables" href="#8859">ISO 8859</a> encoding, or <a href="#utf">UTF-8</a>, depending on how large character repertoire you need. </p> 
+  <p> In particular, <strong>avoid sending data in a proprietary encoding</strong> (like the <a href="#maccode">Macintosh encoding</a> or a <a href="#cp">DOS encoding</a>) to a public network. At the very least, if you do that, make sure that the message heading specifies the encoding! There's nothing wrong with using such an encoding within a single computer or in data transfer between similar computers. But when sent to Internet, data should be converted to a more widely known encoding, by the sending program. If you cannot find a way to configure your program to do that, get another program. </p> 
+  <p><small> As regards to other forms of transfer of data in digital form, such as diskettes, information about encoding is important, too. The problem is typically handled by guesswork. Often the crucial thing is to know which <em>program</em> was used to generate the data, since the text data might be inside a file in, say, the MS Word format which can only be read by (a suitable version of) MS Word or by a program which knows its internal data format. That format, once recognized, might contain information which specifies the character encoding used in the text data included; or it might not, in which case one has to ask the sender, or make a guess, or use trial and error&nbsp;- viewing the data using different encodings until something sensible appears. </small> </p> 
+  <h2><a name="more">Further reading</a></h2> 
+  <ul> 
+   <li><a href="http://www.joelonsoftware.com/articles/Unicode.html"> The Absolute Minimum Every Software Developer Absolutely, Positively Must Know About Unicode and Character Sets</a> by Joel on Software. An enjoyable nice treatise, though probably not quite the absolute minimum. 
+    <!--  [LI][a href="http://www.ewos.be/tg-cs/gtop.htm"][cite]Character
+     Sets[/cite][/a] in
+[a href="http://www.ewos.be/goss/top.htm"
+title="Guide to Open Systems Specifications"
+     ][cite]GOSS[/cite][/a]. --> </li>
+   <li> <a href="http://developer.apple.com/techpubs/macos8/TextIntlSvcs/TextEncodingConversionManager/TEC1.5/TEC.9e.html"><cite>Character Encodings Concepts</cite></a>, adapted from a presentation by Peter Edberg at a Unicode conference. Old, but a rich source of information, with good illustrations. 
+    <!--"http://developer.apple.com/techpubs/mac/TextEncodingCMgr/TECRefBook-140.html"--> 
+    <!--"http://developer.apple.com/techpubs/macos8/TextIntlSvcs/TextEncodingConversionManager/TEC1.5/TEC.9e.html"--> </li>
+   <li> <a href="http://www.alanflavell.org.uk//iso8859/iso8859-pointers.html"> <cite>ISO-8859 briefing and resources</cite> </a> by <a href="http://www.alanflavell.org.uk//">Alan&nbsp;J.&nbsp;Flavell</a>. Partly a character set tutorial, partly a discussion of specific (especially ISO 8859 and HTML related) issues in depth. 
+    <!--
+<li> <a href=
+"http://www.stadlar.is/TC304/GUIDE/"
+     ><cite>Guide to the use of character sets in Europe </cite></a>.
+     A draft which contains explanations of basic concepts
+     related to character sets in general and discusses various
+     European standards.  
+--> </li>
+   <li> Section <cite><a href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/chars.html">Character set standards</a></cite> in the <cite><a href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/standards.html">Standards and Specifications List</a></cite> by <a href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/">Diffuse</a> (archive copy) </li>
+   <li><cite><a href="http://web.archive.org/web/20030605114512/http://www.diffuse.org/charguide.html">Guide to Character Sets</a></cite>, by Diffuse. (archive copy) </li>
+   <li> <a href="http://directory.google.com/">Google</a>'s <a href="http://directory.google.com/Top/Computers/Software/Globalization/Internationalization/">section on internalization</a>, which has interesting entries like <a href="http://www.i18ngurus.com/index.html" title="Open directory of links to internationalization (i18n) resources and related material.">i18nGurus</a> </li>
+   <li> <a href="http://www.w3.org/MarkUp/html-spec/charset-harmful.html"> <cite>"Character Set" Considered Harmful</cite></a> by <a href="http://www.w3.org/People/Connolly/">Dan Connolly</a>. A good discussion of the basic concepts and misconceptions. </li>
+   <li> <a href="http://linguist.emich.edu/%7elinglit/routledge/multilingual.html"><cite>The Nature of Linguistic Data: Multilingual Computing</cite></a> - an old (1997) collection of annotated links to information on character codes, fonts, etc. </li>
+   <li> John Clews: <a href="http://mirrored.ukoln.ac.uk/lis-journals/dlib/dlib/dlib/march97/sesame/03clews.html"><cite>Digital Language Access: Scripts, Transliteration, and Computer Access</cite></a>; an introduction to scripts and transliteration, so it's useful background information for character code issues. </li>
+   <li> <a href="http://www.evertype.com/">Michael Everson's Web site</a>, which contains a lot of links to detailed documents on character code issues, especially progress and proposals in standardization. </li>
+   <li> <a href="http://www.terena.nl/library/multiling/euroml/JWvanWingen.html">Johan W. van Wingen</a>: <a href="http://www.terena.nl/library/multiling/euroml/mlcs5.html"><cite>Character sets. Letters, tokens and codes.</cite></a> Detailed information on many topics (including particular character codes). 
+    <!--
+now: http://web.archive.org/web/20040107013243/http://wes.feec.vutbr.cz/~kuchta/cp/esej.html
+<li> <a href="http://www.fee.vutbr.cz/~kuchta/">Jiri Kuchta</a>:
+<cite><a href=
+"http://www.fee.vutbr.cz/~kuchta/cp/esej.html.iso-8859-1"
+>Survey of code page history</a></cite>.
+--> </li>
+   <li> Steven J. Searle: <cite><a href="http://tronweb.super-nova.co.jp/characcodehist.html">A Brief History of Character Codes in North America, Europe, and East Asia</a></cite> </li>
+   <li> <a href="http://www.oreilly.com/catalog/cjkvinfo/author.html"> Ken Lunde</a>: <cite><a href="http://www.oreilly.com/catalog/cjkvinfo/">CJKV Information Processing</a></cite>. A book on Chinese, Japanese, Korean&nbsp;&amp; Vietnamese Computing. The book itself is not online, but some extracts are, e.g. the <a href="ftp://ftp.oreilly.com/pub/examples/nutshell/cjkv/pdf/CJKVInfoProc.Chap1.pdf" title="CJKV Information Processing Overview [PDF format]">overview</a> chapter. </li>
+   <li> <a href="http://www.eki.ee/letter/">An online character database</a> by Indrek Hein at the <a href="http://www.eki.ee/">Institute of the Estonian Language</a>. You can e.g. search for <a href="#10646">Unicode</a> characters by name or code position, get lists of differences between some character sets, and get lists of characters needed for different languages. </li>
+   <li> <a href="http://recode.progiciels-bpi.ca/"><cite>Free recode</cite></a> is a free program by <a href="http://www.iro.umontreal.ca/%7epinard/index.html" hreflang="fr" lang="fr">François Pinard</a>. It can be used to perform various character code conversions between a large number of encodings. </li>
+  </ul> 
+  <p>Character code problems are part of a topic called <dfn>internationalization</dfn> (jocularly abbreviated as <dfn>i18n</dfn>), rather misleadingly, because it mainly revolves around the problems of using various <em>languages and writing systems (scripts)</em>. (Typically <a href="lingua-franca.html" title="English - the universal language on the Internet?"><em>international</em> communication on the Internet is carried out in English</a>!) It includes difficult questions like text directionality (some languages are written right to left) and requirements to present the same character with different glyphs according to its context. See <a href="http://www.w3.org/International/">W3C pages on internationalization</a>.</p> 
+  <p>I originally started writing this document as a tutorial for <strong>HTML authors</strong>. Later I noticed that this general information is extensive enough to be put into a document of its own. As regards to HTML specific problems, the document <a href="html/chars.html"><cite>Using national and special characters in HTML</cite></a> summarizes what currently seems to be the best alternative in the general case. </p> 
+  <hr title="Information about this document"> 
+  <h2 style="font-size:100%;margin:0">Acknowledgements</h2> 
+  <p>I have learned a lot about character set issues from the following people (listed in an order which is roughly chronological by the start of their influence on my understanding of these things): <a hreflang="fi" lang="fi" href="http://www.nixu.fi/%7ekiravuo/">Timo Kiravuo</a>, <a href="http://www.alanflavell.org.uk/">Alan&nbsp;J.&nbsp;Flavell</a>, <a href="mailto:aray@interactrx.com">Arjun Ray</a>, Roman Czyborra, <a href="http://web.archive.org/web/20041012084602/http://www.bobbemer.com/">Bob Bemer</a>, 
+   <!--
+"http://www.tieke.fi/tieke.nsf/DUID/5327E5F9C8E43491C22569D00045F9C4?OpenDocument"--> <span lang="fi">Erkki&nbsp;I. Kolehmainen</span>. (But any errors in this document I souped up by myself.)</p> 
+  <div class="footer"> 
+   <div>
+    <a title="ISO 8601, the date and time representation standard" href="iso8601.html"> Date</a> of last revision: 2001-09-06. Date of last update: 2012-02-27. 
+   </div> 
+   <div>
+    This page belongs to section 
+    <cite><a href="chars/index.html">Characters and encodings</a></cite> of the free information site 
+    <cite><a accesskey="1" href="indexen.html">IT and communication</a></cite> by 
+    <a href="personal.html" title="Jukka K. Korpela, an IT generalist and specialist (personal home page)"><span lang="fi">Jukka</span> "Yucca" <span lang="fi">Korpela</span></a>. 
+   </div> 
+  </div>   
+ </body>
+</html>

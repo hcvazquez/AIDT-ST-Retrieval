@@ -1,0 +1,1023 @@
+<!doctype html>
+<html>
+ <head> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" type="text/javascript"></script> 
+  <script type="text/javascript">
+if (typeof(jQuery) == 'undefined')  
+        document.write(unescape("%3Cscript src='/wwSC.axd?r=Westwind.Web.Resources.jquery.js' type='text/javascript'%3E%3C/script%3E"));
+</script> 
+  <title>
+	JavaScript JSON Date Parsing and real Dates - Rick Strahl's Web Log
+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1">
+  <link id="ctl00_RssLink" rel="alternate" type="application/rss+xml" title="Rick Strahl's Web Log" href="http://feedproxy.google.com/rickstrahl">
+  <meta id="ctl00_metaKeyWords" name="Keywords" content="Date,JSON,ISO 8601,parse">
+  <meta id="ctl00_metaDescription" name="Description" content="JavaScript doesn't have a date literal, and for this reason JSON serializes dates as strings rather than real JavaScript dates. In this post I show how JSON date serialization works, a few approaches how you can manage dates and how to automate the process of converting JSON dates to 'real' dates more easily.">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Rick Strahl">
+  <meta name="twitter:description" content="Life, Code, Surf and everything in between">
+  <meta name="twitter:image" content="images/rick.jpg">
+  <meta name="twitter:creator" content="@rickstrahl">
+  <meta name="twitter:domain" content="west-wind.com"> 
+  <style type="text/css">
+        .blogimgtag  { border:none;margin-top:5px; }
+    </style> 
+  <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>        
+    <![endif]--> 
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon"> 
+  <link rel="apple-touch-icon" href="/favicon.ico"> 
+  <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="Search Rick Strahl's Blog"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://weblog.west-wind.com/rsd.xml"> 
+  <meta property="og:title" content="JavaScript JSON Date Parsing and real Dates"> 
+  <meta property="og:description" content="JavaScript doesn't have a date literal, and for this reason JSON serializes dates as strings rather than real JavaScript dates. In this post I show how JSON date serialization works, a few approaches how you can manage dates and how to automate the process of converting JSON dates to 'real' dates more easily."> 
+  <meta property="og:url" content="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates"> 
+  <script src="/scripts/ww.jQuery.js" type="text/javascript"></script> 
+  <script src="/ShowPost.js" type="text/javascript"></script> 
+  <link href="../../../../App_Themes/Standard/Standard.css" type="text/css" rel="stylesheet">
+ </head> 
+ <body> 
+  <div id="page-wrapper"> 
+   <div id="toplevel"> 
+    <form method="post" action="./javascript-json-date-parsing-and-real-dates" onsubmit="javascript:return WebForm_OnSubmit();" id="aspnetForm"> 
+     <div class="aspNetHidden"> 
+      <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUKMTczNDY0NDQ0MGQYAQUVY3RsMDAkQ29udGVudCRDYXB0Y2hhDzKSAgABAAAA/////wEAAAAAAAAADAIAAABNV2VzdHdpbmQuV2ViLldlYkZvcm1zLCBWZXJzaW9uPTIuNjkuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPW51bGwFAQAAACdXZXN0d2luZC5XZWIuQ29udHJvbHMuRGlzcGxheUV4cHJlc3Npb24HAAAADUV4cGVjdGVkVmFsdWUGVmFsdWUxBlZhbHVlMglPcGVyYXRpb24CSWQMVW5pcXVlUGFnZUlkB0VudGVyZWQAAAABAQEACAgIDQIAAAAKAAAABQAAAAUAAAAGAwAAAAErBgQAAAAIMmIxMzFiZGUGBQAAAACkctmn+v3USAtkoIbRzJKIdx2BcmiOOwDtrglzvM+/PBzLSpTBtbmghPA="> 
+     </div> 
+     <script type="text/javascript">
+//<![CDATA[
+var scriptVars = {
+	webBasePath: "/"
+};
+var serverVars = {
+	commentMaxLength: 4000,
+	txtBodyId: "ctl00_Content_txtBody",
+	txtAuthorId: "ctl00_Content_txtAuthor"
+};
+function WebForm_OnSubmit() {
+var CpCtl = document.getElementById('2b131bde');
+if (CpCtl) CpCtl.value += '_2b131bde';
+return true;
+}
+//]]>
+</script> 
+     <div class="aspNetHidden"> 
+      <input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="3F8968ED"> 
+      <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEdAAIVbav0/8H3up64sGZP9dcZARF5kFqnCFqtyoWIwXSnS7Rn+NK0gzblMBKYbLnDEIWGoxLiWxm77LSOWNzIuTF0"> 
+     </div> 
+     <div class="pagemarquee"> 
+      <img class="hero-image" src="/images/RickHero1.jpg"> 
+      <img class="author-image" src="/images/rick175x175.jpg"> 
+      <header class="blog-name-container" onclick="window.location='/';"> 
+       <h2>Rick Strahl's Web Log</h2> 
+       <b>Wind, waves, code and everything in between...<br> ASP.NET • C# • HTML5 • JavaScript • AngularJs </b> 
+      </header> 
+     </div> 
+     <div class="marquee-bottom-menu" style="margin-bottom: 0;"> 
+      <div class="marquee-bottom-sharing" style="float: right; margin-right: 20px; margin-top: -6px;"> 
+       <a href="http://twitter.com/rickstrahl"><img src="/images/twitter32.png" title="Rick Strahl on Twitter"></a> &nbsp; &nbsp; 
+       <a href="http://feedproxy.google.com/rickstrahl"><img src="/images/rss32.png" title="RSS feed for Rick Strahl's Web Log"></a> 
+      </div> 
+      <span class="marquee-bottom-links"> <a href="https://west-wind.com/contact/" title="">Contact</a> &nbsp; • &nbsp; <a href="https://west-wind.com/articles.aspx">Articles</a> <span class="hide-small">&nbsp; • &nbsp;</span> <a href="https://store.west-wind.com" class="hide-small">Products</a> <span class="hide-small">&nbsp; • &nbsp;</span> <a href="https://support.west-wind.com" class="hide-small">Support</a> <span class="hide-small">&nbsp; • &nbsp;</span> <a href="https://weblog.west-wind.com/search" class="hide-small">Search</a> </span> 
+     </div> 
+     <div id="SponsorPanel" onclick="window.location.href='http://www.aspose.com/products/total/net?utm_source=westwind&amp;utm_medium=banner&amp;utm_campaign=westwind-sponsored'" style="cursor: pointer"> 
+      <div class="ad-free-msg">
+        Ad-free experience sponsored by: 
+      </div> 
+      <div style="flex: auto;"> 
+       <a href="http://www.aspose.com/products/total/net?utm_source=westwind&amp;utm_medium=banner&amp;utm_campaign=westwind-sponsored" title="Please stop by our friends at ASPOSE who graciously are providing sponsorship to remove all other ads on this site."> <img src="/images/Sponsors/AspPoseLogoIconTransparent.png" style="height: 20px;  vertical-align:top"> <b>ASPOSE</b> </a> - the market leader of .NET and Java APIs for file formats – natively work with DOCX, XLSX, PPT, PDF, images and more 
+       <a href="http://www.aspose.com/products/total/net?utm_source=westwind&amp;utm_medium=banner&amp;utm_campaign=westwind-sponsored" title="Please stop by our friends at ASPOSE who graciously are providing sponsorship to remove all other ads on this site."> <i class="fa fa-external-link" style="color: #333; padding: 0 5px; font-weight: bold"></i> </a> 
+      </div> 
+     </div> 
+     <div class="clearfix"></div> 
+     <div class="post-container"> 
+      <aside class="post-sidebar"> 
+       <div class="author-name">
+        Rick Strahl
+       </div> 
+       <nav class="twitter-name" style="font-weight: bold;"> 
+        <a href="https://twitter.com/rickstrahl" title="Rick Strahl on Twitter"> @RickStrahl </a> 
+       </nav> 
+       <nav style="margin-top: 10px;"> 
+        <a href="http://aspinsiders.com"> <img src="/images/asp-insiders.jpg" style="box-shadow: #535353 2px 2px 3px; height: 36px;"></a> 
+        <a href="http://mvp.microsoft.com/en-us/MVP/Rick%20Strahl-5000249"> <img src="/images/MsMvp.png" style="box-shadow: #535353 2px 2px 3px; height: 36px"> </a> 
+       </nav> 
+       <nav class="sidebar-group" style="margin-top: 10px;"> 
+        <div>
+         <a href="/posts">Posts - 1114</a>
+        </div> 
+        <div>
+         <a href="/comments">Comments - 14323</a>
+        </div> 
+        <div> 
+         <a href="http://feedproxy.google.com/rickstrahl" title="RSS feed for this Weblog">RSS Feed</a> 
+        </div> 
+       </nav> 
+       <div class="sidebar-header">
+        Rick's Sites
+       </div> 
+       <nav class="sidebar-group"> 
+        <div> 
+         <a href="https://west-wind.com" title="Rick's company home page.">West Wind Technologies</a> 
+        </div> 
+        <div> 
+         <a href="https://github.com/RickStrahl?tab=repositories" title="Rick Strahl's Open Source and Sample projects on GitHub">Rick's GitHub Projects</a> 
+        </div> 
+        <div> 
+         <a href="https://west-wind.com/wconnect/weblog/" title="Rick's other blog to discuss FoxPro and Web Connection topics">Rick's FoxPro Web Log</a> 
+        </div> 
+        <div> 
+         <a href="https://support.west-wind.com/" title="West Wind Technologies Support forum">West Wind Message Board</a> 
+        </div> 
+        <div> 
+         <a href="https://codepaste.net" title="Paste and link code snippets for twitter and social media"> CodePaste.net </a> 
+        </div> 
+        <div>
+         <a href="https://geocrumbs.net" title="Keep track of your favorite locations on your mobile device"> GeoCrumbs.net</a> 
+        </div> 
+       </nav>  
+       <div class="sidebar-header">
+        Rick's Products
+       </div> 
+       <nav class="sidebar-group"> 
+        <div> 
+         <a href="https://markdownmonster.west-wind.com" title="Markdown Monster - extensible Markdown Editing on Windows">Markdown Monster</a> 
+        </div> 
+        <div> 
+         <a href="https://websurge.west-wind.com" title="West Wind WebSurge Web URL and Load Tester">WebSurge</a> 
+        </div> 
+        <div> 
+         <a href="https://helpbuilder.west-wind.com" title="West Wind Html Help Builder">Html Help Builder</a> 
+        </div> 
+        <div> 
+         <a href="https://west-wind.com/webmonitor" title="West Wind Web Monitor">Web Monitor</a> 
+        </div> 
+       </nav> 
+       <hr> 
+       <div style="text-align: center; margin: 15px 0 15px;"> 
+        <img onclick="window.open('https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=rstrahl@west-wind.com&amp;item_name=Rick+Strahl%27s+Web+Log&amp;no_shipping=0&amp;no_note=1&amp;tax=0&amp;currency_code=USD&amp;lc=US&amp;bn=PP%2dDonationsBF&amp;charset=UTF%2d8&amp;image_url=https://weblog.west-wind.com/images/WebLogBannerLogo.jpg','PayPal');" title="Find this content useful? Consider making a small donation." alt="Make Donation" style="text-decoration: none;" src="/images/donation.gif"> 
+        <br> 
+        <small style="font-size: 8pt; font-family: Arial, Sans-Serif"> Find this content useful? Consider making a small donation to show your support. </small> 
+       </div> 
+       <hr> 
+       <!-- Twitter List --> 
+       <a class="twitter-timeline" data-dnt="true" href="https://twitter.com/RickStrahl" data-widget-id="243833136067264512">Tweets by @RickStrahl</a> 
+       <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script> 
+      </aside> 
+      <main class="post-content"> 
+       <style type="text/css">    
+            .comment>a:first-child { text-decoration: none; }
+            .contenteditable { background: azure; padding: 10px; border: solid 1px orange; }
+
+            .linkicon {
+                width: 17px;
+                height: 17px;
+                margin-left: -22px;
+                margin-top: 4px;      
+                float: left;
+                vertical-align: text-bottom;
+                opacity: 0.8;
+                background-image: url(/images/link.png);
+                transition: opacity 0.5s ease-in-out;
+            }
+            .link-hidden {
+                opacity: 0.1;
+            }
+            .postcontent>h3 {
+                cursor: pointer;
+                transition: opacity 0.5s ease-in-out;
+            }
+            .postcontent>h3:hover {
+                opacity: 0.85;
+        
+            }
+           
+        .comment-dialog-header {
+            color: #535353;
+            text-align: center; 
+            font-size: 14pt; 
+            font-weight: bold; 
+            padding: 5px;   
+            margin-bottom: 10px;         
+        }
+        .comment-dialog {             
+            width:95%;
+            text-align: left; 
+            margin: 0 auto;
+            padding: 7px 5px;
+        }
+        .comment-dialog input[type=text],
+        .comment-dialog input[type=email],
+        .comment-dialog textarea
+        {
+            width: 95%;      
+            font-family: 'Trebuchet MS','Trebuchet',sans-serif;
+            font-size: 1.05em;                
+            font-weight: bold;
+            margin-bottom: 8px;
+            padding: 5px 10px;            
+        }
+        .comment-dialog textarea {
+            font-size: 1em;                
+        }
+        .comment-directions {
+            width: 95%; 
+            color:#535353;
+            background: cornsilk; 
+            text-align:center;
+            font-size:0.8em;
+            padding: 10px 10px;
+            margin-top: 13px;
+        }
+
+            @media(max-width: 639px) {
+                .linkicon {
+                    display: none;
+                }
+            }
+
+            
+                               .comment-textbox, .comment-textbox:focus {
+                                    background-color: #444 !important;
+                                    color: #e9e9e9;
+                                    font-family: Consolas, monospace !important;                                    
+                                    font-size: 1.1em !important;
+                                    font-weight: 500 !important;                                    
+                                }
+                                .edit-toolbar {
+                                    margin-top: 15px;
+                                    background: #656565;
+                                    color: white;
+                                    padding: 5px 10px;
+                                    width: 95%;
+                                    height: 29px;
+                                }
+                                .edit-toolbar>* {
+                                    color: white;
+                                    padding: 6px 11px;
+                                    margin-left: 1px; 
+                                    float: left;
+                                    display: block;                                   
+                                }
+                                 .edit-toolbar>a:focus, .edit-toolbar>a:hover {
+                                       background-color: #888 !important;
+                                       color: white !important;
+                                       text-decoration: none;
+                                 }
+                            
+        </style> 
+       <article style="width: 100%;" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+        <header> 
+         <h2 itemprop="headline_name"> <a href="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates" style="text-decoration:none;">JavaScript JSON Date Parsing and real Dates</a> </h2> 
+        </header> 
+        <hr> 
+        <div class="byline"> 
+         <div class="leftbox"> 
+          <img src="/images/time.gif"> January 06, 2014 - from Maui, HI 
+         </div> 
+         <div class="leftbox" style="float: right;"> 
+          <a href="#Feedback" class="hoverbutton"><img src="/images/comment.gif"> 17 comments</a> 
+         </div> 
+         <div class="leftbox" id="ShareIconContainer" style="float: right;"> 
+          <div style="display:inline-block;width: 95px; overflow:hidden;"> 
+           <a href="https://twitter.com/share" class="twitter-share-button" data-text="JavaScript JSON Date Parsing and real Dates" data-via="RickStrahl" data-lang="en" data-hashtags="" data-url="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates">Tweet</a> 
+           <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script> 
+          </div> 
+          <div style="display:inline-block;width: 95px; overflow:hidden;"> 
+           <a href="https://www.facebook.com/sharer/sharer.php?u=https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates&amp;display=popup" target="_blank"> <img src="/images/shareonfacebook.png" style="height: 20px;"> </a> 
+          </div> 
+          <div style="display:inline-block;width: 75px; overflow:hidden;"> 
+           <g:plusone size="medium" href="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates" "></g:plusone> 
+           <script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script> 
+          </div> 
+         </div> 
+        </div> 
+        <div class="clearfix"></div> 
+        <div id="ArticleBody" class="postcontent" itemprop="articleBody"> 
+         <p>JSON has become a rather prevalent serialization format in recent years. For Web based applications one could say it’s become *the* serialization format. It’s used for transport serialization for just about anything REST related these days, for configuration management, for storage and data representation in many database formats (NoSql). But yet there’s at least one very annoying problem with JSON: It doesn’t serialize dates. Or more precisely – it serializes dates just fine, it just doesn’t deserialize them.</p> 
+         <p>I’ve talked about this topic a few times in the past, but I thought I’d revisit because it’s one that comes up quite frequently, and because in the interceding years I’ve started using a more flexible solution than what I previously discussed. In this post I’ll discuss the problem and a few workarounds as well as small JSON extension library that you can use to globally parse JSON with proper date conversion with minimal fuss.</p> 
+         <p>The code and small support library discussed in this post is up on <a href="https://github.com/RickStrahl/json.date-extensions">GitHub in my json.date-extensions library</a>, so you can download and play around with this yourself. I find this functionality indispensable and use as part of my own libraries in just about every client-side application that uses AJAX.</p> 
+         <h3>JSON Dates are not dates – they are Strings</h3> 
+         <p>The problem with dates in JSON – and really JavaScript in general – is that JavaScript doesn’t have a date literal. You can represent strings, numbers, Booleans and even objects, arrays and RegEx expressions with language specific literals, but <em>there’s no equivalent literal representation for dates</em>. Which seems like a rather major omission given that dates are pretty important in computing and business environments.</p> 
+         <p>So in order to represent dates in JavaScript, JSON uses a specific string format – <a href="http://www.w3.org/TR/NOTE-datetime">ISO 8601</a> – to encode dates as string. There’s no ‘official’ standard for what the date format should look like, although it’s been more or less agreed upon that the JSON Date encoding format should be ISO 8601 as that’s what all the major browser native JSON parsers use. Dates are encoded as ISO 8601 strings and then treated just like a regular string when the JSON is serialized and deserialized. </p> 
+         <p><em>You can serialize to this format, but there’s no direct deserialization back to a date from it.</em> </p> 
+         <p>A JSON encoded date looks like this:</p> 
+         <p><strong>"2014-01-01T23:28:56.782Z"</strong></p> 
+         <p>The date is represented in a standard and sortable format that represents a UTC time (indicated by the Z). ISO 8601 also supports time zones by replacing the Z with + or – value for the timezone offset:</p> 
+         <p><strong>"2014-02-01T09:28:56.321-10:00"</strong></p> 
+         <p>There are other variations of the timezone encoding in the ISO 8601 spec, but the –10:00 format is the only TZ format that current JSON parsers support. In general it’s best to use the UTC based format (Z) unless you have a specific need for figuring out the time zone in which the date was produced (possible only in server side generation). </p> 
+         <p>There have been other date formats in the past – namely Microsoft’s MS AJAX style date (\/Date(454123112)/\) which Microsoft used in their original AJAX and REST products (Microsoft AJAX and WCF REST specifically), but which thankfully have disappeared in new frameworks (ASP.NET Web API, Nancy, ServiceStack etc.) in favor of ISO style dates that are now ubiquitous.</p> 
+         <p></p> 
+         <h3>How Date Parsing Works with JSON Serializers</h3> 
+         <p>To encode a date with JSON you can just use the standard JSON serializer’s stringify() method:</p>
+         <pre class="code"><span style="color: blue">var </span><span style="color: black">date = </span><span style="color: blue">new </span><span style="color: black">Date();
+console.log(date); </span><span style="color: green">// Wed Jan 01 2014 13:28:56 GMT-1000 (Hawaiian Standard Time) 
+        
+</span><span style="color: blue">var </span><span style="color: black">json = JSON.stringify(date);
+console.log(json);  </span><span style="color: green">// "2014-01-01T23:28:56.782Z" </span></pre> 
+         <p>This produces a JSON encoded string value:</p> 
+         <p><strong>"2014-01-01T23:28:56.782Z"</strong> </p> 
+         <p>If you now want to deserialize that JSON date back into a date you’ll find that JSON.parse() doesn’t do the job. If you try:</p>
+         <pre class="code"><span style="color: blue">var </span><span style="color: black">dateStr = JSON.parse(json);  
+console.log(dateStr); </span><span style="color: green">// 2014-01-01T23:28:56.782Z
+        </span></pre> 
+         <p>You’ll find that you get back… drum roll… a string in dateStr:</p> 
+         <p><strong>2014-01-01T23:28:56.782Z</strong></p> 
+         <p>No quotes this time – it’s no longer a JSON string, but a string nevertheless. This is because the JSON created is in fact a string and JSON.parse() doesn’t know anything other than that the encoded date value is a string, so that’s what you get back. Fun, ain’t it?</p> 
+         <h3>Decoding the Date</h3> 
+         <p>The good news – and maybe not very widely known news at that – is that ISO dates can be easily converted into JavaScript dates by use of the flexible JavaScript Date constructor. The date constructor accepts a wide variety of inputs to construct a date, ISO 8601 amongst them.</p> 
+         <p>The following turns the ISO date back into a ‘real’ date:</p>
+         <pre class="code"><span style="color: blue">var </span><span style="color: black">dateStr = JSON.parse(json);  
+console.log(dateStr); </span><span style="color: green">// 2014-01-01T23:28:56.782Z
+        
+</span><span style="color: blue">var </span><span style="color: black">date = </span><span style="color: blue">new </span><span style="color: black">Date(dateStr);
+console.log(date);  </span><span style="color: green">// Wed Jan 01 2014 13:28:56 GMT-1000 (Hawaiian Standard Time)         </span></pre> 
+         <p>Note that the string has to be a plain string, not a JSON string. JSON strings would have to remove the wrapping quotes in order to parse by the new Date() constructor.</p> 
+         <p>This works nicely for single dates, but unfortunately it’s a bit of a pain if you get back complex objects that contain dates: An object with a few date fields or an array containing objects with date fields requires that you to fix up each of the values at the point of use.&nbsp; In application means you’d have to manually replace dates every time you use them or do any sort of date math. </p> 
+         <p>It works, but you have to be careful in your usage of these pseudo date strings, always remembering that they have to be converted manually when you use them.</p> 
+         <h3>JSON Parser Extensions</h3> 
+         <p>One way around this date problem is to extend the JSON parser to automatically convert the ISO string dates into real JavaScript dates. The JSON.parse() method supports an optional filter function parameter that can be passed to transform values as they are parsed. We can check each of the key value pairs for each property as its parsed and look for strings that look like dates and automatically transform them into dates. </p> 
+         <p>It’s only a short bit of code:</p>
+         <pre class="code"><p><span style="color: blue">if </span><span style="color: black">(window.JSON &amp;&amp; !window.JSON.dateParser) { </span><span style="color: blue">var </span><span style="color: black">reISO = </span><span style="color: maroon">/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/</span><span style="color: black">; </span><span style="color: blue">var </span><span style="color: black">reMsAjax = </span><span style="color: maroon">/^\/Date\((d|-|.*)\)[\/|\\]$/</span><span style="color: black">; JSON.dateParser = </span><span style="color: blue">function </span><span style="color: black">(key, value) { </span><span style="color: blue">if </span><span style="color: black">(</span><span style="color: blue">typeof </span><span style="color: black">value === </span><span style="color: #a31515">'string'</span><span style="color: black">) { </span><span style="color: blue">var </span><span style="color: black">a = reISO.exec(value); </span><span style="color: blue">if </span><span style="color: black">(a) </span><span style="color: blue">return new </span><span style="color: black">Date(value); a = reMsAjax.exec(value); </span><span style="color: blue">if </span><span style="color: black">(a) { </span><span style="color: blue">var </span><span style="color: black">b = a[1].split(</span><span style="color: maroon">/[-+,.]/</span><span style="color: black">); </span><span style="color: blue">return new </span><span style="color: black">Date(b[0] ? +b[0] : 0 - +b[1]); } } </span><span style="color: blue">return </span><span style="color: black">value; };<br></span></p><p><span style="color: black">}</span></p></pre> 
+         <p>This parser also handles MS AJAX dates. If you don’t care about that you can remove that bit of code making the date parser a bit more efficient.</p> 
+         <p>Using this date parser you can now add that to the call to JSON.parse():</p>
+         <pre class="code"><span style="color: blue">var </span><span style="color: black">date = JSON.parse(json,JSON.dateParser);  
+console.log(date); </span></pre> 
+         <p>which produces a JavaScript date.</p> 
+         <p>This also works on complex objects so if you have and object like this:</p>
+         <pre class="code"><span style="color: black">{   
+    "id": "312saAs1",    
+    "name": "Jimmy Roe",
+    "entered": "2014-01-01T23:28:56.782Z",
+    "updated": "2014-01-01T23:28:56.782Z"
+}</span></pre> 
+         <p>both the entered and updated properties will be parsed to dates. If you have an array of these objects – all the dates are still converted. This much better but still limited in that you have to manually call JSON.parse() in order to apply the filter function.</p> 
+         <p></p> 
+         <h3>Taking over JSON.parse()</h3> 
+         <p>This works fine if you manually parse the JSON yourself, but it’s unlikely that you do your own JSON parsing in your applications. Most likely JSON is parsed for you by a library of some sort like jQuery, or AngularJs or any other framework. In that case you have no control over the JSON parsing because the parsing happens deeply buried inside of a framework. jQuery and other libraries allow overriding their processing as well, but you don’t really want to do this for every application/page and each framework you use.</p> 
+         <p>The common denominator here is the JSON parser itself. What if we can just take over the parser? What if we could – at the beginning of the page perhaps – override the JSON parser to actually use our behavior instead of the stock behavior?</p> 
+         <p>To do this we can create a few additional functions and provide for a way to switch the parser:</p>
+         <pre class="code"><span style="color: blue">if </span><span style="color: black">(</span><span style="color: blue">this</span><span style="color: black">.JSON &amp;&amp; !</span><span style="color: blue">this</span><span style="color: black">.JSON.dateParser) {
+    </span><span style="color: blue">var </span><span style="color: black">reISO = </span><span style="color: maroon">/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*))(?:Z|(\+|-)([\d|:]*))?$/</span><span style="color: black">;
+    </span><span style="color: blue">var </span><span style="color: black">reMsAjax = </span><span style="color: maroon">/^\/Date\((d|-|.*)\)[\/|\\]$/</span><span style="color: black">;
+
+    </span><span style="color: green">/// &lt;summary&gt;
+    /// set this if you want MS Ajax Dates parsed
+    /// before calling any of the other functions
+    /// &lt;/summary&gt;
+    </span><span style="color: black">JSON.parseMsAjaxDate = </span><span style="color: blue">false</span><span style="color: black">;
+
+    JSON.useDateParser = </span><span style="color: blue">function</span><span style="color: black">(reset) {
+        </span><span style="color: gray">/// &lt;summary&gt;
+        /// </span><span style="color: green">Globally enables JSON date parsing for JSON.parse().
+        </span><span style="color: gray">/// </span><span style="color: green">replaces the default JSON parser with parse plus dateParser extension 
+        </span><span style="color: gray">/// &lt;/summary&gt;    
+        /// &lt;param name="reset" type="bool"&gt;</span><span style="color: green">when set restores the original JSON.parse() function</span><span style="color: gray">&lt;/param&gt;
+
+        </span><span style="color: green">// if any parameter is passed reset
+        </span><span style="color: blue">if </span><span style="color: black">(</span><span style="color: blue">typeof </span><span style="color: black">reset != </span><span style="color: #a31515">"undefined"</span><span style="color: black">) {
+            </span><span style="color: blue">if </span><span style="color: black">(JSON._parseSaved) {
+                JSON.parse = JSON._parseSaved;
+                JSON._parseSaved = </span><span style="color: blue">null</span><span style="color: black">;
+            }
+        } </span><span style="color: blue">else </span><span style="color: black">{
+            </span><span style="color: blue">if </span><span style="color: black">(!JSON.parseSaved) {
+                JSON._parseSaved = JSON.parse;
+                JSON.parse = JSON.parseWithDate;
+            }
+        }
+    };
+
+    JSON.dateParser = </span><span style="color: blue">function</span><span style="color: black">(key, value) {
+        </span><span style="color: gray">/// &lt;summary&gt;
+        /// </span><span style="color: green">Globally enables JSON date parsing for JSON.parse().
+        </span><span style="color: gray">/// </span><span style="color: green">Replaces the default JSON.parse() method and adds
+        </span><span style="color: gray">/// </span><span style="color: green">the datePaser() extension to the processing chain.
+        </span><span style="color: gray">/// &lt;/summary&gt;    
+        /// &lt;param name="key" type="string"&gt;</span><span style="color: green">property name that is parsed</span><span style="color: gray">&lt;/param&gt;
+        /// &lt;param name="value" type="any"&gt;</span><span style="color: green">property value</span><span style="color: gray">&lt;/param&gt;
+        /// &lt;returns type="date"&gt;</span><span style="color: green">returns date or the original value if not a date string</span><span style="color: gray">&lt;/returns&gt;
+        </span><span style="color: blue">if </span><span style="color: black">(</span><span style="color: blue">typeof </span><span style="color: black">value === </span><span style="color: #a31515">'string'</span><span style="color: black">) {
+            </span><span style="color: blue">var </span><span style="color: black">a = reISO.exec(value);
+            </span><span style="color: blue">if </span><span style="color: black">(a)
+                </span><span style="color: blue">return new </span><span style="color: black">Date(value);
+
+            </span><span style="color: blue">if </span><span style="color: black">(!JSON.parseMsAjaxDate)
+                </span><span style="color: blue">return </span><span style="color: black">value;
+
+            a = reMsAjax.exec(value);
+            </span><span style="color: blue">if </span><span style="color: black">(a) {
+                </span><span style="color: blue">var </span><span style="color: black">b = a[1].split(</span><span style="color: maroon">/[-+,.]/</span><span style="color: black">);
+                </span><span style="color: blue">return new </span><span style="color: black">Date(b[0] ? +b[0] : 0 - +b[1]);
+            }
+        }
+        </span><span style="color: blue">return </span><span style="color: black">value;
+    };
+
+    JSON.parseWithDate = </span><span style="color: blue">function</span><span style="color: black">(json) {
+        </span><span style="color: gray">/// &lt;summary&gt;
+        /// </span><span style="color: green">Wrapper around the JSON.parse() function that adds a date
+        </span><span style="color: gray">/// </span><span style="color: green">filtering extension. Returns all dates as real JavaScript dates.
+        </span><span style="color: gray">/// &lt;/summary&gt;    
+        /// &lt;param name="json" type="string"&gt;</span><span style="color: green">JSON to be parsed</span><span style="color: gray">&lt;/param&gt;
+        /// &lt;returns type="any"&gt;</span><span style="color: green">parsed value or object</span><span style="color: gray">&lt;/returns&gt;
+        </span><span style="color: blue">var </span><span style="color: black">parse = JSON._parseSaved ? JSON._parseSaved : JSON.parse;
+        </span><span style="color: blue">try </span><span style="color: black">{
+            </span><span style="color: blue">var </span><span style="color: black">res = parse(json, JSON.dateParser);
+            </span><span style="color: blue">return </span><span style="color: black">res;
+        } </span><span style="color: blue">catch </span><span style="color: black">(e) {
+            </span><span style="color: green">// orignal error thrown has no error message so rethrow with message
+            </span><span style="color: blue">throw new </span><span style="color: black">Error(</span><span style="color: #a31515">"JSON content could not be parsed"</span><span style="color: black">);
+        }
+    };
+
+    JSON.dateStringToDate = </span><span style="color: blue">function</span><span style="color: black">(dtString, nullDateVal) {
+        </span><span style="color: gray">/// &lt;summary&gt;
+        /// </span><span style="color: green">Converts a JSON ISO or MSAJAX date or real date a date value.
+        </span><span style="color: gray">/// </span><span style="color: green">Supports both JSON encoded dates or plain date formatted strings
+        </span><span style="color: gray">/// </span><span style="color: green">(without the JSON string quotes).
+        </span><span style="color: gray">/// </span><span style="color: green">If you pass a date the date is returned as is. If you pass null
+        </span><span style="color: gray">/// </span><span style="color: green">null or the nullDateVal is returned.
+        </span><span style="color: gray">/// &lt;/summary&gt;    
+        /// &lt;param name="dtString" type="var"&gt;</span><span style="color: green">Date String in ISO or MSAJAX format</span><span style="color: gray">&lt;/param&gt;
+        /// &lt;param name="nullDateVal" type="var"&gt;</span><span style="color: green">value to return if date can't be parsed</span><span style="color: gray">&lt;/param&gt;
+        /// &lt;returns type="date"&gt;</span><span style="color: green">date or the nullDateVal (null by default)</span><span style="color: gray">&lt;/returns&gt; 
+        </span><span style="color: blue">if </span><span style="color: black">(!nullDateVal)
+            nullDateVal = </span><span style="color: blue">null</span><span style="color: black">;
+            
+        </span><span style="color: blue">if </span><span style="color: black">(!dtString)
+            </span><span style="color: blue">return </span><span style="color: black">nullDateVal; </span><span style="color: green">// empty
+
+        </span><span style="color: blue">if </span><span style="color: black">(dtString.getTime)
+            </span><span style="color: blue">return </span><span style="color: black">dtString; </span><span style="color: green">// already a date
+            
+        </span><span style="color: blue">if </span><span style="color: black">(dtString[0] === </span><span style="color: #a31515">'"' </span><span style="color: black">|| dtString[0] === </span><span style="color: #a31515">"'"</span><span style="color: black">)
+            </span><span style="color: green">// strip off JSON quotes
+            </span><span style="color: black">dtString = dtString.substr(1, dtString.length - 2);
+
+        </span><span style="color: blue">var </span><span style="color: black">a = reISO.exec(dtString);
+        </span><span style="color: blue">if </span><span style="color: black">(a)
+            </span><span style="color: blue">return new </span><span style="color: black">Date(dtString);
+
+        </span><span style="color: blue">if </span><span style="color: black">(!JSON.parseMsAjaxDate)
+            </span><span style="color: blue">return </span><span style="color: black">nullDateVal;
+
+        a = reMsAjax.exec(dtString);
+        </span><span style="color: blue">if </span><span style="color: black">(a) {
+            </span><span style="color: blue">var </span><span style="color: black">b = a[1].split(</span><span style="color: maroon">/[-,.]/</span><span style="color: black">);
+            </span><span style="color: blue">return new </span><span style="color: black">Date(+b[0]);
+        }
+        </span><span style="color: blue">return </span><span style="color: black">nullDateVal;
+    };
+}</span></pre> 
+         <p>You can find the <a href="https://github.com/RickStrahl/json.date-extensions/blob/master/src/json.date-extensions.js">current source on GitHub</a>. </p> 
+         <p>First there’s a specific function added to the JSON object called .parseWithDate() which can be called internally or explicitly instead of .parse(). .parseWithDate() is just a wrapper around .parse() with the dateParser applied so dates are automatically converted.</p> 
+         <p>We can then create a .useDateParser() function which can swap the parser by replacing the stock parser with JSON.parseWithDate(). By replacing the JSON.parse() method with .parseWithDate() the date parsing behavior is basically made global and is applied to all JSON.parse() operations. .useDateParser() is meant to be called at the beginning of the page before any JSON requests are made, and affects any JSON parsing requests made after it. There’s also support for restoring the original parser by passing any parameter.</p> 
+         <p>To use this you would call JSON.useDateParser() somewhere at the top of your script hierarchy:</p>
+         <pre class="code"><span style="color: blue">&lt;</span><span style="color: maroon">script </span><span style="color: red">src</span><span style="color: blue">="jquery.min.js"&gt;&lt;/</span><span style="color: maroon">script</span><span style="color: blue">&gt;
+&lt;</span><span style="color: maroon">script </span><span style="color: red">src</span><span style="color: blue">="JsonDateExtensions.js"&gt;&lt;/</span><span style="color: maroon">script</span><span style="color: blue">&gt;
+&lt;</span><span style="color: maroon">script</span><span style="color: blue">&gt;
+    </span><span style="color: green">// use date parser for all JSON.parse() requests
+    // make sure to call before any JSON conversions
+    </span><span style="color: black">JSON.useDateParser();
+</span><span style="color: blue">&lt;/</span><span style="color: maroon">script</span><span style="color: blue">&gt;
+&lt;</span><span style="color: maroon">script</span><span style="color: blue">&gt;
+    </span><span style="color: green">// other libs
+    // page script code etc.
+</span><span style="color: blue">&lt;/</span><span style="color: maroon">script</span><span style="color: blue">&gt;</span></pre> 
+         <p>Let’s look at an example. Assume we have a JSON object we’re requesting from the server that has a couple of date properties – update and entered. </p>
+         <pre class="code"><span style="color: black">{   
+    </span><span style="color: #a31515">"id"</span><span style="color: black">: </span><span style="color: #a31515">"312saAs1"</span><span style="color: black">,    
+    </span><span style="color: #a31515">"name"</span><span style="color: black">: </span><span style="color: #a31515">"Jimmy Roe"</span><span style="color: black">,
+    </span><strong><span style="color: #a31515">"entered"</span><span style="color: black">: </span><span style="color: #a31515">"2014-01-01T13:13:34.441Z"</span></strong><strong><span style="color: black">, </span><span style="color: #a31515">"updated"</span><span style="color: black">: </span></strong><span style="color: #a31515"><strong>"2014-01-03T23:28:56.782Z"</strong>
+</span><span style="color: black">}</span></pre> 
+         <p>Now we want to access this JSON data with jQuery’s $.getJSON() like this:</p>
+         <pre class="code"><span style="color: black">$.getJSON(</span><span style="color: #a31515">"JsonWithDate.json"</span><span style="color: black">)
+    .done(</span><span style="color: blue">function </span><span style="color: black">(data) {
+        console.log(</span><span style="color: #a31515">"result.entered: " </span><span style="color: black">+ data.entered +
+                    </span><span style="color: #a31515">"  result.updated: " </span><span style="color: black">+ data.updated);
+    });</span></pre> 
+         <p>If you do nothing, you get the default JSON parsing in jQuery which doesn’t convert dates and leaves the ISO strings: </p> 
+         <p><strong>result.entered: 2014-01-01T23:28:56.782Z <br>result.Updated: 2014-01-01T23:28:56.782Z</strong></p> 
+         <p>But, if you now add the generic function code shown above followed by a call to JSON.useDateParser() near the top of the script hierarchy of the page:</p> 
+         <p><strong>JSON.useDateParser() </strong></p> 
+         <p>and then re-run that same jQuery AJAX call you now get:</p> 
+         <p><strong>result. Entered: Wed Jan 01 2014 13:34:56 GMT-1000 (Hawaiian Standard Time) <br>result.Updated: Wed Jan 03 2014 23:28:56 GMT-1000 (Hawaiian Standard Time)</strong></p> 
+         <p>The latter creates real dates. As will any other framework that uses the native JSON parsers in JavaScript. This means that by replacing the JSON.parse() method we have effectively overriden the JSON parser so that all JSON.parse() calls now do the date parsing including the external jQuery.getJSON() call or any other framework code that I don’t control. In effect, the date parsing support is now global.</p> 
+         <p>Because the setting is page or scope global, you can also reset the original parser by using:</p> 
+         <p><strong>JSON.useDateParser(false)</strong></p> 
+         <p>This restores the default JSON parser and restores the original ISO date string behavior.</p> 
+         <h3>Caveats of overriding JSON Parsing</h3> 
+         <p>There are a couple of caveats to doing a wholesale behavior change like this to the JSON parser. First you are in fact changing behavior when you apply this parser and if there is existing code that relies on the existing date ISO format of dates, that will of course cause problems. I’ve been using automatic date conversions for quite a while though with a variety of frameworks, and I haven’t run into any problem yet, so this is probably not a big issue, but still be aware of it.</p> 
+         <p></p> 
+         <p>The other caveat of a JSON parse filter is that it is a filter and it slows down JSON parsing. Because parse filters are fired for every key of a JSON document and the code then checks each string value for two RegEx expressions, there’s definitely some overhead. Not a huge amount (about 3-5% in my informal tests of a 10k JSON blocks) but there is definitely some overhead… Probably not enough to worry about, but make sure you test your specific scenarios especially if you have large JSON data sets you’re pushing around in your app.</p> 
+         <h3>Do you really need Dates?</h3> 
+         <p>A discussion of dates in serialization wouldn’t be complete without mentioning that the best way to handle dates in UI applications is to not use dates. Ha! No I’m not trying to be snarky, but the best date format is one that you don’t have to format – on the client.</p> 
+         <p>If you’re pushing data from the server to display on the client, consider formatting the date on the server. Native JavaScript date formatting sucks unless you add yet another library (<a href="http://momentjs.com/">moment.js</a> is a good one) to your page, and you have all the tools necessary to format dates easily on your server. Rather than pushing down date values to the client consider pushing preformatted date strings in your ViewModels. This alone will reduce date usage significantly on the client.</p> 
+         <p>Also when you’re doing date input from the user, it’s often much easier to just accept string values and push those to the server. The JSON.NET parser understands a lot of different date formats including human readable ones and can parse that out of JSON when you push your dates back up to the server using ASP.NET Web API or ASP.NET MVC. </p> 
+         <p>With the advent of purely client side SPA style applications this is getting more common now, but often this still can be addressed via server side formatting. </p> 
+         <p>If you can avoid parsing dates on the client, avoid it and format on the server.</p> 
+         <h3>Sometimes Dates are necessary</h3> 
+         <p>That leaves real date requirements on the client where the client has to actively work and manipulate dates and for those cases real JSON date parsing is highly useful.</p> 
+         <p>It seems silly to actually having this discussion. A serializer without date formatting support just seems… silly, if you really think about it. But then this is JavaScript and there are lots of things that are just plain silly.</p> 
+         <p>If you do need to get dates into the client and if you actually send dates from the server, then a global way of date deserialization certainly makes life a lot easier than having to manually translate dates at every usage point in your front end code. And for that these routines I described here have been very useful to me. I hope some of you get some utility out of them as well.</p> 
+         <h3>Resources</h3> 
+         <ul> 
+          <li><a href="https://github.com/RickStrahl/json.date-extensions"><strong>JSON Parser Date Extensions GitHub Project</strong></a> </li>
+          <li><a href="http://momentjs.com/"><strong>moment.js JavaScript Date Parsing Library</strong></a></li>
+         </ul> 
+         <hr> 
+         <p>I'll be at <a href="https://devintersection.com">DevIntersection</a> this year in late October, early November giving sessions and ASP.NET Core and Angular and localization. Thinking of coming? Use discount code <strong>STRAHL</strong> and save a few bucks. If you do be sure to stop by and say hello!</p> 
+         <p><img src="https://weblog.west-wind.com/images/2017/A-Literal-Markdown-Control-for-ASP.NET-WebForms/devconnections.jpg" alt=""></p> 
+         <div style="margin: 30px 0"> 
+          <h3 style="margin-top: 30px">Other Posts you might also like </h3> 
+          <ul> 
+           <li><a href="https://weblog.west-wind.com/posts/2014/Feb/22/Using-CSS-Transitions-to-SlideUp-and-SlideDown">Using CSS Transitions to SlideUp and SlideDown</a></li> 
+           <li><a href="https://weblog.west-wind.com/posts/2017/Mar/04/Getting-JavaScript-Properties-for-Object-Maps-by-Index-or-Name">Getting JavaScript Properties for Object Maps by Index or Name</a></li> 
+           <li><a href="https://weblog.west-wind.com/posts/2017/Aug/07/Handling-HTML5-Client-Route-Fallbacks-in-ASPNET-Core">Handling HTML5 Client Route Fallbacks in ASP.NET Core</a></li> 
+           <li><a href="https://weblog.west-wind.com/posts/2014/Oct/24/AngularJs-and-Promises-with-the-http-Service">AngularJs and Promises with the $http Service</a></li> 
+          </ul> 
+         </div> 
+        </div> 
+        <div class="advert"> 
+        </div> 
+        <style>
+       .donate-buttons {
+           display: flex; flex-direction: row; justify-content:space-between;
+       }
+       .social-button-container {
+           margin-left: 15px;
+           flex: 250 250 auto;
+           display: flex; flex-direction: row; justify-content:space-around; margin-top: 3px;
+       }
+       @media(max-width: 600px) {
+           .donate-buttons { flex-direction: column; }
+           
+       }
+       
+   </style> 
+        <div class="borderbox" style="min-height:30px;box-shadow: 2px 2px 3px #535353;"> 
+         <div class="donate-buttons"> 
+          <div style="flex: none;"> 
+           <img onclick="window.open('https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=rstrahl@west-wind.com&amp;item_name=Rick+Strahl%27s+Web+Log&amp;no_shipping=0&amp;no_note=1&amp;tax=0&amp;currency_code=USD&amp;lc=US&amp;bn=PP%2dDonationsBF&amp;charset=UTF%2d8&amp;image_url=https://weblog.west-wind.com/images/WebLogBannerLogo.jpg','PayPal');" title="Find this content useful? Consider making a small donation." alt="Make Donation" style="text-decoration: none;" src="/images/donation.png"> 
+          </div> 
+          <div style="font-size: 0.8em; width: 233px" class="hidable-xs">
+            Find this content useful? 
+           <b>Consider making a small donation</b> to show your support. 
+          </div> 
+          <div class="social-button-container"> 
+           <div style="margin-top: -2px"> 
+            <a href="https://twitter.com/share" class="twitter-share-button" data-text="JavaScript JSON Date Parsing and real Dates" data-via="RickStrahl" data-lang="en" data-hashtags="" data-url="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates">Tweet</a> 
+            <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script> 
+           </div> 
+           <div> 
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates&amp;display=popup" target="_blank"> <img src="/images/shareonfacebook.png" style="height: 20px;"> </a> 
+           </div> 
+           <div> 
+            <g:plusone size="medium" href="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates" "></g:plusone> 
+            <script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script> 
+           </div> 
+          </div> 
+         </div> 
+         <div style="margin-top: 20px"> 
+          <div>
+           Posted in 
+           <b><a href="/ShowPosts.aspx?Category=JavaScript">JavaScript</a>&nbsp;&nbsp;<a href="/ShowPosts.aspx?Category=HTML">HTML</a>&nbsp;&nbsp;</b>
+          </div>  
+         </div> 
+        </div> 
+        <br> 
+        <h2>The Voices of Reason</h2> 
+        <hr style="margin-bottom: 30px;"> 
+        <div id="ctl00_Content_FeedbackPanel"> 
+         <a name="Feedback">&nbsp;</a> 
+         <div class="clearfix"></div> 
+         <div id="cmt_198508" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=40ce12ddb2623e473d03ba906b3f75cb&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> <a href="http://weblogs.asp.net/bleroy" target="_WebLog">Bertrand Le Roy</a> <br> January 07, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="198508" href="#198508">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             What if you want to include in your data a string that looks like a date, but it really is a real string? 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_198815" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=f1bf1c7c0b0d30fb7a9b737ab5b4cad0&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Stephen <br> January 07, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="198815" href="#198815">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Thanks for the great post as always....
+            <br> 
+            <br> I recently was on a project where JavaScript dates were driving me crazy, as I was pulling dates out of the database in Central Time and trying to use "new Date()" to turn that value into a JS date *still in Central*, new Date() kept converting the time to browser time, which is Eastern. I need to look more into using "Z" to keep it UTC or something rather than my super clunky workaround (using .match to hack up my ISO8601-formatted date and building a js date object from the parts) 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_199258" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=beb7fdd4bcd15e35472a96ab8182f034&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> <a href="http://west-wind.com" target="_WebLog">Rick Strahl</a> <br> January 07, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="199258" href="#199258">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             @Stephen - most JSON serializers (including JSON.NET) generate JSON dates with the Z UTC designation which should fix the timezone issue pretty easily, as long as your code knows how to properly deal with UTC dates. Personally I keep all dates in UTC format and convert to local time when needed only which seems easiest all around. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_199988" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=beb7fdd4bcd15e35472a96ab8182f034&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> <a href="http://west-wind.com" target="_WebLog">Rick Strahl</a> <br> January 08, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="199988" href="#199988">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             @Bertrand - yes that's an issue, but a pretty unlikely one. I just can't think of a use case where you'd actually have ISO dates (or something that looks very similar as to match the RegEx) as a string value. Even if an ISO date was embedded in string content that wouldn't trigger because it's looking for line begin/end.
+            <br> 
+            <br> IAC, if you really needed to do that, then use the regular parser on the page and resort to manually parse the encoded dates on use. But again I can't think of a use case where this would happen and personally I'd be more than happy to live with that (infinitesimally small) risk. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_202999" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> SadDeveloper <br> January 09, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="202999" href="#202999">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Hi Rick,
+            <br> 
+            <br> Thanks for the post, it's great. Could you please say in what browser you tested performance? Or even better post the test to 
+            <a href="http://jsperf.com/">http://jsperf.com/</a>.
+            <br> 
+            <br> Thanks. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_204636" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=81ed46fd387870e12f89354d6ee17f09&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Adam <br> January 09, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="204636" href="#204636">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Server-side we always use Utc dates, and in the current project I'm in, I decided to push Utc dates to the client as well. Previously we'd convert dates in the controllers when binding data to poco models.
+            <br> 
+            <br> I went with moment.js with timezone support to display times that are local to something as well as times that are local to the viewer. For example we can show the local time at a branch office, or events that are specific to another users timezone while simultaneously displaying data such as when a record may have been updated, but relative to the user.
+            <br> 
+            <br> I came across moment.js and really wanted to use it for their relative time display. Adding a simple js timer to update the document once a minute so that relative changes age as you sit and watch instead of being just a conversion when you first navigated.
+            <br> 
+            <br> It makes the MVC models much simpler as there are never any timezone conversions. It's important to note in JavaScript dates are always internally in UTC, and to be honest, when using moment.js, never had to even think of json parsing (I'm using MVC5 / Web Api 2).
+            <br> 
+            <br> The only "hard part" was converting Windows TimeZone's into IANA ones (I used NodaTime). 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_439762" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=e90d3971be54d06acc1623585de1cda2&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> <a href="http://www.activeenginesoftware.com" target="_WebLog">David Robbins</a> <br> April 02, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="439762" href="#439762">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Very nice!!! Dates and javascript are the ugly elephants in the room, especially if you end create a client solution for project management apps, with Gantt charts, timelines, etc. I'm so used to sighing in discouragement it makes me numb.
+            <br> 
+            <br> Looking to trying your solution out. Thanks Rick. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_508130" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> <a href="http://example.com" target="_WebLog">nomen</a> <br> May 02, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="508130" href="#508130">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             The biggest problem I'm facing is that what you're calling a date is actually a time. A date is the thing calendars mark off. Representing dates with times is a big pain. They have different semantics, and you can't just assume that because a time is a date just because the "time part" is 0.
+            <br> 
+            <br> It seems like we just can't win. Postgres gets this right. But then the libraries I use get it wrong. So either I change the libraries, write a bunch of pointless and error prone code, or change my database schema and write a bunch of pointless and error prone code to group times by the date part. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_750289" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Michael <br> August 28, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="750289" href="#750289">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Thanks for this! I had real dates in my client, but after being JSONified and sent to the server, they ended up as strings in the database (mongodb). I added your code to my server and now I have real dates in my database. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_758817" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=977a57f270621efa049a8d5254a85cb3&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Sime <br> September 04, 2014 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="758817" href="#758817">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Thanks Rick for such a "sane" and considered article. I especially like the fact that you stress the common-sense approach of avoiding client-side date parsing whenever possible! 
+            <br> 
+            <br> We have converted to using the DateTimeOffset data type in all our serverside (database and .NET code). It gives the best of both worlds - local time when you need it and UTC when you don't. We actuallt use DATETIMEOFFSET(0) in the database. This gives the precision we need in the same 8 bytes of storage as a UTC DATETIME.
+            <br> 
+            <br> I found it interesting and heartening to see that JSON / JavaScript is moving towards the ISO8601 standard which actually matches up pretty well with the DateTimeOffset datatype. Also, thanks for the link to moment.js looks very interesting. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_1158418" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=92f22c9fc9a5dfcd86914c96fcda6681&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> <a href="http://bridge24.com" target="_WebLog">Frederic</a> <br> May 15, 2015 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="1158418" href="#1158418">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Hi, we also had to create a "custom" date parser for our app.
+            <br> 
+            <br> We want to work with real "dates" format, because we sometimes need to re-format them in a format that our user can choose. 
+            <br> 
+            <br> Our app (bridge24.com) connects to a lot of different api (basecamp, trello, asana, aceproject), and not everyone returns dates the same way... 
+            <br> 
+            <br> The only thing we're sure of, is that the 10 first characters are yyyy-mm-dd. 
+            <br> Sometimes, it stops there (for a value like "Due Date", there is no "time" for that data. 
+            <br> 
+            <br> There is 3 different cases we need to handle.
+            <br> 
+            <br> 1. The "easy" one: full string including "timezone" at the end 
+            <br> (yyyy-MM-ddTHH:mm:ss-hh:mm)
+            <br> easy, just use new Date(input)
+            <br> 
+            <br> 2. the "no-timezone" one
+            <br> (yyyy-MM-ddTHH:mm:ss)
+            <br> We need to keep it like that when we display it. If we do a "new Date' on it, it apply the current local timezone, and changes the date. So we use "substring" to extract y,m,d,h,m,s, and we call new Date(y,m,d,h,m,s,0). That way, the time is the same in the "date" object than it was on the original string.
+            <br> 
+            <br> 3. the "no-time" date
+            <br> (yyyy-MM-dd)
+            <br> For that case, like the last one, if we use new Date(value), it applies a local timezone, so it add our localtimezone (in our case, EST, it substract 5 hours), so the day change. "2015-04-19" becomes "2015-04-18T19:00". To prevent it, we need to substr y-m-d from the string, and use new Date(y,m,d,0,0,0,0).
+            <br> 
+            <br> We may need to "mix" these 3 cases, example: 
+            <br> (yyyy-MM-ddT00:00:00), what do we do with that? no timezone, but time provided, and all at 00:00:00... Case 3 will work, and return data like case 2 do. Date object will be in "current timezone"' with hour at 00:00.
+            <br> 
+            <br> It works fine for now with all different API we're connecting to.
+            <br> 
+            <br> Yes, there is certainly some performance issues of all these substring ... but we don't "feel" it, and at the end, our dates are easier to work with. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_1278780" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Harvey Mushman <br> August 09, 2015 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="1278780" href="#1278780">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Interesting and very informative! 
+            <br> 
+            <br> Wondering if it would make sense to write up an example that could be used as a directive in AngularJS? Seems to me that if it really only effects the &lt;input type=date... why not just add on the element that is effected say fix-iso-date?
+            <br> 
+            <br> app.directive('fixisodate', function...
+            <br> 
+            <br> Is this something you might want to post? &lt;g&gt; 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_1362968" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Bill Kunneke <br> October 19, 2015 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="1362968" href="#1362968">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Small world. I did FoxPro development for many years and the last time I touched it was probably 15 years ago. I know manage a couple of Java teams and was Googling JSON date parsing and look who I run across, Rick Strahl. Doubtful you would remember me, but it's good to see you are still alive and kicking. 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_1642546" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Surinder <br> July 19, 2016 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="1642546" href="#1642546">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;">
+             Thanks for this informative post. Currently I am working on an application and I need to pass Java 8 LocalDate from MVC controller to Ajax response in Jquery Data tables. I did not find anything to deserialize Localdate JSON string back to LocalDate in UI. So I manually had to append year, month and day to build date. 
+            <br> Is there a better way to handle Localdates in such siituation.
+            <br> 
+            <br> Please let e know, I will get rid of messy code in JS file I wrote. Below is my sample code columnDef column
+            <br> 
+            <br> columnDefs : [ {
+            <br> targets : [ 6 ],
+            <br> render : function(data, type, row) {
+            <br> /* var json = JSON.stringify(data);
+            <br> var date = JSON.parse(json);
+            <br> console.log("json: " + json + "date : " + data); */
+            <br> var month = data.month;
+            <br> var day = data.day;
+            <br> return data.year+"-"+month+"-"+day;
+            <br> }
+            <br> } 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_114518" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=00&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Johan <br> January 12, 2017 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="114518" href="#114518">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;"> 
+            <p>I want to add that in ISO 8601 so called "time zone designator" is just an offset from UTC and not an actual time zone. For example, given time zone and valid local time instant in that time zone you can calculate offset from UTC but you cannot infer time zone from ISO 8601 date with some offset. Different time zones may have same UTC offset for many reasons (daylight saving time). Same time zone at different time instants may have different offset from UTC.</p> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_209781" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=580b31b0be7173bbc477ca1d6967d87c&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> Aluan <br> April 17, 2017 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="209781" href="#209781">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;"> 
+            <p>Excellent article. I think this is an elegant solution. I really like the advice to just avoid dates in the first place. In addition to preventing a large class of errors, using server formatted strings also makes client side databinding code simpler and staves off any temptation to write god awful, stateful and logic-ridden models.</p> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+         <div id="cmt_226250" class="comment"> 
+          <div class="comment-panel-left"> 
+           <img src="https://www.gravatar.com/avatar.php?gravatar_id=e8ecdd12e898b0df220704271041681d&amp;size=100&amp;rating=R" style="border-radius: 4px;box-shadow: 2px 2px 4px #5353535; "> 
+           <br> 
+           <small> N. Peter <br> May 03, 2017 </small> 
+          </div> 
+          <div class="comment-panel-right"> 
+           <h3 style="margin-top: 0; font-size: 1.21em;"> <a name="226250" href="#226250">#</a> re: JavaScript JSON Date Parsing and real Dates </h3> 
+           <div class="commentbody" style="padding-top: 15px;"> 
+            <p>Today I had to post a javascript datetime to C# controller. (from UI to asp.net MVC Controller) Finally I had to remove timezone information, otherwise the posted result (the hours part of the time) was tranformed due to timezone information.</p> 
+            <p>(ok, it is not about JSON, but may help someone who is surfing on the information ocean)</p> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="clearfix"></div> 
+        </div> 
+        <span id="ctl00_Content_ErrorDisplay" errorimage="~/app_themes/"></span> &nbsp;
+        <input type="submit" name="ctl00$Content$btnShowCommentTable" value="Add a Comment" id="ctl00_Content_btnShowCommentTable" class="submitbutton">
+        <div id="ContentOverlay" style="background:steelblue"></div> 
+        <link href="/scripts/highlightjs/styles/twilight.css" rel="stylesheet"> 
+        <script src="/scripts/highlightjs/highlight.pack.js"></script> 
+        <script>
+        $('pre code').each(function (i, block) {
+            hljs.highlightBlock(block);
+        });
+    </script> 
+        <br> 
+       </article> 
+       <!--
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+             xmlns:dc="http://purl.org/dc/elements/1.1/"
+             xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+<rdf:Description
+    rdf:about="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates"
+    dc:identifier="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates"
+    dc:title="JavaScript JSON Date Parsing and real Dates"
+    trackback:ping="https://weblog.west-wind.com/posts/2014/Jan/06/JavaScript-JSON-Date-Parsing-and-real-Dates?Trackback=True" />
+</rdf:RDF>
+--> 
+      </main> 
+     </div> 
+     <footer> 
+      <a href="https://west-wind.com"><img id="ctl00_Image1" align="right" border="0" alt="West Wind" src="../../../../images/wwToolbarlogo.png"></a> &nbsp;
+      <small>© Rick Strahl, West Wind Technologies, 2005 - 2017</small> 
+      <p>&nbsp;</p> 
+     </footer> 
+     <script type="text/javascript">
+//<![CDATA[
+var Proxy = { 
+    Hello: function (name,completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("Hello",[name],completed,errorHandler);
+        return _cb;           
+    },
+    FormatComment: function (inputText,completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("FormatComment",[inputText],completed,errorHandler);
+        return _cb;           
+    },
+    DeleteComment: function (id,completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("DeleteComment",[id],completed,errorHandler);
+        return _cb;           
+    },
+    DeleteEntry: function (id,completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("DeleteEntry",[id],completed,errorHandler);
+        return _cb;           
+    },
+    GetCommentText: function (id,completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("GetCommentText",[id],completed,errorHandler);
+        return _cb;           
+    },
+    UpdateCommentText: function (id,html,completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("UpdateCommentText",[id,html],completed,errorHandler);
+        return _cb;           
+    },
+    GetRandomBookImage: function (completed,errorHandler)
+    {
+        var _cb = Proxy_GetProxy();
+        _cb.callMethod("GetRandomBookImage",[],completed,errorHandler);
+        return _cb;           
+    }
+}
+function Proxy_GetProxy() {
+    var _cb = new AjaxMethodCallback('Proxy','/WebLogCallbacks.ashx',
+                                    { timeout: 20000,
+                                      postbackMode: 'PostMethodParametersOnly',
+                                      formName: '' 
+                                    });
+    return _cb;
+}
+//]]>
+</script> 
+    </form> 
+   </div> 
+  </div> 
+  <script src="/scripts/weblog.js"></script> 
+  <script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date(); a = s.createElement(o),
+        m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-9492219-4', 'west-wind.com');
+    ga('send', 'pageview');
+</script>  
+ </body>
+</html>

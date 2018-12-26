@@ -1,0 +1,157 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+ <head> 
+  <link href="http://gmpg.org/xfn/11" rel="profile"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <!-- Enable responsiveness on mobile devices--> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"> 
+  <title>
+    
+      Writing a Meteor OAuth 2 Handler · Tunguska
+    
+  </title> 
+  <!-- CSS --> 
+  <link rel="stylesheet" href="/public/css/poole.css"> 
+  <link rel="stylesheet" href="/public/css/syntax.css"> 
+  <link rel="stylesheet" href="/public/css/hyde.css"> 
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface"> 
+  <!-- Icons --> 
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png"> 
+  <link rel="shortcut icon" href="/public/favicon.ico"> 
+  <!-- RSS --> 
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml"> 
+ </head> 
+ <body> 
+  <div class="sidebar"> 
+   <div class="container sidebar-sticky"> 
+    <div class="sidebar-about"> 
+     <h1>Tunguska</h1> 
+     <p class="lead">An infrequent set of ramblings about the Meteor platform. With luck, some of them may be useful to others.</p> 
+    </div> 
+    <ul class="sidebar-nav"> 
+     <li class="sidebar-nav-item"> <a href="/">Home</a> </li> 
+     <!--li class="sidebar-nav-item"><a href="/archive/v.zip">Download</a></li>
+      <li class="sidebar-nav-item"><a href="">GitHub project</a></li>
+      <li class="sidebar-nav-item">Currently v</li--> 
+    </ul> 
+    <p>© 2017. All rights reserved.</p> 
+   </div> 
+  </div> 
+  <div class="content container"> 
+   <div class="post"> 
+    <h1 class="post-title">Writing a Meteor OAuth 2 Handler</h1> 
+    <span class="post-date">17 Dec 2015</span> 
+    <p>Meteor provides a number of ready-to-use OAuth handlers for some of the “big names”, but there’s no real help if you want to use your own service, or some other 3rd party provider.</p> 
+    <p>I was encouraged to write a couple of paragraphs about putting together some guidance to help people roll their own handlers. Sadly, I blew the two paragraph target, but I hope the following proves useful to someone!</p> 
+    <h2 id="what-is-oauth">What is OAuth?</h2> 
+    <p>OAuth is a way of providing access to third party application resources (such as Facebook) from a user written application (such as a Meteor app). For example, we can use Facebook’s OAuth service to enable our Meteor app to gain access to a user’s email address.</p> 
+    <p>OAuth is an <em>authorization</em> service, rather than an <em>authentication</em> service. Nonetheless, it’s common practice to use OAuth as a means of authenticating users to your application.</p> 
+    <p>There are advantages to this:</p> 
+    <ul> 
+     <li>We have a reasonable expectation that the account details for Facebook, Google, Twitter, etc., have been secured using industry best practices. As long as we are careful to protect private data (such as our application’s <em>secret key</em>), we can leverage their investment in security to our advantage.</li> 
+     <li>We only need to remember one set of credentials (at least in theory).</li> 
+     <li>It’s an easy way to equip an app, or multiple apps with the appearance of seamless connectivity across various devices.</li> 
+    </ul> 
+    <p>The disadvantages are that if (for example) Facebook’s OAuth service is your only means of authenticating your users, then you are constraining your users to have a Facebook account, and you are reliant on Facebook not changing their service in such a way as to affect their ability to use your app. In Meteor it’s simple to have password authentication as a fallback, or to allow multiple OAuth services to be available.</p> 
+    <h2 id="oauth-versions">OAuth Versions</h2> 
+    <p>OAuth 1.0: The <a href="http://tools.ietf.org/html/rfc5849">original protocol</a>. Complex to implement, but generally considered more secure than OAuth 2.0.</p> 
+    <p>OAuth 2.0: The protocol in use by most “big name” providers. Relatively simple to implement, but may be less secure than OAuth 1.0.</p> 
+    <h2 id="writing-an-oauth-client-for-meteor">Writing an OAuth client for Meteor</h2> 
+    <p>This article concentrates on implementing a popular (Imgur) OAuth 2 login handler. If you want to use it as a base for writing your own, whether for Imgur or something else, I’ve tried to annotate the code well, especially where it looks complicated. In practice, it’s largely boilerplate based off Meteor’s own Google OAuth handler.</p> 
+    <h3 id="understand-the-flows-and-data">Understand the flows and data</h3> 
+    <p>Even though Meteor abstracts some of the complication around OAuth flows, understanding the sequence of events, as well as the data in and out, for the OAuth service you want to write for is important. The flows are based around standard HTTP(S) POST and REDIRECT methods.</p> 
+    <p>Spring have some great flow diagrams, for <a href="http://docs.spring.io/spring-social/docs/1.1.0.RELEASE/reference/htmlsingle/#section_oauth1ServiceProviders">OAuth 1</a> and <a href="http://docs.spring.io/spring-social/docs/1.1.0.RELEASE/reference/htmlsingle/#section_oauth2ServiceProviders">OAuth 2</a>. It’s worth spending a little time becoming acquainted with how OAuth works.</p> 
+    <p>Data is typically passed as query parameters in the URI (REDIRECT/GET), or as POST data. Returned data is commonly encoded as JSON.</p> 
+    <p>You need solid documentation from your OAuth provider if you intend writing a Meteor OAuth handler.</p> 
+    <h3 id="the-meteor-way">The Meteor way</h3> 
+    <p>Meteor provides us with some underlying code to manage the flows and help us write an OAuth 1.0 or OAuth 2.0 client. We just need to follow some simple guidelines to ensure that everything is kept in step.</p> 
+    <p>For any given provider ‘xxx’, we write two packages:</p> 
+    <ul> 
+     <li>xxx 
+      <ul> 
+       <li>Provides information for the configuration dialog.</li> 
+       <li>Defines the namespace (export).</li> 
+       <li>May have a whitelist of required resources.</li> 
+       <li>Registers ‘xxx’ as an OAuth provider.</li> 
+       <li>Provides the functionality for the flow logic.</li> 
+       <li>Gets resources from (multiple) endpoint(s).</li> 
+      </ul> </li> 
+     <li>accounts-xxx 
+      <ul> 
+       <li>Provides the Meteor accounts tie-in.</li> 
+       <li>Defines the <code class="highlighter-rouge">loginButtons</code> helper.</li> 
+       <li>Defines the <code class="highlighter-rouge">loginButtons</code> logo for ‘xxx’.</li> 
+      </ul> </li> 
+    </ul> 
+    <p>Let’s look at what’s involved. We’ll write an OAuth handler for <a href="https://api.imgur.com/oauth2">Imgur</a>. In order to test or use this we will need to register an app with Imgur to get a <code class="highlighter-rouge">client_id</code> and <code class="highlighter-rouge">client_secret</code>. We use these in conjunction with the documented endpoints and data structures to write our handler.</p> 
+    <p>I chose Imgur because its OAuth service is well documented, although a certain amount of “hopping around” was needed to get all the information I needed. You will almost inevitably go through this process for whatever service you write for.</p> 
+    <p>You will find I have used the term “boilerplate” in a lot of places (here and in the code). By this I mean that it’s fundamentally unchanged for any OAuth 2 handler. Often, little more than identifying and changing the service name is needed. So, starting from my code, you would replace ‘Imgur’ with ‘Xxx’ and ‘imgur’ with ‘xxx’ wherever you see it. Clear exceptions to this rule of thumb will be endpoints and the data they return, which will be very provider-specific.</p> 
+    <p>Note that rather than go through the code step-by-step in this article, I have provided some background information and links to the Github repo(s), so you can look at the code in context.</p> 
+    <p>Finally, I wrote my packages using ES2015 syntax (where I have remembered to) - I ensured the <code class="highlighter-rouge">ecmascript</code> package was specified in the <code class="highlighter-rouge">package.js</code> files.</p> 
+    <p>You can find the <code class="highlighter-rouge">imgur</code> package <a href="https://github.com/robfallows/tunguska-imgur">here</a> and the <code class="highlighter-rouge">accounts-imgur</code> package <a href="https://github.com/robfallows/tunguska-accounts-imgur">here</a>.</p> 
+    <h3 id="imgur-package">imgur package</h3> 
+    <p>Within the <code class="highlighter-rouge">imgur</code> package we set up five files for the handler, along with files for any unit tests we may write. I have excluded tests in this list of files (and in the <code class="highlighter-rouge">package.js</code> file):</p> 
+    <div class="highlighter-rouge">
+     <pre class="highlight"><code>imgur_configure.html
+imgur_configure.js
+imgur_client.js
+imgur_server.js
+package.js
+</code></pre> 
+    </div> 
+    <h4 id="imgur_configurehtml">imgur_configure.html</h4> 
+    <p>I started with the configuration dialog. This comprises <code class="highlighter-rouge">imgur_configure.html</code> and <code class="highlighter-rouge">imgur_configure.js</code>. Meteor uses these files when you first attempt to authorize to the OAuth service, in order to display a prompted dialog which it uses to store the credentials applicable to that OAuth service.</p> 
+    <p><code class="highlighter-rouge">imgur_configure.html</code> contains a template named <code class="highlighter-rouge">configureLoginServiceDialogForImgur</code> and contains instructions for completing the dialog. The template name is standard boilerplate (<code class="highlighter-rouge">configureLoginServiceDialogForXxx</code>), and the template itself can be as detailed as you like. You can look at MDG’s <a href="https://github.com/meteor/meteor/blob/devel/packages/google/google_configure.html">google_configure.html</a> for inspiration. You can find the one I put together for Imgur <a href="https://github.com/robfallows/tunguska-imgur/blob/master/imgur_configure.html">here</a>.</p> 
+    <h4 id="imgur_configurejs">imgur_configure.js</h4> 
+    <p><code class="highlighter-rouge">imgur_configure.js</code> is fundamentally boilerplate and contains a list of fields used to populate the dialog form. It will always contain fields for the <code class="highlighter-rouge">clientId</code> and <code class="highlighter-rouge">secret</code> (corresponding to Imgur’s <code class="highlighter-rouge">client_id</code> and <code class="highlighter-rouge">client_secret</code>). If your dialog requires other data to be entered during configuration, this is the place to do it. The one I wrote is <a href="https://github.com/robfallows/tunguska-imgur/blob/master/imgur_configure.js">here</a>.</p> 
+    <h4 id="imgur_clientjs">imgur_client.js</h4> 
+    <p>The client component does little more than initiate the authorization request to the appropriate OAuth service endpoint. By convention this is an OAuth redirect flow to obtain a code (to be exchanged later for a token). The redirect is hooked into the <code class="highlighter-rouge">imgur_server.js</code> code via an automatically created server-side REST endpoint at <code class="highlighter-rouge">/_oauth/imgur</code>. Mine is <a href="https://github.com/robfallows/tunguska-imgur/blob/master/imgur_client.js">here</a>.</p> 
+    <h4 id="imgur_serverjs">imgur_server.js</h4> 
+    <p>The server component is responsible for the initial OAuth flow to exchange a <code class="highlighter-rouge">code</code> for a <code class="highlighter-rouge">token</code>. Most of this is boilerplate (little more than ensuring references to the service name are correct and the right endpoints are accessed).</p> 
+    <p>When the <code class="highlighter-rouge">imgur_client.js</code> executes the authorization request, Meteor’s underlying OAuth code sets up a server-side REST endpoint (at <code class="highlighter-rouge">/_oauth/imgur</code>) which ensures the <code class="highlighter-rouge">retrieveCredential</code> method in this file is executed. This file is not particularly complex - it’s just a careful sequence of boilerplate actions with some specifics for this service.</p> 
+    <p>These are the steps we go through:</p> 
+    <ul> 
+     <li>Define the base object namespace (boilerplate).</li> 
+     <li>Define the retrieveCredential hook for use by underlying Meteor code (boilerplate).</li> 
+     <li>Define the fields we want (whitelist). Note that they come from various endpoints (boilerplate).</li> 
+     <li>Register this service with the underlying OAuth handler. 
+      <ul> 
+       <li>Make sure we have a config object (boilerplate).</li> 
+       <li>Get the token (Meteor handles the underlying authorization flow) (mostly boilerplate).</li> 
+       <li>Get required data from the account endpoints with the token. (service-specific)</li> 
+       <li>Build the serviceData object (mostly boilerplate).</li> 
+       <li>Return the serviceData object and options object (boilerplate).</li> 
+      </ul> </li> 
+    </ul> 
+    <p>My code for <code class="highlighter-rouge">imgur_server.js</code> is <a href="https://github.com/robfallows/tunguska-imgur/blob/master/imgur_server.js">here</a>.</p> 
+    <h4 id="packagejs">package.js</h4> 
+    <p>This file needs to have all the dependencies added for this package. It’s boilerplate stuff and you can see my file <a href="https://github.com/robfallows/tunguska-imgur/blob/master/package.js">here</a>.</p> 
+    <h3 id="accounts-imgur-package">accounts-imgur package</h3> 
+    <p>Within the <code class="highlighter-rouge">accounts-imgur</code> package we set up three files for the package, along with files for any unit tests we may write. I have excluded tests in this list of files (and in the <code class="highlighter-rouge">package.js</code> file):</p> 
+    <div class="highlighter-rouge">
+     <pre class="highlight"><code>accounts-imgur.js
+accounts-imgur_login_button.css
+package.js
+</code></pre> 
+    </div> 
+    <h4 id="accounts-imgurjs">accounts-imgur.js</h4> 
+    <p>Completely boilerplate - just ensure that <code class="highlighter-rouge">Imgur</code> or <code class="highlighter-rouge">imgur</code> is used in the right places. Mine’s <a href="https://github.com/robfallows/tunguska-accounts-imgur/blob/master/accounts-imgur.js">here</a>.</p> 
+    <h4 id="accounts-imgur_login_buttoncss">accounts-imgur_login_button.css</h4> 
+    <p>This is boilerplate in structure - just ensure that the class name has <code class="highlighter-rouge">imgur</code> in it. This file provides the logo which appears on the login button. It’s a 16x16 URL-encoded <code class="highlighter-rouge">png</code>. Mine’s <a href="https://github.com/robfallows/tunguska-accounts-imgur/blob/master/accounts-imgur_login_button.css">here</a>.</p> 
+    <h4 id="packagejs-1">package.js</h4> 
+    <p>Boilerplate. Mine’s <a href="https://github.com/robfallows/tunguska-accounts-imgur/blob/master/package.js">here</a>. Note that this package depends on <code class="highlighter-rouge">tunguska:imgur</code>, which means you only need to explicitly <code class="highlighter-rouge">meteor add tunguska:accounts-imgur</code> to get Imgur authorization in your app.</p> 
+    <h2 id="what-next">What next?</h2> 
+    <ul> 
+     <li>I’ve put both packages on atmosphere, if you want to try them. However, with a little effort they’re sufficiently reusable on any OAuth 2 service, so I encourage you to fork and add to the ecosystem with your favorite service!</li> 
+     <li>Add tests!</li> 
+     <li>PR’s welcome (especially tests!)</li> 
+    </ul> 
+   </div> 
+   <div class="related"> 
+    <h2>Related Posts</h2> 
+    <ul class="related-posts"> 
+    </ul> 
+   </div> 
+  </div>   
+ </body>
+</html>

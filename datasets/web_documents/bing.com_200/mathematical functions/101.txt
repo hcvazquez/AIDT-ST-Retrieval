@@ -1,0 +1,649 @@
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"> 
+  <title>Extending XSLT with Java</title>
+  <meta name="generator" content="DocBook XSL Stylesheets V1.52.2">
+  <meta name="description" content="The complete text of Elliotte Rusty Harold's book Processing XML with Java.         published by Addison-Wesley, November 2002">
+  <script language="javascript"><!--
+/* Only sunsites are allowed to mirror this page and then
+only with explicit, prior permission. For details,
+send email to elharo@metalab.unc.edu */
+if (location.protocol.toLowerCase().indexOf("file") != 0 ) { 
+  if (0 > location.host.toLowerCase().indexOf("cafeconleche.org")
+      && 0 > location.host.toLowerCase().indexOf("ibiblio.org")) {
+    location.href="http://www.cafeconleche.org/books/xmljava/chapters/";
+  }
+} // --></script>
+  <link rel="home" href="index.html" title="Processing XML with Java">
+  <link rel="up" href="ch17.html" title="Chapter&nbsp;17.&nbsp;XSLT">
+  <link rel="previous" href="ch17s02.html" title="TrAX">
+  <link rel="next" href="ch17s04.html" title="Summary">
+  <link rel="preface" href="pr01.html" title="Preface">
+  <link rel="preface" href="pr02.html" title="Acknowledgements">
+  <link rel="chapter" href="ch01.html" title="Chapter&nbsp;1.&nbsp;XML for Data">
+  <link rel="chapter" href="ch02.html" title="Chapter&nbsp;2.&nbsp;XML Protocols: XML-RPC and SOAP">
+  <link rel="chapter" href="ch03.html" title="Chapter&nbsp;3.&nbsp;Writing XML with Java">
+  <link rel="chapter" href="ch04.html" title="Chapter&nbsp;4.&nbsp;Converting Flat Files to XML">
+  <link rel="chapter" href="ch05.html" title="Chapter&nbsp;5.&nbsp;Reading XML">
+  <link rel="chapter" href="ch06.html" title="Chapter&nbsp;6.&nbsp;SAX">
+  <link rel="chapter" href="ch07.html" title="Chapter&nbsp;7.&nbsp;The XMLReader Interface">
+  <link rel="chapter" href="ch08.html" title="Chapter&nbsp;8.&nbsp;SAX Filters">
+  <link rel="chapter" href="ch09.html" title="Chapter&nbsp;9.&nbsp;The Document Object Model">
+  <link rel="chapter" href="ch10.html" title="Chapter&nbsp;10.&nbsp;Creating XML Documents with DOM">
+  <link rel="chapter" href="ch11.html" title="Chapter&nbsp;11.&nbsp;The Document Object Model Core">
+  <link rel="chapter" href="ch12.html" title="Chapter&nbsp;12.&nbsp;The DOM Traversal Module">
+  <link rel="chapter" href="ch13.html" title="Chapter&nbsp;13.&nbsp;Output from DOM">
+  <link rel="chapter" href="ch14.html" title="Chapter&nbsp;14.&nbsp;JDOM">
+  <link rel="chapter" href="ch15.html" title="Chapter&nbsp;15.&nbsp;The JDOM Model">
+  <link rel="chapter" href="ch16.html" title="Chapter&nbsp;16.&nbsp;XPath">
+  <link rel="chapter" href="ch17.html" title="Chapter&nbsp;17.&nbsp;XSLT">
+  <link rel="appendix" href="apa.html" title="Appendix&nbsp;A.&nbsp;XML APIs Quick Reference">
+  <link rel="appendix" href="apb.html" title="Appendix&nbsp;B.&nbsp;SOAP 1.1 Schemas">
+  <link rel="index" href="ix01.html" title="Index">
+  <link rel="subsection" href="ch17s03.html#d0e33279" title="Extension Functions">
+  <link rel="subsection" href="ch17s03.html#d0e33998" title="Extension Elements">
+ </head>
+ <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+  <div class="navheader">
+   <table width="100%" summary="Navigation header">
+    <tbody>
+     <tr>
+      <th colspan="3" align="center">Extending XSLT with Java</th>
+     </tr>
+     <tr>
+      <td width="20%" align="left"><a accesskey="p" href="ch17s02.html">Prev</a>&nbsp;</td>
+      <th width="60%" align="center">Chapter&nbsp;17.&nbsp;XSLT</th>
+      <td width="20%" align="right">&nbsp;<a accesskey="n" href="ch17s04.html">Next</a></td>
+     </tr>
+    </tbody>
+   </table>
+   <hr>
+  </div>
+  <div class="sect1">
+   <div class="titlepage">
+    <div>
+     <h2 class="title" style="clear: both"><a name="d0e33257"></a>Extending XSLT with Java</h2>
+    </div>
+   </div>
+   <p> TrAX lets you integrate XSLT code with Java programs. Most XSLT processors written in Java also let you go the other way, integrating Java code with XSLT stylesheets. The most common reason to do this is to provide access to operating system functionality XSLT doesn’t offer such as querying a database, listing the files in a directory, or asking the user for more information with a dialog box. Java can also be used when you simply find it easier to implement some complex algorithm in imperative Java rather than functional XSLT. For example, although you can do complicated string searching and replacing in XSLT, I guarantee you it will be about a thousand times easier in Java, especially with a good regular expression library. And finally, even though a function could be implemented in pure XSLT relatively easily, you may choose to write it in Java anyway purely for performance reasons. This is especially true for mathematical functions like factorial and fibonacci. XSLT optimizers are not nearly as mature or as reliable as Java optimizers, and those that do exist mostly focus on optimizing XPath search and evaluation on node-sets rather than mathematical operations on numbers. </p>
+   <p> XSLT defines two mechanisms for integrating Java code into stylesheets, extension functions and extension elements. These are invoked exactly like built-in functions and elements such as <tt>document()</tt> and <tt>xsl:template</tt>. However, rather than being provided by the processor, they’re written in Java. Furthermore, they have names in some non-XSLT namespace. The exact way such functions and elements are linked with the processor varies from processor to processor though. </p>
+   <p> Regardless of which XSLT processor you’re using, there are two basic parts to writing and using extension functions and elements: </p>
+   <div class="itemizedlist">
+    <ul type="disc">
+     <li><p> Binding the extensions to the stylesheet. This is done via namespaces, class names, and the Java class path. </p></li>
+     <li><p> Mapping the five XSLT types (number, boolean, string, node-set, and result tree fragment) to Java types and vice versa. </p></li>
+    </ul>
+   </div>
+   <div class="sect2">
+    <div class="titlepage">
+     <div>
+      <h3 class="title"><a name="d0e33279"></a>Extension Functions</h3>
+     </div>
+    </div>
+    <p> As an example, I’m going to write a simple extension function that calculates Fibonacci numbers. This can be used as a faster alternative to the earlier recursive template. <a href="ch17s03.html#FibonacciNumber.java" title="Example&nbsp;17.19.&nbsp;A Java class that calculates Fibonacci numbers">Example&nbsp;17.19</a> contains this function. The entire class is in the <tt>com.macfaq.math</tt> package. When writing extension functions and elements, you really have to use proper Java package naming and set up your class path appropriately. </p>
+    <div class="example">
+     <a name="FibonacciNumber.java"></a>
+     <p class="title"><b>Example&nbsp;17.19.&nbsp;A Java class that calculates Fibonacci numbers</b></p>
+     <pre class="programlisting">package com.macfaq.math;
+
+import java.math.BigInteger;
+
+public class FibonacciNumber {
+
+  public static BigInteger calculate(int n) {
+  
+    if (n &lt;= 0) {
+      throw new IllegalArgumentException(
+       "Fibonacci numbers are only defined for positive integers"
+      );
+    }
+    BigInteger low  = BigInteger.ONE;
+    BigInteger high = BigInteger.ONE;
+    
+    for (int i = 3; i &lt;= n; i++) {
+      BigInteger temp = high;
+      high = high.add(low);
+      low = temp;
+    }
+    
+    return high;
+  
+  }
+
+}
+</pre>
+    </div>
+    <p> Notice there’s nothing about XSLT in this example. This is just like any other Java class. On the Java side, all you need to do to make it accessible to the XSLT processor is compile it and install the <tt>.class</tt> file in the proper place in the processor’s class path. </p>
+    <p> If the extension function throws an exception, as <tt>calculate()</tt> might if it’s passed a negative number as an argument, then the XSLT processing will halt. XSLT has no way to catch and respond to exceptions thrown by extension functions. Consequently, if you want to handle them, you’ll need to handle them in the Java code. After catching the exception, you’ll want to return something. Possibilities include: </p>
+    <div class="itemizedlist">
+     <ul type="disc">
+      <li><p> A <tt>String</tt> containing an error message </p></li>
+      <li><p>A <tt>NodeList</tt> containing a fault document</p></li>
+      <li><p>An integer error code</p></li>
+     </ul>
+    </div>
+    <p> Since this may not be the same type you normally return, you’ll probably need to declare that the method returns <tt>Object</tt> to give you the additional flexibility. For example, this method returns an error message inside a <tt>String</tt> instead of throwing an exception: </p>
+    <div class="informalexample">
+     <pre class="programlisting">  public static Object calculate(int n) {
+  
+    if (n &lt;= 0) {
+     return
+      "Fibonacci numbers are only defined for positive integers";
+    }
+    BigInteger low  = BigInteger.ONE;
+    BigInteger high = BigInteger.ONE;
+    
+    for (int i = 3; i &lt;= n; i++) {
+      BigInteger temp = high;
+      high = high.add(low);
+      low = temp;
+    }
+    
+    return high;
+  
+  }</pre>
+    </div>
+    <p> This method returns -1 (an illegal value for a Fibonacci number) instead of throwing an exception: </p>
+    <div class="informalexample">
+     <pre class="programlisting">  public static BigInteger calculate(int n) {
+  
+    if (n &lt;= 0) return new BigInteger("-1");
+    BigInteger low  = BigInteger.ONE;
+    BigInteger high = BigInteger.ONE;
+    
+    for (int i = 3; i &lt;= n; i++) {
+      BigInteger temp = high;
+      high = high.add(low);
+      low = temp;
+    }
+    
+    return high;
+  
+  }</pre>
+    </div>
+    <p> It would be up to the stylesheet to check for the error code before using the result, and handle such a situation appropriately. In this example, that might require calling the extension function before any output is generated, storing the result in a variable, and deciding whether to output a successful response or a fault document based on the value of that variable. Waiting until the template for the <tt>int</tt> element is activated would be too late because by that point substantial parts of a successful response document have already been generated. </p>
+    <p> Now we need a stylesheet that uses this function to calculate Fibonacci numbers instead of the XSLT template. The details at this point are a little processor specific. I will cover the two most popular, Saxon and Xalan. As you’ll see there are quite a few points of similarity between them (though I think Saxon’s approach is the cleaner of the two). Most other processors are likely to use something similar. </p>
+    <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in; font-family: Helvetica, Arial, sans">
+     <h3 class="title">Tip</h3>
+     <p> Before spending a lot of time and effort writing your own extension functions, check to see if the <a href="http://www.exslt.org/" target="_top">EXSLT library</a> already has the extension function you need. EXSLT provides many useful extension functions and elements for working with dates and times, functions, math, strings, regular expressions, sets, and more. This library has been ported to many different processors in many different platforms and languages. I use some of the date functions in the stylesheets for this book. </p>
+    </div>
+    <div class="sect3">
+     <div class="titlepage">
+      <div>
+       <h4 class="title"><a name="d0e33349"></a>Extension functions in Saxon</h4>
+      </div>
+     </div>
+     <p> Saxon allows you to bind any Java class to a namespace prefix. The trick is to use the custom URI scheme <tt>java</tt> followed by a colon and the fully package-qualified name of the class. For example, this attribute binds the namespace prefix <tt>fib</tt> to the <tt>com.macfaq.math.FibonacciNumber</tt> class: </p>
+     <div class="informalexample">
+      <pre class="programlisting">xmlns:fib="java:com.macfaq.math.FibonacciNumber"</pre>
+     </div>
+     <p> As long as this mapping is in scope, you can invoke any static function in the <tt>com.macfaq.math.FibonacciNumber</tt> class by using the prefix <tt>fib</tt> and the name of the method. For example, the old template for the <tt>int</tt> element could be replaced by this one: </p>
+     <div class="informalexample">
+      <pre class="programlisting">  &lt;xsl:template match="int"
+                xmlns:fib="java:com.macfaq.math.FibonacciNumber"&gt;
+    &lt;int&gt;
+      &lt;xsl:value-of select="fib:calculate(number(.))"/&gt;
+    &lt;/int&gt;
+  &lt;/xsl:template&gt;</pre>
+     </div>
+     <p> Here the <tt>number()</tt> function converts the value of the context node to an XSLT number. Then the processor looks for a static method named <tt>calculate()</tt> in the Java class mapped to the <tt>fib</tt> prefix that takes a single argument. It finds one, invokes it, and inserts the return value into the result tree. </p>
+     <p> XSLT is much more weakly typed than Java, and this can be useful when writing extension functions. Saxon will only invoke methods that have the right name and the right number of arguments. However, it will often convert the types of arguments and return values as necessary to make a function fit. In this case, the <tt>calculate()</tt> method expects to receive an <tt>int</tt>. However, an XSLT number is really more like a Java <tt>double</tt>. In this case, since Saxon can’t find a matching method that takes a <tt>double</tt> it truncates the fractional part of the <tt>double</tt> to get an <tt>int</tt> and invokes the method that takes an <tt>int</tt>. This is a conversion that Java itself would not do without an explicit cast. </p>
+     <p> Going in the opposite direction, the <tt>calculate()</tt> method returns a <tt>BigInteger</tt>, which is not equivalent to any of XSLT’s types. Thus Saxon converts it to a string using its <tt>toString()</tt> before inserting it into the result tree. Other more recognizable return types may be converted differently. For example, <tt>void</tt> is converted to an empty node-set and primitive number types like <tt>int</tt> and <tt>double</tt> are converted to XSLT numbers as are type-wrapper classes like <tt>Integer</tt> and <tt>Double</tt>. A DOM <tt>NodeList</tt> is converted to an XPath node-set. However, the nodes in the list must all be created by Saxon’s own DOM implementation. You can’t use third party DOM implementations like Xerces or GNU JAXP in a Saxon extension function. </p>
+     <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in; font-family: Helvetica, Arial, sans">
+      <h3 class="title">Tip</h3>
+      <p> Namespace mappings for extension functions and elements are normally only relevant in the stylesheet. Nonetheless they often have an annoying habit of popping up in the output document. If you know that an extension element or function prefix will not be used in the output document (and 99% of the time you do know exactly this) you can add an <tt>exclude-result-prefixes</tt> attribute to the stylesheet root element that contains a list of the namespace prefixes whose declarations should not be copied into the output document. For example, </p>
+      <div class="informalexample">
+       <pre class="programlisting">&lt;xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:fib="java:com.macfaq.math.FibonacciNumber"
+  xmlns:saxon="http://icl.com/saxon"
+  exclude-result-prefixes="fib saxon"&gt;</pre>
+      </div>
+     </div>
+     <div class="sect4">
+      <div class="titlepage">
+       <div>
+        <h5 class="title"><a name="d0e33452"></a>Instance Methods and Constructors</h5>
+       </div>
+      </div>
+      <p> XSLT is not an object oriented language. Static methods fit much more neatly into its structures than do objects and instance methods. If I’m writing a method just for XSLT, I’ll normally make it static if at all possible. However, Saxon can use instance methods as extension functions too. As before, the fully package qualified class name must be bound to a namespace prefix. The constructor for the class can be called using the special local function name <tt>new()</tt>. For example, this template retrieves the current time using the Java <tt>Date</tt> class: </p>
+      <div class="informalexample">
+       <pre class="programlisting">&lt;xsl:template name="currentTime" 
+              xmlns:date="java:java.util.Date"&gt;
+  &lt;xsl:value-of select="date:new()"/&gt;
+&lt;/xsl:template&gt;</pre>
+      </div>
+      <p> <tt>date:new()</tt> in XSLT is basically the same thing as <tt>new Date()</tt> in Java. When the <tt>Date</tt> constructor is invoked with no arguments, Java initializes the resulting <tt>Date</tt> object to the current time. You can also pass arguments to constructors, just like you can to static methods. </p>
+      <p> The object the <tt>new()</tt> function returns is normally assigned to a variable. You can pass this variable to other extension functions as an argument. To invoke instance methods on that object, pass the variable that points to the object whose instance method you’re invoking as the first argument to the instance method. Then the normal first argument gets pushed over to become the second argument, the second argument becomes the third, and so on. For example, this template uses the <tt>GregorianCalendar</tt> class to get today’s date. First it uses the static <tt>getInstance()</tt> method to return a <tt>GregorianCalendar</tt> object initialized to the current time. Then it passes the appropriate integer constants to the <tt>get()</tt> instance method to retrieve the month, day, and year. It produces the current date in the form 2002-3-26. </p>
+      <div class="informalexample">
+       <pre class="programlisting">&lt;xsl:template name="today" 
+              xmlns:cal="java:java.util.GregorianCalendar"&gt;
+  &lt;xsl:variable name="rightNow" select="cal:getInstance()" /&gt;
+  &lt;!-- The Calendar class uses zero-based months; 
+       i.e. January is month 0, February is month 1, and 
+       so on. We have to add one to get the customary month 
+       number. --&gt;
+  &lt;xsl:variable name="month" select="cal:get($rightNow, 2) + 1" /&gt;
+  &lt;xsl:variable name="day" select="cal:get($rightNow, 5)" /&gt;
+  &lt;xsl:variable name="year" select="cal:get($rightNow, 1)" /&gt;
+  &lt;xsl:value-of 
+   select="$year" /&gt;-&lt;xsl:value-of 
+   select="$month" /&gt;-&lt;xsl:value-of 
+   select="$day" /&gt;
+&lt;/xsl:template&gt;</pre>
+      </div>
+      <div class="note" style="margin-left: 0.5in; margin-right: 0.5in; font-family: Helvetica, Arial, sans">
+       <h3 class="title">Note</h3>
+       <p> If I were writing this in Java rather than XSLT, the code would look like this: </p>
+       <div class="informalexample">
+        <pre class="programlisting">Calendar rightNow = Calendar.getInstance();
+// Months are zero-based; i.e. January is month 0, February is
+// month 1, and so on. We have to add one to get the customary
+// month number.
+String month = rightNow.get(Calendar.MONTH) + 1;
+String date  = rightNow.get(Calendar.DATE);
+String year  = rightNow.get(Calendar.YEAR);
+String result = year + "-" + month + "-" + date;</pre>
+       </div>
+       <p> However, Saxon doesn’t support extension <span class="emphasis"><em>fields</em></span> so XSLT must use the actual constant key values instead of the named constants. </p>
+       <p> If you absolutely have to use the value of a field, (e.g. because a method expects an instance of the type-safe enum pattern instead of an <tt>int</tt> constant), you can always write an extension function whose sole purpose is to return the relevant field. </p>
+      </div>
+     </div>
+    </div>
+    <div class="sect3">
+     <div class="titlepage">
+      <div>
+       <h4 class="title"><a name="d0e33516"></a>Extension functions in Xalan</h4>
+      </div>
+     </div>
+     <p> Xalan’s extension function mechanism is a little more complicated and a little more powerful than Saxon’s, but not a great deal more. Xalan offers somewhat greater access to the XSLT context inside extension functions if you need it, and has some additional shortcuts for mapping Java classes to namespace prefixes. Most importantly, it allows extension functions to work with any compliant DOM2 implementation, rather than requiring its own custom DOM. </p>
+     <p> Xalan uses the custom URI scheme <tt>xalan</tt> to bind namespace prefixes to classes. To bind a Java class to a namespace prefix in Xalan, you add an attribute of the form <tt>xmlns:<i><tt>prefix</tt></i>="xalan://<i><tt>packagename.classname</tt></i>"</tt> to the root element of the stylesheet or some other ancestor element. For example, this attribute binds the namespace prefix <tt>fib</tt> to the <tt>com.macfaq.math.FibonacciNumber</tt> class: </p>
+     <div class="informalexample">
+      <pre class="programlisting">xmlns:fib="xalan://com.macfaq.math.FibonacciNumber"</pre>
+     </div>
+     <p> As long as this mapping is in scope, you can invoke any static function in the <tt>com.macfaq.math.FibonacciNumber</tt> class by using the prefix <tt>fib</tt> and the name of the method. For example, the pure XSLT template for the <tt>int</tt> element could be replaced by this one: </p>
+     <div class="informalexample">
+      <pre class="programlisting">&lt;xsl:template match="int"
+   xmlns:fib="xalan://com.macfaq.math.FibonacciNumber"&gt;
+  &lt;int&gt;
+    &lt;xsl:value-of select="fib:calculate(number(.))"/&gt;
+  &lt;/int&gt;
+&lt;/xsl:template&gt;</pre>
+     </div>
+     <p> Xalan also allows you to define a namespace prefix for the entire Java class library by associating it with the URI <tt>http://xml.apache.org/xslt/java</tt>. The function calls must then use fully qualified class names. For example, this template uses the prefix <tt>java</tt> to identify extension functions: </p>
+     <div class="informalexample">
+      <pre class="programlisting">&lt;xsl:template match="int"
+    xmlns:java="http://xml.apache.org/xslt/java"&gt;
+  &lt;int&gt;
+    &lt;xsl:value-of select=
+     "java:com.macfaq.math.FibonacciNumber.calculate(number(.))"
+    /&gt;
+  &lt;/int&gt;
+&lt;/xsl:template&gt;</pre>
+     </div>
+     <p> This form is convenient if your stylesheets use many different classes. It is of course not limited to classes you write yourself. It works equally well for classes from the standard library and third-party libraries. For example, here’s a random template that uses Java’s <tt>Math.random()</tt> method: </p>
+     <div class="informalexample">
+      <pre class="programlisting">&lt;xsl:template name="random"
+              xmlns:java="http://xml.apache.org/xslt/java"&gt;
+  &lt;xsl:value-of select="java:java.lang.Math.random()" /&gt;
+&lt;/xsl:template&gt;</pre>
+     </div>
+     <div class="sect4">
+      <div class="titlepage">
+       <div>
+        <h5 class="title"><a name="d0e33577"></a>Constructors and Instance Methods</h5>
+       </div>
+      </div>
+      <p> Xalan can use instance methods as extension functions too. The <tt>new()</tt> function invokes the constructor for the class and can take whatever arguments the constructor requires. For example, this template retrieves the current time using the Java <tt>Date</tt> class: </p>
+      <div class="informalexample">
+       <pre class="programlisting">&lt;xsl:template name="currentTime" 
+              xmlns:java="http://xml.apache.org/xslt/java"&gt;
+  &lt;xsl:value-of select="java:java.util.Date.new()"/&gt;
+&lt;/xsl:template&gt;</pre>
+      </div>
+      <p> If the prefix is bound to a specific class, you can omit the class name. For example, </p>
+      <div class="informalexample">
+       <pre class="programlisting">&lt;xsl:template name="currentTime" 
+              xmlns:date="xalan://java.util.Date"&gt;
+  &lt;xsl:value-of select="date:new()"/&gt;
+&lt;/xsl:template&gt;</pre>
+      </div>
+      <p> The object the <tt>new()</tt> function returns can be assigned to an XSLT variable that can then be passed as an argument to other extension functions or used to invoke instance methods on the object. As in Saxon, to invoke an instance method pass the object whose method you’re invoking as the first argument to the method. For example, here’s the Xalan version of the <tt>GregorianCalendar</tt> template that produces the current date in the form 2002-3-26. </p>
+      <div class="informalexample">
+       <pre class="programlisting">&lt;xsl:template name="today" 
+              xmlns:cal="xalan://java.util.GregorianCalendar"&gt;
+  &lt;xsl:variable name="rightNow" select="cal:getInstance()" /&gt;
+  &lt;!-- The GregorianCalendar class counts months from zero
+       so we have to add one to get the customary number --&gt;
+  &lt;xsl:variable name="month" select="cal:get($rightNow, 2) + 1" /&gt;
+  &lt;xsl:variable name="day" select="cal:get($rightNow, 5) " /&gt;
+  &lt;xsl:variable name="year" select="cal:get($rightNow, 1)" /&gt;
+  &lt;xsl:value-of 
+   select="$year" /&gt;-&lt;xsl:value-of 
+   select="$month" /&gt;-&lt;xsl:value-of 
+   select="$day" /&gt;
+&lt;/xsl:template&gt;</pre>
+      </div>
+      <p> Like Saxon, Xalan also doesn’t let you access fields in a class, so once again it’s necessary to use the actual values instead of the named constants for the arguments to the <tt>get()</tt> method. </p>
+      <p> Exceptions thrown by extension functions have the same results in Xalan as in Saxon; that is, the the XSLT processing halts, possibly in the middle of transforming a document. Once again, it’s probably a good idea to design your extension functions so that they handle all probable exceptions internally and always return a sensible result. </p>
+     </div>
+     <div class="sect4">
+      <div class="titlepage">
+       <div>
+        <h5 class="title"><a name="d0e33614"></a>Type Conversion</h5>
+       </div>
+      </div>
+      <p> Xalan converts method arguments and return types between Java and XSLT types in a mostly intuitive way. <a href="ch17s03.html#XSLTToJava" title="Table&nbsp;17.1.&nbsp;Xalan Conversions from XSLT to Java">Table&nbsp;17.1</a> lists the conversions from XSLT’s five types to Java types in order of preference: </p>
+      <div class="table">
+       <a name="XSLTToJava"></a>
+       <p class="title"><b>Table&nbsp;17.1.&nbsp;Xalan Conversions from XSLT to Java</b></p>
+       <table summary="Xalan Conversions from XSLT to Java" border="1">
+        <colgroup>
+         <col>
+         <col>
+        </colgroup>
+        <thead>
+         <tr>
+          <th>XSLT type</th>
+          <th>Java types (in decreasing order of preference)</th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr>
+          <td>node-set</td>
+          <td><tt>org.w3c.dom.traversal.NodeIterator</tt>, <tt>org.w3c.dom.NodeList</tt>, <tt>org.w3c.dom.Node</tt>, <tt>String</tt>, <tt>Object</tt>, <tt>char</tt>, <tt>double</tt>, <tt>float</tt>, <tt>long</tt>, <tt>int</tt>, <tt>short</tt>, <tt>byte</tt>, <tt>boolean</tt></td>
+         </tr>
+         <tr>
+          <td>string</td>
+          <td><tt>String</tt>, <tt>Object</tt>, <tt>char</tt>, <tt>double</tt>, <tt>float</tt>, <tt>long</tt>, <tt>int</tt>, <tt>short</tt>, <tt>byte</tt>, <tt>boolean</tt></td>
+         </tr>
+         <tr>
+          <td>boolean</td>
+          <td><tt>boolean</tt>, <tt>Boolean</tt>, <tt>Object</tt>, <tt>String</tt></td>
+         </tr>
+         <tr>
+          <td>number</td>
+          <td><tt>double</tt>, <tt>Double</tt>, <tt>float</tt>, <tt>long</tt>, <tt>int</tt>, <tt>short</tt>, <tt>char</tt>, <tt>byte</tt>, <tt>boolean</tt>, <tt>String</tt>, <tt>Object</tt></td>
+         </tr>
+         <tr>
+          <td>result tree fragment</td>
+          <td><tt>org.w3c.dom.traversal.NodeIterator</tt>, <tt>org.w3c.dom.NodeList</tt>, <tt>org.w3c.dom.Node</tt>, <tt>String</tt>, <tt>Object</tt>, <tt>char</tt>, <tt>double</tt>, <tt>float</tt>, <tt>long</tt>, <tt>int</tt>, <tt>short</tt>, <tt>byte</tt>, <tt>boolean</tt></td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+      <p> Moving in the other direction from Java to XSLT, the conversions are fairly obvious. <a href="ch17s03.html#JavaToXSLT" title="Table&nbsp;17.2.&nbsp;Xalan Conversions from Java to XSLT">Table&nbsp;17.2</a> summarizes them. Besides the ones listed here, other object types will normally be converted to a string using their <tt>toString()</tt> method if they’re actually dereferenced somewhere in the stylesheet. However, their original type will be maintained when they’re passed back to another extension function. </p>
+      <div class="table">
+       <a name="JavaToXSLT"></a>
+       <p class="title"><b>Table&nbsp;17.2.&nbsp;Xalan Conversions from Java to XSLT</b></p>
+       <table summary="Xalan Conversions from Java to XSLT" border="1">
+        <colgroup>
+         <col>
+         <col>
+        </colgroup>
+        <thead>
+         <tr>
+          <th>Java type</th>
+          <th>Xalan XSLT type</th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr>
+          <td><tt>org.w3c.dom.traversal.NodeIterator</tt></td>
+          <td>node-set</td>
+         </tr>
+         <tr>
+          <td><tt>org.apache.xml.dtm.DTM</tt></td>
+          <td>node-set</td>
+         </tr>
+         <tr>
+          <td><tt>org.apache.xml.dtm.DTMAxisIterator</tt></td>
+          <td>node-set</td>
+         </tr>
+         <tr>
+          <td><tt>org.apache.xml.dtm.DTMIterator</tt></td>
+          <td>node-set</td>
+         </tr>
+         <tr>
+          <td><tt>org.w3c.dom.Node</tt> and its subtypes (<tt>Element</tt>, <tt>Attr</tt>, etc)</td>
+          <td>node-set</td>
+         </tr>
+         <tr>
+          <td><tt>org.w3c.dom.DocumentFragment</tt></td>
+          <td>result tree fragment</td>
+         </tr>
+         <tr>
+          <td><tt>String</tt></td>
+          <td>string</td>
+         </tr>
+         <tr>
+          <td><tt>Boolean</tt></td>
+          <td>boolean</td>
+         </tr>
+         <tr>
+          <td><tt>Number</tt> and its subclasses (<tt>Double</tt>, <tt>Integer</tt>, etc) </td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>double</tt></td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>float</tt></td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>int</tt></td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>long</tt></td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>short</tt></td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>byte</tt></td>
+          <td>number</td>
+         </tr>
+         <tr>
+          <td><tt>char</tt></td>
+          <td>object</td>
+         </tr>
+         <tr>
+          <td><tt>boolean</tt></td>
+          <td>boolean</td>
+         </tr>
+         <tr>
+          <td><tt>null</tt></td>
+          <td>empty string</td>
+         </tr>
+         <tr>
+          <td><tt>void</tt></td>
+          <td>empty string</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <div class="sect4">
+      <div class="titlepage">
+       <div>
+        <h5 class="title"><a name="d0e33950"></a>Expression Context</h5>
+       </div>
+      </div>
+      <p> There is one thing Xalan extension functions can do that Saxon extension functions can’t. A Xalan extension function can receive the current XSLT context as an argument. This provides information about the context node, the context node position, the context node list, and variable bindings. Admittedly, needing to know this information inside an extension function is rare. Most operations that consider the current context are more easily implemented in XSLT than Java. Nonetheless, if you need to know this for some reason, you can declare that the initial argument to your function has type <tt>org.apache.xalan.extensions.ExpressionContext</tt>; for example, </p>
+      <code class="methodsynopsis"><span class="modifier">public&nbsp;</span><span class="modifier">static&nbsp;</span><span class="type">Node&nbsp;</span><span class="methodname"><b>findMaximum</b></span>(<span class="methodparam"><span class="type">ExpressionContext&nbsp;</span><span class="parameter"><i>context</i></span></span>);</code>
+      <p> You do not need to pass an argument of this type explicitly. Xalan will create an <tt>ExpressionContext</tt> object for you and pass it to the method automatically. Furthermore, Xalan will always pick a method that takes an <tt>ExpressionContext</tt> over one that does not. </p>
+      <p> This Xalan-J <tt>ExpressionContext</tt> interface, shown in <a href="ch17s03.html#CompactExpressionContext.java" title="Example&nbsp;17.20.&nbsp;The Xalan ExpressionContext interface">Example&nbsp;17.20</a>, provides methods to get the context and the context node list, convert the context node into either its string or number value (as defined by the XPath <tt>string()</tt> and <tt>number()</tt> functions), and to get the XPath object bound to a known variable or parameter. </p>
+      <div class="example">
+       <a name="CompactExpressionContext.java"></a>
+       <p class="title"><b>Example&nbsp;17.20.&nbsp;The Xalan ExpressionContext interface</b></p>
+       <pre class="programlisting">package org.apache.xalan.extensions;
+
+public interface ExpressionContext {
+
+  public Node         getContextNode();
+  public NodeIterator getContextNodes();
+  public double       toNumber(Node n);
+  public String       toString(Node n);
+  public XObject      getVariableOrParam(
+   org.apache.xml.utils.QName qualifiedName)
+   throws javax.xml.transform.TransformerException;
+
+}
+</pre>
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="sect2">
+    <div class="titlepage">
+     <div>
+      <h3 class="title"><a name="d0e33998"></a>Extension Elements</h3>
+     </div>
+    </div>
+    <p> An extension element is much like an extension function. However in the stylesheet it appears as an entire element such as <tt>&lt;saxon:script/&gt;</tt> or <tt>&lt;redirect:write /&gt;</tt> rather than as a mere function in an XPath expression contained in a <tt>select</tt> or <tt>test</tt> attribute. Any value it returns is placed directly in the result tree. </p>
+    <p> For example, suppose you wanted to define a <tt>fibonacci</tt> element like this one: </p>
+    <div class="informalexample">
+     <pre class="programlisting">&lt;fib:fibonacci xmlns:fib="java:com.macfaq.math.FibonacciNumber"&gt;
+  10
+&lt;/fib:fibonacci&gt;</pre>
+    </div>
+    <p> When processed, this element would be replaced by the specified Fibonacci number. </p>
+    <p> The first question is how the XSLT processor should recognize this as an extension element. After all, <tt>fib:fibonacci</tt> looks just like a literal result element that should be copied verbatim. The answer is that the <tt>xsl:stylesheet</tt> root element (or some other ancestor element) should have an <tt>extension-element-prefixes</tt> attribute containing a whitespace separated list of namespace prefixes that identify extension elements. For example, this stylesheet uses the <tt>saxon</tt> and <tt>fib</tt> prefixes for extension elements: </p>
+    <div class="informalexample">
+     <pre class="programlisting">&lt;xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:saxon="http://icl.com/saxon"
+  xmlns:fib="java:com.macfaq.math.FibonacciNumber"
+  extension-element-prefixes="saxon fib"&gt;
+  
+  &lt;!- - ... - -&gt;
+  
+&lt;/xsl:stylesheet&gt;</pre>
+    </div>
+    <p> Since you can’t be sure which extension elements are likely to be available across processors, it’s customary to include one or more <tt>xsl:fallback</tt> elements as children of each extension element. Each such element contains a template that is instantiated if and only if the parent extension element can’t be found. <a href="ch17s03.html#FibonacciXMLRPCExtensionElement.xsl" title="Example&nbsp;17.21.&nbsp;A stylesheet that uses an extension element">Example&nbsp;17.21</a> demonstrates a stylesheet that attempts to use the <tt>fib:fibonacci</tt> extension element. However, if that element cannot be found then a pure XSLT solution is used instead. </p>
+    <div class="example">
+     <a name="FibonacciXMLRPCExtensionElement.xsl"></a>
+     <p class="title"><b>Example&nbsp;17.21.&nbsp;A stylesheet that uses an extension element</b></p>
+     <pre class="programlisting">&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt;
+&lt;xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:fib="http://namespaces.cafeconleche.org/fibonacci"
+  extension-element-prefixes="fib"&gt;
+  
+  &lt;!-- I deleted the validation code from this stylesheet to
+       save space, but it would be easy to add back in if
+       for production use. --&gt;
+  
+  &lt;xsl:template match="/methodCall"&gt;
+    &lt;methodResponse&gt;
+      &lt;params&gt;
+        &lt;param&gt;
+          &lt;value&gt;
+            &lt;xsl:apply-templates select="params/param/value" /&gt;
+          &lt;/value&gt;
+        &lt;/param&gt;
+      &lt;/params&gt;
+    &lt;/methodResponse&gt;
+  &lt;/xsl:template&gt;
+
+  &lt;xsl:template match="value"&gt;
+    &lt;int&gt;
+      &lt;fib:fibonacci&gt;
+        &lt;xsl:value-of select="number(.)"/&gt;
+        &lt;xsl:fallback&gt;
+          &lt;!-- This template will be called only if the 
+               fib:fibonacci code can't be loaded. --&gt;
+          &lt;xsl:call-template name="calculateFibonacci"&gt;
+            &lt;xsl:with-param name="index" select="number(.)" /&gt;
+          &lt;/xsl:call-template&gt;
+        &lt;/xsl:fallback&gt;
+      &lt;/fib:fibonacci&gt;
+    &lt;/int&gt;
+  &lt;/xsl:template&gt;
+
+  &lt;xsl:template name="calculateFibonacci"&gt;
+    &lt;xsl:param name="index"/&gt;
+    &lt;xsl:param name="low"  select="1"/&gt;
+    &lt;xsl:param name="high" select="1"/&gt;
+    &lt;xsl:choose&gt;
+      &lt;xsl:when test="$index &amp;lt;= 1"&gt;
+        &lt;xsl:value-of select="$low"/&gt;
+      &lt;/xsl:when&gt;
+      &lt;xsl:otherwise&gt;
+        &lt;xsl:call-template name="calculateFibonacci"&gt;
+          &lt;xsl:with-param name="index" select="$index - 1"/&gt;
+          &lt;xsl:with-param name="low"   select="$high"/&gt;
+          &lt;xsl:with-param name="high"  select="$high + $low"/&gt;
+        &lt;/xsl:call-template&gt;
+      &lt;/xsl:otherwise&gt;
+    &lt;/xsl:choose&gt;
+  &lt;/xsl:template&gt;
+  
+&lt;/xsl:stylesheet&gt;
+</pre>
+    </div>
+    <p> Alternately, you can pass the namespace qualified name of the extension element to the <tt>element-available()</tt> function to figure out whether or not the extension is available. For example, </p>
+    <div class="informalexample">
+     <pre class="programlisting">  &lt;xsl:template match="value"&gt;
+    &lt;int&gt;
+      &lt;xsl:choose&gt;
+        &lt;xsl:when test="element-available('fib:fibonacci')"&gt;
+          &lt;fib:fibonacci&gt;
+            &lt;xsl:value-of select="number(.)"/&gt;
+          &lt;/fib:fibonacci&gt;
+        &lt;/xsl:when&gt;
+        &lt;xsl:otherwise&gt;
+          &lt;xsl:call-template name="calculateFibonacci"&gt;
+            &lt;xsl:with-param name="index" select="number(.)" /&gt;
+          &lt;/xsl:call-template&gt;
+        &lt;/xsl:otherwise&gt;
+      &lt;/xsl:choose&gt;
+    &lt;/int&gt;
+  &lt;/xsl:template&gt;</pre>
+    </div>
+    <p> From this point on, the exact details of how you code the extension element in Java are quite implementation dependent. You’ll need to consult the documentation for your XSLT processor to learn how to write an extension element and install it. You cannot use preexisting methods and classes as extension elements. You need to custom code the extension element so it fits in with the processor’s own code. </p>
+    <div class="caution" style="margin-left: 0.5in; margin-right: 0.5in; font-family: Helvetica, Arial, sans">
+     <h3 class="title">Caution</h3>
+     <p> Writing an extension element is much more complex than writing an extension function. It requires intimate knowledge of and interaction with the XSLT processor. If at all possible, you should probably use an extension function, perhaps one that returns a node-set, instead of an extension element. </p>
+    </div>
+   </div>
+  </div>
+  <div class="navfooter">
+   <hr>
+   <table width="100%" summary="Navigation footer">
+    <tbody>
+     <tr>
+      <td width="40%" align="left"><a accesskey="p" href="ch17s02.html">Prev</a>&nbsp;</td>
+      <td width="20%" align="center"><a accesskey="u" href="ch17.html">Up</a></td>
+      <td width="40%" align="right">&nbsp;<a accesskey="n" href="ch17s04.html">Next</a></td>
+     </tr>
+     <tr>
+      <td width="40%" align="left" valign="top">TrAX&nbsp;</td>
+      <td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td>
+      <td width="40%" align="right" valign="top">&nbsp;Summary</td>
+     </tr>
+    </tbody>
+   </table>
+  </div>
+  <hr xmlns:dt="http://xsltsl.org/date-time">
+  <table xmlns:dt="http://xsltsl.org/date-time" width="100%" summary="Cafe con Leche footer">
+   <tbody>
+    <tr>
+     <td width="34%" align="left">Copyright 2001, 2002 Elliotte Rusty Harold</td>
+     <td width="32%" align="center"><a href="mailto:elharo@metalab.unc.edu">elharo@metalab.unc.edu</a></td>
+     <td width="34%" align="right">Last Modified May 20, 2002</td>
+    </tr>
+    <tr>
+     <td width="34%" align="left"></td>
+     <td width="32%" align="center"><a href="http://www.cafeconleche.org/">Up To Cafe con Leche</a></td>
+     <td width="34%" align="right"></td>
+    </tr>
+   </tbody>
+  </table>
+ </body>
+</html>

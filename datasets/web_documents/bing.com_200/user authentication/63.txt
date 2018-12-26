@@ -1,0 +1,1648 @@
+<!doctype html>
+<html class="header-dark">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+  <meta name="description" content="Let's learn the correct way to secure Spring Boot RESTful APIs with JWTs."> 
+  <!-- <meta property="fb:admins" content="YOUR_FB_USER_ID" /> --> 
+  <meta property="fb:app_id" content="534074790006350"> 
+  <meta property="og:title" content="Implementing JWT Authentication on Spring Boot APIs"> 
+  <meta property="og:site_name" content="Auth0 - Blog"> 
+  <meta property="og:url" content="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/"> 
+  <meta property="og:image" content="https://cdn.auth0.com/blog/spring-boot-auth/logo.png"> 
+  <meta property="og:description" content="Let's learn the correct way to secure Spring Boot RESTful APIs with JWTs."> 
+  <meta property="og:type" content="article"> 
+  <!-- Twitter Cards --> 
+  <meta name="twitter:site" content="@auth0"> 
+  <meta name="twitter:creator" content="@auth0"> 
+  <meta name="twitter:title" content="Implementing JWT Authentication on Spring Boot APIs"> 
+  <meta name="twitter:url" content="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/"> 
+  <meta name="twitter:description" content="Let's learn the correct way to secure Spring Boot RESTful APIs with JWTs."> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:image" content="https://cdn.auth0.com/blog/spring-boot-auth/logo.png"> 
+  <meta name="twitter:image:height" content="512"> 
+  <meta name="twitter:image:width" content="1024"> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <title>Implementing JWT Authentication on Spring Boot APIs</title> 
+  <!-- Swiftype for the posts --> 
+  <meta class="swiftype" name="title" data-type="string" content="Implementing JWT Authentication on Spring Boot APIs"> 
+  <meta class="swiftype" name="type" data-type="enum" content="blog"> 
+  <meta class="swiftype" name="popularity" data-type="integer" content="1"> 
+  <link href="https://plus.google.com/+Auth0" rel="publisher"> 
+  <link rel="manifest" href="/blog/manifest.json"> 
+  <script src="//use.typekit.net/tde2fii.js"></script> 
+  <script>try{Typekit.load();}catch(e){}</script> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> 
+  <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script> 
+  <script src="//cdn.auth0.com/w2/auth0-7.4.0.min.js"></script> 
+  <script src="//cdn.auth0.com/js/lock/10.6.1/lock.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/react/15.2.0/react.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/react/15.2.0/react-dom.min.js"></script> 
+  <link rel="stylesheet" href="https://cdn.auth0.com/website/web-header/4.0.32/web-header.css"> 
+  <script src="https://cdn.auth0.com/website/web-header/4.0.32/web-header.js"></script> 
+  <script src="//npmcdn.com/auth0-contact-form@2.0.3/cdn/contact-form.js"></script> 
+  <link rel="stylesheet" href="//npmcdn.com/auth0-contact-form@2.0.3/cdn/contact-form.css"> 
+  <script src="https://cdn.auth0.com/website/sliding-popup/1.0.21/sliding-popup.js"></script> 
+  <script src="//cdn.auth0.com/js/m/metrics-1.min.js"></script> 
+  <script type="text/javascript">
+      !function(){
+        var metricsLib = window.metricsLib = window.metricsLib || [];
+        // A list of the methods in metrics.js to stub.
+        metricsLib.methods = [
+          'segment',
+          'track',
+          'setUserId',
+          'identify',
+          'alias',
+          'page',
+          'getData',
+          'ready',
+          'traits'
+        ];
+        metricsLib.factory = function(method){
+          return function(){
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift(method);
+            metricsLib.push(args);
+            return metricsLib;
+          };
+        };
+        for (var i = 0; i < metricsLib.methods.length; i++) {
+          var key = metricsLib.methods[i];
+          metricsLib[key] = metricsLib.factory(key);
+        }
+        metricsLib.load = function(segmentKey, dwhEndpoint){
+          if(null != window.Auth0Metrics){
+            window.metricsLib = new Auth0Metrics(segmentKey, dwhEndpoint, 'blog');
+          }else{
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.async = true;
+            script.src = ('https:' === document.location.protocol
+              ? 'https://' : 'http://')
+              + 'cdn.auth0.com/js/m/metrics-1.min.js';
+            script.onerror = function(){
+              console.error("No metrics");
+            }
+            script.onload = function(){
+              // Grab analytics and make it private
+              window.metricsLib = new Auth0Metrics(segmentKey, dwhEndpoint, 'blog');
+            }
+            var first = document.getElementsByTagName('script')[0];
+            first.parentNode.insertBefore(script, first);
+          }
+        };
+        var SEGMENT_KEY =  'aaB6w2BsRwUcGbRSUY7X22FPAa1NL3BL' ;
+        var DWH_ENDPOINT =  'https://dwh-tracking.it.auth0.com/dwh-metrics' ;
+        if (DWH_ENDPOINT) {
+          //- We should catch for an undefined DWH_ENDPOINT
+          metricsLib.load(SEGMENT_KEY, DWH_ENDPOINT);
+        } else {
+          console.error("DWH_ENDPOINT must be defined for tracking to work.")
+        }
+        }();
+    </script> 
+  <script src="//cdn.auth0.com/js/ab/ab-1.min.js"></script> 
+  <script src="//cdn.auth0.com/js/ab/ab-loader-1.min.js"></script> 
+  <link rel="canonical" href="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/"> 
+  <!-- amphtml
+
+    
+      
+        <link rel="amphtml" href="https://auth0.com/blog/amp/implementing-jwt-authentication-on-spring-boot/" />
+      
+     --> 
+  <link rel="shortcut icon" href="https://cdn.auth0.com/styleguide/components/1.0.8/media/logos/img/favicon.png"> 
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="https://auth0.com/blog/rss.xml"> 
+  <link type="application/opensearchdescription+xml" rel="search" href="https://auth0.com/blog/osd.xml"> 
+  <link rel="preload" href="https://cdn.auth0.com/styleguide/core/2.0.4/fonts/fakt/FaktPro-Normal.woff2" as="font" type="font/woff2" crossorigin=""> 
+  <link rel="stylesheet" href="https://cdn.auth0.com/styleguide/core/2.0.4/core.min.css"> 
+  <link rel="stylesheet" href="https://cdn.auth0.com/styleguide/components/1.0.8/components.min.css"> 
+  <link rel="stylesheet" href="/blog/css/index.css"> 
+  <link rel="stylesheet" href="/blog/css/vendor/selection-sharer.min.css"> 
+  <!-- <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"> --> 
+  <style id="move-section">.new-homepage-page .customers{ padding-top: 0px;}.new-homepage-page .features-articles{ padding-top: 230px; }@media (min-width: 992px){.new-homepage-page .features-articles .article-container.map-bg:before{ top: -925px;}};@media (max-width: 991px){.new-homepage-page .features-articles{ padding-top: 230px;}};</style>
+ </head> 
+ <body itemscope itemtype="http://schema.org/WebPage"> 
+  <div id="header"></div> 
+  <aside id="popup"></aside> 
+  <div class="container"> 
+   <div class="pn-popup" role="alert"> 
+    <div class="pn-popup-container"> 
+     <p>?????Do you want to receive a desktop notification when new content is published?</p> 
+     <div class="pn-buttons"> 
+      <button id="push-allow">YES</button> 
+      <button id="push-block">NO</button> 
+     </div> 
+     <div class="arrow"></div> 
+    </div> 
+   </div> 
+  </div> 
+  <script>
+    (function () {
+      var config = {
+        auth0Domain: 'auth0.auth0.com',
+        auth0ClientID: 'zEYfpoFzUMEzilhkHilcWoNkrFfJ3hAI',
+        auth0CallbackURL: 'https://manage.auth0.com/callback',
+      };
+      var auth0js = new Auth0({
+        domain: config.auth0Domain,
+        clientID: config.auth0ClientID,
+        callbackURL: config.auth0CallbackURL,
+        responseType: 'token'
+      });
+      var lockOptions = {
+        auth: { redirectUrl: config.auth0CallbackURL },
+        theme: {
+          logo: 'https://cdn.auth0.com/styleguide/components/1.0.8/media/logos/img/badge.png'
+        },
+        rememberLastLogin: true,
+        integratedWindowsLogin: false,
+        socialButtonStyle: 'big',
+        languageDictionary: {
+          emailInputPlaceholder: 'Work email',
+          passwordInputPlaceholder: 'Your password',
+          signUpTerms: 'By signing up, you agree to our <a href="/terms" target="_new">terms of service</a> and <a href="/privacy" target="_new">privacy policy</a>'
+        }
+      };
+      var lock = window.lock = new Auth0Lock(
+        config.auth0ClientID,
+        config.auth0Domain,
+        lockOptions
+      );
+
+      lock.on('signup ready', function () {
+        metricsLib.track('open:signup', getBasicInfo());
+      });
+
+      lock.on('signin ready', function () {
+        metricsLib.track('open:signin', getBasicInfo());
+      });
+
+      window.login = function login() {
+        metricsLib.track('click:signin', getBasicInfo());
+        lock.show({ initialScreen: 'login' });
+      }
+
+      window.signup = function() {
+        metricsLib.track('click:signup', getBasicInfo());
+        window.location.href = '/signup';
+      }
+
+      // Header
+      var React = window.React;
+      var ReactDOM = window.ReactDOM;
+      var Auth0WebHeader = window.Auth0WebHeader.default;
+      var Auth0ContactForm = window.Auth0ContactForm.default;
+      var Header = React.createClass({
+        getInitialState: function () {
+          return {
+            logged: false
+          };
+        },
+
+        componentDidMount: function () {
+          var _this = this;
+          auth0js.getSSOData(false, function (err, data) {
+            var logged = data.sso;
+            _this.setState({ logged: logged });
+          });
+
+          var contactFormOptions = {
+            onModalOpen: function () {
+              metricsLib.track('open:talk-to-sales');
+            },
+            onFormSuccess: function (metricsData) {
+              metricsLib.track('register:lead:talk-to-sales-modal', metricsData);
+              metricsLib.track('sent:talk-to-sales', metricsData);
+            },
+            onFormFail: function (metricsData) {
+              metricsLib.track('fail:register:lead:talk-to-sales-modal', metricsData);
+              metricsLib.track('fail-sent:talk-to-sales', metricsData);
+            }
+          };
+          var contactForm = new Auth0ContactForm(contactFormOptions);
+          this.setState({
+            showContactForm: function () {
+              contactForm.show({includePhoneField: true });
+            }
+          });
+        },
+
+        render: function () {
+          var HeaderProps = {
+            logged: this.state.logged,
+            showContactForm: this.state.showContactForm
+          };
+          var Auth0WebHeaderProps = toAuth0WebHeaderProps(HeaderProps);
+
+          return React.createElement(Auth0WebHeader, Auth0WebHeaderProps);
+        }
+      });
+
+      function toAuth0WebHeaderProps(props) {
+        var Auth0WebHeaderProps = {
+          theme: 'dark',
+          talkToSalesButtonLink: null,
+          talkToSalesButtonOnClick: props.showContactForm,
+          loginButtonOnClick: window.login
+        };
+
+        if (props.logged) {
+          Auth0WebHeaderProps.signupButtonLink = 'https://manage.auth0.com';
+        } else {
+          Auth0WebHeaderProps.signupButtonOnClick = window.signup;
+        }
+
+        return Auth0WebHeaderProps;
+      }
+
+      var SlidingPopup = window.Auth0SlidingPopup.default;
+      ReactDOM.render(React.createElement(Header, null), document.getElementById('header'));
+      ReactDOM.render(React.createElement(SlidingPopup, { source: 'blog' }), document.getElementById('popup'));
+
+    })();
+    </script> 
+  <div id="pjax"> 
+   <!-- Facebook --> 
+   <div id="fb-root"></div> 
+   <script>
+        (function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&appId=534074790006350&version=v2.0";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+      </script> 
+   <!-- Twitter --> 
+   <script type="text/javascript">
+        !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+      </script> 
+   <!-- Twitter Conversion --> 
+   <script src="//platform.twitter.com/oct.js" type="text/javascript"></script> 
+   <!-- Twitter Conversion --> 
+   <script type="text/javascript">
+  twttr.conversion.trackPid('l4rua');
+</script> 
+   <noscript> 
+    <img height="1" width="1" style="display:none;" alt="" src="https://analytics.twitter.com/i/adsct?txn_id=l4rua&amp;p_id=Twitter"> 
+    <img height="1" width="1" style="display:none;" alt="" src="//t.co/i/adsct?txn_id=l4rua&amp;p_id=Twitter"> 
+   </noscript> 
+   <article itemprop="mainEntity" itemscope itemtype="http://schema.org/BlogPosting"> 
+    <link itemprop="mainEntityOfPage" href="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/"> 
+    <section class="banner banner-post" style="background: #3F6426"> 
+     <div class="container banner-container"> 
+      <i class="icon-budicon-697 hide"></i> 
+      <h2 class="banner-subtitle"><a href="/blog/" target="_blank">Blog</a></h2> 
+      <a href="/blog/implementing-jwt-authentication-on-spring-boot/" style="
+
+ 
+
+" class="entry-thumbnail"> 
+       <div class="holder" itemprop="image" itemscope itemtype="http://schema.org/ImageObject"> 
+        <img style="
+  
+ 
+  
+    
+  
+ 
+  
+ 
+  
+" src="https://cdn.auth0.com/blog/spring-boot-auth/logo.png" alt="Implementing JWT Authentication on Spring Boot APIs"> 
+        <meta itemprop="url" content="https://cdn.auth0.com/blog/spring-boot-auth/logo.png"> 
+        <meta itemprop="width" content="128"> 
+        <meta itemprop="height" content="128"> 
+       </div> </a> 
+      <h1 class="entry-title"><a href="/blog/implementing-jwt-authentication-on-spring-boot/" title="Published: August 10, 2017"><span itemprop="headline">Implementing JWT Authentication on Spring Boot APIs</span></a></h1> 
+      <div class="entry-content" itemprop="description"> 
+       <p>Let's learn the correct way to secure Spring Boot RESTful APIs with JWTs.</p> 
+      </div> 
+      <div class="post-info"> 
+       <div class="author"> 
+        <a href="https://twitter.com/brunoskrebs"><img src="https://www.gravatar.com/avatar/76ea40cbf67675babe924eecf167b9b8?s=60" width="27" height="27"> <span class="name" itemprop="author">Bruno Krebs</span></a> 
+       </div> 
+       <div class="date"> 
+        <time datetime="August 10, 2017" class="published updated">August 10, 2017</time> 
+        <meta itemprop="datePublished" content="2017-08-10"> 
+       </div> 
+       <div class="social-stats"> 
+        <a href="#" data-url="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/" data-type="twitter" data-txt="Implementing JWT Authentication on Spring Boot APIs" data-via="auth0" data-count="true" class="network"> 
+         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="22" height="22" viewbox="0 0 512 512" enable-background="new 0 0 512 512" space="preserve"> 
+          <path id="twitter-icon" d="M462,128.223c-15.158,6.724-31.449,11.269-48.547,13.31c17.449-10.461,30.854-27.025,37.164-46.764
+
+      c-16.333,9.687-34.422,16.721-53.676,20.511c-15.418-16.428-37.386-26.691-61.698-26.691c-54.56,0-94.668,50.916-82.337,103.787
+
+      c-70.25-3.524-132.534-37.177-174.223-88.314c-22.142,37.983-11.485,87.691,26.158,112.85c-13.854-0.438-26.891-4.241-38.285-10.574
+
+      c-0.917,39.162,27.146,75.781,67.795,83.949c-11.896,3.237-24.926,3.978-38.17,1.447c10.754,33.58,41.972,58.018,78.96,58.699
+
+      C139.604,378.282,94.846,390.721,50,385.436c37.406,23.982,81.837,37.977,129.571,37.977c156.932,0,245.595-132.551,240.251-251.435
+
+      C436.339,160.061,450.668,145.174,462,128.223z" /> 
+         </svg> </a> 
+        <a href="#" data-url="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/" data-type="linkedin" data-txt="Implementing JWT Authentication on Spring Boot APIs" data-count="true" class="network"> 
+         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="22" height="22" viewbox="0 0 512 512" enable-background="new 0 0 512 512" space="preserve"> 
+          <path id="linkedin-icon" d="M411.945,50h-312c-27.614,0-50,22.386-50,50v312c0,27.614,22.386,50,50,50h312
+
+      c27.614,0,50-22.386,50-50V100C461.945,72.386,439.56,50,411.945,50z M180.996,392.99h-56.537V210.336h56.537V392.99z
+
+       M152.457,186.417c-18.465,0-33.432-15.09-33.432-33.703c0-18.614,14.967-33.704,33.432-33.704c18.463,0,33.432,15.09,33.432,33.704
+
+      C185.889,171.327,170.92,186.417,152.457,186.417z M392.865,392.99h-56.262c0,0,0-69.582,0-95.881
+
+      c0-26.296-9.988-40.974-30.781-40.974c-22.629,0-34.453,15.289-34.453,40.974c0,28.133,0,95.881,0,95.881h-54.223V210.336h54.223
+
+      v24.599c0,0,16.309-30.171,55.041-30.171s66.455,23.648,66.455,72.572C392.865,326.262,392.865,392.99,392.865,392.99z" /> 
+         </svg> </a> 
+        <a href="#" data-url="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/" data-type="facebook" data-txt="Implementing JWT Authentication on Spring Boot APIs" data-count="true" class="network"> 
+         <svg width="17" height="17" viewbox="0 0 412 412" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"> 
+          <g id="facebook-icon" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> 
+           <path d="M283.80119,412 L361.995375,412 C389.611494,412 412,389.612167 412,361.995375 L412,50.0046252 C412,22.3885058 389.612167,0 361.995375,0 L50.0046252,0 C22.3885058,0 0,22.3878333 0,50.0046252 L0,361.995375 C0,389.611494 22.3878333,412 50.0046252,412 L219.907783,412 L219.907783,254.137637 L166.482996,254.137637 L166.482996,192.266054 L219.907783,192.266054 L219.907783,146.637452 C219.907783,93.6867027 252.247398,64.8530656 299.484232,64.8530656 C322.110827,64.8530656 341.559134,66.5376524 347.225329,67.2916602 L347.225329,122.6301 L314.462578,122.644417 C288.775412,122.644417 283.80119,134.851707 283.80119,152.764958 L283.80119,192.266054 L345.068293,192.266054 L337.089173,254.137637 L283.80119,254.137637 L283.80119,412 Z" id="Rectangle-1" fill="#000000" sketch:type="MSShapeGroup" /> 
+          </g> 
+         </svg> </a> 
+       </div> 
+      </div> 
+     </div> 
+    </section> 
+    <div class="utility-bar"> 
+     <div class="container"> 
+      <div class="pull-left"> 
+       <a href="javascript:signup()" class="signup-button btn btn-success btn-md mf-listen">Use Auth0 for Free</a> 
+      </div> 
+      <div class="pull-right share-container"> 
+       <span class="share-label">Share this post</span> 
+       <div class="social-stats"> 
+        <a href="#" data-url="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/" data-type="twitter" data-txt="Implementing JWT Authentication on Spring Boot APIs" data-via="auth0" data-count="true" class="network"> 
+         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="22" height="22" viewbox="0 0 512 512" enable-background="new 0 0 512 512" space="preserve"> 
+          <path id="twitter-icon" d="M462,128.223c-15.158,6.724-31.449,11.269-48.547,13.31c17.449-10.461,30.854-27.025,37.164-46.764
+
+      c-16.333,9.687-34.422,16.721-53.676,20.511c-15.418-16.428-37.386-26.691-61.698-26.691c-54.56,0-94.668,50.916-82.337,103.787
+
+      c-70.25-3.524-132.534-37.177-174.223-88.314c-22.142,37.983-11.485,87.691,26.158,112.85c-13.854-0.438-26.891-4.241-38.285-10.574
+
+      c-0.917,39.162,27.146,75.781,67.795,83.949c-11.896,3.237-24.926,3.978-38.17,1.447c10.754,33.58,41.972,58.018,78.96,58.699
+
+      C139.604,378.282,94.846,390.721,50,385.436c37.406,23.982,81.837,37.977,129.571,37.977c156.932,0,245.595-132.551,240.251-251.435
+
+      C436.339,160.061,450.668,145.174,462,128.223z" /> 
+         </svg> </a> 
+        <a href="#" data-url="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/" data-type="linkedin" data-txt="Implementing JWT Authentication on Spring Boot APIs" data-count="true" class="network"> 
+         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="22" height="22" viewbox="0 0 512 512" enable-background="new 0 0 512 512" space="preserve"> 
+          <path id="linkedin-icon" d="M411.945,50h-312c-27.614,0-50,22.386-50,50v312c0,27.614,22.386,50,50,50h312
+
+      c27.614,0,50-22.386,50-50V100C461.945,72.386,439.56,50,411.945,50z M180.996,392.99h-56.537V210.336h56.537V392.99z
+
+       M152.457,186.417c-18.465,0-33.432-15.09-33.432-33.703c0-18.614,14.967-33.704,33.432-33.704c18.463,0,33.432,15.09,33.432,33.704
+
+      C185.889,171.327,170.92,186.417,152.457,186.417z M392.865,392.99h-56.262c0,0,0-69.582,0-95.881
+
+      c0-26.296-9.988-40.974-30.781-40.974c-22.629,0-34.453,15.289-34.453,40.974c0,28.133,0,95.881,0,95.881h-54.223V210.336h54.223
+
+      v24.599c0,0,16.309-30.171,55.041-30.171s66.455,23.648,66.455,72.572C392.865,326.262,392.865,392.99,392.865,392.99z" /> 
+         </svg> </a> 
+        <a href="#" data-url="https://auth0.com/blog/implementing-jwt-authentication-on-spring-boot/" data-type="facebook" data-txt="Implementing JWT Authentication on Spring Boot APIs" data-count="true" class="network"> 
+         <svg width="17" height="17" viewbox="0 0 412 412" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"> 
+          <g id="facebook-icon" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage"> 
+           <path d="M283.80119,412 L361.995375,412 C389.611494,412 412,389.612167 412,361.995375 L412,50.0046252 C412,22.3885058 389.612167,0 361.995375,0 L50.0046252,0 C22.3885058,0 0,22.3878333 0,50.0046252 L0,361.995375 C0,389.611494 22.3878333,412 50.0046252,412 L219.907783,412 L219.907783,254.137637 L166.482996,254.137637 L166.482996,192.266054 L219.907783,192.266054 L219.907783,146.637452 C219.907783,93.6867027 252.247398,64.8530656 299.484232,64.8530656 C322.110827,64.8530656 341.559134,66.5376524 347.225329,67.2916602 L347.225329,122.6301 L314.462578,122.644417 C288.775412,122.644417 283.80119,134.851707 283.80119,152.764958 L283.80119,192.266054 L345.068293,192.266054 L337.089173,254.137637 L283.80119,254.137637 L283.80119,412 Z" id="Rectangle-1" fill="#000000" sketch:type="MSShapeGroup" /> 
+          </g> 
+         </svg> </a> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="container" class="container"> 
+     <div class="row sticky-container"> 
+      <section class="col-md-8 content-column"> 
+       <main class="blog-post blog-single"> 
+        <div class="inner"> 
+         <div class="entry-content js-entry-content" itemprop="articleBody"> 
+          <p><strong>TL;DR</strong> In this blog post, we will learn how to handle authentication and authorization on <em>RESTful APIs</em> written with <em>Spring Boot</em>. We will clone, from <em>GitHub</em>, a simple Spring Boot application that exposes public endpoints, and then we will secure these endpoints with <em>Spring Security</em> and <em>JWTS</em>.</p> 
+          <h2>Securing RESTful APIs with JWTs</h2> 
+          <p><em>JSON Web Tokens</em>, commonly known as JWTs, are tokens that are used to authenticate users on applications. This technology has gained popularity over the past few years because it enables backends to accept requests simply by validating the contents of these JWTS. That is, applications that use JWTS no longer have to hold cookies or other session data about their users. This characteristic facilitates scalability while keeping applications secure.</p> 
+          <p>During the authentication process, when a user successfully logs in using their credentials, a JSON Web Token is returned and must be saved locally (typically in local storage). Whenever the user wants to access a protected route or resource (an endpoint), the user agent must send the JWT, usually in the <code>Authorization</code> header using the <a href="http://self-issued.info/docs/draft-ietf-oauth-v2-bearer.html"><em>Bearer schema</em></a>, along with the request.</p> 
+          <p>When a backend server receives a request with a JWT, the first thing to do is to validate the token. This consists of a series of steps, and if any of these fails then, the request must be rejected. The following list shows the validation steps needed:</p> 
+          <ul> 
+           <li>Check that the JWT is well formed</li> 
+           <li>Check the signature</li> 
+           <li>Validate the standard claims</li> 
+           <li>Check the Client permissions (scopes)</li> 
+          </ul> 
+          <p>We won't get into the nitty-gritty details about JWTS in this article but, if needed, <a href="https://auth0.com/docs/jwt">this resource can provide more about information about JWTS</a> and this <a href="https://auth0.com/docs/api-auth/tutorials/verify-access-token">resource about JWT validation</a>.</p> 
+          <h2>The RESTful Spring Boot API Overview</h2> 
+          <p>The RESTful Spring Boot API that we are going to secure is a task list manager. The task list is kept globally, which means that all users will see and interact with the same list. To clone and run this application, let's issue the following commands:</p> 
+          <pre><code class="bash"># clone the starter project
+git clone https://github.com/auth0-blog/spring-boot-auth.git
+
+cd spring-boot-auth
+
+# run the unsecured RESTful API
+gradle bootRun
+</code></pre> 
+          <p>If everything works as expected, our RESTful Spring Boot API will be up and running. To test it, we can use a tool like <a href="https://www.getpostman.com/">Postman</a> or <a href="https://curl.haxx.se/">curl</a> to issue request to the available endpoints:</p> 
+          <pre><code class="bash"># issue a GET request to see the (empty) list of tasks
+curl http://localhost:8080/tasks
+
+# issue a POST request to create a new task
+curl -H "Content-Type: application/json" -X POST -d '{
+    "description": "Buy some milk(shake)"
+}'  http://localhost:8080/tasks
+
+# issue a PUT request to update the recently created task
+curl -H "Content-Type: application/json" -X PUT -d '{
+    "description": "Buy some milk"
+}'  http://localhost:8080/tasks/1
+
+# issue a DELETE request to remove the existing task
+curl -X DELETE http://localhost:8080/tasks/1
+</code></pre> 
+          <p>All the endpoints used in the commands above are defined in the <code>TaskController</code> class, which belongs to the <code>com.auth0.samples.authapi.task</code> package. Besides this class, this package contains two other classes:</p> 
+          <ul> 
+           <li><code>Task</code>: the entity model that represents tasks in the application.</li> 
+           <li><code>TaskRepository</code>: the class responsible for handling the persistence of <code>Tasks</code>.</li> 
+          </ul> 
+          <p>The persistence layer of our application is backed by an in-memory database called <a href="http://hsqldb.org/"><em>HSQLDB</em></a>. We would typically use a production-ready database like <em>PostgreSQL</em> or <em>MySQL</em> on real applications, but for this tutorial this in-memory database will be enough.</p> 
+          <h2>Enabling User Registration on Spring Boot APIs</h2> 
+          <p>Now that we took a look at the endpoints that our RESTful Spring Boot API exposes, we are going to start securing it. The first step is to allow new users to register themselves. The classes that we will create in this feature will belong to a new package called <code>com.auth0.samples.authapi.user</code>. Let's create this package and add a new entity class called <code>ApplicationUser</code> to it:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.user;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+
+@Entity
+public class ApplicationUser {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
+    private String username;
+    private String password;
+
+    public long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+</code></pre> 
+          <p>This entity class contains three properties:</p> 
+          <ul> 
+           <li>the <code>id</code> that works as the primary identifier of a user instance in the application,</li> 
+           <li>the <code>username</code> that will be used by users to identify themselves,</li> 
+           <li>and the <code>password</code> to check the user identity.</li> 
+          </ul> 
+          <p>To manage the persistence layer of this entity, we will create an interface called <code>ApplicationUserRepository</code>. This interface will be an extension of <a href="http://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/JpaRepository.html"><code>JpaRepository</code></a>—which gives us access to some common methods like <a href="http://docs.spring.io/spring-data/jpa/docs/current/api/org/springframework/data/jpa/repository/JpaRepository.html#save"><code>save</code></a>—and will be created in the same package of the <code>ApplicationUser</code> class:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.user;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ApplicationUserRepository extends JpaRepository&lt;ApplicationUser, Long&gt; {
+    ApplicationUser findByUsername(String username);
+}
+</code></pre> 
+          <p>We have also added a method called <code>findByUsername</code> to this interface. This method will be used when we implement the authentication feature.</p> 
+          <p>The endpoint that enables new users to register will be handled by a new <a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/stereotype/Controller.html"><code>@Controller</code> class</a>. We will call this controller <code>UserController</code> and add it to the same package as the <code>ApplicationUser</code> class:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.user;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    private ApplicationUserRepository applicationUserRepository;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public UserController(ApplicationUserRepository applicationUserRepository,
+                          BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.applicationUserRepository = applicationUserRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
+
+    @PostMapping("/sign-up")
+    public void signUp(@RequestBody ApplicationUser user) {
+        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        applicationUserRepository.save(user);
+    }
+}
+</code></pre> 
+          <p>The implementation of the endpoint is quite simple. All it does is encrypt the password of the new user (holding it as plain text wouldn't be a good idea) and then save it to the database. The encryption process is handled by an instance of <a href="https://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/crypto/bcrypt/BCryptPasswordEncoder.html"><code>BCryptPasswordEncoder</code></a>, which is a class that belongs to the Spring Security framework.</p> 
+          <p>Right now we have two gaps in our application:</p> 
+          <ol> 
+           <li>We didn't include the Spring Security framework as a dependency to our project.</li> 
+           <li>There is no default instance of <code>BCryptPasswordEncoder</code> that can be injected in the <code>UserController</code> class.</li> 
+          </ol> 
+          <p>The first problem we solve by adding the Spring Security framework dependency to the <code>./build.gradle</code> file:</p> 
+          <pre><code class="gradle">...
+
+dependencies {
+    ...
+    compile("org.springframework.boot:spring-boot-starter-security")
+}
+</code></pre> 
+          <p>The second problem, the missing <code>BCryptPasswordEncoder</code> instance, we solve by implementing a method that generates an instance of <code>BCryptPasswordEncoder</code>. This method must be annotated with <code>@Bean</code> and we will add it in the <code>Application</code> class:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi;
+
+// ... other imports
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+@SpringBootApplication
+public class Application {
+
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // ... main method definition
+}
+</code></pre> 
+          <p>This ends the user registration feature, but we still lack support for user authentication and authorization. Let's tackle these features next.</p> 
+          <h2>User Authentication and Authorization on Spring Boot</h2> 
+          <p>To support both authentication and authorization in our application, we are going to:</p> 
+          <ul> 
+           <li>implement an authentication filter to issue JWTS to users sending credentials,</li> 
+           <li>implement an authorization filter to validate requests containing JWTS,</li> 
+           <li>create a custom implementation of <a href="http://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/core/userdetails/UserDetailsService.html"><code>UserDetailsService</code></a> to help Spring Security loading user-specific data in the framework,</li> 
+           <li>and extend the <a href="http://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/config/annotation/web/configuration/WebSecurityConfigurerAdapter.html"><code>WebSecurityConfigurerAdapter</code></a> class to customize the security framework to our needs.</li> 
+          </ul> 
+          <p>Before proceeding to the development of these filters and classes, let's create a new package called <code>com.auth0.samples.authapi.security</code>. This package will hold all the code related to our app's security.</p> 
+          <h3>The Authentication Filter</h3> 
+          <p>The first element that we are going to create is the class responsible for the authentication process. We are going to call this class <code>JWTAuthenticationFilter</code>, and we will implement it with the following code:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.security;
+
+import com.auth0.samples.authapi.user.ApplicationUser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+
+import static com.auth0.samples.authapi.security.SecurityConstants.EXPIRATION_TIME;
+import static com.auth0.samples.authapi.security.SecurityConstants.HEADER_STRING;
+import static com.auth0.samples.authapi.security.SecurityConstants.SECRET;
+import static com.auth0.samples.authapi.security.SecurityConstants.TOKEN_PREFIX;
+
+public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+    private AuthenticationManager authenticationManager;
+
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+    }
+
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest req,
+                                                HttpServletResponse res) throws AuthenticationException {
+        try {
+            ApplicationUser creds = new ObjectMapper()
+                    .readValue(req.getInputStream(), ApplicationUser.class);
+
+            return authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            creds.getUsername(),
+                            creds.getPassword(),
+                            new ArrayList&lt;&gt;())
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected void successfulAuthentication(HttpServletRequest req,
+                                            HttpServletResponse res,
+                                            FilterChain chain,
+                                            Authentication auth) throws IOException, ServletException {
+
+        String token = Jwts.builder()
+                .setSubject(((User) auth.getPrincipal()).getUsername())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(SignatureAlgorithm.HS512, SECRET)
+                .compact();
+        res.addHeader(HEADER_STRING, TOKEN_PREFIX + token);
+    }
+}
+</code></pre> 
+          <p>Note that the authentication filter that we created extends the <a href="http://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/web/authentication/UsernamePasswordAuthenticationFilter.html"><code>UsernamePasswordAuthenticationFilter</code> class</a>. When we add a new filter to Spring Security, we can explicitly define where in the <em>filter chain</em> we want that filter, or we can let the framework figure it out by itself. By extending the filter provided within the security framework, Spring can automatically identify the best place to put it in the security chain.</p> 
+          <p>Our custom authentication filter overwrites two methods of the base class:</p> 
+          <ul> 
+           <li><code>attemptAuthentication</code>: where we parse the user's credentials and issue them to the <a href="https://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/authentication/AuthenticationManager.html"><code>AuthenticationManager</code></a>.</li> 
+           <li><code>successfulAuthentication</code>: which is the method called when a user successfully logs in. We use this method to generate a JWT for this user.</li> 
+          </ul> 
+          <p>Our IDE will probably complain about the code in this class for two reasons. First, because the code imports four constants from a class that we haven't created yet, <code>SecurityConstants</code>. Second, because this class generates JWTS with the help of a class called <code>Jwts</code>, which belongs to a library that we haven't added as dependency to our project.</p> 
+          <p>Let's solve the missing dependency first. In the <code>./build.gradle</code> file, let's add the following line of code:</p> 
+          <pre><code class="gradle">...
+
+dependencies {
+    ...
+    compile("io.jsonwebtoken:jjwt:0.7.0")
+}
+</code></pre> 
+          <p>This will add the <a href="https://github.com/jwtk/jjwt">Java JWT: JSON Web Token for Java and Android library</a> to our project, and will solve the issue of the missing classes. Now we have to create the <code>SecurityConstants</code> class:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.security;
+
+public class SecurityConstants {
+    public static final String SECRET = "SecretKeyToGenJWTs";
+    public static final long EXPIRATION_TIME = 864_000_000; // 10 days
+    public static final String TOKEN_PREFIX = "Bearer ";
+    public static final String HEADER_STRING = "Authorization";
+    public static final String SIGN_UP_URL = "/users/sign-up";
+}
+</code></pre> 
+          <p>This class contains all four constants referenced by the <code>JWTAuthenticationFilter</code> class, alongside a <code>SIGN_UP_URL</code> constant that will be used later.</p> 
+          <h3>The Authorization Filter</h3> 
+          <p>As we have implemented the filter responsible for authenticating users, we now need to implement the filter responsible for user authorization. We create this filter as a new class, called <code>JWTAuthorizationFilter</code>, in the <code>com.auth0.samples.authapi.security</code> package:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.security;
+
+import io.jsonwebtoken.Jwts;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+
+import static com.auth0.samples.authapi.security.SecurityConstants.HEADER_STRING;
+import static com.auth0.samples.authapi.security.SecurityConstants.SECRET;
+import static com.auth0.samples.authapi.security.SecurityConstants.TOKEN_PREFIX;
+
+public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
+
+    public JWTAuthorizationFilter(AuthenticationManager authManager) {
+        super(authManager);
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest req,
+                                    HttpServletResponse res,
+                                    FilterChain chain) throws IOException, ServletException {
+        String header = req.getHeader(HEADER_STRING);
+
+        if (header == null || !header.startsWith(TOKEN_PREFIX)) {
+            chain.doFilter(req, res);
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken authentication = getAuthentication(req);
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        chain.doFilter(req, res);
+    }
+
+    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
+        String token = request.getHeader(HEADER_STRING);
+        if (token != null) {
+            // parse the token.
+            String user = Jwts.parser()
+                    .setSigningKey(SECRET)
+                    .parseClaimsJws(token.replace(TOKEN_PREFIX, ""))
+                    .getBody()
+                    .getSubject();
+
+            if (user != null) {
+                return new UsernamePasswordAuthenticationToken(user, null, new ArrayList&lt;&gt;());
+            }
+            return null;
+        }
+        return null;
+    }
+}
+</code></pre> 
+          <p>We have extended the <a href="https://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/web/authentication/www/BasicAuthenticationFilter.html"><code>BasicAuthenticationFilter</code></a> to make Spring replace it in the <em>filter chain</em> with our custom implementation. The most important part of the filter that we've implemented is the private <code>getAuthentication</code> method. This method reads the JWT from the <code>Authorization</code> header, and then uses <a href="https://github.com/jwtk/jjwt/blob/master/src/main/java/io/jsonwebtoken/Jwts.java"><code>Jwts</code></a> to validate the token. If everything is in place, we set the user in the <a href="https://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/core/context/SecurityContext.html"><code>SecurityContext</code></a> and allow the request to move on.</p> 
+          <h3>Integrating the Security Filters on Spring Boot</h3> 
+          <p>Now that we have both security filters properly created, we have to configure them on the Spring Security filter chain. To do that, we are going to create a new class called <code>WebSecurity</code> in the <code>com.auth0.samples.authapi.security</code> package:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.security;
+
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.context.annotation.Bean;
+
+import static com.auth0.samples.authapi.security.SecurityConstants.SIGN_UP_URL;
+
+@EnableWebSecurity
+public class WebSecurity extends WebSecurityConfigurerAdapter {
+    private UserDetailsService userDetailsService;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    public WebSecurity(UserDetailsService userDetailsService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.userDetailsService = userDetailsService;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable().authorizeRequests()
+                .antMatchers(HttpMethod.POST, SIGN_UP_URL).permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .addFilter(new JWTAuthenticationFilter(authenticationManager()))
+                .addFilter(new JWTAuthorizationFilter(authenticationManager()));
+    }
+
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder);
+    }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", new CorsConfiguration().applyPermitDefaultValues());
+    return source;
+  }
+}
+</code></pre> 
+          <p>We have annotated this class with <code>@EnableWebSecurity</code> and made it extend <code>WebSecurityConfigurerAdapter</code> to take advantage of the default <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-security.html">web security configuration provided by Spring Security</a>. This allows us to fine-tune the framework to our needs by defining three methods:</p> 
+          <ul> 
+           <li><code>configure(HttpSecurity http)</code>: a method where we can define which resources are public and which are secured. In our case, we set the <code>SIGN_UP_URL</code> endpoint as being public and everything else as being secured. We also configure CORS (Cross-Origin Resource Sharing) support through <code>http.cors()</code> and we add a custom security filter in the Spring Security filter chain.</li> 
+           <li><code>configure(AuthenticationManagerBuilder auth)</code>: a method where we defined a custom implementation of <a href="https://docs.spring.io/spring-security/site/docs/current/apidocs/org/springframework/security/core/userdetails/UserDetailsService.html"><code>UserDetailsService</code></a> to load user-specific data in the security framework. We have also used this method to set the encrypt method used by our application (<code>BCryptPasswordEncoder</code>).</li> 
+           <li><code>corsConfigurationSource()</code>: a method where we can allow/restrict our CORS support. In our case we left it wide open by permitting requests from any source (<code>/**</code>).</li> 
+          </ul> 
+          <p>Spring Security doesn't come with a concrete implementation of <code>UserDetailsService</code> that we could use out of the box with our in-memory database. Therefore, we create a new class called <code>UserDetailsServiceImpl</code> in the <code>com.auth0.samples.authapi.user</code> package to provide one:</p> 
+          <pre><code class="java">package com.auth0.samples.authapi.user;
+
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import static java.util.Collections.emptyList;
+
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService {
+    private ApplicationUserRepository applicationUserRepository;
+
+    public UserDetailsServiceImpl(ApplicationUserRepository applicationUserRepository) {
+        this.applicationUserRepository = applicationUserRepository;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        ApplicationUser applicationUser = applicationUserRepository.findByUsername(username);
+        if (applicationUser == null) {
+            throw new UsernameNotFoundException(username);
+        }
+        return new User(applicationUser.getUsername(), applicationUser.getPassword(), emptyList());
+    }
+}
+</code></pre> 
+          <p>The only method that we had to implement is <code>loadUserByUsername</code>. When a user tries to authenticate, this method receives the username, searches the database for a record containing it, and (if found) returns an instance of <code>User</code>. The properties of this instance (<code>username</code> and <code>password</code>) are then checked against the credentials passed by the user in the login request. This last process is executed outside this class, by the Spring Security framework.</p> 
+          <p>We can now rest assured that our endpoints won't be publicly exposed and that we can support authentication and authorization with JWTS on Spring Boot properly. To check everything, let's run our application (through the IDE or through <code>gradle bootRun</code>) and issue the following requests:</p> 
+          <pre><code class="bash"># issues a GET request to retrieve tasks with no JWT
+# HTTP 403 Forbidden status is expected
+curl http://localhost:8080/tasks
+
+# registers a new user
+curl -H "Content-Type: application/json" -X POST -d '{
+    "username": "admin",
+    "password": "password"
+}' http://localhost:8080/users/sign-up
+
+# logs into the application (JWT is generated)
+curl -i -H "Content-Type: application/json" -X POST -d '{
+    "username": "admin",
+    "password": "password"
+}' http://localhost:8080/login
+
+# issue a POST request, passing the JWT, to create a task
+# remember to replace xxx.yyy.zzz with the JWT retrieved above
+curl -H "Content-Type: application/json" \
+-H "Authorization: Bearer xxx.yyy.zzz" \
+-X POST -d '{
+    "description": "Buy watermelon"
+}'  http://localhost:8080/tasks
+
+# issue a new GET request, passing the JWT
+# remember to replace xxx.yyy.zzz with the JWT retrieved above
+curl -H "Authorization: Bearer xxx.yyy.zzz" http://localhost:8080/tasks
+</code></pre> 
+          <h2>Securing Spring Applications with Auth0</h2> 
+          <p>Securing Spring applications with Auth0 is very easy and brings a lot of great features to the table. With Auth0, we only have to write a few lines of code to get a solid <a href="https://auth0.com/docs/identityproviders">identity management solution</a>, including <a href="https://auth0.com/docs/sso/single-sign-on">single sign-on</a>, <a href="https://auth0.com/docs/user-profile">user management</a>, support for <a href="https://auth0.com/docs/identityproviders">social identity providers (like Facebook, GitHub, Twitter, etc.)</a>, <a href="https://auth0.com/enterprise">enterprise (Active Directory, LDAP, SAML, etc.)</a>, and our <a href="https://auth0.com/docs/connections/database/mysql">own database of users</a>.</p> 
+          <p><a href="https://auth0.com/docs/quickstart/backend/java-spring-security">To learn the best way to secure <em>Spring Security API endpoints</em> with Auth0, take a look at this tutorial</a>. Besides providing tutorials for backend technologies (like Spring), <a href="https://auth0.com/docs">the <em>Auth0 Docs</em> webpage also provides tutorials for <em>Mobile/Native apps</em> and <em>Single-Page applications</em></a>.</p> 
+          <h2>Conclusion</h2> 
+          <p>Securing RESTful Spring Boot API with JWTS is not a hard task. This article showed that by creating a couple of classes and extending a few others provided by Spring Security, we can protect our endpoints from unknown users, enable users to register themselves, and authenticate existing users based on JWTS.</p> 
+          <p>Of course that for a production-ready application we would need a few more features, like password retrieval, but the article demystified the most sensible parts of dealing with JWTS to authorize requests on Spring Boot applications.</p> 
+         </div> 
+        </div> 
+       </main> 
+       <div class="bottom-module"> 
+        <section class="custom-try-banner  "> 
+         <div class="banner-wrapper"> 
+          <a href="https://auth0.com/" target="_blank" class="banner-logo"></a> 
+          <p class="banner-text"> Authentication that just works.<br> Any app. Any device. Hosted anywhere. </p> 
+          <a href="javascript:signup()" class="signup-button btn btn-success btn-md">Use Auth0 for Free</a> 
+         </div> 
+        </section> 
+        <div class="try-banner" style="display:none;"> 
+         <a href="javascript:signup()" class="signup-button btn btn-success   btn-lg">Use Auth0 for Free</a> 
+        </div> 
+       </div> 
+       <div id="disqus_thread"></div> 
+      </section> 
+      <aside class="col-md-4 sidebar-column" data-sticky-padding="90" itemscope itemtype="http://schema.org/WPSideBar"> 
+       <section id="newsletter-subs"> 
+        <form class="newsletter-subscriber hide"> 
+         <span data-close=""></span> 
+         <h5 class="title">Subscribe to more awesome content!</h5> 
+         <div class="fields"> 
+          <button type="submit" class="btn btn-lg btn-success"> 
+           <svg fill="#FFFFFF" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"> 
+            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" /> 
+            <path d="M0 0h24v24H0z" fill="none" /> 
+           </svg> </button> 
+          <span><input class="form-control" type="text" placeholder="your@email.com"></span> 
+         </div> 
+        </form> 
+       </section> 
+       <section class="popular-posts"> 
+        <h5 class="section-title">Related Posts</h5> 
+        <article class="popular-post"> 
+         <div class="image-container"> 
+          <a href="/blog/developing-jsf-applications-with-spring-boot/" style="
+
+ 
+
+" class="entry-thumbnail"> 
+           <div class="holder" itemprop="image" itemscope itemtype="http://schema.org/ImageObject"> 
+            <img style="
+  
+ 
+  
+    
+  
+ 
+  
+ 
+  
+" src="https://cdn2.auth0.com/blog/boot-faces/jsf-logo.png" alt="Developing JSF applications with Spring Boot"> 
+            <meta itemprop="url" content="https://cdn2.auth0.com/blog/boot-faces/jsf-logo.png"> 
+            <meta itemprop="width" content="128"> 
+            <meta itemprop="height" content="128"> 
+           </div> </a> 
+         </div> 
+         <div class="text-container"> 
+          <a href="/blog/developing-jsf-applications-with-spring-boot/"><h2 class="popular-post-title h4">Developing JSF applications with Spring Boot</h2></a> 
+          <span class="popular-post-author"><a href="#" rel="author">Bruno Krebs</a></span> 
+         </div> 
+        </article> 
+        <article class="popular-post"> 
+         <div class="image-container"> 
+          <a href="/blog/incrementally-changing-your-database-with-java-and-flyway/" style="
+
+ 
+
+" class="entry-thumbnail"> 
+           <div class="holder" itemprop="image" itemscope itemtype="http://schema.org/ImageObject"> 
+            <img style="
+  
+ 
+  
+    
+  
+ 
+  
+ 
+  
+" src="https://cdn.auth0.com/blog/spring-boot-flyway/logo.png" alt="Database Versioning with Flyway and Java"> 
+            <meta itemprop="url" content="https://cdn.auth0.com/blog/spring-boot-flyway/logo.png"> 
+            <meta itemprop="width" content="128"> 
+            <meta itemprop="height" content="128"> 
+           </div> </a> 
+         </div> 
+         <div class="text-container"> 
+          <a href="/blog/incrementally-changing-your-database-with-java-and-flyway/"><h2 class="popular-post-title h4">Database Versioning with Flyway and Java</h2></a> 
+          <span class="popular-post-author"><a href="#" rel="author">Bruno Krebs</a></span> 
+         </div> 
+        </article> 
+        <article class="popular-post"> 
+         <div class="image-container"> 
+          <a href="/blog/java-platform-and-java-community-process-overview/" style="
+
+ 
+
+" class="entry-thumbnail"> 
+           <div class="holder" itemprop="image" itemscope itemtype="http://schema.org/ImageObject"> 
+            <img style="
+  
+ 
+  
+    
+  
+ 
+  
+ 
+  
+" src="https://cdn.auth0.com/blog/java-jcp/logo.png" alt="Java Platform and Java Community Process Overview"> 
+            <meta itemprop="url" content="https://cdn.auth0.com/blog/java-jcp/logo.png"> 
+            <meta itemprop="width" content="128"> 
+            <meta itemprop="height" content="128"> 
+           </div> </a> 
+         </div> 
+         <div class="text-container"> 
+          <a href="/blog/java-platform-and-java-community-process-overview/"><h2 class="popular-post-title h4">Java Platform and Java Community Process Overview</h2></a> 
+          <span class="popular-post-author"><a href="#" rel="author">Bruno Krebs</a></span> 
+         </div> 
+        </article> 
+       </section> 
+       <script type="text/javascript">
+$('.popular-post a').click(function(e) {
+  metricsLib.track('click:blog-related');
+})
+</script> 
+       <section class="guest-author-widget"> 
+        <article> 
+         <h2 class="guest-author-title">Join the Auth0<br> Guest Author Program</h2> 
+         <button data-close="" class="close-btn"> 
+          <svg width="15px" height="15px" viewbox="0 0 15 15" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink"> 
+           <title>Button - Close</title> 
+           <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.25999999"> 
+            <g transform="translate(-1230.000000, -1219.000000)" fill="#000000"> 
+             <g transform="translate(989.000000, 1204.000000)"> 
+              <path d="M248.5,30 C252.642136,30 256,26.6421356 256,22.5 C256,18.3578644 252.642136,15 248.5,15 C244.357864,15 241,18.3578644 241,22.5 C241,26.6421356 244.357864,30 248.5,30 Z M244.75,19.8214286 L245.821429,18.75 L248.5,21.4285714 L251.178571,18.75 L252.25,19.8214286 L249.571429,22.5 L252.25,25.1785714 L251.178571,26.25 L248.5,23.5714286 L245.821429,26.25 L244.75,25.1785714 L247.428571,22.5 L244.75,19.8214286 Z" id="Button---Clear" /> 
+             </g> 
+            </g> 
+           </g> 
+          </svg> </button> 
+         <a class="img-link" href="https://auth0.com/guest-authors"><img class="guest-author-image" src="https://cdn.auth0.com/blog/guest-authors/pencil.png" alt="Auth0 Guest Author Program"></a> 
+         <a class="guest-author-link" href="https://auth0.com/guest-authors" rel="external"> Learn More 
+          <svg width="6px" height="9px" viewbox="0 0 6 9" version="1.1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink"> 
+           <title>Learn More</title> 
+           <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd"> 
+            <g transform="translate(-1166.000000, -1345.000000)" fill="#0A86B1"> 
+             <g transform="translate(989.000000, 1204.000000)"> 
+              <g transform="translate(87.000000, 132.000000)"> 
+               <polygon id="Path" points="90 9 95.5514274 13.4411825 90 17.8820874" /> 
+              </g> 
+             </g> 
+            </g> 
+           </g> 
+          </svg> </a> 
+        </article> 
+        <script type="text/javascript">
+(function() {
+if (Math.random() >= .5) {
+        title = document.getElementsByClassName("guest-author-title")[0];
+        title.innerHTML = 'Join the Auth0<br> Ambassador Program'
+        img = document.getElementsByClassName("guest-author-image")[0];
+        img.src = 'https://auth0.com/pages/ambassador-program/assets/ambassador-spaceman-stand-up-1x.gif'
+        img.alt = 'Auth0 Ambassador Program'
+        imgLink = document.getElementsByClassName("img-link")[0];
+        imgLink.href = 'https://auth0.com/ambassador-program'
+	learnLink = document.getElementsByClassName("guest-author-link")[0];
+	learnLink.href = 'https://auth0.com/ambassador-program'
+}})();
+</script> 
+       </section> 
+      </aside> 
+     </div> 
+     <div itemprop="publisher" itemscope itemtype="https://schema.org/Organization"> 
+      <div itemprop="logo" itemscope itemtype="https://schema.org/ImageObject"> 
+       <meta itemprop="url" content="https://i.cloudup.com/BngR4GufYd-3000x3000.png"> 
+       <meta itemprop="width" content="100"> 
+       <meta itemprop="height" content="37"> 
+      </div> 
+      <meta itemprop="name" content="Auth0"> 
+     </div> 
+     <script>
+
+        var disqus_shortname = 'auth0blog'; // required: replace example with your forum shortname
+
+        var disqus_config = function () {
+            this.page.url = location.href.split('?')[0];
+        };
+
+        (function() {  // REQUIRED CONFIGURATION VARIABLE: EDIT THE SHORTNAME BELOW
+            var d = document, s = d.createElement('script');
+
+            s.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+
+            s.setAttribute('data-timestamp', +new Date());
+            (d.head || d.body).appendChild(s);
+        })();
+    </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+     </noscript> 
+    </div> 
+   </article> 
+   <footer class="site-footer"> 
+    <div class="container"> 
+     <div class="logo">
+      <img src="https://cdn.auth0.com/styleguide/components/1.0.8/media/logos/img/badge.png" width="30">
+     </div> 
+     <div class="footer-grid"> 
+      <div class="column"> 
+       <div class="item"> 
+        <h6>Product</h6> 
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/pricing">Pricing</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/why-auth0">Why Auth0</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/how-it-works">How It Works</a>
+       </div> 
+      </div> 
+      <div class="column"> 
+       <div class="item"> 
+        <h6>Company</h6> 
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/about">About Us</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/blog">Blog</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/jobs">Jobs</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/press">Press</a>
+       </div> 
+      </div> 
+      <div class="column"> 
+       <div class="item"> 
+        <h6>Security</h6> 
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/availability-trust">Availability &amp; Trust</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/security">Security</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/whitehat">White Hat</a>
+       </div> 
+      </div> 
+      <div class="column"> 
+       <div class="item"> 
+        <h6>Learn</h6> 
+       </div> 
+       <div class="item">
+        <a href="https://support.auth0.com">Help &amp; Support</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/docs">Documentation</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/opensource">Open Source</a>
+       </div> 
+      </div> 
+      <div class="column"> 
+       <div class="item"> 
+        <h6>Extend</h6> 
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/lock">Lock</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/wordpress">WordPress</a>
+       </div> 
+       <div class="item">
+        <a href="https://auth0.com/docs/apiv2">API Explorer</a>
+       </div> 
+      </div> 
+      <div class="contact"> 
+       <div class="column"> 
+        <div class="item"> 
+         <h6>Contact</h6> 
+        </div> 
+        <div class="item item-text">
+         10900 NE 8th St.
+         <br>Suite 700
+         <br>Bellevue, WA 98004
+        </div> 
+       </div> 
+       <div class="column no-heading"> 
+        <div class="item">
+         <a href="tel:+18882352699">+1 (888) 235-2699</a>
+        </div> 
+        <div class="item">
+         <a href="tel:+14253126521">+1 (425) 312-6521</a>
+        </div> 
+        <div class="item">
+         <a href="https://support.auth0.com">Support Center</a>
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+     <div class="colophon"> 
+      <div class="column"> 
+       <div class="social"> 
+        <div class="twitter"> 
+         <iframe allowtransparency="true" frameborder="0" scrolling="no" src="//platform.twitter.com/widgets/follow_button.html?screen_name=auth0" class="twitter"></iframe> 
+        </div> 
+        <div class="facebook"> 
+         <iframe src="//www.facebook.com/plugins/like.php?href=https%3A%2F%2Ffacebook.com%2Fgetauth0&amp;width&amp;layout=button_count&amp;action=like&amp;show_faces=false&amp;show_count=false&amp;share=false&amp;height=21&amp;appId=507756515938786" scrolling="no" frameborder="0" allowtransparency="true" class="facebook"></iframe> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="column"> 
+       <ul class="list-inline text-right"> 
+        <li><a href="https://auth0.com/privacy">Privacy Policy</a></li> 
+        <li><a href="https://auth0.com/terms">Terms of Service</a></li> 
+        <li><span>© 2013-2016 Auth0 ® Inc. All Rights Reserved.</span> </li> 
+       </ul> 
+      </div> 
+     </div> 
+    </div> 
+   </footer> 
+  </div> 
+  <script src="/blog/push-notification.js" type="text/javascript"></script> 
+  <script src="/blog/js/vendor/js-cookie.js" type="text/javascript"></script> 
+  <!-- btn ontact us  ---> 
+  <script type="text/javascript">
+      var Auth0ContactForm = window.Auth0ContactForm.default;
+      var contactFormOptions = {
+        onModalOpen: function () {
+          metricsLib.track('open:talk-to-sales');
+        },
+        onFormSuccess: function (metricsData) {
+          metricsLib.track('register:lead:talk-to-sales-modal', metricsData);
+          metricsLib.track('sent:talk-to-sales', metricsData);
+        },
+        onFormFail: function (metricsData) {
+          metricsLib.track('fail:register:lead:talk-to-sales-modal', metricsData);
+          metricsLib.track('fail-sent:talk-to-sales', metricsData);
+        }
+      };
+      var contactForm = new Auth0ContactForm(contactFormOptions);
+
+
+      $('.contact-us').on('click', function() {
+        contactForm.show({includePhoneField: true });
+      });
+
+    </script> 
+  <script type="text/javascript">
+    try {
+      window.abTestingLib.load({ fetchFn: function () { return [{"name":"enterprise-addons-sections-to-two-columns","path":"^/pricing/?$","description":"Change Enterprise Addons sections to be two columns","application":"website","variants":[{"name":"original","description":"Original","settings":{"weight":0.5},"properties":{"___stub":""}},{"name":"change-two-columns","description":"Change sections to two columns","settings":{"weight":0.5},"properties":{"auth":{"args":["ctx"],"body":"var $ = ctx.$;var styleId = $('head').find('#enterprise-addon');var styles = '<style id=\"enterprise-addon\">' +                '@media (min-width: 992px){' +                  'html.pricing-page .enterprise-addon-container .addons-list { display: flex; flex-wrap: wrap; justify-content: space-between;}' +                  'html.pricing-page .enterprise-addon-container .addons-list .addon-component{ flex: 0 1 46%; border-bottom: 0; position: relative; }' +                  'html.pricing-page .enterprise-addon-container .addons-list .addon-component .row .addon-list { display: flex; justify-content: space-between; }' +                  'html.pricing-page .enterprise-addon-container .addons-list .addon-component .row .addon-footer { display: flex; justify-content: space-between; position: absolute; bottom: 2px;}' +                  'html.pricing-page .enterprise-addon-container .addons-list .addon-component .row .col-md-5 { width: 100%; padding: 0; position: static;}' +                  'html.pricing-page .enterprise-addon-container .addons-list .addon-component .row .col-md-7 { width: 100%; padding: 0; position: static;}' +                '};' +              '</style>';if (!styleId.length) {  $('head').append(styles);}","type":"js"}}}]},{"name":"move-logo-section","path":"^\\/","description":"move the logo section aboe the Risk-based / Enterprise-class availability sections","application":"website","variants":[{"name":"original","description":"Original","settings":{"weight":0.5},"properties":{"___stub":""}},{"name":"move-section","description":"move logo section","settings":{"weight":0.5},"properties":{"both":{"args":["ctx"],"body":"var $ = ctx.$;var styleId = $('head').find('#move-section');var styles = '<style id=\"move-section\">' +                '.new-homepage-page .customers{ padding-top: 0px;}' +                '.new-homepage-page .features-articles{ padding-top: 230px; }' +                '@media (min-width: 992px){' +                  '.new-homepage-page .features-articles .article-container.map-bg:before{ top: -925px;}' +                '};' +                '@media (max-width: 991px){' +                  '.new-homepage-page .features-articles{ padding-top: 230px;}' +                '};' +              '</style>';if (!styleId.length) {  $('head').append(styles);}if (!$('.features-articles .customers-list').length) {  $('.customers > .container').insertBefore('.features-articles > .container');  $('.features-articles').addClass('customers');}","type":"js"}}}]},{"name":"show-prices-when-priced-annually","path":"^/pricing/?$","description":"Show Monthly prices when Priced Annually","application":"website","variants":[{"name":"original","description":"Original","settings":{"weight":0.5},"properties":{"___stub":""}},{"name":"when-paid-annually","description":"Annual plan","settings":{"weight":0.5},"properties":{"___stub":""}}]}]; }});
+      window.abTestingLib.integration('auth0metrics').start({ metrics: window.metricsLib});
+      window.abTestingLib.start().then(enhanceAnalytics).then(function () {
+        try {
+          window.abLoaded = true;
+          // Save experiments on the global scope
+          window.experiments = window.abTestingLib.getExperiments();
+          executeABExperiments();
+
+        } catch (e) {
+          console.error('Error running AB experiments.');
+          $('#pjax').css('visibility', 'visible');
+          window.abLoaded = true;
+        }
+      });
+
+      function enhanceAnalytics() {
+        var analytics = window.abTestingLib.analytics;
+
+        var originalSetCurrentVariantName = analytics.setCurrentVariantName.bind(analytics);
+        var originalGetCurrentVariantName = analytics.getCurrentVariantName.bind(analytics);
+
+        var enhancedSetCurrentVariantName = function (variantName, value) {
+          setCurrentVariantName(variantName, value);
+          originalSetCurrentVariantName(variantName, value);
+        };
+
+        var enhancedGetCurrentVariantName = function (variantName) {
+          var originalValue = originalGetCurrentVariantName(variantName);
+          var cookieValue = getCurrentVariantName(variantName);
+
+          if (originalValue != cookieValue) {
+            originalSetCurrentVariantName(variantName, cookieValue);
+          }
+
+          return cookieValue;
+        };
+
+        analytics.setCurrentVariantName = enhancedSetCurrentVariantName;
+        analytics.getCurrentVariantName = enhancedGetCurrentVariantName;
+        window.setVariant = enhancedSetCurrentVariantName;
+        window.getVariant = enhancedGetCurrentVariantName;
+      }
+
+      function setCurrentVariantName(variantName, value) {
+        var variants = loadCookieVariants();
+        variants[variantName] = value;
+        saveCookieVariants(variants);
+      }
+
+      function getCurrentVariantName(variantName) {
+        var variants = loadCookieVariants();
+        return variants[variantName];
+      }
+
+      function loadCookieVariants() {
+        return JSON.parse(Cookies.get('ajs_ab.traits') || '{}');
+      }
+
+      function saveCookieVariants(variants) {
+        return Cookies.set('ajs_ab.traits', JSON.stringify(variants), {
+          expires: 365,
+          path: '/'
+        });
+      }
+    } catch (e) {
+      console.error('Error initializing ABTesting lib. ABTesting will be disabled');
+      $('#pjax').css('visibility', 'visible');
+      window.abLoaded = true;
+    }
+    </script> 
+  <script type="text/javascript">
+    function executeABExperiments () {
+      var path = window.location.pathname;
+      var experiments = window.experiments;
+
+      if(!window.abLoaded) {
+        return;
+      }
+
+      if(!experiments) {
+        // Restore content
+        $('#pjax').css('visibility', 'visible');
+        return;
+      }
+
+      try {
+        var experimentsForPath = experiments.runAllByPath(path);
+        var winningVariants = [];
+
+        experimentsForPath.experiments.forEach(function (e) {
+          winningVariants = winningVariants.concat(e.getCurrentVariant().getPropertiesByType('js'));
+        });
+
+        var variantContext = {};
+        variantContext.$ = $;
+
+        winningVariants.forEach(function(v) {
+          v.runInContext(variantContext);
+        });
+      } catch (e) {
+        console && console.error("Error running experiments for path:%s", path);
+      } finally {
+        // Restore content
+        $('#pjax').css('visibility', 'visible');
+      }
+    }
+    </script> 
+  <script type="text/javascript">
+      // ab-watchdog, after 1500ms, show the site content no matter the state
+      // of the experiments
+      setTimeout(function () {
+        $('#pjax').css('visibility', 'visible');
+      }, 400);
+    </script> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/default.min.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/go.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/languages/elm.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery.pjax/1.9.6/jquery.pjax.min.js"></script> 
+  <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script> 
+  <script src="/blog/js/vendor/nprogress.js"></script> 
+  <script src="/blog/js/vendor/moment.min.js"></script> 
+  <script src="/blog/js/vendor/jquery.csbuttons.min.js"></script> 
+  <script async src="/blog/js/vendor/html2canvas.js"></script> 
+  <script src="/blog/js/vendor/selection-sharer.min.js"></script> 
+  <script src="/blog/js/vendor/jquery.sticky-kit.min.js"></script> 
+  <script src="/blog/js/vendor/jquery.ba-throttle-debounce.min.js"></script> 
+  <script type="text/javascript">
+      var getBasicInfo = function () {
+        return {
+          path: window.location.pathname,
+          url: window.location.toString(),
+          title: document.title,
+          referrer: document.referrer,
+          category: 'Lock',
+          label: 'blog'
+        }
+      };
+
+      var getBlogImage = function(getDOM) {
+          var img = $('.banner .entry-thumbnail img').first();
+
+          if(img.length) {
+              convertToDataURLviaCanvas(img.attr('src'), function(dataURL) {
+                img.replaceWith('<img src="' + dataURL + '">');
+              });
+          }
+
+          setTimeout(function() {
+            var banner = $('.banner');
+            var dom = $('.banner .entry-thumbnail');
+
+            if(getDOM === 'banner') {
+              dom = banner;
+            } else {
+              banner.addClass('export-icon');
+            }
+
+            banner.addClass('export');
+
+            html2canvas(dom.get(0), {
+              onrendered: function(canvas) {
+                var img = canvas.toDataURL("image/png");
+
+                banner.removeClass('export');
+
+                window.location = img;
+              }
+            });
+          }, 20);
+
+          function convertToDataURLviaCanvas(url, callback, outputFormat){
+            var img = new Image();
+
+            img.crossOrigin = 'Anonymous';
+
+            img.onload = function(){
+                var canvas = document.createElement('CANVAS');
+                var ctx = canvas.getContext('2d');
+                var dataURL;
+
+                canvas.height = this.height;
+                canvas.width = this.width;
+                ctx.drawImage(this, 0, 0);
+                dataURL = canvas.toDataURL(outputFormat);
+                callback(dataURL);
+                canvas = null;
+            };
+
+            img.src = url;
+          }
+      };
+
+      var getBlogBanner = function() {
+          getBlogImage('banner');
+      };
+
+      $(function() {
+
+
+        function stickyElements() {
+
+          function stickElement($elem, options) {
+            $elem.stick_in_parent(Object.assign({},{
+              offset_top: parseInt($elem.attr("data-sticky-padding")) || 0
+            }, options ));
+          }
+
+          stickElement($('.sidebar-column'));
+          stickElement($('.utility-bar'));
+          stickElement($('.blog-navigation'), {parent: "body"});
+        }
+
+        function initBlogSubscriber() {
+          if(localStorage.isBlogSubscriber !== true) {
+            $('form.newsletter-subscriber').removeClass('hide');
+          }
+
+          function closeSticky($module, animation) {
+            $module.addClass('animated ' + animation );
+            $module.on('animationend webkitAnimationEnd oAnimationEnd', function () {
+              $module.remove()
+              $(document.body).trigger("sticky_kit:recalc");
+            });
+          }
+
+          $('form.newsletter-subscriber').on('click', '[data-close]', function() {
+            var $module = $(this).closest('form');
+
+            closeSticky($module, 'fadeOutUp');
+          });
+
+          $('.guest-author-widget').on('click', '[data-close]', function() {
+            var $module = $(this).closest('section');
+            closeSticky($module, 'fadeOutRight');
+          });
+
+          $('form.newsletter-subscriber').on('submit', function(e) {
+            var $module = $(this);
+            var o_content = $module.html();
+            var value = $module.find('input').val();
+
+            e.preventDefault();
+
+            if(isValidEmail(value)) {
+              onValid();
+            } else {
+              alert('Please enter a valid email');
+            }
+
+            function isValidEmail(val) {
+              if(/^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/.test(val)) {
+                return true;
+              }
+
+              return false;
+            }
+
+            function onValid() {
+              $module.find('.fields').html('<p class="loading">Sending...</p>');
+
+              $.ajax({
+                type: "POST",
+                url: 'https://webtask.it.auth0.com/api/run/wt-martin-gon_to-0/auth0-blog-user?webtask_no_cache=1',
+                data: {
+                  email: value
+                },
+                success: onSuccess,
+                error: onFail
+              });
+            }
+
+            function onFail(response) {
+              $module.find('.fields').html('<p class="subscription-failed">There’s a problem subscribing to the list right now. Please try again later or <a href="https://support.auth0.com">contact support</a>.</p>');
+            }
+
+            function onSuccess(response) {
+              localStorage.setItem('isBlogSubscriber', true);
+
+              var blogRegData = getBasicInfo();
+              blogRegData.trackData = value;
+              blogRegData.email = value;
+              blogRegData.formId = '1052';
+              blogRegData.lpId = '1117';
+              blogRegData.Blog_Subs__c = true;
+              metricsLib.track('register:lead:blog-newsletter', blogRegData);
+
+              $module.find('.title').text('Thanks for subscribing');
+              $module.find('.fields').html('<p>You’ll be getting lots of awesome content!</p>');
+
+            }
+          });
+        }
+
+        function initialize() {
+          initBlogSubscriber();
+
+          $('pre code').each(function(i, block) {
+             hljs.highlightBlock(block);
+          });
+
+          $('.post-info time').each(function() {
+            var $current = $(this);
+            var dateString = new Date($current.text());
+            var diff = moment(dateString).diff(moment(new Date()), 'days');
+            var dateFormat;
+
+            dateFormat = moment(dateString).fromNow();
+
+            if(diff > -10) {
+              $current.text(dateFormat);
+            }
+
+            if (diff === 0) {
+              $current.text('Today');
+            }
+
+            $current.addClass('rendered');
+          });
+
+          // Social Buttons
+          $('.social-stats .network').cSButtons();
+
+          // Force content links to _blank if not explicitly set to _self
+          $('.entry-content a').each(function() {
+            var _$this = $(this);
+            var _target = _$this.attr('target');
+
+            if (_target !== '_self') {
+             _$this.attr('target', '_blank');
+            }
+          });
+
+          // Handle scroll pos
+          if($(window).data('navScroll')) {
+            $(window).scrollTop($(window).data('navScroll'));
+
+            $(window).data('navScroll', 0);
+          } else {
+            $(window).scrollTop(0);
+          }
+
+          stickyElements();
+        }
+
+        function setEvents() {
+          hljs.configure({
+            tabReplace: '  ', // 4 spaces
+            classPrefix: ''
+          });
+
+          NProgress.configure({ showSpinner: false, trickleSpeed: 600 });
+
+          metricsLib.page();
+
+          $('p').selectionSharer();
+
+          var selectionSharerFacebook = $('#selectionSharerPopover-inner .action.facebook')[0];
+          $(selectionSharerFacebook).on('click', function() {
+            metricsLib.track('blog:share:custom:facebook');
+          });
+
+          var selectionSharerTwitter = $('#selectionSharerPopover-inner .action.tweet')[0];
+          $(selectionSharerTwitter).on('click', function() {
+            metricsLib.track('blog:share:custom:twitter');
+          });
+
+          var selectionSharerEmail = $('#selectionSharerPopover-inner .action.email')[0];
+          $(selectionSharerEmail).on('click', function() {
+            metricsLib.track('blog:share:custom:email');
+          });
+
+          $(window).on('load', function() {
+            $(document.body).trigger("sticky_kit:recalc");
+          });
+
+
+          $('body').on('click', '.blog-navigation a', function() {
+            var tabs = $('.blog-navigation li');
+            var activeTab = $(this).parent();
+
+            $(window).data('navScroll', $(window).scrollTop());
+
+            tabs.removeClass('active');
+            activeTab.addClass('active');
+          });
+
+          initialize();
+        }
+
+        setEvents();
+      });
+    </script> 
+  <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'auth0blog'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script'); s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script> 
+  <script>
+      (function(h,o,t,j,a,r){
+          h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+          h._hjSettings={hjid:301495,hjsv:5};
+          a=o.getElementsByTagName('head')[0];
+          r=o.createElement('script');r.async=1;
+          r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+          a.appendChild(r);
+      })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+    </script> 
+ </body>
+</html>

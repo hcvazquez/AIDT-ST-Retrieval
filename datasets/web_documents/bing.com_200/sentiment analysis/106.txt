@@ -1,0 +1,1629 @@
+<!doctype html>
+<!--// OPEN HTML //-->
+<html lang="en" xmlns:og="http://opengraphprotocol.org/schema/" xmlns:fb="http://www.facebook.com/2008/fbml">
+ <!--// OPEN HEAD //-->
+ <head> 
+  <!-- Manually set render engine for Internet Explorer, prevent any plugin overrides --> 
+  <meta http-equiv="X-UA-Compatible" content="IE=EmulateIE10"> 
+  <!--// SITE TITLE //--> 
+  <title>Sentiment Analysis with Twitter and rStudio | Andrew Bonneau</title> 
+  <!--// SITE META //--> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"> 
+  <!--// PINGBACK & FAVICON //--> 
+  <link rel="pingback" href="http://www.andrewbonneau.com/xmlrpc.php"> 
+  <script>function writeCookie(){the_cookie=document.cookie,the_cookie&&window.devicePixelRatio>=2&&(the_cookie="pixel_ratio="+window.devicePixelRatio+";"+the_cookie,document.cookie=the_cookie)}writeCookie();</script> 
+  <!-- All in One SEO Pack 2.3.16 by Michael Torbert of Semper Fi Web Design[396,469] --> 
+  <meta name="description" content="Utilizing twitteR R package with tm R package to conduct sentiment analysis on various tweet keywords."> 
+  <meta name="keywords" content="r,rstudio,tweet,twitter,sentiment,analysis,data,big data,sentiment analysis,code,visualization"> 
+  <link rel="canonical" href="http://www.andrewbonneau.com/code/sentiment-analysis-with-twitter-and-tm-r-packages/"> 
+  <!-- /all in one seo pack --> 
+  <link rel="alternate" type="application/rss+xml" title="Andrew Bonneau » Feed" href="http://www.andrewbonneau.com/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Andrew Bonneau » Comments Feed" href="http://www.andrewbonneau.com/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Andrew Bonneau » Sentiment Analysis with twitteR and tm R packages Comments Feed" href="http://www.andrewbonneau.com/code/sentiment-analysis-with-twitter-and-tm-r-packages/feed/"> 
+  <!-- Facebook Meta --> 
+  <meta property="og:title" content="Sentiment Analysis with twitteR and tm R packages - Andrew Bonneau"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:url" content="http://www.andrewbonneau.com/code/sentiment-analysis-with-twitter-and-tm-r-packages/"> 
+  <meta property="og:site_name" content="Andrew Bonneau"> 
+  <meta property="og:description" content=""> 
+  <!-- Twitter Card data --> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:title" content="Sentiment Analysis with twitteR and tm R packages"> 
+  <meta name="twitter:description" content=""> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"http:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/www.andrewbonneau.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.2.4"}};
+			!function(a,b,c){function d(a){var c=b.createElement("canvas"),d=c.getContext&&c.getContext("2d");return d&&d.fillText?(d.textBaseline="top",d.font="600 32px Arial","flag"===a?(d.fillText(String.fromCharCode(55356,56812,55356,56807),0,0),c.toDataURL().length>3e3):(d.fillText(String.fromCharCode(55357,56835),0,0),0!==d.getImageData(16,16,1,1).data[0])):!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g;c.supports={simple:d("simple"),flag:d("flag")},c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.simple&&c.supports.flag||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="gallery-bank-popup.css-css" href="http://www.andrewbonneau.com/wp-content/plugins/gallery-bank/assets/admin/layout/css/gallery-bank-popup.css?ver=4.2.4" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wp-quicklatex-format-css" href="http://www.andrewbonneau.com/wp-content/plugins/wp-quicklatex/css/quicklatex-format.css?ver=4.2.4" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crayon-css" href="http://www.andrewbonneau.com/wp-content/plugins/crayon-syntax-highlighter/css/min/crayon.min.css?ver=_2.7.2_beta" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crayon-theme-sublime-text-css" href="http://www.andrewbonneau.com/wp-content/plugins/crayon-syntax-highlighter/themes/sublime-text/sublime-text.css?ver=_2.7.2_beta" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crayon-font-monaco-css" href="http://www.andrewbonneau.com/wp-content/plugins/crayon-syntax-highlighter/fonts/monaco.css?ver=_2.7.2_beta" type="text/css" media="all"> 
+  <link rel="stylesheet" id="rs-plugin-settings-css" href="http://www.andrewbonneau.com/wp-content/plugins/revslider/rs-plugin/css/settings.css?ver=4.6.5" type="text/css" media="all"> 
+  <style id="rs-plugin-settings-inline-css" type="text/css">
+.tp-caption a{color:#ff7302;text-shadow:none;-webkit-transition:all 0.2s ease-out;-moz-transition:all 0.2s ease-out;-o-transition:all 0.2s ease-out;-ms-transition:all 0.2s ease-out}.tp-caption a:hover{color:#ffa902}
+</style> 
+  <link rel="stylesheet" id="spb-frontend-min-css" href="http://www.andrewbonneau.com/wp-content/plugins/swift-framework/includes/page-builder/frontend-assets/css/spb-styles.min.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wpctc_wpctc-css" href="http://www.andrewbonneau.com/wp-content/plugins/wp-category-tag-could/css/wpctc.min.css?ver=1.7.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="sf-combined-min-css" href="http://www.andrewbonneau.com/wp-content/themes/atelier/css/sf-combined.min.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="sf-responsive-min-css" href="http://www.andrewbonneau.com/wp-content/themes/atelier/css/responsive.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="sf-style-css" href="http://www.andrewbonneau.com/wp-content/themes/atelier/style.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="redux-google-fonts-sf_atelier_options-css" href="http://fonts.googleapis.com/css?family=Lato%3A100%2C300%2C400%2C700%2C900%2C100italic%2C300italic%2C400italic%2C700italic%2C900italic%7CSource+Sans+Pro%3A200%2C300%2C400%2C600%2C700%2C900%2C200italic%2C300italic%2C400italic%2C600italic%2C700italic%2C900italic&amp;ver=1505894647" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-includes/js/jquery/jquery.js?ver=1.11.2"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var CrayonSyntaxSettings = {"version":"_2.7.2_beta","is_admin":"0","ajaxurl":"http:\/\/www.andrewbonneau.com\/wp-admin\/admin-ajax.php","prefix":"crayon-","setting":"crayon-setting","selected":"crayon-setting-selected","changed":"crayon-setting-changed","special":"crayon-setting-special","orig_value":"data-orig-value","debug":""};
+var CrayonSyntaxStrings = {"copy":"Press %s to Copy, %s to Paste","minimize":"Click To Expand Code"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/crayon-syntax-highlighter/js/min/crayon.min.js?ver=_2.7.2_beta"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/revslider/rs-plugin/js/jquery.themepunch.tools.min.js?ver=4.6.5"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/revslider/rs-plugin/js/jquery.themepunch.revolution.min.js?ver=4.6.5"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/wp-quicklatex/js/wp-quicklatex-frontend.js?ver=1.0"></script> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.andrewbonneau.com/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.andrewbonneau.com/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Revisiting UK Precipitation Data" href="http://www.andrewbonneau.com/code/revisiting-uk-precipitation-data/"> 
+  <link rel="next" title="leaflet.js project" href="http://www.andrewbonneau.com/code/leaflet-js-project/"> 
+  <meta name="generator" content="WordPress 4.2.4"> 
+  <link rel="shortlink" href="http://www.andrewbonneau.com/?p=206"> 
+  <script type="text/javascript">
+			jQuery(document).ready(function() {
+				// CUSTOM AJAX CONTENT LOADING FUNCTION
+				var ajaxRevslider = function(obj) {
+				
+					// obj.type : Post Type
+					// obj.id : ID of Content to Load
+					// obj.aspectratio : The Aspect Ratio of the Container / Media
+					// obj.selector : The Container Selector where the Content of Ajax will be injected. It is done via the Essential Grid on Return of Content
+					
+					var content = "";
+
+					data = {};
+					
+					data.action = 'revslider_ajax_call_front';
+					data.client_action = 'get_slider_html';
+					data.token = 'a40face158';
+					data.type = obj.type;
+					data.id = obj.id;
+					data.aspectratio = obj.aspectratio;
+					
+					// SYNC AJAX REQUEST
+					jQuery.ajax({
+						type:"post",
+						url:"http://www.andrewbonneau.com/wp-admin/admin-ajax.php",
+						dataType: 'json',
+						data:data,
+						async:false,
+						success: function(ret, textStatus, XMLHttpRequest) {
+							if(ret.success == true)
+								content = ret.data;								
+						},
+						error: function(e) {
+							console.log(e);
+						}
+					});
+					
+					 // FIRST RETURN THE CONTENT WHEN IT IS LOADED !!
+					 return content;						 
+				};
+				
+				// CUSTOM AJAX FUNCTION TO REMOVE THE SLIDER
+				var ajaxRemoveRevslider = function(obj) {
+					return jQuery(obj.selector+" .rev_slider").revkill();
+				};
+
+				// EXTEND THE AJAX CONTENT LOADING TYPES WITH TYPE AND FUNCTION
+				var extendessential = setInterval(function() {
+					if (jQuery.fn.tpessential != undefined) {
+						clearInterval(extendessential);
+						if(typeof(jQuery.fn.tpessential.defaults) !== 'undefined') {
+							jQuery.fn.tpessential.defaults.ajaxTypes.push({type:"revslider",func:ajaxRevslider,killfunc:ajaxRemoveRevslider,openAnimationSpeed:0.3});   
+							// type:  Name of the Post to load via Ajax into the Essential Grid Ajax Container
+							// func: the Function Name which is Called once the Item with the Post Type has been clicked
+							// killfunc: function to kill in case the Ajax Window going to be removed (before Remove function !
+							// openAnimationSpeed: how quick the Ajax Content window should be animated (default is 0.3)
+						}
+					}
+				},30);
+			});
+		</script> 
+  <script type="text/javascript">
+			var ajaxurl = 'http://www.andrewbonneau.com/wp-admin/admin-ajax.php';
+			</script> 
+  <!--[if lt IE 9]><script data-cfasync="false" src="http://www.andrewbonneau.com/wp-content/themes/atelier/js/respond.js"></script><script data-cfasync="false" src="http://www.andrewbonneau.com/wp-content/themes/atelier/js/html5shiv.js"></script><script data-cfasync="false" src="http://www.andrewbonneau.com/wp-content/themes/atelier/js/excanvas.compiled.js"></script><![endif]-->
+  <style type="text/css">
+::selection, ::-moz-selection {background-color: #50dd21; color: #fff;}.accent-bg, .funded-bar .bar {background-color:#50dd21;}.accent {color:#50dd21;}span.highlighted, span.dropcap4, .loved-item:hover .loved-count, .flickr-widget li, .portfolio-grid li, figcaption .product-added, .woocommerce .widget_layered_nav ul li.chosen small.count, .woocommerce .widget_layered_nav_filters ul li a, .sticky-post-icon, .fw-video-close:hover {background-color: #50dd21!important; color: #ffffff!important;}a:hover, a:focus, #sidebar a:hover, .pagination-wrap a:hover, .carousel-nav a:hover, .portfolio-pagination div:hover > i, #footer a:hover, .beam-me-up a:hover span, .portfolio-item .portfolio-item-permalink, .read-more-link, .blog-item .read-more, .blog-item-details a:hover, .author-link, span.dropcap2, .spb_divider.go_to_top a, .item-link:hover, #header-translation p a, #breadcrumbs a:hover, .ui-widget-content a:hover, .yith-wcwl-add-button a:hover, #product-img-slider li a.zoom:hover, .woocommerce .star-rating span, #jckqv .woocommerce-product-rating .star-rating span:before, .article-body-wrap .share-links a:hover, ul.member-contact li a:hover, .bag-product a.remove:hover, .bag-product-title a:hover, #back-to-top:hover,  ul.member-contact li a:hover, .fw-video-link-image:hover i, .ajax-search-results .all-results:hover, .search-result h5 a:hover .ui-state-default a:hover, .fw-video-link-icon:hover {color: #50dd21;}.carousel-wrap > a:hover,  .woocommerce p.stars a.active:after,  .woocommerce p.stars a:hover:after {color: #50dd21!important;}.read-more i:before, .read-more em:before {color: #50dd21;}textarea:focus, input:focus, input[type="text"]:focus, input[type="email"]:focus, textarea:focus, .bypostauthor .comment-wrap .comment-avatar,.search-form input:focus, .wpcf7 input:focus, .wpcf7 textarea:focus, .ginput_container input:focus, .ginput_container textarea:focus, .mymail-form input:focus, .mymail-form textarea:focus, input[type="tel"]:focus, input[type="number"]:focus {border-color: #50dd21!important;}nav .menu ul li:first-child:after,.navigation a:hover > .nav-text, .returning-customer a:hover {border-bottom-color: #50dd21;}nav .menu ul ul li:first-child:after {border-right-color: #50dd21;}.spb_impact_text .spb_call_text {border-left-color: #50dd21;}.spb_impact_text .spb_button span {color: #fff;}a[rel="tooltip"], ul.member-contact li a, a.text-link, .tags-wrap .tags a, .logged-in-as a, .comment-meta-actions .edit-link, .comment-meta-actions .comment-reply, .read-more {border-color: #444444;}.super-search-go {border-color: #50dd21!important;}.super-search-go:hover {background: #50dd21!important;border-color: #50dd21!important;}.owl-pagination .owl-page span {background-color: #e4e4e4;}.owl-pagination .owl-page::after {background-color: #50dd21;}.owl-pagination .owl-page:hover span, .owl-pagination .owl-page.active a {background-color: #222222;}body.header-below-slider .home-slider-wrap #slider-continue:hover {border-color: #50dd21;}body.header-below-slider .home-slider-wrap #slider-continue:hover i {color: #50dd21;}#one-page-nav li a:hover > i {background: #50dd21;}#one-page-nav li.selected a:hover > i {border-color: #50dd21;}#one-page-nav li .hover-caption {background: #50dd21; color: #ffffff;}#one-page-nav li .hover-caption:after {border-left-color: #50dd21;}.love-it:hover > svg .stroke {stroke: #50dd21!important;}.love-it:hover > svg .fill {fill: #50dd21!important;}.comments-wrapper a:hover > svg .stroke {stroke: #50dd21!important;}.comments-wrapper a:hover span, .love-it:hover span.love-count {color: #50dd21!important;}.circle-bar .spinner > div {border-top-color: #50dd21;border-right-color: #50dd21;}#sf-home-preloader, #site-loading {background-color: #FFFFFF;}.loading-bar-transition .pace .pace-progress {background-color: #50dd21;}.spinner .circle-bar {border-left-color:#e4e4e4;border-bottom-color:#e4e4e4;border-right-color:#50dd21;border-top-color:#50dd21;}.orbit-bars .spinner > div:before {border-top-color:#50dd21;border-bottom-color:#50dd21;}.orbit-bars .spinner > div:after {background-color: #e4e4e4;}body, .layout-fullwidth #container {background-color: #222222;}#main-container, .tm-toggle-button-wrap a {background-color: #FFFFFF;}.tabbed-heading-wrap .heading-text {background-color: #FFFFFF;}.single-product.page-heading-fancy .product-main {background-color: #FFFFFF;}.spb-row-container[data-top-style="slant-ltr"]:before, .spb-row-container[data-top-style="slant-rtl"]:before, .spb-row-container[data-bottom-style="slant-ltr"]:after, .spb-row-container[data-bottom-style="slant-rtr"]:after {background-color: #FFFFFF;}a, .ui-widget-content a, #respond .form-submit input[type=submit] {color: #444444;}a:hover, a:focus {color: #999999;}ul.bar-styling li:not(.selected) > a:hover, ul.bar-styling li > .comments-likes:hover {color: #ffffff;background: #50dd21;border-color: #50dd21;}ul.bar-styling li > .comments-likes:hover * {color: #ffffff!important;}ul.bar-styling li > a, ul.bar-styling li > div, ul.page-numbers li > a, ul.page-numbers li > span, .curved-bar-styling, ul.bar-styling li > form input, .spb_directory_filter_below {border-color: #e4e4e4;}ul.bar-styling li > a, ul.bar-styling li > span, ul.bar-styling li > div, ul.bar-styling li > form input {background-color: #FFFFFF;}.pagination-wrap {border-color: #e4e4e4;}.pagination-wrap ul li a {border-color: transparent;}ul.page-numbers li > a:hover, ul.page-numbers li > span.current, .pagination-wrap ul li > a:hover, .pagination-wrap ul li span.current {border-color: #e4e4e4!important;color: #222222!important;}input[type="text"], input[type="email"], input[type="password"], textarea, select, .wpcf7 input[type="text"], .wpcf7 input[type="email"], .wpcf7 textarea, .wpcf7 select, .ginput_container input[type="text"], .ginput_container input[type="email"], .ginput_container textarea, .ginput_container select, .mymail-form input[type="text"], .mymail-form input[type="email"], .mymail-form textarea, .mymail-form select, input[type="date"], input[type="tel"], input.input-text, input[type="number"], .select2-container .select2-choice {border-color: #e4e4e4;background-color: #f7f7f7;color:#222222;}.select2-container .select2-choice>.select2-chosen {color:#222222!important;}::-webkit-input-placeholder {color:#222222!important;}:-moz-placeholder {color:#222222!important;}::-moz-placeholder {color:#222222!important;}:-ms-input-placeholder {color:#222222!important;}input[type=submit], button[type=submit], input[type="file"], select, .wpcf7 input.wpcf7-submit[type=submit] {border-color: #e4e4e4;color: #222222;}input[type=submit]:hover, button[type=submit]:hover, .wpcf7 input.wpcf7-submit[type=submit]:hover, .gform_wrapper input[type=submit]:hover, .mymail-form input[type=submit]:hover {background: #222222;border-color: #222222; color: #ffffff;}.modal-header {background: #f7f7f7;}.modal-content {background: #FFFFFF;}.modal-header h3, .modal-header .close {color: #222222;}.modal-header .close:hover {color: #50dd21;}.recent-post .post-details, .portfolio-item h5.portfolio-subtitle, .search-item-content time, .search-item-content span, .portfolio-details-wrap .date {color: #222222;}ul.bar-styling li.facebook > a:hover {color: #fff!important;background: #3b5998;border-color: #3b5998;}ul.bar-styling li.twitter > a:hover {color: #fff!important;background: #4099FF;border-color: #4099FF;}ul.bar-styling li.google-plus > a:hover {color: #fff!important;background: #d34836;border-color: #d34836;}ul.bar-styling li.pinterest > a:hover {color: #fff!important;background: #cb2027;border-color: #cb2027;}#top-bar {background: #ffffff; border-bottom-color: #e3e3e3;}#top-bar .tb-text {color: #222222;}#top-bar .tb-text > a, #top-bar nav .menu > li > a {color: #666666;}#top-bar .menu li {border-left-color: #e3e3e3; border-right-color: #e3e3e3;}#top-bar .menu > li > a, #top-bar .menu > li.parent:after {color: #666666;}#top-bar .menu > li > a:hover, #top-bar a:hover {color: #fe504f;}.header-wrap #header, .header-standard-overlay #header, .vertical-header .header-wrap #header-section, #header-section .is-sticky #header.sticky-header {background-color:#ffffff;}.fs-search-open .header-wrap #header, .fs-search-open .header-standard-overlay #header, .fs-search-open .vertical-header .header-wrap #header-section, .fs-search-open #header-section .is-sticky #header.sticky-header {background-color: #fe504f;}.fs-supersearch-open .header-wrap #header, .fs-supersearch-open .header-standard-overlay #header, .fs-supersearch-open .vertical-header .header-wrap #header-section, .fs-supersearch-open #header-section .is-sticky #header.sticky-header {background-color: #fe504f;}.overlay-menu-open .header-wrap #header, .overlay-menu-open .header-standard-overlay #header, .overlay-menu-open .vertical-header .header-wrap #header-section, .overlay-menu-open #header-section .is-sticky #header.sticky-header {background-color: #fe504f;}#sf-header-banner {background-color:#fff; border-bottom: 2px solid#e3e3e3;}#sf-header-banner {color:#222;}#sf-header-banner a {color:#333;}#sf-header-banner a:hover {color:#1dc6df;}.header-left, .header-right, .vertical-menu-bottom .copyright {color: #222;}.header-left a, .header-right a, .vertical-menu-bottom .copyright a, #header .header-left ul.menu > li > a.header-search-link-alt, #header .header-right ul.menu > li > a.header-search-link, #header .header-right ul.menu > li > a.header-search-link-alt {color: #222;}.header-left a:hover, .header-right a:hover, .vertical-menu-bottom .copyright a:hover {color: #fe504f;}#header .header-left ul.menu > li:hover > a.header-search-link-alt, #header .header-right ul.menu > li:hover > a.header-search-link-alt {color: #fe504f!important;}#header-search a:hover, .super-search-close:hover {color: #50dd21;}.sf-super-search {background-color: #222222;}.sf-super-search .search-options .ss-dropdown ul {background-color: #50dd21;}.sf-super-search .search-options .ss-dropdown ul li a {color: #ffffff;}.sf-super-search .search-options .ss-dropdown ul li a:hover {color: #222222;}.sf-super-search .search-options .ss-dropdown > span, .sf-super-search .search-options input {color: #50dd21; border-bottom-color: #50dd21;}.sf-super-search .search-options .ss-dropdown ul li .fa-check {color: #222222;}.sf-super-search-go:hover, .sf-super-search-close:hover { background-color: #50dd21; border-color: #50dd21; color: #ffffff;}.header-languages .current-language {color: #000000;}#header-section #main-nav {border-top-color: #f0f0f0;}.ajax-search-wrap {background-color:#fff}.ajax-search-wrap, .ajax-search-results, .search-result-pt .search-result, .vertical-header .ajax-search-results {border-color: #f0f0f0;}.page-content {border-bottom-color: #e4e4e4;}.ajax-search-wrap input[type="text"], .search-result-pt h6, .no-search-results h6, .search-result h5 a, .no-search-results p {color: #252525;}.header-wrap, #header-section .is-sticky .sticky-header, #header-section.header-5 #header {border-bottom: 2px solid #e4e4e4;}.vertical-header .header-wrap {border-right: 2px solid #e4e4e4;}.vertical-header-right .header-wrap {border-left: 2px solid #e4e4e4;}nav.std-menu ul.sub-menu {border: 2px solid#e4e4e4;}.is-sticky nav.std-menu ul.sub-menu {border-top-width: 0;}nav.std-menu .sf-mega-menu ul.sub-menu ul.sub-menu {border: 0!important;}.header-left .aux-item, .header-right .aux-item {border-color: #e4e4e4!important;}#contact-slideout {background: #FFFFFF;}#mobile-top-text, #mobile-header {background-color: #ffffff;border-bottom-color:#e4e4e4;}#mobile-top-text, #mobile-logo h1 {color: #222;}#mobile-top-text a, #mobile-header a {color: #222;}#mobile-header a {color: #222;}#mobile-header a.mobile-menu-link span.menu-bars, #mobile-header a.mobile-menu-link span.menu-bars:before, #mobile-header a.mobile-menu-link span.menu-bars:after {background-color: #222;}#mobile-header a.mobile-menu-link:hover span.menu-bars, #mobile-header a.mobile-menu-link:hover span.menu-bars:before, #mobile-header a.mobile-menu-link:hover span.menu-bars:after {background-color: #fe504f;}#mobile-menu-wrap, #mobile-cart-wrap {background-color: #222;color: #e4e4e4;}.mobile-search-form input[type="text"] {color: #e4e4e4;border-bottom-color: #444;}.mobile-search-form ::-webkit-input-placeholder {color: #e4e4e4!important;}.mobile-search-form :-moz-placeholder {color: #e4e4e4!important;}.mobile-search-form ::-moz-placeholder {color: #e4e4e4!important;}.mobile-search-form :-ms-input-placeholder {color: #e4e4e4!important;}#mobile-menu-wrap a, #mobile-cart-wrap a:not(.sf-button), #mobile-menu-wrap .shopping-bag-item a > span.num-items {color: #fff;}.shop-icon-fill #mobile-menu-wrap .shopping-bag-item a > span.num-items {color: #222!important;}#mobile-menu-wrap a:hover, #mobile-cart-wrap a:not(.sf-button):hover,  #mobile-menu ul li:hover > a {color: #fe504f!important;}#mobile-menu-wrap .bag-buttons a.wishlist-button {color: #fff;}#mobile-menu ul li.parent > a:after {color: #e4e4e4;}#mobile-cart-wrap .shopping-bag-item > a.cart-contents, #mobile-cart-wrap .bag-product, #mobile-cart-wrap .bag-empty {border-bottom-color: #444;}#mobile-menu ul li, .mobile-cart-menu li, .mobile-cart-menu .bag-header, .mobile-cart-menu .bag-product, .mobile-cart-menu .bag-empty {border-color: #444;}a.mobile-menu-link span, a.mobile-menu-link span:before, a.mobile-menu-link span:after {background: #fff;}a.mobile-menu-link:hover span, a.mobile-menu-link:hover span:before, a.mobile-menu-link:hover span:after {background: #fe504f;}#mobile-cart-wrap .bag-buttons > a.bag-button {color: #fff!important;border-color: #fff;}#mobile-cart-wrap .bag-product a.remove {color: #fff!important;}#mobile-cart-wrap .bag-product a.remove:hover {color: #fe504f!important;}#logo.has-img, .header-left, .header-right {height:70px;}#mobile-logo {max-height:70px;}#mobile-logo.has-img img {max-height:70px;}.full-center #logo.has-img a > img {max-height: 100px;}.header-left, .header-right {line-height:70px;}#logo.has-img a > img {padding: 20px 0;}.header-2 #logo.has-img img {max-height:70px;}#logo.has-img img {max-height:100px;}.full-center #logo.has-img a > img {max-height: 100px;padding: 0;}.full-header-stick #header, .full-header-stick #logo, .full-header-stick .header-left, .full-header-stick .header-right {height:100px;line-height:100px;}.full-center #main-navigation ul.menu > li > a, .full-center .header-right ul.menu > li > a, .full-center nav.float-alt-menu ul.menu > li > a, .full-center .header-right div.text, .full-center #header .aux-item ul.social-icons li {height:100px;line-height:100px;}.full-center #header, .full-center .float-menu, .header-split .float-menu {height:100px;}.full-center nav li.menu-item.sf-mega-menu > ul.sub-menu, .full-center .ajax-search-wrap {top:100px!important;}.browser-ff #logo a {height:100px;}.full-center #logo {max-height:100px;}.header-6 .header-left, .header-6 .header-right, .header-6 #logo.has-img {height:100px;line-height:100px;}.header-6 #logo.has-img a > img {padding: 0;}#main-nav, .header-wrap[class*="page-header-naked"] #header-section .is-sticky #main-nav, .header-wrap #header-section .is-sticky #header.sticky-header, .header-wrap #header-section.header-5 #header, .header-wrap[class*="page-header-naked"] #header .is-sticky .sticky-header, .header-wrap[class*="page-header-naked"] #header-section.header-5 #header .is-sticky .sticky-header {background-color: #fff;}#main-nav {border-color: #f0f0f0;border-top-style: solid;}.show-menu {background-color: #222222;color: #ffffff;}nav .menu > li:before {background: #07c1b6;}nav .menu .sub-menu .parent > a:after {border-left-color: #07c1b6;}nav .menu ul.sub-menu, li.menu-item.sf-mega-menu > ul.sub-menu > div {background-color: #FFFFFF;}nav .menu ul.sub-menu li {border-top-color: #f0f0f0;border-top-style: solid;}li.menu-item.sf-mega-menu > ul.sub-menu > li {border-top-color: #f0f0f0;border-top-style: solid;}li.menu-item.sf-mega-menu > ul.sub-menu > li {border-left-color: #f0f0f0;border-left-style: solid;}nav .menu > li.menu-item > a, nav.std-menu .menu > li > a {color: #252525;}#main-nav ul.menu > li, #main-nav ul.menu > li:first-child, #main-nav ul.menu > li:first-child, .full-center nav#main-navigation ul.menu > li, .full-center nav#main-navigation ul.menu > li:first-child, .full-center #header nav.float-alt-menu ul.menu > li {border-color: #f0f0f0;}nav ul.menu > li.menu-item.sf-menu-item-btn > a {border-color: #252525;background-color: #252525;color: #fe504f;}nav ul.menu > li.menu-item.sf-menu-item-btn:hover > a {border-color: #50dd21; background-color: #50dd21; color: #ffffff!important;}#main-nav ul.menu > li, .full-center nav#main-navigation ul.menu > li, .full-center nav.float-alt-menu ul.menu > li, .full-center #header nav.float-alt-menu ul.menu > li {border-width: 0!important;}.full-center nav#main-navigation ul.menu > li:first-child {border-width: 0;margin-left: -15px;}#main-nav .menu-right {right: -5px;}nav .menu > li.menu-item:hover > a, nav.std-menu .menu > li:hover > a {color: #fe504f!important;}nav .menu > li.current-menu-ancestor > a, nav .menu > li.current-menu-item > a, nav .menu > li.current-scroll-item > a, #mobile-menu .menu ul li.current-menu-item > a {color: #fe504f;}.shopping-bag-item a > span.num-items {border-color: #222;}.shop-icon-fill .shopping-bag-item > a > i {color: inherit;}.shop-icon-fill .shopping-bag-item a > span.num-items, .shop-icon-fill .shopping-bag-item:hover a > span.num-items {color: #ffffff!important;}.shop-icon-fill .shopping-bag-item:hover > a > i {color: inherit;}.header-left ul.sub-menu > li > a:hover, .header-right ul.sub-menu > li > a:hover {color: #fe504f;}.shopping-bag-item a > span.num-items:after {border-color: #fe504f;}.shopping-bag-item:hover a > span.num-items {border-color: #fe504f!important; color: #fe504f!important;}.shopping-bag-item:hover a > span.num-items:after {border-color: #fe504f!important;}.page-header-naked-light .sticky-wrapper:not(.is-sticky) .shopping-bag-item:hover a > span.num-items, .page-header-naked-dark .sticky-wrapper:not(.is-sticky) .shopping-bag-item:hover a > span.num-items {color: #ffffff}.page-header-naked-light .sticky-wrapper:not(.is-sticky) .shopping-bag-item:hover a > span.num-items:after, .page-header-naked-dark .sticky-wrapper:not(.is-sticky) .shopping-bag-item:hover a > span.num-items:after {border-color: #fe504f;}nav .menu ul.sub-menu li.menu-item > a, nav .menu ul.sub-menu li > span, nav.std-menu ul.sub-menu {color: #666666;}.bag-buttons a.bag-button, .bag-buttons a.wishlist-button {color: #666666!important;}.bag-product a.remove, .woocommerce .bag-product a.remove {color: #666666!important;}.bag-product a.remove:hover, .woocommerce .bag-product a.remove:hover {color: #50dd21!important;}nav .menu ul.sub-menu li.menu-item:hover > a, .bag-product a.remove:hover {color: #000000!important;}nav .menu li.parent > a:after, nav .menu li.parent > a:after:hover, .ajax-search-wrap:after {color: #252525;}nav .menu ul.sub-menu li.current-menu-ancestor > a, nav .menu ul.sub-menu li.current-menu-item > a {color: #000000!important;}#main-nav .header-right ul.menu > li, .wishlist-item {border-left-color: #f0f0f0;}.bag-header, .bag-product, .bag-empty, .wishlist-empty {border-color: #f0f0f0;}.bag-buttons a.checkout-button, .bag-buttons a.create-account-button, .woocommerce input.button.alt, .woocommerce .alt-button, .woocommerce button.button.alt {background: #50dd21; color: #ffffff;}.woocommerce .button.update-cart-button:hover {background: #50dd21; color: #ffffff;}.woocommerce input.button.alt:hover, .woocommerce .alt-button:hover, .woocommerce button.button.alt:hover {background: #50dd21; color: #ffffff;}.shopping-bag:before, nav .menu ul.sub-menu li:first-child:before {border-bottom-color: #07c1b6;}.page-header-naked-light .sticky-wrapper:not(.is-sticky) a.menu-bars-link:hover span, .page-header-naked-light .sticky-wrapper:not(.is-sticky) a.menu-bars-link:hover span:before, .page-header-naked-light .sticky-wrapper:not(.is-sticky) a.menu-bars-link:hover span:after, .page-header-naked-dark .sticky-wrapper:not(.is-sticky) a.menu-bars-link:hover span, .page-header-naked-dark .sticky-wrapper:not(.is-sticky) a.menu-bars-link:hover span:before, .page-header-naked-dark .sticky-wrapper:not(.is-sticky) a.menu-bars-link:hover span:after {background: #50dd21;}a.menu-bars-link span, a.menu-bars-link span:before, a.menu-bars-link span:after {background: #222;}a.menu-bars-link:hover span, a.menu-bars-link:hover span:before, a.menu-bars-link:hover span:after {background: #fe504f;}.overlay-menu-open .header-wrap {background-color: #ffffff;}.overlay-menu-open .header-wrap #header {background-color: transparent!important;}.overlay-menu-open #logo h1, .overlay-menu-open .header-left, .overlay-menu-open .header-right, .overlay-menu-open .header-left a, .overlay-menu-open .header-right a {color: #ffffff!important;}#overlay-menu nav li.menu-item > a, .overlay-menu-open a.menu-bars-link, #overlay-menu .fs-overlay-close {color: #ffffff;}.overlay-menu-open a.menu-bars-link span:before, .overlay-menu-open a.menu-bars-link span:after {background: #ffffff!important;}.fs-supersearch-open .fs-supersearch-link, .fs-search-open .fs-header-search-link {color: #ffffff!important;}#overlay-menu {background-color: #fe504f;}#overlay-menu, #fullscreen-search, #fullscreen-supersearch {background-color: rgba(254,80,79, 0.95);}#overlay-menu nav li:hover > a {color: #fe504f!important;}#fullscreen-supersearch .sf-super-search {color: #666666!important;}#fullscreen-supersearch .sf-super-search .search-options .ss-dropdown > span, #fullscreen-supersearch .sf-super-search .search-options input {color: #ffffff!important;}#fullscreen-supersearch .sf-super-search .search-options .ss-dropdown > span:hover, #fullscreen-supersearch .sf-super-search .search-options input:hover {color: #fe504f!important;}#fullscreen-supersearch .sf-super-search .search-go a.sf-button {background-color: #50dd21!important;}#fullscreen-supersearch .sf-super-search .search-go a.sf-button:hover {background-color: #222222!important;border-color: #222222!important;color: #ffffff!important;}#fullscreen-search .fs-overlay-close, #fullscreen-search .search-wrap .title, .fs-search-bar, .fs-search-bar input#fs-search-input, #fullscreen-search .search-result-pt h3 {color: #666666;}#fullscreen-search ::-webkit-input-placeholder {color: #666666!important;}#fullscreen-search :-moz-placeholder {color: #666666!important;}#fullscreen-search ::-moz-placeholder {color: #666666!important;}#fullscreen-search :-ms-input-placeholder {color: #666666!important;}#fullscreen-search .container1 > div, #fullscreen-search .container2 > div, #fullscreen-search .container3 > div {background-color: #666666;}nav#main-navigation ul.menu > li.sf-menu-item-new-badge > a:before {background-color: #ffffff;box-shadow: inset 2px 2px #fa726e;}nav#main-navigation ul.menu > li.sf-menu-item-new-badge > a:after {background-color: #ffffff;color: #fa726e; border-color: #fa726e;}.sf-side-slideout {background-color: #222;}.sf-side-slideout .vertical-menu nav .menu li > a, .sf-side-slideout .vertical-menu nav .menu li.parent > a:after, .sf-side-slideout .vertical-menu nav .menu > li ul.sub-menu > li > a {color: #fff;}.sf-side-slideout .vertical-menu nav .menu li.menu-item {border-color: #ccc;}.sf-side-slideout .vertical-menu nav .menu li:hover > a, .sf-side-slideout .vertical-menu nav .menu li.parent:hover > a:after, .sf-side-slideout .vertical-menu nav .menu > li ul.sub-menu > li:hover > a {color: #07c1b6!important;}.contact-menu-link.slide-open {color: #fe504f;}#base-promo, .sf-promo-bar {background-color: #e4e4e4;}#base-promo > p, #base-promo.footer-promo-text > a, #base-promo.footer-promo-arrow > a, .sf-promo-bar > p, .sf-promo-bar.promo-text > a, .sf-promo-bar.promo-arrow > a {color: #222;}#base-promo.footer-promo-arrow:hover, #base-promo.footer-promo-text:hover, .sf-promo-bar.promo-arrow:hover, .sf-promo-bar.promo-text:hover {background-color: #50dd21!important;color: #ffffff!important;}#base-promo.footer-promo-arrow:hover > *, #base-promo.footer-promo-text:hover > *, .sf-promo-bar.promo-arrow:hover > *, .sf-promo-bar.promo-text:hover > * {color: #ffffff!important;}#breadcrumbs {background-color:#e4e4e4;color:#666666;}#breadcrumbs a, #breadcrumb i {color:#999999;}.page-heading {background-color: #f7f7f7;}.page-heading h1, .page-heading h3 {color: #222222;}.page-heading .heading-text, .fancy-heading .heading-text {text-align: left;}.content-divider-wrap .content-divider {border-color: #e4e4e4;}body {color: #222222;}h1, h1 a, h3.countdown-subject {color: #222222;}h2, h2 a {color: #222222;}h3, h3 a {color: #222222;}h4, h4 a, .carousel-wrap > a {color: #222222;}h5, h5 a {color: #222222;}h6, h6 a {color: #222222;}.title-wrap .spb-heading span, #reply-title span {border-bottom-color: #222222;}.title-wrap h3.spb-heading span, h3#reply-title span {border-bottom-color: #222222;}figure.animated-overlay figcaption {background-color: #fe504f;}figure.animated-overlay figcaption {background-color: rgba(254,80,79, 0.90);}figure.animated-overlay figcaption * {color: #ffffff;}figcaption .thumb-info .name-divide {background-color: #ffffff;}figcaption .thumb-info h6 span.price {border-top-color: #ffffff;}.article-divider {background: #e4e4e4;}.post-pagination-wrap {background-color:#444;}.post-pagination-wrap .next-article > *, .post-pagination-wrap .next-article a, .post-pagination-wrap .prev-article > *, .post-pagination-wrap .prev-article a {color:#fff;}.post-pagination-wrap .next-article a:hover, .post-pagination-wrap .prev-article a:hover {color: #50dd21;}.article-extras {background-color:#f7f7f7;}.review-bar {background-color:#f7f7f7;}.review-bar .bar, .review-overview-wrap .overview-circle {background-color:#2e2e36;color:#fff;}.posts-type-bright .recent-post .post-item-details {border-top-color:#e4e4e4;}table {border-bottom-color: #e4e4e4;}table td {border-top-color: #e4e4e4;}.read-more-button, #comments-list li .comment-wrap {border-color: #e4e4e4;}.read-more-button:hover {color: #50dd21;border-color: #50dd21;}.testimonials.carousel-items li .testimonial-text, .recent-post figure {background-color: #f7f7f7;}.spb_accordion .spb_accordion_section {border-color: #e4e4e4;}.spb_accordion .spb_accordion_section > h4.ui-state-active a, .toggle-wrap .spb_toggle.spb_toggle_title_active {color: #222222!important;}.widget ul li, .widget.widget_lip_most_loved_widget li {border-color: #e4e4e4;}.widget.widget_lip_most_loved_widget li {background: #FFFFFF; border-color: #e4e4e4;}.widget_lip_most_loved_widget .loved-item > span {color: #222222;}ul.wp-tag-cloud li > a, ul.wp-tag-cloud li:before {border-color: #e4e4e4;}.widget .tagcloud a:hover, ul.wp-tag-cloud li:hover > a, ul.wp-tag-cloud li:hover:before {background-color: #50dd21; border-color: #50dd21; color: #ffffff;}ul.wp-tag-cloud li:hover:after {border-color: #50dd21; background-color: #ffffff;}.loved-item .loved-count > i {color: #222222;background: #e4e4e4;}.subscribers-list li > a.social-circle {color: #ffffff;background: #222222;}.subscribers-list li:hover > a.social-circle {color: #fbfbfb;background: #50dd21;}.sidebar .widget_categories ul > li a, .sidebar .widget_archive ul > li a, .sidebar .widget_nav_menu ul > li a, .sidebar .widget_meta ul > li a, .sidebar .widget_recent_entries ul > li, .widget_product_categories ul > li a, .widget_layered_nav ul > li a, .widget_display_replies ul > li a, .widget_display_forums ul > li a, .widget_display_topics ul > li a {color: #444444;}.sidebar .widget_categories ul > li a:hover, .sidebar .widget_archive ul > li a:hover, .sidebar .widget_nav_menu ul > li a:hover, .widget_nav_menu ul > li.current-menu-item a, .sidebar .widget_meta ul > li a:hover, .sidebar .widget_recent_entries ul > li a:hover, .widget_product_categories ul > li a:hover, .widget_layered_nav ul > li a:hover, .widget_edd_categories_tags_widget ul li a:hover, .widget_display_replies ul li, .widget_display_forums ul > li a:hover, .widget_display_topics ul > li a:hover {color: #999999;}#calendar_wrap caption {border-bottom-color: #222222;}.sidebar .widget_calendar tbody tr > td a {color: #ffffff;background-color: #222222;}.sidebar .widget_calendar tbody tr > td a:hover {background-color: #50dd21;}.sidebar .widget_calendar tfoot a {color: #222222;}.sidebar .widget_calendar tfoot a:hover {color: #50dd21;}.widget_calendar #calendar_wrap, .widget_calendar th, .widget_calendar tbody tr > td, .widget_calendar tbody tr > td.pad {border-color: #e4e4e4;}.sidebar .widget hr {border-color: #e4e4e4;}.widget ul.flickr_images li a:after, .portfolio-grid li a:after {color: #ffffff;}.loved-item:hover .loved-count > svg .stroke {stroke: #ffffff;}.loved-item:hover .loved-count > svg .fill {fill: #ffffff;}.fw-row .spb_portfolio_widget .title-wrap {border-bottom-color: #e4e4e4;}.portfolio-item {border-bottom-color: #e4e4e4;}.masonry-items .portfolio-item-details {background: #f7f7f7;}.masonry-items .blog-item .blog-details-wrap:before {background-color: #f7f7f7;}.masonry-items .portfolio-item figure {border-color: #e4e4e4;}.portfolio-details-wrap span span {color: #666;}.share-links > a:hover {color: #50dd21;}.portfolio-item.masonry-item .portfolio-item-details {background: #FFFFFF;}#infscr-loading .spinner > div {background: #e4e4e4;}.blog-aux-options li.selected a {background: #50dd21;border-color: #50dd21;color: #ffffff;}.blog-filter-wrap .aux-list li:hover {border-bottom-color: transparent;}.blog-filter-wrap .aux-list li:hover a {color: #ffffff;background: #50dd21;}.mini-blog-item-wrap, .mini-items .mini-alt-wrap, .mini-items .mini-alt-wrap .quote-excerpt, .mini-items .mini-alt-wrap .link-excerpt, .masonry-items .blog-item .quote-excerpt, .masonry-items .blog-item .link-excerpt, .timeline-items .standard-post-content .quote-excerpt, .timeline-items .standard-post-content .link-excerpt, .post-info, .author-info-wrap, .body-text .link-pages, .page-content .link-pages, .posts-type-list .recent-post, .standard-items .blog-item .standard-post-content {border-color: #e4e4e4;}.standard-post-date, .timeline {background: #e4e4e4;}.timeline-items .standard-post-content {background: #FFFFFF;}.timeline-items .format-quote .standard-post-content:before, .timeline-items .standard-post-content.no-thumb:before {border-left-color: #f7f7f7;}.search-item-img .img-holder {background: #f7f7f7;border-color:#e4e4e4;}.masonry-items .blog-item .masonry-item-wrap {background: #f7f7f7;}.mini-items .blog-item-details, .share-links, .single-portfolio .share-links, .single .pagination-wrap, ul.post-filter-tabs li a {border-color: #e4e4e4;}.mini-item-details {color: #222222;}.related-item figure {background-color: #222222; color: #ffffff}.required {color: #ee3c59;}.post-item-details .comments-likes a i, .post-item-details .comments-likes a span {color: #222222;}.posts-type-list .recent-post:hover h4 {color: #999999}.blog-grid-items .blog-item .grid-left:after {border-left-color: #e3e3e3;}.blog-grid-items .blog-item .grid-right:after {border-right-color: #e3e3e3;}.blog-item .tweet-icon, .blog-item .post-icon, .blog-item .inst-icon {color: #ffffff!important;}.posts-type-bold .recent-post .details-wrap, .masonry-items .blog-item .details-wrap, .blog-grid-items .blog-item > div, .product-shadows .preview-slider-item-wrapper {background: #e3e3e3;color: #222;}.masonry-items .blog-item .details-wrap:before {background: #e3e3e3;}.masonry-items .blog-item .comments-svg .stroke, .masonry-items .blog-item .loveit-svg .stroke {stroke: #222;}.masonry-items .blog-item .loveit-svg .fill {fill: #222;}.masonry-items .blog-item:hover .comments-svg .stroke, .masonry-items .blog-item:hover .loveit-svg .stroke {stroke: #ffffff;}.masonry-items .blog-item:hover .loveit-svg .fill {fill: #ffffff;}.blog-grid-items .blog-item h2, .blog-grid-items .blog-item h6, .blog-grid-items .blog-item data, .blog-grid-items .blog-item .author span, .blog-grid-items .blog-item .tweet-text a, .masonry-items .blog-item h2, .masonry-items .blog-item h6 {color: #222;}.posts-type-bold a, .masonry-items .blog-item a {color: #444444;}.posts-type-bold .recent-post .details-wrap:before, .masonry-items .blog-item .details-wrap:before, .posts-type-bold .recent-post.has-thumb .details-wrap:before {border-bottom-color: #e3e3e3;}.posts-type-bold .recent-post.has-thumb:hover .details-wrap, .posts-type-bold .recent-post.no-thumb:hover .details-wrap, .bold-items .blog-item:hover, .masonry-items .blog-item:hover .details-wrap, .blog-grid-items .blog-item:hover > div, .instagram-item .inst-overlay, .masonry-items .blog-item:hover .details-wrap:before {background: #fe504f;}.blog-grid-items .instagram-item:hover .inst-overlay {background: rgba(254,80,79, 0.90);}.posts-type-bold .recent-post:hover .details-wrap:before, .masonry-items .blog-item:hover .details-wrap:before {border-bottom-color: #fe504f;}.posts-type-bold .recent-post:hover .details-wrap *, .bold-items .blog-item:hover *, .masonry-items .blog-item:hover .details-wrap, .masonry-items .blog-item:hover .details-wrap a, .masonry-items .blog-item:hover h2, .masonry-items .blog-item:hover h6, .masonry-items .blog-item:hover .details-wrap .quote-excerpt *, .blog-grid-items .blog-item:hover *, .instagram-item .inst-overlay data {color: #ffffff;}.blog-grid-items .blog-item:hover .grid-right:after {border-right-color:#fe504f;}.blog-grid-items .blog-item:hover .grid-left:after {border-left-color:#fe504f;}.blog-grid-items .blog-item:hover h2, .blog-grid-items .blog-item:hover h6, .blog-grid-items .blog-item:hover data, .blog-grid-items .blog-item:hover .author span, .blog-grid-items .blog-item:hover .tweet-text a {color: #ffffff;}.blog-item .side-details, .narrow-date-block {background: #e3e3e3;color: #222;}.blog-item .side-details .comments-wrapper {border-color: #e4e4e4;}.standard-items.alt-styling .blog-item .standard-post-content {background: #FFFFFF;}.standard-items.alt-styling .blog-item.quote .standard-post-content, .mini-items .blog-item.quote .mini-alt-wrap {background: #222222;color: #FFFFFF;}.standard-items .blog-item .read-more-button, .mini-items .blog-item .read-more-button {background-color: #FFFFFF;}#respond .form-submit input[type=submit]:hover {border-color: #50dd21;}.post-details-wrap .tags-wrap, .post-details-wrap .comments-likes {border-color: #e4e4e4;}.sf-button.accent {color: #ffffff; background-color: #50dd21;border-color: #50dd21;}.sf-button.sf-icon-reveal.accent {color: #ffffff!important; background-color: #50dd21!important;}a.sf-button.stroke-to-fill {color: #444444;}.sf-button.accent.bordered .sf-button-border {border-color: #50dd21;}a.sf-button.bordered.accent {color: #50dd21;border-color: #50dd21;}a.sf-button.bordered.accent:hover {color: #ffffff;}a.sf-button.rotate-3d span.text:before {color: #ffffff; background-color: #50dd21;}.sf-button.accent:hover, .sf-button.bordered.accent:hover {background-color: #222222;border-color: #222222;color: #ffffff;}a.sf-button, a.sf-button:hover, #footer a.sf-button:hover {background-image: none;color: #fff;}a.sf-button.gold, a.sf-button.gold:hover, a.sf-button.lightgrey, a.sf-button.lightgrey:hover, a.sf-button.white:hover {color: #222!important;}a.sf-button.transparent-dark {color: #222222!important;}a.sf-button.transparent-light:hover, a.sf-button.transparent-dark:hover {color: #50dd21!important;}.title-wrap a.sf-button:hover {color: #50dd21!important;}.sf-icon {color: #1dc6df;}.sf-icon-cont, .sf-icon-cont:hover, .sf-hover .sf-icon-cont, .sf-icon-box[class*="icon-box-boxed-"] .sf-icon-cont, .sf-hover .sf-icon-box-hr {background-color: #1dc6df;}.sf-hover .sf-icon-cont, .sf-hover .sf-icon-box-hr {background-color: #222!important;}.sf-hover .sf-icon-cont .sf-icon {color: #ffffff!important;}.sf-icon-box[class*="sf-icon-box-boxed-"] .sf-icon-cont:after {border-top-color: #1dc6df;border-left-color: #1dc6df;}.sf-hover .sf-icon-cont .sf-icon, .sf-icon-box.sf-icon-box-boxed-one .sf-icon, .sf-icon-box.sf-icon-box-boxed-three .sf-icon {color: #ffffff;}.sf-icon-box-animated .front {background: #f7f7f7; border-color: #e4e4e4;}.sf-icon-box-animated .front h3 {color: #222222;}.sf-icon-box-animated .back {background: #50dd21; border-color: #50dd21;}.sf-icon-box-animated .back, .sf-icon-box-animated .back h3 {color: #ffffff;}.client-item figure, .borderframe img {border-color: #e4e4e4;}span.dropcap3 {background: #000;color: #fff;}span.dropcap4 {color: #fff;}.spb_divider, .spb_divider.go_to_top_icon1, .spb_divider.go_to_top_icon2, .testimonials > li, .tm-toggle-button-wrap, .tm-toggle-button-wrap a, .portfolio-details-wrap, .spb_divider.go_to_top a, .widget_search form input {border-color: #e4e4e4;}.spb_divider.go_to_top_icon1 a, .spb_divider.go_to_top_icon2 a {background: #FFFFFF;}.divider-wrap h3.divider-heading:before, .divider-wrap h3.divider-heading:after {background: #e4e4e4;}.spb_tabs .ui-tabs .ui-tabs-panel, .spb_content_element .ui-tabs .ui-tabs-nav, .ui-tabs .ui-tabs-nav li {border-color: #e4e4e4;}.spb_tabs .ui-tabs .ui-tabs-panel, .ui-tabs .ui-tabs-nav li.ui-tabs-active a {background: #FFFFFF!important;}.tabs-type-dynamic .nav-tabs li.active a, .tabs-type-dynamic .nav-tabs li a:hover {background:#50dd21;border-color:#50dd21!important;color: #50dd21;}.spb_tabs .nav-tabs li a, .spb_tour .nav-tabs li a {border-color: #e4e4e4!important;}.spb_tabs .nav-tabs li:hover a, .spb_tour .nav-tabs li:hover a {border-color: #50dd21!important;color: #50dd21!important;}.spb_tabs .nav-tabs li.active a, .spb_tour .nav-tabs li.active a {background: #50dd21;border-color: #50dd21!important;color: #ffffff!important;}.spb_accordion_section > h4:hover .ui-icon:before {border-color: #50dd21;}.toggle-wrap .spb_toggle, .spb_toggle_content {border-color: #e4e4e4;}.toggle-wrap .spb_toggle:hover {color: #50dd21;}.ui-accordion h4.ui-accordion-header .ui-icon {color: #222222;}.standard-browser .ui-accordion h4.ui-accordion-header.ui-state-active:hover a, .standard-browser .ui-accordion h4.ui-accordion-header:hover .ui-icon {color: #50dd21;}blockquote.pullquote {border-color: #50dd21;}.borderframe img {border-color: #eeeeee;}.spb_box_content.whitestroke {background-color: #fff;border-color: #e4e4e4;}ul.member-contact li a:hover {color: #999999;}.testimonials.carousel-items li .testimonial-text {border-color: #e4e4e4;}.testimonials.carousel-items li .testimonial-text:after {border-left-color: #e4e4e4;border-top-color: #e4e4e4;}.horizontal-break {background-color: #e4e4e4;}.horizontal-break.bold {background-color: #222222;}.progress .bar {background-color: #50dd21;}.progress.standard .bar {background: #50dd21;}.progress-bar-wrap .progress-value {color: #50dd21;}.sf-share-counts {border-color: #e4e4e4;}.mejs-controls .mejs-time-rail .mejs-time-current {background: #50dd21!important;}.mejs-controls .mejs-time-rail .mejs-time-loaded {background: #ffffff!important;}.pt-banner h6 {color: #ffffff;}.pinmarker-container a.pin-button:hover {background: #50dd21; color: #ffffff;}.directory-item-details .item-meta {color: #222222;}.spb_row_container .spb_tweets_slider_widget .spb-bg-color-wrap, .spb_tweets_slider_widget .spb-bg-color-wrap {background: #1dc6df;}.spb_tweets_slider_widget .tweet-text, .spb_tweets_slider_widget .tweet-icon {color: #ffffff;}.spb_tweets_slider_widget .tweet-text a, .spb_tweets_slider_widget .twitter_intents a {color: #339933;}.spb_tweets_slider_widget .tweet-text a:hover, .spb_tweets_slider_widget .twitter_intents a:hover {color: #ffffff;}.spb_testimonial_slider_widget .spb-bg-color-wrap {background: #1dc6df;}.spb_testimonial_slider_widget .heading-wrap h3.spb-center-heading, .spb_testimonial_slider_widget .testimonial-text, .spb_testimonial_slider_widget cite, .spb_testimonial_slider_widget .testimonial-icon {color: #ffffff;}.spb_testimonial_slider_widget .heading-wrap h3.spb-center-heading {border-bottom-color: #ffffff;}.content-slider .flex-direction-nav .flex-next:before, .content-slider .flex-direction-nav .flex-prev:before {background-color: #e4e4e4;color: #222222;}.spb_tweets_slider_widget .heading-wrap h3.spb-center-heading {color: #ffffff;border-bottom-color: #ffffff;}#footer {background: #222222;}#footer.footer-divider {border-top-color: #333333;}#footer, #footer p, #footer h3.spb-heading {color: #cccccc;}#footer h3.spb-heading span {border-bottom-color: #cccccc;}#footer a {color: #ffffff;}#footer a:hover {color: #cccccc;}#footer .widget ul li, #footer .widget_categories ul, #footer .widget_archive ul, #footer .widget_nav_menu ul, #footer .widget_recent_comments ul, #footer .widget_meta ul, #footer .widget_recent_entries ul, #footer .widget_product_categories ul {border-color: #333333;}#copyright {background-color: #222222;border-top-color: #333333;}#copyright p, #copyright .text-left, #copyright .text-right {color: #999999;}#copyright a {color: #ffffff;}#copyright a:hover, #copyright nav .menu li a:hover {color: #cccccc!important;}#copyright nav .menu li {border-left-color: #333333;}#footer .widget_calendar #calendar_wrap, #footer .widget_calendar th, #footer .widget_calendar tbody tr > td, #footer .widget_calendar tbody tr > td.pad {border-color: #333333;}.widget input[type="email"] {background: #f7f7f7; color: #999}#footer .widget hr {border-color: #333333;}#sf-newsletter-bar, .layout-boxed #sf-newsletter-bar > .container {background-color: #222;}#sf-newsletter-bar h3.sub-text {color: #ccc;}#sf-newsletter-bar .sub-code > form input[type=submit], #sf-newsletter-bar .sub-code > form input[type="text"], #sf-newsletter-bar .sub-code > form input[type="email"] {border-color: #ccc;color: #ccc;}#sf-newsletter-bar .sub-code > form input[type=submit]:hover {border-color: #fff;color: #fff;}#sf-newsletter-bar .sub-close {color: #ccc;}#sf-newsletter-bar .sub-close:hover {color: #fff;}#sf-newsletter-bar ::-webkit-input-placeholder {color:#ccc!important;}#sf-newsletter-bar :-moz-placeholder {color:#ccc!important;}#sf-newsletter-bar ::-moz-placeholder {color:#ccc!important;}#sf-newsletter-bar :-ms-input-placeholder {color:#ccc!important;}#buddypress .activity-meta a, #buddypress .acomment-options a, #buddypress #member-group-links li a, .widget_bp_groups_widget #groups-list li, .activity-list li.bbp_topic_create .activity-content .activity-inner, .activity-list li.bbp_reply_create .activity-content .activity-inner {border-color: #e4e4e4;}#buddypress .activity-meta a:hover, #buddypress .acomment-options a:hover, #buddypress #member-group-links li a:hover {border-color: #50dd21;}#buddypress .activity-header a, #buddypress .activity-read-more a {border-color: #50dd21;}#buddypress #members-list .item-meta .activity, #buddypress .activity-header p {color: #222222;}#buddypress .pagination-links span, #buddypress .load-more.loading a {background-color: #50dd21;color: #ffffff;border-color: #50dd21;}#buddypress div.dir-search input[type=submit], #buddypress #whats-new-submit input[type=submit] {background: #f7f7f7; color: #222222}span.bbp-admin-links a, li.bbp-forum-info .bbp-forum-content {color: #222222;}span.bbp-admin-links a:hover {color: #50dd21;}.bbp-topic-action #favorite-toggle a, .bbp-topic-action #subscription-toggle a, .bbp-single-topic-meta a, .bbp-topic-tags a, #bbpress-forums li.bbp-body ul.forum, #bbpress-forums li.bbp-body ul.topic, #bbpress-forums li.bbp-header, #bbpress-forums li.bbp-footer, #bbp-user-navigation ul li a, .bbp-pagination-links a, #bbp-your-profile fieldset input, #bbp-your-profile fieldset textarea, #bbp-your-profile, #bbp-your-profile fieldset {border-color: #e4e4e4;}.bbp-topic-action #favorite-toggle a:hover, .bbp-topic-action #subscription-toggle a:hover, .bbp-single-topic-meta a:hover, .bbp-topic-tags a:hover, #bbp-user-navigation ul li a:hover, .bbp-pagination-links a:hover {border-color: #50dd21;}#bbp-user-navigation ul li.current a, .bbp-pagination-links span.current {border-color: #50dd21;background: #50dd21; color: #ffffff;}#bbpress-forums fieldset.bbp-form button[type=submit], #bbp_user_edit_submit, .widget_display_search #bbp_search_submit {background: #f7f7f7; color: #222222}#bbpress-forums fieldset.bbp-form button[type=submit]:hover, #bbp_user_edit_submit:hover {background: #50dd21; color: #ffffff;}#bbpress-forums li.bbp-header {border-top-color: #50dd21;}.campaign-item .details-wrap {background-color:#FFFFFF;}.atcf-profile-campaigns > li {border-color: #e4e4e4;}.tribe-events-list-separator-month span {background-color:#FFFFFF;}#tribe-bar-form, .tribe-events-list .tribe-events-event-cost span, #tribe-events-content .tribe-events-calendar td {background-color:#f7f7f7;}.tribe-events-loop .tribe-events-event-meta, .tribe-events-list .tribe-events-venue-details {border-color: #e4e4e4;}@media only screen and (max-width: 767px) {nav .menu > li {border-top-color: #e4e4e4;}}html.no-js .sf-animation, .mobile-browser .sf-animation, .apple-mobile-browser .sf-animation, .sf-animation[data-animation="none"], .image-banner-content.sf-animation[data-animation="none"] {
+				opacity: 1!important;left: auto!important;right: auto!important;bottom: auto!important;-webkit-transform: scale(1)!important;-o-transform: scale(1)!important;-moz-transform: scale(1)!important;transform: scale(1)!important;}html.no-js .sf-animation.image-banner-content, .mobile-browser .sf-animation.image-banner-content, .apple-mobile-browser .sf-animation.image-banner-content, .sf-animation[data-animation="none"].image-banner-content {
+				bottom: 50%!important;}.mobile-browser .product-grid .product {opacity: 1!important;}
+/*========== User Custom CSS Styles ==========*/
+                                    </style> 
+  <meta name="generator" content="Powered by Visual Composer - drag and drop page builder for WordPress."> 
+  <!--[if IE 8]><link rel="stylesheet" type="text/css" href="http://www.andrewbonneau.com/wp-content/plugins/js_composer/assets/css/vc-ie8.css" media="screen"><![endif]-->
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+  <!-- BEGIN GADWP v5.1.1.1 Universal Analytics - https://deconf.com/google-analytics-dashboard-wordpress/ --> 
+  <script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-63067931-1', 'auto');
+  ga('send', 'pageview');
+</script> 
+  <!-- END GADWP Universal Analytics --> 
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Sentiment Analysis with twitteR and tm R packages">
+  <meta name="twitter:site" content="@RLangTip">
+  <meta name="twitter:description" content="With the volume of social media traffic that Twitter has each day, it has become a fantastic store of information. Utilizing Rstudio&nbsp;and a few handy R packages one can easily import tweets with specific keywords and conduct various analyzes on them. The first step to doing this is authorizing a new application on a twitter account to communicate with R…">
+  <meta name="twitter:image" content="http://www.andrewbonneau.com/wp-content/uploads/2016/03/weather-word-cloud.png"> 
+  <style type="text/css" title="dynamic-css" class="options-output">#logo h1, #logo h2, #mobile-logo h1{font-family:Lato;font-weight:400;font-style:normal;color:#222;font-size:24px;}body,p{font-family:"Source Sans Pro";line-height:22px;font-weight:400;font-style:normal;font-size:14px;}h1,.impact-text,.impact-text > p,.impact-text-large,.impact-text-large > p,h3.countdown-subject, .swiper-slide .caption-content > h2, #jckqv h1{font-family:Lato;line-height:48px;font-weight:400;font-style:normal;font-size:32px;}h2,.blog-item .quote-excerpt{font-family:Lato;line-height:36px;font-weight:400;font-style:normal;font-size:24px;}h3,.spb-row-expand-text,.woocommerce div.product .woocommerce-tabs ul.tabs li a, .single_variation_wrap .single_variation span.price{font-family:Lato;line-height:28px;font-weight:400;font-style:normal;font-size:22px;}h4{font-family:Lato;line-height:24px;font-weight:400;font-style:normal;font-size:18px;}h5{font-family:Lato;line-height:22px;font-weight:400;font-style:normal;font-size:16px;}h6{font-family:Lato;line-height:16px;font-weight:400;font-style:normal;font-size:12px;}#main-nav, #header nav, .vertical-menu nav, .header-9#header-section #main-nav, #overlay-menu nav, #mobile-menu, #one-page-nav li .hover-caption, .mobile-search-form input[type="text"]{font-family:"Source Sans Pro";font-weight:400;font-style:normal;font-size:18px;}</style>
+  <noscript>
+   <style> .wpb_animate_when_almost_visible { opacity: 1; }</style>
+  </noscript>
+  <meta name="twitter:widgets:link-color" content="#000000">
+  <meta name="twitter:widgets:border-color" content="#000000">
+  <meta name="twitter:partner" content="tfwp"> 
+  <!--// CLOSE HEAD //--> 
+ </head> 
+ <!--// OPEN BODY //--> 
+ <body class="single single-post postid-206 single-format-standard minimal-design mobile-header-left-logo mhs-tablet-land mh-overlay responsive-fluid sticky-header-enabled page-shadow standard product-shadows header-standard layout-fullwidth page-heading-standard disable-mobile-animations  wpb-js-composer js-comp-ver-4.5.3 vc_responsive"> 
+  <div id="site-loading" class="circle-bar">
+   <div class="spinner ">
+    <div class="circle"></div>
+   </div>
+  </div>
+  <div id="mobile-menu-wrap" class="menu-is-right"> 
+   <a href="#" class="mobile-overlay-close"><i class="sf-icon-close"></i></a>
+   <nav id="mobile-menu" class="clearfix"> 
+    <ul class="alt-mobile-menu"> 
+    </ul> 
+   </nav> 
+  </div> 
+  <!--// OPEN #container //--> 
+  <div id="container"> 
+   <header id="mobile-header" class="mobile-left-logo clearfix"> 
+    <div id="mobile-logo" class="logo-left no-img clearfix"> 
+     <a href="http://www.andrewbonneau.com"> 
+      <div class="text-logo">
+       <h1 class="logo-h1 standard">Andrew Bonneau</h1> 
+       <h1 class="logo-h1 retina">Andrew Bonneau</h1> 
+      </div> </a> 
+    </div> 
+    <div class="mobile-header-opts">
+     <a href="#" class="mobile-menu-link menu-bars-link"><span class="menu-bars"></span></a> 
+    </div>
+   </header> 
+   <!--// HEADER //--> 
+   <div class="header-wrap  full-center full-header-stick page-header-standard"> 
+    <div id="header-section" class="header-4 "> 
+     <header id="header" class="sticky-header clearfix"> 
+      <div class="container"> 
+       <div class="row"> 
+        <div id="logo" class="col-sm-4 logo-left no-img clearfix"> 
+         <a href="http://www.andrewbonneau.com"> 
+          <div class="text-logo">
+           <h1 class="logo-h1 standard">Andrew Bonneau</h1> 
+           <h1 class="logo-h1 retina">Andrew Bonneau</h1> 
+          </div> </a> 
+        </div> 
+        <div class="header-right"> 
+         <div class="aux-item aux-item-social">
+          <ul class="social-icons standard "> 
+           <li class="linkedin"><a href="https://www.linkedin.com/pub/andrew-bonneau/78/724/115" target="_blank"><i class="fa-linkedin"></i><i class="fa-linkedin"></i></a></li> 
+           <li class="github"><a href="https://github.com/abonn" target="_blank"><i class="fa-github"></i><i class="fa-github"></i></a></li> 
+          </ul> 
+         </div> 
+        </div> 
+        <div class="float-menu container"> 
+         <nav id="main-navigation" class="std-menu clearfix"> 
+          <div class="menu-nav-container">
+           <ul id="menu-nav" class="menu">
+            <li class="menu-item-10 menu-item menu-item-type-custom menu-item-object-custom menu-item-home sf-std-menu         "><a href="http://www.andrewbonneau.com/"><span class="menu-item-text">Home</span></a></li> 
+            <li class="menu-item-17 menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children sf-std-menu         "><a href="http://www.andrewbonneau.com/portfolio/"><span class="menu-item-text">Portfolio</span></a> 
+             <ul class="sub-menu"> 
+              <li class="menu-item-19 menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent sf-std-menu         "><a href="http://www.andrewbonneau.com/category/code/">Code<span class="menu-item-desc">coding</span></a></li> 
+              <li class="menu-item-21 menu-item menu-item-type-taxonomy menu-item-object-category sf-std-menu         "><a href="http://www.andrewbonneau.com/category/visual/">Visual<span class="menu-item-desc">visual</span></a></li> 
+             </ul> </li> 
+            <li class="menu-item-158 menu-item menu-item-type-post_type menu-item-object-page sf-std-menu         "><a href="http://www.andrewbonneau.com/home/resources/"><span class="menu-item-text">Resources</span></a></li> 
+           </ul>
+          </div>
+         </nav> 
+        </div> 
+       </div> 
+       <!-- CLOSE .row --> 
+      </div> 
+      <!-- CLOSE .container --> 
+     </header> 
+    </div> 
+    <div id="fullscreen-search"> 
+     <a href="#" class="fs-overlay-close"> <i class="sf-icon-close"></i> </a> 
+     <div class="search-wrap" data-ajaxurl="http://www.andrewbonneau.com/wp-admin/admin-ajax.php"> 
+      <div class="fs-search-bar"> 
+       <form method="get" class="ajax-search-form" action="http://www.andrewbonneau.com/"> 
+        <input id="fs-search-input" type="text" name="s" placeholder="Type to search" autocomplete="off"> 
+       </form> 
+      </div> 
+      <div class="ajax-loading-wrap"> 
+       <div class="circle-bar">
+        <div class="spinner ajax-loading">
+         <div class="circle"></div>
+        </div>
+       </div> 
+      </div> 
+      <div class="ajax-search-results"></div> 
+     </div> 
+    </div> 
+   </div> 
+   <!--// OPEN #main-container //--> 
+   <div id="main-container" class="clearfix"> 
+    <div class="page-heading  page-heading-breadcrumbs clearfix"> 
+     <div class="container"> 
+      <div class="heading-text"> 
+       <h1 class="entry-title">Sentiment Analysis with twitteR and tm R packages</h1> 
+      </div> 
+      <div id="breadcrumbs"> 
+       <div class="container">
+        <!-- Breadcrumb NavXT 5.3.1 --> 
+        <span property="itemListElement" typeof="ListItem"><a property="item" typeof="WebPage" title="Go to Andrew Bonneau." href="http://www.andrewbonneau.com" class="home"><span property="name">Andrew Bonneau</span></a>
+         <meta property="position" content="1"></span> &gt; 
+        <span property="itemListElement" typeof="ListItem"><a property="item" typeof="WebPage" title="Go to Blog." href="http://www.andrewbonneau.com/blog/" class="post-root post post-post"><span property="name">Blog</span></a>
+         <meta property="position" content="2"></span> &gt; 
+        <span property="itemListElement" typeof="ListItem"><a property="item" typeof="WebPage" title="Go to the Code category archives." href="http://www.andrewbonneau.com/category/code/" class="taxonomy category"><span property="name">Code</span></a>
+         <meta property="position" content="3"></span> &gt; 
+        <span property="itemListElement" typeof="ListItem"><span property="name">Sentiment Analysis with twitteR and tm R packages</span>
+         <meta property="position" content="4"></span>
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="content-divider-wrap container">
+     <div class="content-divider"></div>
+    </div> 
+    <div class="inner-page-wrap has-no-sidebar clearfix"> 
+     <!-- OPEN page --> 
+     <div class="clearfix"> 
+      <div class="page-content hfeed clearfix"> 
+       <!-- OPEN article --> 
+       <article class="clearfix single-post-standard post-206 post type-post status-publish format-standard hentry category-code tag-code tag-r tag-twitter tag-visualization" id="206" itemscope itemtype="http://schema.org/Article"> 
+        <div class="article-meta hide"> 
+         <div itemprop="headline">
+          Sentiment Analysis with twitteR and tm R packages
+         </div> 
+         <time itemprop="datePublished" datetime="2016-03-24">March 24, 2016</time> 
+        </div> 
+        <header class="article-heading hidden-hatom"> 
+         <div class="container"> 
+          <div class="entry-title" itemprop="name">
+           Sentiment Analysis with twitteR and tm R packages
+          </div> 
+          <span class="date updated">March 24, 2016</span> 
+          <span class="vcard author"> <span class="fn">abonn</span> </span> 
+         </div> 
+        </header> 
+        <section class="page-content clearfix container"> 
+         <div class="content-wrap col-sm-8 col-sm-offset-2 clearfix" itemprop="articleBody"> 
+          <div class="top-author-info container clearfix"> 
+           <div class="author-avatar">
+            <img alt="" src="http://1.gravatar.com/avatar/12537c394080e72b76f5b333d59825bd?s=140&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/12537c394080e72b76f5b333d59825bd?s=280&amp;d=mm&amp;r=g 2x" class="avatar avatar-140 photo" height="140" width="140">
+           </div> 
+           <div class="post-details"> 
+            <div class="author-name" itemprop="author" itemscope itemtype="http://schema.org/Person"> 
+             <h5 class="vcard author">By <a href="http://www.andrewbonneau.com/author/admin/" rel="author" itemprop="name" class="fn">abonn</a></h5> 
+            </div> 
+            <time datetime="2016-03-24">March 24, 2016</time> 
+            <span class="categories">In <a href="http://www.andrewbonneau.com/category/code/">Code</a></span> 
+           </div> 
+          </div> 
+          <div class="container"> 
+           <figure class="media-wrap media-type-image" itemscope> 
+           </figure> 
+          </div> 
+          <p>With the volume of social media traffic that Twitter has each day, it has become a fantastic store of information. Utilizing Rstudio&nbsp;and a few handy R packages one can easily import tweets with specific keywords and conduct various analyzes on them.</p> 
+          <p>The first step to doing this is authorizing a new application on a twitter account to communicate with R while importing data. Head to&nbsp;<a href="http://apps.twitter.com">apps.twitter.com&nbsp;</a>&nbsp;and create a new application. Once done, be sure to create an access token for said application. You will then utilize the information for your Twitter app within R with the following code:</p>
+          <!-- Crayon Syntax Highlighter v_2.7.2_beta --> 
+          <div id="crayon-59d392efcb5c4907043807" class="crayon-syntax crayon-theme-sublime-text crayon-font-monaco crayon-os-pc print-yes notranslate" data-settings=" minimize scroll-mouseover" style=" margin-top: 12px; margin-bottom: 12px; font-size: 12px !important; line-height: 15px !important;"> 
+           <div class="crayon-toolbar" data-settings=" mouseover overlay hide delay" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+            <span class="crayon-title"></span> 
+            <div class="crayon-tools" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+             <div class="crayon-button crayon-nums-button" title="Toggle Line Numbers">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-plain-button" title="Toggle Plain Code">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-wrap-button" title="Toggle Line Wrap">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-expand-button" title="Expand Code">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-copy-button" title="Copy">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-popup-button" title="Open Code In New Window">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <span class="crayon-language">R</span>
+            </div>
+           </div> 
+           <div class="crayon-info" style="min-height: 16.8px !important; line-height: 16.8px !important;"></div> 
+           <div class="crayon-plain-wrap">
+            <textarea wrap="soft" class="crayon-plain print-no" data-settings="dblclick" readonly style="-moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4; font-size: 12px !important; line-height: 15px !important;">
+consumer_key &lt;- "yourconsumerkey"
+consumer_secret &lt;- "yourconsumersecret"
+access_token &lt;- "youraccesstoken"
+access_secret &lt;- "youraccesstokensecret"
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)</textarea>
+           </div> 
+           <div class="crayon-main" style=""> 
+            <table class="crayon-table"> 
+             <tbody>
+              <tr class="crayon-row"> 
+               <td class="crayon-nums " data-settings="show"> 
+                <div class="crayon-nums-content" style="font-size: 12px !important; line-height: 15px !important;">
+                 <div class="crayon-num" data-line="crayon-59d392efcb5c4907043807-1">
+                  1
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5c4907043807-2">
+                  2
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5c4907043807-3">
+                  3
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5c4907043807-4">
+                  4
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5c4907043807-5">
+                  5
+                 </div>
+                </div> </td> 
+               <td class="crayon-code">
+                <div class="crayon-pre" style="font-size: 12px !important; line-height: 15px !important; -moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4;">
+                 <div class="crayon-line" id="crayon-59d392efcb5c4907043807-1">
+                  <span class="crayon-v">consumer_key</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"yourconsumerkey"</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5c4907043807-2">
+                  <span class="crayon-v">consumer_secret</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"yourconsumersecret"</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5c4907043807-3">
+                  <span class="crayon-v">access_token</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"youraccesstoken"</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5c4907043807-4">
+                  <span class="crayon-v">access_secret</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"youraccesstokensecret"</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5c4907043807-5">
+                  <span class="crayon-e">setup_twitter_oauth</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">consumer_key</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">consumer_secret</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">access_token</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">access_secret</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                </div></td> 
+              </tr> 
+             </tbody>
+            </table> 
+           </div> 
+          </div> 
+          <!-- [Format Time: 0.0013 seconds] --> 
+          <p>Below is code that will create a word cloud based on the words showing up in the tweets with your keyword&nbsp;with the greatest frequency. I have annotated the code to give an explanation as to what various lines are doing. The tm library is used with various commands (i.e.,&nbsp;myCorpus &lt;- tm_map(myCorpus, removePunctuation)) to clean up the tweets and remove extraneous information such as URL’s or punctuation.</p> 
+          <p>More information on the tm and wordcloud packages can be found here:&nbsp;<a href="https://cran.r-project.org/web/packages/wordcloud/wordcloud.pdf" target="_blank">wordcloud package</a>&nbsp;<a href="https://mran.microsoft.com/web/packages/tm/tm.pdf" target="_blank">tm package</a></p> 
+          <p>Now for the code:</p>
+          <!-- Crayon Syntax Highlighter v_2.7.2_beta --> 
+          <div id="crayon-59d392efcb5d2320747187" class="crayon-syntax crayon-theme-sublime-text crayon-font-monaco crayon-os-pc print-yes notranslate" data-settings=" minimize scroll-mouseover" style=" margin-top: 12px; margin-bottom: 12px; font-size: 12px !important; line-height: 15px !important;"> 
+           <div class="crayon-toolbar" data-settings=" mouseover overlay hide delay" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+            <span class="crayon-title"></span> 
+            <div class="crayon-tools" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+             <div class="crayon-button crayon-nums-button" title="Toggle Line Numbers">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-plain-button" title="Toggle Plain Code">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-wrap-button" title="Toggle Line Wrap">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-expand-button" title="Expand Code">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-copy-button" title="Copy">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-popup-button" title="Open Code In New Window">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <span class="crayon-language">R</span>
+            </div>
+           </div> 
+           <div class="crayon-info" style="min-height: 16.8px !important; line-height: 16.8px !important;"></div> 
+           <div class="crayon-plain-wrap">
+            <textarea wrap="soft" class="crayon-plain print-no" data-settings="dblclick" readonly style="-moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4; font-size: 12px !important; line-height: 15px !important;">
+library(twitteR)
+library(wordcloud)
+library(tm)
+
+# retrieve the first 200 tweets (or all tweets if fewer than 200) from the
+# user timeline of @rdatammining
+tweets &lt;- userTimeline("weather", n=400)
+nDocs &lt;- length(tweets)
+
+##convert tweets to data frame
+df &lt;- do.call("rbind", lapply(tweets, as.data.frame))
+dim(df)
+
+myCorpus &lt;- Corpus(VectorSource(df$text))
+myCorpus &lt;- tm_map(myCorpus, removePunctuation)
+myCorpus &lt;- tm_map(myCorpus, content_transformer(tolower))
+myCorpus &lt;- tm_map(myCorpus, removeWords, stopwords("english")) #removes common prepositions and conjunctions 
+myCorpus &lt;- tm_map(myCorpus, removeWords, c("example"))
+removeURL &lt;- function(x) gsub("http[[:alnum:]]*", "", x)
+myCorpus &lt;- tm_map(myCorpus, removeURL)
+myCorpus &lt;- tm_map(myCorpus, stripWhitespace)
+corpus_clean &lt;- tm_map(myCorpus, PlainTextDocument) ##this ensures the corpus transformations final output is a PTD
+##optional, remove word stems (cleaning, cleaned, cleaner all would become clean): 
+##wordCorpus &lt;- tm_map(wordCorpus, stemDocument)
+
+
+#create term document matrix for analysis
+myTdm &lt;- TermDocumentMatrix(corpus_clean, control=list(wordLengths=c(1,Inf)))
+myTdm
+
+
+##or create a word cloud from the corpus_clean data 
+pal &lt;- brewer.pal(9,"YlGnBu")
+pal &lt;- pal[-(1:4)]
+set.seed(123)
+wordcloud(words = corpus_clean, scale=c(4,0.5), max.words=50, random.order=FALSE, 
+          rot.per=0.35, use.r.layout=TRUE, colors=pal)</textarea>
+           </div> 
+           <div class="crayon-main" style=""> 
+            <table class="crayon-table"> 
+             <tbody>
+              <tr class="crayon-row"> 
+               <td class="crayon-nums " data-settings="show"> 
+                <div class="crayon-nums-content" style="font-size: 12px !important; line-height: 15px !important;">
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-1">
+                  1
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-2">
+                  2
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-3">
+                  3
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-4">
+                  4
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-5">
+                  5
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-6">
+                  6
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-7">
+                  7
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-8">
+                  8
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-9">
+                  9
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-10">
+                  10
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-11">
+                  11
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-12">
+                  12
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-13">
+                  13
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-14">
+                  14
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-15">
+                  15
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-16">
+                  16
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-17">
+                  17
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-18">
+                  18
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-19">
+                  19
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-20">
+                  20
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-21">
+                  21
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-22">
+                  22
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-23">
+                  23
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-24">
+                  24
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-25">
+                  25
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-26">
+                  26
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-27">
+                  27
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-28">
+                  28
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-29">
+                  29
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-30">
+                  30
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-31">
+                  31
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-32">
+                  32
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-33">
+                  33
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-34">
+                  34
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-35">
+                  35
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5d2320747187-36">
+                  36
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5d2320747187-37">
+                  37
+                 </div>
+                </div> </td> 
+               <td class="crayon-code">
+                <div class="crayon-pre" style="font-size: 12px !important; line-height: 15px !important; -moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4;">
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-1">
+                  <span class="crayon-r">library</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">twitteR</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-2">
+                  <span class="crayon-r">library</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">wordcloud</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-3">
+                  <span class="crayon-r">library</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">tm</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-4">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-5">
+                  <span class="crayon-c"># retrieve the first 200 tweets (or all tweets if fewer than 200) from the</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-6">
+                  <span class="crayon-c"># user timeline of @rdatammining</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-7">
+                  <span class="crayon-v">tweets</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">userTimeline</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"weather"</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">n</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-cn">400</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-8">
+                  <span class="crayon-v">nDocs</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">length</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">tweets</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-9">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-10">
+                  <span class="crayon-c">##convert tweets to data frame</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-11">
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-st">do</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-e">call</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"rbind"</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">lapply</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">tweets</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-st">as</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">data</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">frame</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-12">
+                  <span class="crayon-e">dim</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-13">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-14">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">Corpus</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-e">VectorSource</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-sy">$</span>
+                  <span class="crayon-v">text</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-15">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">removePunctuation</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-16">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">content_transformer</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">tolower</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-17">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">removeWords</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">stopwords</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"english"</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-c">#removes common prepositions and conjunctions </span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-18">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">removeWords</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">c</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"example"</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-19">
+                  <span class="crayon-v">removeURL</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-t">function</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">x</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">gsub</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"http[[:alnum:]]*"</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">""</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">x</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-20">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">removeURL</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-21">
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">stripWhitespace</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-22">
+                  <span class="crayon-v">corpus_clean</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">tm_map</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">myCorpus</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">PlainTextDocument</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-c">##this ensures the corpus transformations final output is a PTD</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-23">
+                  <span class="crayon-c">##optional, remove word stems (cleaning, cleaned, cleaner all would become clean): </span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-24">
+                  <span class="crayon-c">##wordCorpus &lt;- tm_map(wordCorpus, stemDocument)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-25">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-26">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-27">
+                  <span class="crayon-c">#create term document matrix for analysis</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-28">
+                  <span class="crayon-v">myTdm</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">TermDocumentMatrix</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">corpus_clean</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">control</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-e">list</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">wordLengths</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-e">c</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-cn">1</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-t ">Inf</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-29">
+                  <span class="crayon-v">myTdm</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-30">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-31">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-32">
+                  <span class="crayon-c">##or create a word cloud from the corpus_clean data </span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-33">
+                  <span class="crayon-v">pal</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">brewer</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-e">pal</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-cn">9</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-s">"YlGnBu"</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-34">
+                  <span class="crayon-v">pal</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">pal</span>
+                  <span class="crayon-sy">[</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-cn">1</span>
+                  <span class="crayon-o">:</span>
+                  <span class="crayon-cn">4</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">]</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-35">
+                  <span class="crayon-v">set</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-e">seed</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-cn">123</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5d2320747187-36">
+                  <span class="crayon-e">wordcloud</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">words</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">corpus_clean</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">scale</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-e">c</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-cn">4</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-cn">0.5</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">max</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">words</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-cn">50</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">random</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">order</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-t">FALSE</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5d2320747187-37">
+                  <span class="crayon-h">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                  <span class="crayon-v">rot</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">per</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-cn">0.35</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-st">use</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">r</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">layout</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-t">TRUE</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">colors</span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-v">pal</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                </div></td> 
+              </tr> 
+             </tbody>
+            </table> 
+           </div> 
+          </div> 
+          <!-- [Format Time: 0.0076 seconds] --> 
+          <p>As you can see, my keyword was “weather” and I imported 400 tweets.</p> 
+          <p>Result:</p> 
+          <p><a href="http://www.andrewbonneau.com/wp-content/uploads/2016/03/weather-word-cloud.png"><img class="alignnone size-medium wp-image-208" src="http://www.andrewbonneau.com/wp-content/uploads/2016/03/weather-word-cloud-300x258.png" alt="weather word cloud" width="300" height="258"></a></p> 
+          <p>Words like storm, tornado, and science were frequently in the same tweet as the word weather. Other words, such as flooding, heavy,&nbsp;and wave were also found in tweets with the word weather but not at the same frequency as the former batch of words.</p> 
+          <p>A wordcloud is a nice way to get a quick idea about the relationship between words in tweets. To understand the emotions that may be being conveyed in tweets requires us to conduct a sentiment analysis.&nbsp;Sentiment analysis can be conducted in a variety of ways. I utilized the tm and syuzhet packages to complete this (the syuzhet&nbsp;package conducts a sentiment analysis based on the&nbsp;<a href="http://saifmohammad.com/WebPages/NRC-Emotion-Lexicon.htm" target="_blank"> NRC Word-Emotion Association Lexicon</a>)</p> 
+          <p>The following bit of code is added after you have already imported Twitter data and created a data frame with it:</p>
+          <!-- Crayon Syntax Highlighter v_2.7.2_beta --> 
+          <div id="crayon-59d392efcb5dc463502688" class="crayon-syntax crayon-theme-sublime-text crayon-font-monaco crayon-os-pc print-yes notranslate" data-settings=" minimize scroll-mouseover" style=" margin-top: 12px; margin-bottom: 12px; font-size: 12px !important; line-height: 15px !important;"> 
+           <div class="crayon-toolbar" data-settings=" mouseover overlay hide delay" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+            <span class="crayon-title"></span> 
+            <div class="crayon-tools" style="font-size: 12px !important;height: 18px !important; line-height: 18px !important;">
+             <div class="crayon-button crayon-nums-button" title="Toggle Line Numbers">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-plain-button" title="Toggle Plain Code">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-wrap-button" title="Toggle Line Wrap">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-expand-button" title="Expand Code">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-copy-button" title="Copy">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <div class="crayon-button crayon-popup-button" title="Open Code In New Window">
+              <div class="crayon-button-icon"></div>
+             </div>
+             <span class="crayon-language">R</span>
+            </div>
+           </div> 
+           <div class="crayon-info" style="min-height: 16.8px !important; line-height: 16.8px !important;"></div> 
+           <div class="crayon-plain-wrap">
+            <textarea wrap="soft" class="crayon-plain print-no" data-settings="dblclick" readonly style="-moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4; font-size: 12px !important; line-height: 15px !important;">
+mySentiment &lt;- get_nrc_sentiment(df$text)
+
+df &lt;- cbind(df, mySentiment)
+
+sentimentTotals &lt;- data.frame(colSums(df[,c(17:25)])) ##select columns with sentiment data
+names(sentimentTotals) &lt;- "count" 
+sentimentTotals &lt;- cbind("sentiment" = rownames(sentimentTotals), sentimentTotals)
+rownames(sentimentTotals) &lt;- NULL ##graph would be messy if these were left when plotting
+ggplot(data = sentimentTotals, aes(x = sentiment, y = count)) +
+  geom_bar(aes(fill = sentiment), stat = "identity") +
+  theme(legend.position = "none") +
+  xlab("Sentiment") + ylab("Total Count") + ggtitle("Total Sentiment Score")</textarea>
+           </div> 
+           <div class="crayon-main" style=""> 
+            <table class="crayon-table"> 
+             <tbody>
+              <tr class="crayon-row"> 
+               <td class="crayon-nums " data-settings="show"> 
+                <div class="crayon-nums-content" style="font-size: 12px !important; line-height: 15px !important;">
+                 <div class="crayon-num" data-line="crayon-59d392efcb5dc463502688-1">
+                  1
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5dc463502688-2">
+                  2
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5dc463502688-3">
+                  3
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5dc463502688-4">
+                  4
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5dc463502688-5">
+                  5
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5dc463502688-6">
+                  6
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5dc463502688-7">
+                  7
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5dc463502688-8">
+                  8
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5dc463502688-9">
+                  9
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5dc463502688-10">
+                  10
+                 </div>
+                 <div class="crayon-num" data-line="crayon-59d392efcb5dc463502688-11">
+                  11
+                 </div>
+                 <div class="crayon-num crayon-striped-num" data-line="crayon-59d392efcb5dc463502688-12">
+                  12
+                 </div>
+                </div> </td> 
+               <td class="crayon-code">
+                <div class="crayon-pre" style="font-size: 12px !important; line-height: 15px !important; -moz-tab-size:4; -o-tab-size:4; -webkit-tab-size:4; tab-size:4;">
+                 <div class="crayon-line" id="crayon-59d392efcb5dc463502688-1">
+                  <span class="crayon-v">mySentiment</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">get_nrc_sentiment</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-sy">$</span>
+                  <span class="crayon-v">text</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5dc463502688-2">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5dc463502688-3">
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">cbind</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">mySentiment</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5dc463502688-4">
+                  &nbsp;
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5dc463502688-5">
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">data</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-e">frame</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-e">colSums</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">df</span>
+                  <span class="crayon-sy">[</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-e">c</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-cn">17</span>
+                  <span class="crayon-o">:</span>
+                  <span class="crayon-cn">25</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">]</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-c">##select columns with sentiment data</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5dc463502688-6">
+                  <span class="crayon-e">names</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"count"</span>
+                  <span class="crayon-h"> </span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5dc463502688-7">
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">cbind</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"sentiment"</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">rownames</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5dc463502688-8">
+                  <span class="crayon-e">rownames</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">&lt;</span>
+                  <span class="crayon-o">-</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-t">NULL</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-c">##graph would be messy if these were left when plotting</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5dc463502688-9">
+                  <span class="crayon-e">ggplot</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">data</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">sentimentTotals</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">aes</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">x</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">sentiment</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">y</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">count</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">+</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5dc463502688-10">
+                  <span class="crayon-h">&nbsp;&nbsp;</span>
+                  <span class="crayon-e">geom_bar</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-e">aes</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">fill</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">sentiment</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-sy">,</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-v">stat</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"identity"</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">+</span>
+                 </div>
+                 <div class="crayon-line" id="crayon-59d392efcb5dc463502688-11">
+                  <span class="crayon-h">&nbsp;&nbsp;</span>
+                  <span class="crayon-e">theme</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-v">legend</span>
+                  <span class="crayon-sy">.</span>
+                  <span class="crayon-v">position</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">=</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-s">"none"</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">+</span>
+                 </div>
+                 <div class="crayon-line crayon-striped-line" id="crayon-59d392efcb5dc463502688-12">
+                  <span class="crayon-h">&nbsp;&nbsp;</span>
+                  <span class="crayon-e">xlab</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"Sentiment"</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">+</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">ylab</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"Total Count"</span>
+                  <span class="crayon-sy">)</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-o">+</span>
+                  <span class="crayon-h"> </span>
+                  <span class="crayon-e">ggtitle</span>
+                  <span class="crayon-sy">(</span>
+                  <span class="crayon-s">"Total Sentiment Score"</span>
+                  <span class="crayon-sy">)</span>
+                 </div>
+                </div></td> 
+              </tr> 
+             </tbody>
+            </table> 
+           </div> 
+          </div> 
+          <!-- [Format Time: 0.0039 seconds] --> 
+          <p>After a bit of manipulation of the data can be plotted using ggplot:</p> 
+          <p><a href="http://www.andrewbonneau.com/wp-content/uploads/2016/03/weather_sentiment-analysis.png"><img class="alignnone size-medium wp-image-210" src="http://www.andrewbonneau.com/wp-content/uploads/2016/03/weather_sentiment-analysis-300x258.png" alt="weather sentiment analysis" width="300" height="258"></a>(click to enlarge)</p> 
+          <p>Unsurprisingly, social media has a knack for producing generally negative and fearful posts regarding weather.</p> 
+          <p>Taking these concepts further, one can break down twitter data into months, years, or even hours. For instance, you could look at twitter data regarding the weather during tornado season and compare it with the weather keyword during other months. Or, you could see how sentiment toward certain political candidates has changed over time.</p> 
+          <div class="link-pages"></div> 
+          <div class="post-aux-wrap "> 
+           <div class="post-info clearfix"> 
+            <div class="author-info-wrap clearfix"> 
+             <div class="author-avatar">
+              <img alt="" src="http://1.gravatar.com/avatar/12537c394080e72b76f5b333d59825bd?s=140&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/12537c394080e72b76f5b333d59825bd?s=280&amp;d=mm&amp;r=g 2x" class="avatar avatar-140 photo" height="140" width="140">
+             </div> 
+             <div class="author-bio"> 
+              <div class="author-name" itemprop="author" itemscope itemtype="http://schema.org/Person">
+               <h3 class="vcard author"><span itemprop="name" class="fn">abonn</span> </h3>
+              </div> 
+              <div class="author-bio-text"> 
+               <a href="http://www.andrewbonneau.com/author/admin/" class="author-more-link">More by abonn <i class="fa-long-arrow-right"></i></a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="post-details-wrap"> 
+             <div class="sf-share-counts">
+              <h3 class="share-text">Share</h3>
+              <a href="https://www.facebook.com/sharer/sharer.php?u=http%3A%2F%2Fwww.andrewbonneau.com%2Fcode%2Fsentiment-analysis-with-twitter-and-tm-r-packages%2F" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=440,width=660');return false;" class="sf-share-link sf-share-fb"><i class="fa-facebook"></i><span class="count">0</span></a>
+              <a href="http://twitter.com/share?text=Sentiment Analysis with twitteR and tm R packages&amp;url=http%3A%2F%2Fwww.andrewbonneau.com%2Fcode%2Fsentiment-analysis-with-twitter-and-tm-r-packages%2F" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=440,width=660');return false;" class="sf-share-link sf-share-twit"><i class="fa-twitter"></i><span class="count">0</span></a>
+              <a href="http://pinterest.com/pin/create/button/?url=http%3A%2F%2Fwww.andrewbonneau.com%2Fcode%2Fsentiment-analysis-with-twitter-and-tm-r-packages%2F&amp;media=&amp;description=Sentiment Analysis with twitteR and tm R packages" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=yes,scrollbars=yes,height=690,width=750');return false;" class="sf-share-link sf-share-pin"><i class="fa-pinterest"></i><span class="count">0</span></a>
+             </div> 
+             <div class="tags-wrap"> 
+              <span class="tags-title">Tags</span> 
+              <ul class="wp-tag-cloud">
+               <li><a href="http://www.andrewbonneau.com/tag/code/" rel="tag">code</a></li>
+               <li><a href="http://www.andrewbonneau.com/tag/r/" rel="tag">R</a></li>
+               <li><a href="http://www.andrewbonneau.com/tag/twitter/" rel="tag">twitteR</a></li>
+               <li><a href="http://www.andrewbonneau.com/tag/visualization/" rel="tag">visualization</a></li>
+              </ul> 
+             </div> 
+             <div class="comments-likes"> 
+              <div class="comments-wrapper"> 
+               <a href="#comment-area" class="smooth-scroll-link"> 
+                <svg version="1.1" class="comments-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30px" height="30px" viewbox="0 0 30 30" enable-background="new 0 0 30 30" xml:space="preserve"> 
+                 <path fill="none" class="stroke" stroke="#252525" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+			                        	M13.958,24H2.021C1.458,24,1,23.541,1,22.975V2.025C1,1.459,1.458,1,2.021,1h25.957C28.542,1,29,1.459,29,2.025v20.949
+			                        	C29,23.541,28.542,24,27.979,24H21v5L13.958,24z" /> 
+                </svg> <span>0</span> </a> 
+              </div> 
+              <div class="love-it-wrapper ">
+               <a href="#" class="love-it" data-post-id="206" data-user-id="0">
+                <svg version="1.1" class="loveit-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="30px" height="30px" viewbox="0 0 30 30" enable-background="new 0 0 30 30" xml:space="preserve"> 
+                 <g> 
+                  <path fill="none" class="stroke" stroke="#252525" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="
+				M5.631,24H2.021C1.459,24,1,23.541,1,22.975V2.025C1,1.459,1.459,1,2.021,1h25.957C28.543,1,29,1.459,29,2.025v20.949
+				C29,23.541,28.543,24,27.979,24h-3.316" /> 
+                  <path fill="#252525" class="fill" d="M19.994,22.895c-0.053-0.888-0.436-1.71-1.043-2.214C18.438,20.253,17.756,20,17.074,20
+				c-1.035,0-1.684,0.45-2.068,1.009C14.611,20.45,13.961,20,12.926,20c-0.682,0-1.363,0.253-1.875,0.681
+				c-0.609,0.504-0.992,1.326-1.045,2.214c-0.043,0.757,0.139,1.908,1.248,3.082c1.875,2.007,3.367,3.618,3.389,3.629L15.006,30
+				l0.361-0.395c0.012-0.011,1.504-1.622,3.381-3.629C19.857,24.803,20.037,23.651,19.994,22.895z" /> 
+                 </g> 
+                </svg><span class="love-count"><data class="count" value="">0</data></span></a>
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+           <div class="comments-wrap clearfix"> 
+            <div id="comment-area" class=""> 
+             <div id="comments"> 
+              <div id="comments-list" class="comments"> 
+               <div class="title-wrap"> 
+                <h2 class="spb-heading"><span>Comments (0)</span></h2> 
+               </div> 
+              </div>
+              <!-- #comments-list .comments --> 
+              <div id="respond-wrap"> 
+               <div id="respond" class="comment-respond"> 
+                <h3 id="reply-title" class="comment-reply-title">Leave a reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/code/sentiment-analysis-with-twitter-and-tm-r-packages/#respond" style="display:none;">Click here to cancel the reply</a></small></h3> 
+                <form action="http://www.andrewbonneau.com/wp-comments-post.php" method="post" id="commentform" class="comment-form"> 
+                 <p class="comment-notes"><span id="email-notes">Your email address will not be published.</span> Required fields are marked <span class="required">*</span></p> 
+                 <div class="row">
+                  <p class="comment-form-author col-sm-4"><label for="author">Name</label> <span class="required">*</span><input id="author" name="author" type="text" value="" size="30" aria-required="true" placeholder="Author"></p> 
+                  <p class="comment-form-email col-sm-4"><label for="email">Email</label> <span class="required">*</span><input id="email" name="email" type="text" value="" size="30" aria-required="true" placeholder="Email"></p> 
+                  <p class="comment-form-url col-sm-4"><label for="url">Website</label><input id="url" name="url" type="text" value="" size="30" placeholder="Website"></p>
+                 </div> 
+                 <p class="comment-form-title"><label for="title">Title</label><input id="title" name="title" placeholder="Title" type="text" size="30"></p> 
+                 <p class="comment-form-comment"><label for="comment">Comment</label><textarea id="comment" name="comment" cols="45" rows="8" placeholder="Comment" aria-required="true"></textarea></p> 
+                 <p class="form-allowed-tags" id="form-allowed-tags">You may use these <abbr title="HyperText Markup Language">HTML</abbr> tags and attributes: <code>&lt;a href="" title=""&gt; &lt;abbr title=""&gt; &lt;acronym title=""&gt; &lt;b&gt; &lt;blockquote cite=""&gt; &lt;cite&gt; &lt;code class="" title="" data-url=""&gt; &lt;del datetime=""&gt; &lt;em&gt; &lt;i&gt; &lt;q cite=""&gt; &lt;s&gt; &lt;strike&gt; &lt;strong&gt; &lt;pre class="" title="" data-url=""&gt; &lt;span class="" title="" data-url=""&gt; </code></p> 
+                 <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="Post comment"> <input type="hidden" name="comment_post_ID" value="206" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"> </p> 
+                </form> 
+               </div>
+               <!-- #respond --> 
+              </div> 
+             </div>
+             <!-- #comments --> 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+        </section> 
+        <!-- CLOSE article --> 
+       </article> 
+       <section class="article-extras"> 
+        <div class="related-wrap">
+         <div class="related-articles container">
+          <div class="title-wrap">
+           <h3 class="spb-heading"><span>Related Articles</span></h3>
+          </div>
+          <div class="related-items recent-posts posts-type-standard row clearfix">
+           <div itemscope class="recent-post has-thumb col-sm-3 clearfix">
+            <div class="figure-wrap">
+             <div class="date-overlay narrow-date-block">
+              <span class="month">Sep</span>
+              <span class="day">20</span>
+             </div>
+             <figure class="animated-overlay overlay-alt">
+              <img itemprop="image" src="http://www.andrewbonneau.com/wp-content/uploads/2017/09/bsly-computational-structure_edit_POST-360x270.jpg" width="360" height="270" alt="Multi-Regional Input-Output Model Computation">
+              <a href="http://www.andrewbonneau.com/code/multi-regional-input-output-model-computation/" class="link-to-post"></a>
+              <div class="figcaption-wrap"></div>
+              <figcaption>
+               <div class="thumb-info thumb-info-alt">
+                <i class="sf-icon-chevron-next"></i>
+               </div>
+              </figcaption>
+             </figure>
+            </div>
+            <div class="details-wrap">
+             <h5><a href="http://www.andrewbonneau.com/code/multi-regional-input-output-model-computation/" class="link-to-post">Multi-Regional Input-Output Model Computation</a></h5>
+             <div class="blog-item-details">
+              <span class="author">By <a href="http://www.andrewbonneau.com/author/admin/" rel="author" itemprop="author">abonn</a></span> / 
+              <span>No Comments</span>
+             </div>
+            </div>
+           </div>
+           <div itemscope class="recent-post has-thumb col-sm-3 clearfix">
+            <div class="figure-wrap">
+             <div class="date-overlay narrow-date-block">
+              <span class="month">Sep</span>
+              <span class="day">10</span>
+             </div>
+             <figure class="animated-overlay overlay-alt">
+              <img itemprop="image" src="http://www.andrewbonneau.com/wp-content/themes/atelier/images/default-thumb.png" width="1600" height="1600" alt="leaflet.js project">
+              <a href="http://www.andrewbonneau.com/code/leaflet-js-project/" class="link-to-post"></a>
+              <div class="figcaption-wrap"></div>
+              <figcaption>
+               <div class="thumb-info thumb-info-alt">
+                <i class="sf-icon-chevron-next"></i>
+               </div>
+              </figcaption>
+             </figure>
+            </div>
+            <div class="details-wrap">
+             <h5><a href="http://www.andrewbonneau.com/code/leaflet-js-project/" class="link-to-post">leaflet.js project</a></h5>
+             <div class="blog-item-details">
+              <span class="author">By <a href="http://www.andrewbonneau.com/author/admin/" rel="author" itemprop="author">abonn</a></span> / 
+              <span>No Comments</span>
+             </div>
+            </div>
+           </div>
+           <div itemscope class="recent-post has-thumb col-sm-3 clearfix">
+            <div class="figure-wrap">
+             <div class="date-overlay narrow-date-block">
+              <span class="month">Jan</span>
+              <span class="day">18</span>
+             </div>
+             <figure class="animated-overlay overlay-alt">
+              <img itemprop="image" src="http://www.andrewbonneau.com/wp-content/uploads/2016/01/featured-e1453151476766-360x250.jpg" width="360" height="250" alt="Water Abstraction in the UK">
+              <a href="http://www.andrewbonneau.com/code/water-abstraction-in-the-uk/" class="link-to-post"></a>
+              <div class="figcaption-wrap"></div>
+              <figcaption>
+               <div class="thumb-info thumb-info-alt">
+                <i class="sf-icon-chevron-next"></i>
+               </div>
+              </figcaption>
+             </figure>
+            </div>
+            <div class="details-wrap">
+             <h5><a href="http://www.andrewbonneau.com/code/water-abstraction-in-the-uk/" class="link-to-post">Water Abstraction in the UK</a></h5>
+             <div class="blog-item-details">
+              <span class="author">By <a href="http://www.andrewbonneau.com/author/admin/" rel="author" itemprop="author">abonn</a></span> / 
+              <span>No Comments</span>
+             </div>
+            </div>
+           </div>
+           <div itemscope class="recent-post has-thumb col-sm-3 clearfix">
+            <div class="figure-wrap">
+             <div class="date-overlay narrow-date-block">
+              <span class="month">Jan</span>
+              <span class="day">03</span>
+             </div>
+             <figure class="animated-overlay overlay-alt">
+              <img itemprop="image" src="http://www.andrewbonneau.com/wp-content/uploads/2016/01/auto.arima_gdp_energy_Germany-e1451826346776-350x270.png" width="350" height="270" alt="auto.arima model for forecasting non-seasonal data">
+              <a href="http://www.andrewbonneau.com/code/auto-arima-model-for-forecasting-non-seasonal-data/" class="link-to-post"></a>
+              <div class="figcaption-wrap"></div>
+              <figcaption>
+               <div class="thumb-info thumb-info-alt">
+                <i class="sf-icon-chevron-next"></i>
+               </div>
+              </figcaption>
+             </figure>
+            </div>
+            <div class="details-wrap">
+             <h5><a href="http://www.andrewbonneau.com/code/auto-arima-model-for-forecasting-non-seasonal-data/" class="link-to-post">auto.arima model for forecasting non-seasonal data</a></h5>
+             <div class="blog-item-details">
+              <span class="author">By <a href="http://www.andrewbonneau.com/author/admin/" rel="author" itemprop="author">abonn</a></span> / 
+              <span>No Comments</span>
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div> 
+       </section> 
+      </div> 
+      <!-- CLOSE page --> 
+     </div> 
+    </div> 
+    <!--// CLOSE #main-container //--> 
+   </div> 
+   <div id="footer-wrap"> 
+    <!--// OPEN #footer //--> 
+    <section id="footer" class="footer-divider"> 
+     <div class="container"> 
+      <div id="footer-widgets" class="row clearfix"> 
+       <div class="col-sm-12"> 
+        <section id="wpctc_widget-2" class="widget widget_wpctc_widget clearfix"> 
+         <div id="wpctc_widget-2-tagcloud" class="wpctc-wpctc_widget-2       wpctc-list"> 
+          <ul class="wp-tag-cloud"> 
+           <li><a href="http://www.andrewbonneau.com/tag/gtrendsr/" class="tag-link-6" title="1 topic" style="font-size: 75%;">gtrendsR</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/ggplot2/" class="tag-link-20" title="2 topics" style="font-size: 102.777777778%;">ggplot2</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/wdi/" class="tag-link-21" title="2 topics" style="font-size: 102.777777778%;">WDI</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/code/" class="tag-link-43" title="2 topics" style="font-size: 102.777777778%;">code</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/plotting/" class="tag-link-17" title="2 topics" style="font-size: 102.777777778%;">plotting</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/graphing/" class="tag-link-11" title="2 topics" style="font-size: 102.777777778%;">graphing</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/visualization/" class="tag-link-27" title="5 topics" style="font-size: 149.074074074%;">visualization</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/data/" class="tag-link-12" title="6 topics" style="font-size: 159.87654321%;">data</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/rstudio/" class="tag-link-13" title="6 topics" style="font-size: 159.87654321%;">Rstudio</a></li> 
+           <li><a href="http://www.andrewbonneau.com/tag/r/" class="tag-link-7" title="12 topics" style="font-size: 200%;">R</a></li> 
+          </ul> 
+         </div> 
+        </section> 
+       </div> 
+      </div> 
+     </div> 
+     <!--// CLOSE #footer //--> 
+    </section> 
+    <!--// OPEN #copyright //--> 
+    <footer id="copyright" class="copyright-divider"> 
+     <div class="container"> 
+      <div class="text-left">
+       ©2017 Andrew Bonneau
+      </div> 
+      <nav class="footer-menu std-menu"> 
+      </nav> 
+     </div> 
+     <!--// CLOSE #copyright //--> 
+    </footer> 
+   </div> 
+   <!--// CLOSE #container //--> 
+  </div> 
+  <!--// BACK TO TOP //--> 
+  <div id="back-to-top" class="animate-top">
+   <i class="sf-icon-chevron-up"></i>
+  </div> 
+  <!--// FULL WIDTH VIDEO //--> 
+  <div class="fw-video-area"> 
+   <div class="fw-video-close">
+    <i class="sf-icon-close"></i>
+   </div> 
+   <div class="fw-video-wrap"></div> 
+  </div> 
+  <div class="fw-video-spacer"></div> 
+  <!--// FRAMEWORK INCLUDES //--> 
+  <div id="sf-included" class=""></div> 
+  <div id="sf-option-params" data-slider-slidespeed="7000" data-slider-animspeed="600" data-slider-autoplay="0" data-slider-loop="" data-carousel-pagespeed="800" data-carousel-slidespeed="200" data-carousel-autoplay="0" data-carousel-pagination="0" data-lightbox-nav="default" data-lightbox-thumbs="1" data-lightbox-skin="light" data-lightbox-sharing="1" data-product-zoom-type="inner" data-product-slider-thumbs-pos="bottom" data-product-slider-vert-height="700" data-quickview-text="Quickview" data-cart-notification="tada"></div> 
+  <div id="loveit-locale" data-ajaxurl="http://www.andrewbonneau.com/wp-admin/admin-ajax.php" data-nonce="0c0bcf55d2" data-alreadyloved="You have already loved this item." data-error="Sorry, there was a problem processing your request." data-loggedin="false"></div> 
+  <div class="sf-container-overlay"> 
+   <div class="sf-loader"> 
+   </div> 
+  </div> 
+  <script>                                    </script>
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/swift-framework/includes/page-builder/frontend-assets/js/spb-functions.min.js"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/wp-category-tag-could/javascript/jquery.tagcanvas.min.js?ver=1.7.1"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/wp-category-tag-could/javascript/wpctc.tagcanvas.min.js?ver=1.7.1"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/wp-category-tag-could/javascript/jquery.style.min.js?ver=1.7.1"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/plugins/wp-category-tag-could/javascript/wp-category-tag-cloud.min.js?ver=1.7.1"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/themes/atelier/js/sf-scripts.min.js"></script> 
+  <script type="text/javascript" src="http://www.andrewbonneau.com/wp-content/themes/atelier/js/functions.min.js"></script> 
+  <!--// CLOSE BODY //-->  
+  <!--// CLOSE HTML //--> 
+ </body>
+</html>

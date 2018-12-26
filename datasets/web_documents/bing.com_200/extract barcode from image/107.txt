@@ -1,0 +1,1019 @@
+<!doctype html>
+<html ng-app="pc">
+ <head> 
+  <title>Face Detection in Java - Haar Cascade with JJIL (how-to)</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <link rel="SHORTCUT ICON" href="/favicon.ico"> 
+  <meta name="google-site-verification" content="BjbiHzqQbDr3WkzAp6OGdtfEOvVb_fohtp90C7TjPj8"> 
+  <link rel="icon" type="image/vnd.microsoft.icon" href="/favicon.ico"> 
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Average" rel="stylesheet" type="text/css"> 
+  <link rel="stylesheet" type="text/css" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"> 
+  <link rel="stylesheet" type="text/css" href="/all-80d92b2388ce1acd4c2b3aac87db62adc30ca137.css"> 
+  <meta name="description" content="A quick how-to guide in apply the JJIL library to detect faces in a picture or image using Java."> 
+ </head> 
+ <body> 
+  <header> 
+   <div class="header-content"> 
+    <div class="rightbar"> 
+     <a class="menu" href="http://feeds.feedburner.com/PragmaticCoder"><i class="fa fa-rss"></i></a> 
+     <a class="menu" href="http://github.com/rjnichols"><i class="fa fa-github"></i></a> 
+     <a class="menu" href="http://twitter.com/richard_nichols"><i class="fa fa-twitter"></i></a> 
+    </div> 
+    <div class="sidebar" style=""> 
+     <strong style="display: block; text-align: right; margin-top: 1em;"><a href="/">Richard Nichols</a></strong> 
+    </div> 
+    <a href="/" class="menu">Blog</a> 
+    <a href="/about/" class="menu">About</a> 
+    <a href="/contact-me/" class="menu">Contact</a> 
+   </div>
+  </header> 
+  <div class="content"> 
+   <!--
+    </div>
+</body>
+</head>--> 
+   <h1>Face Detection in Java - Haar Cascade with JJIL (how-to)</h1> 
+   <div class="sidebar nav"> 
+    <a href="/2010/12/looking-back-on-2010/" class="tooltip" title="Looking back on 2010...">
+     <nobr>
+      ? Previous
+     </nobr></a> 
+    <a href="/2011/01/use-hudson-now-jenkins-to-restart-a-windows-service/" class="tooltip" title="Use Hudson (now Jenkins) to restart a Windows service...">
+     <nobr>
+      Next ?
+     </nobr></a> 
+   </div> 
+   <h4>Published Wed, 12 Jan 2011 • 61 comments</h4> 
+   <p>A requirement came up on a recent project to automatically crop displayed profile images of people to just the "face" area for a thumbnail.</p> 
+   <p>This seems like a job for a face detection algorithm. Searching for appropriate open-source Java implementations didn't yield too many results, however I was successful with <a href="http://code.google.com/p/jjil" target="_blank">JJIL</a> - <em>Jon's Java Imaging Library,</em> which is open sourced under the LGPL licence.</p> 
+   <p>JJIL is targeted at Java ME / Android platforms and doesn't have much documentation or a particularly intuitive API (not complaining, as clearly some stellar work has gone into it, kudos to Jon Webb, it's creator).</p> 
+   <p>In the end I muddled through, detecting faces in an image in a standard Java project, but given it took me a while to get everything working, I thought I'd write a quick guide to help out others that are trying to achieve similar results.</p> 
+   <h2>Getting the Right JARs</h2> 
+   <p>First things first, I had trouble getting the published JAR files to work happily together. There seems to be some sort of version mismatch issue between the core and J2SE versions.</p> 
+   <p>So I built my own copy - you can download it here - <a href="http://static.richardnichols.net/wp-content/uploads/2011/01/JJIL-visural-build-20110112.zip">JJIL-visural-build-20110112.zip</a></p> 
+   <p>This is a build of the current trunk JJIL code, and the Java SE additions (jjil-j2se).</p> 
+   <p>This build is guaranteed to work with the code examples below.</p> 
+   <h2>Basic Process</h2> 
+   <p>I'm going to try to explain the basic process of detecting the faces in terms of input and output data.</p> 
+   <p>The key file provided by JJIL for easy face (and other body part) detection is <em>Gray8DetectHaarMultiScale.java</em></p> 
+   <p>This operation is applied to an 8-bit greyscale input image, in combination with a pre-defined Haar Cascade profile. The profile determines which areas of the image are "detected". So you would want (for example) a profile to detect the frontal face features. JJIL provides several profiles out of the box.</p> 
+   <p>The output image is a mask of the area of image where faces are detected (white) and the areas where no face was detected (black). This isn't tremendously useful, as we'd usually rather just have the rectangular areas in coordinate form - I'll address this later, after walking through the process.</p> 
+   <ol> 
+    <li>Read an image from disk (.JPG, etc.)</li> 
+   </ol> 
+   <p><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/test.jpg"><img title="Test image for face detection" src="http://static.richardnichols.net/wp-content/uploads/2011/01/test-300x216.jpg" alt="" width="300" height="216"></a><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/test.jpg"> </a><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/test.jpg"></a></p> 
+   <ol> 
+    <li><p>Convert it into a <em>jjil.core.Image</em></p></li> 
+    <li><p>Generally we'll have an RGB image (colored image) and so need to convert it to 8-bit greyscale, which is what the <em>Gray8DetectHaarMultiScale </em>class requires.</p></li> 
+   </ol> 
+   <p><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/test-grey.png"><img class="alignnone size-medium wp-image-952" title="Test image for face detection (greyscale)" src="http://static.richardnichols.net/wp-content/uploads/2011/01/test-grey-300x216.png" alt="" width="300" height="216"></a></p> 
+   <ol> 
+    <li><p>Create a new instance of <em>Gray8DetectHaarMultiScale </em>with the Haar profile for detecting faces (or other body part if that's what you're looking for).</p></li> 
+    <li><p>Apply <em>Gray8DetectHaarMultiScale </em>to our 8-bit grey image.</p></li> 
+    <li><p>Retrieve result from <em>Gray8DetectHaarMultiScale</em>.</p></li> 
+   </ol> 
+   <p><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/result.jpg"><img class="alignnone size-medium wp-image-950" title="result" src="http://static.richardnichols.net/wp-content/uploads/2011/01/result-300x216.jpg" alt="Resulting Haar mask for test image for face detection" width="300" height="216"></a></p> 
+   <p>The figure below shows, the source image, overlayed with the resulting mask, from step #6</p> 
+   <p><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/test-overlay.png"><img class="alignnone size-medium wp-image-950" title="test-overlay" src="http://static.richardnichols.net/wp-content/uploads/2011/01/test-overlay-300x216.png" alt="" width="300" height="216"></a></p> 
+   <p>So as you can see, the masks correctly identify the faces the two people in the image.</p> 
+   <h2>The Code</h2> 
+   <p>Here's a small Java class that demonstrates how to read an image and apply the process described above.</p> 
+   <p><strong>Note: all the code in the article can be downloaded as a full project at the end of the article.</strong></p> 
+   <pre class="prettyprint">package jjilexample;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
+import jjil.algorithm.Gray8Rgb;
+import jjil.algorithm.RgbAvgGray;
+import jjil.core.Image;
+import jjil.core.RgbImage;
+import jjil.j2se.RgbImageJ2se;
+import jjil.algorithm.Gray8DetectHaarMultiScale;
+
+public class Main {
+    public static void findFaces(BufferedImage bi, int minScale, int maxScale, File output) {
+        try {
+            // step #2 - convert BufferedImage to JJIL Image
+            RgbImage im = RgbImageJ2se.toRgbImage(bi);
+            // step #3 - convert image to greyscale 8-bits
+            RgbAvgGray toGray = new RgbAvgGray();
+            toGray.push(im);
+            // step #4 - initialise face detector with correct Haar profile
+            InputStream is  = Main.class.getResourceAsStream("/jjilexample/haar/HCSB.txt");
+            Gray8DetectHaarMultiScale detectHaar = new Gray8DetectHaarMultiScale(is, minScale, maxScale);
+            // step #5 - apply face detector to grayscale image
+            detectHaar.push(toGray.getFront());
+            // step #6 - retrieve resulting face detection mask
+            Image i = detectHaar.getFront();
+            // finally convert back to RGB image to write out to .jpg file
+            Gray8Rgb g2rgb = new Gray8Rgb();
+            g2rgb.push(i);
+            RgbImageJ2se conv = new RgbImageJ2se();
+            conv.toFile((RgbImage)g2rgb.getFront(), output.getCanonicalPath());
+        } catch (Throwable e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        // step #1 - read source image
+        BufferedImage bi = ImageIO.read(Main.class.getResourceAsStream("test.jpg"));
+        // onto following steps...
+        findFaces(bi, 1, 40, new File("c:/Temp/result.jpg")); // change as needed
+    }
+}</pre> 
+   <h2>Getting Face Rectangles Instead</h2> 
+   <p>It would be more useful in many cases, to get a collection of Rectangles, in coordinate form, instead of an image mask.</p> 
+   <p>There is a version of <em>DetectHaarMultiScale</em> in the JJIL project SVN, which implements a "getRectangles" method to retrieve this data. Unfortunately the source is incompatible with the rest of the library in SVN, so it may be WIP or an abandoned version of the code.</p> 
+   <p>To get around this, I created my own version of <em>Gray8DetectHaarMultiScale</em>, which you can download here - <a href="http://static.richardnichols.net/wp-content/uploads/2011/01/Gray8DetectHaarMultiScale.zip">Gray8DetectHaarMultiScale</a></p> 
+   <p>Here are the important changes below -</p> 
+   <pre class="prettyprint">    public void push(Image image)  throws jjil.core.Error {
+        pushAndReturn(image);
+    }
+
+    public List pushAndReturn(Image image) throws jjil.core.Error
+    {
+        List result = new ArrayList();
+....
+                    if (hcc.eval(imSub)) {
+                        // Found something.
+                        nxLastFound = imSub.getXOffset();
+                        nyLastFound = imSub.getYOffset();
+                        // assign Byte.MAX_VALUE to the feature area so we don't
+                        // search it again
+                        result.add(new Rect(nxLastFound*nScale, nyLastFound*nScale,
+                                this.hcc.getWidth()*nScale,
+                                this.hcc.getHeight()*nScale));
+
+                        Gray8Rect gr = new Gray8Rect(nxLastFound,
+                                nyLastFound,
+                                this.hcc.getWidth(),
+                                this.hcc.getHeight(),
+                                Byte.MAX_VALUE);
+                        gr.push(imMask);
+                        imMask = (Gray8Image) gr.getFront();
+                     }
+....
+        return result;
+    }</pre> 
+   <p>So now we can call "pushAndReturn(...)" instead of just push() to apply the process to our image, and get a List back of the detected faces. Perfect!</p> 
+   <p>Using this here is a version of the example code above which prints out the rectangles where faces were detected -</p> 
+   <pre class="prettyprint">package jjilexample;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.InputStream;
+import java.util.List;
+import javax.imageio.ImageIO;
+import jjil.algorithm.Gray8Rgb;
+import jjil.algorithm.RgbAvgGray;
+import jjil.core.Image;
+import jjil.core.Rect;
+import jjil.core.RgbImage;
+import jjil.j2se.RgbImageJ2se;
+
+public class Main {
+
+    public static void findFaces(BufferedImage bi, int minScale, int maxScale, File output) {
+        try {
+            InputStream is  = Main.class.getResourceAsStream("/jjilexample/haar/HCSB.txt");
+            Gray8DetectHaarMultiScale detectHaar = new Gray8DetectHaarMultiScale(is, minScale, maxScale);
+            RgbImage im = RgbImageJ2se.toRgbImage(bi);
+            RgbAvgGray toGray = new RgbAvgGray();
+            toGray.push(im);
+            List results = detectHaar.pushAndReturn(toGray.getFront());
+            System.out.println("Found "+results.size()+" faces");
+            Image i = detectHaar.getFront();
+            Gray8Rgb g2rgb = new Gray8Rgb();
+            g2rgb.push(i);
+            RgbImageJ2se conv = new RgbImageJ2se();
+            conv.toFile((RgbImage)g2rgb.getFront(), output.getCanonicalPath());
+        } catch (Throwable e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        BufferedImage bi = ImageIO.read(Main.class.getResourceAsStream("test.jpg"));
+        findFaces(bi, 1, 40, new File("c:/Temp/result.jpg")); // change as needed
+    }
+
+}</pre> 
+   <p>If you run this, you will note that it actually detects 3 faces in the image. This is common, as the way the Haar algorithm works, is by resizing the image to different scales and running a fixed size matrix over the image. It is possible for the same face to be detected at different scales and so you end up with rectangles within rectangles. It is a pretty trivial matter to remove these "extra" rectangles though by just checking if they are fully contained by another and ignoring them accordingly.</p> 
+   <h2>Download the Project</h2> 
+   <p>To save you some time, here's the full example as a Netbeans project that you can download and run, play with, etc. Have fun!</p> 
+   <p><a href="http://static.richardnichols.net/wp-content/uploads/2011/01/JJILExample.zip">JJILExample</a></p> 
+   <p><em>Photo used in this article courtesy of <a href="http://www.flickr.com/photos/gillpenney/2762820382" target="_blank">Gill Penny</a>.</em></p> 
+   <hr class="strong"> 
+   <div style="clear:both;"></div> 
+   <h3>About the Author</h3> 
+   <div class="sidebar aside"> 
+    <img alt="Richard Nichols" src="https://pbs.twimg.com/profile_images/915334472/updatedtwit.jpg" style="width: 6em; height: 6em;"> 
+   </div> 
+   <p>Richard Nichols is an Australian software engineer with a passion for making things.</p> 
+   <p>Follow him on <a href="http://twitter.com/richard_nichols">twitter</a> or subscribe by <a href="http://feeds.feedburner.com/PragmaticCoder">RSS or email</a>.</p> 
+   <h3>You might also enjoy reading - </h3> 
+   <ul> 
+    <li><a href="/2010/07/java-web-datauris-lesscss-javascript-css-compression/"> ResourceTransformFilter - DataUris, LessCSS, Javascript and CSS Compression Made Easy!</a></li> 
+    <li><a href="/2010/09/guice-java-ioc-best-practices-annotation-configuration/">Guice / Java IoC best practices - using annotations for configuration</a></li> 
+    <li><a href="/2010/11/how-to-10000-photos-from-adobe-photoshop-album-2-to-picasa/">How to: 10000 photos from Adobe Photoshop Album 2 to Picasa</a></li> 
+    <li><a href="/2010/07/detecting-which-browser-in-java-servlet-filter/">Detecting Which Browser In Java Servlet/Filter</a></li> 
+    <li><a href="/2009/07/recruitment-from-the-other-side-part-1/">Recruitment From The "Other Side" - Part 1</a></li> 
+   </ul> 
+   <hr class="strong"> 
+   <h3>Discuss / Comment</h3> 
+   <div id="comments"> 
+    <p>There are 61 comments.</p> 
+    <ul class="comments"> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Juan" src="http://www.gravatar.com/avatar/239864b31ab3dd8ce56b665354d311ed.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Juan</strong> <em>on Thu, 13 Jan 2011 at 00:11</em><br> 
+      <blockquote>
+       Hi,
+       <br>Thats great.. do you know any good library for Face recognition, i tried a few but not getting the accuracy , is that possible in java or any other lang.
+       <br>Thanks
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Sandeep" src="http://www.gravatar.com/avatar/67fa77173dda3fd89d4124da7bc6873d.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Sandeep</strong> <em>on Thu, 13 Jan 2011 at 12:13</em><br> 
+      <blockquote>
+       Thanks for the information
+       <br>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Richard Nichols" src="http://www.gravatar.com/avatar/823262bf2559d08e2c6118286296ff04.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Richard Nichols</strong> <em>on Thu, 13 Jan 2011 at 23:11</em><br> 
+      <blockquote>
+       @Juan
+       <br>Haven't looked into this very much, one of the only implementations I found is 
+       <a rel="nofollow" href="http://darnok.org/programming/face-recognition/">http://darnok.org/programming/face-recognition/</a>
+       <br>Not sure how well it works however.
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Vinay Bharadwaj" src="http://www.gravatar.com/avatar/27eaa6f00cb73b111d30f9c7b56e34ce.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Vinay Bharadwaj</strong> <em>on Fri, 21 Jan 2011 at 01:07</em><br> 
+      <blockquote>
+       Hey thank you so much for this.. The internet is scattered with so many libraries but no documentation whatsoever... This article has helped tremendously.. :)
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="SEO services" src="http://www.gravatar.com/avatar/e6534b9af116f24690a9e0cc28a3bdea.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>SEO services</strong> <em>on Mon, 24 Jan 2011 at 06:29</em><br> 
+      <blockquote>
+       Properly explained procedure with some really nice screenshots, thanks for sharing!!..
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Eirik Larsen" src="http://www.gravatar.com/avatar/9103efdc4cbb23b938d1f9b0c0749bd8.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Eirik Larsen</strong> <em>on Thu, 17 Feb 2011 at 20:34</em><br> 
+      <blockquote>
+       Hi, I was dropped off at your site by Google :) Wanted to ask you, where would you recommend me to look for a good script for face-comparison? Java (or other language).
+       <br>
+       <br>Working on a website for parents to locate missing children, and this would make an important feature.
+       <br>
+       <br>Thank you for you time, 
+       <br>Eirik
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Mauricio" src="http://www.gravatar.com/avatar/3d81e66555d95b1c4f51161abe1c73f2.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Mauricio</strong> <em>on Sun, 27 Feb 2011 at 13:32</em><br> 
+      <blockquote>
+       Nice. Thanks for sharing.
+       <br>
+       <br>I'm doing a software to detect certain types of cells in an image. I think this might help me a lot.
+       <br>
+       <br>Thanks again.
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="mohamed hasan" src="http://www.gravatar.com/avatar/ea7cb222d677db6edd6c6e3aad7b8563.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>mohamed hasan</strong> <em>on Tue, 15 Mar 2011 at 19:42</em><br> 
+      <blockquote>
+       hi richard 
+       <br>i want to know how did u obtain the haar files (.txt)
+       <br>because i have other files but (.xml)
+       <br>so how can i convert between them if there is a relaton between them 
+       <br>thanks
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Richard Nichols" src="http://www.gravatar.com/avatar/823262bf2559d08e2c6118286296ff04.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Richard Nichols</strong> <em>on Tue, 15 Mar 2011 at 19:55</em><br> 
+      <blockquote>
+       The .txt versions were contained in the JJIL project source repository.
+       <br>
+       <br>To convert your own, consult the Wiki for the JJIL project here - 
+       <a rel="nofollow" href="http://code.google.com/p/jjil/wiki/ConvertingHaarCascade">http://code.google.com/p/jjil/wiki/ConvertingHaarCascade</a>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Nino" src="http://www.gravatar.com/avatar/5ba67605a7b22857e1bfb59c0d7dad7d.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Nino</strong> <em>on Fri, 18 Mar 2011 at 13:10</em><br> 
+      <blockquote>
+       You could also look into ImageMagic if you want todo more advanced things..
+       <br>
+       <br>
+       <a rel="nofollow" href="http://www.imagemagick.org/script/index.php">http://www.imagemagick.org/script/index.php</a>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Nino" src="http://www.gravatar.com/avatar/5ba67605a7b22857e1bfb59c0d7dad7d.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Nino</strong> <em>on Fri, 18 Mar 2011 at 13:12</em><br> 
+      <blockquote>
+       or even marvin
+       <br>
+       <br>
+       <a rel="nofollow" href="http://marvinproject.sourceforge.net/en/index.html">http://marvinproject.sourceforge.net/en/index.html</a>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Vijay" src="http://www.gravatar.com/avatar/d1c8253c1d5e778a5c382b0216187986.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Vijay</strong> <em>on Tue, 22 Mar 2011 at 21:18</em><br> 
+      <blockquote>
+       i want the "rect" which is mark image......................
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Wilson M. Penha Jr." src="http://www.gravatar.com/avatar/d88ad6c46f183bcb631d59fbd0af9581.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Wilson M. Penha Jr.</strong> <em>on Tue, 19 Apr 2011 at 18:02</em><br> 
+      <blockquote>
+       Have done it to save two images with the faces instead of just a mask image?
+       <br>
+       <br>Any help will be very thanks
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="nerdherd" src="http://www.gravatar.com/avatar/7a2e37c238aea78d122de6cc94f623d9.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>nerdherd</strong> <em>on Sun, 29 May 2011 at 21:21</em><br> 
+      <blockquote>
+       awesomeeeee :D i was having hard time as well with all those jars not working.
+       <br>thanks alot, i will try this now.
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Delower Hossain" src="http://www.gravatar.com/avatar/586acdde1f0bcc1ec9e2a91c039492c9.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Delower Hossain</strong> <em>on Mon, 25 Jul 2011 at 07:42</em><br> 
+      <blockquote>
+       Thanks a lot for this..........
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="mohamad" src="http://www.gravatar.com/avatar/c0494c0639159cb0f53f650954a61361.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>mohamad</strong> <em>on Wed, 14 Sep 2011 at 06:13</em><br> 
+      <blockquote>
+       plzz help me ..this is not working
+       <br>Plz send me the code because this one didn't work and I need the code that gives me the main pic with a rectangle on the facee
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="muhammad sholihin" src="http://www.gravatar.com/avatar/b24374d534671f31be091c381cf624ae.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>muhammad sholihin</strong> <em>on Sun, 16 Oct 2011 at 11:05</em><br> 
+      <blockquote>
+       awesome!!
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="mohamad" src="http://www.gravatar.com/avatar/c0494c0639159cb0f53f650954a61361.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>mohamad</strong> <em>on Wed, 19 Oct 2011 at 12:29</em><br> 
+      <blockquote>
+       helo..what is the awesome !!!
+       <br>this is not worked !!
+       <br>plz chat with me 
+       <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4c2123392825747b137e7c7c780c242338212d2520622f2321">[email&nbsp;protected]</a>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Gaurav" src="http://www.gravatar.com/avatar/8c50cf6b504e5378412eb89ae8e92041.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Gaurav</strong> <em>on Sun, 20 Nov 2011 at 12:14</em><br> 
+      <blockquote>
+       Hi Richard,
+       <br>
+       <br>Could you please elaborate on this part ? 
+       <br>"If you run this, you will note that it actually detects 3 faces in the image. This is common, as the way the Haar algorithm works, is by resizing the image to different scales and running a fixed size matrix over the image. It is possible for the same face to be detected at different scales and so you end up with rectangles within rectangles. It is a pretty trivial matter to remove these ?extra? rectangles though by just checking if they are fully contained by another and ignoring them accordingly."
+       <br>
+       <br>I ran this example on various images which I have, every time, It gives me output as "3 faces found "
+       <br>
+       <br>I appreciate your help.
+       <br>
+       <br>Thanks,
+       <br>Gaurav
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Tres Finocchiaro" src="http://www.gravatar.com/avatar/022d167d07589cb7b8af8d40d2714dbd.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Tres Finocchiaro</strong> <em>on Mon, 21 Nov 2011 at 10:05</em><br> 
+      <blockquote>
+       Excellent tutorial. I'm still a bit confused on the txt files (I assume they're "tweaks" to help detection depending on the photo type).
+       <br>
+       <br>The only one that seems to work predictably for me is HCSB.txt. The rest are hit and miss.
+       <br>
+       <br>Also, I've noticed that faces at angles aren't detected easily.
+       <br>
+       <br>I'm using this to thumbnail photos from drivers licenses scans. Thanks for the work to get this to J2SE and the excellent tutorial!
+       <br>
+       <br>-Tres
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Richard Nichols" src="http://www.gravatar.com/avatar/823262bf2559d08e2c6118286296ff04.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Richard Nichols</strong> <em>on Mon, 21 Nov 2011 at 18:02</em><br> 
+      <blockquote>
+       @Gaurav 
+       <br>The code in the sample does not remove the "duplicate" matches, which is why you get 3 images found. 
+       <br>
+       <br>To implement this you need to loop through the matches and ensure that the rectangle for each one is not wholly contained within another in the set. Once you remove the ones which are "contained" within others you have the final list of matches.
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Gaurav" src="http://www.gravatar.com/avatar/8c50cf6b504e5378412eb89ae8e92041.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Gaurav</strong> <em>on Tue, 22 Nov 2011 at 04:27</em><br> 
+      <blockquote>
+       Hi Richard,
+       <br>
+       <br>Thanks for your reply. 
+       <br>Can you please tell me how to approach to remove those duplicates and find exact answer. I tried with some more images which has single face. Sometimes It gave me output as 0 faces found.I am trying to modify this code so that i achieve following task.
+       <br>Input: Image file
+       <br>Output: # of faces found in images.
+       <br>
+       <br>Thanks,
+       <br>Gaurav
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Piyush" src="http://www.gravatar.com/avatar/573fd035de2965cf652b791ccac58c78.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Piyush</strong> <em>on Mon, 19 Dec 2011 at 12:49</em><br> 
+      <blockquote>
+       Hello Richard,
+       <br>how can i construct an image out of detected face....so i could use it for 
+       <br>further processing such as matching them with a set of images...kind of Facial Recognition....
+       <br>
+       <br>Thanks and Regards:
+       <br>Piyush
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Suneel" src="http://www.gravatar.com/avatar/8554958e140119f1751e133e1df10b72.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Suneel</strong> <em>on Wed, 28 Dec 2011 at 01:17</em><br> 
+      <blockquote>
+       Can any one support me to finish this face detection in an image
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Suneel" src="http://www.gravatar.com/avatar/8554958e140119f1751e133e1df10b72.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Suneel</strong> <em>on Wed, 28 Dec 2011 at 01:18</em><br> 
+      <blockquote>
+       Here is my mail id 
+       <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dba8aeb5beb7b6b4afa9aebe9bbcb6bab2b7f5b8b4b6">[email&nbsp;protected]</a>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="tarun" src="http://www.gravatar.com/avatar/b42969ca47bd5cf6757ce260b6703a28.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>tarun</strong> <em>on Mon, 30 Jan 2012 at 09:08</em><br> 
+      <blockquote>
+       hello sir i am tarun and my last sem of b.tech is going on .
+       <br>my faculty give me face detection as my final year project but i am not able to make so please help me i am in trouble i have to give my presentation of 10th feb as my 5th presentation but my code is not runnig please help me.
+       <br>my exam is from 15th feb and i am going to give an exam of GATE on 12th feb so now what i do
+       <br>i have to make a module of face detection and other module can be easily prepared by me.
+       <br>so please help me...................
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Daniel Dario Morales Salas" src="http://www.gravatar.com/avatar/c433b6d2512a15f40114eb6db2a54ca7.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Daniel Dario Morales Salas</strong> <em>on Sun, 12 Feb 2012 at 00:09</em><br> 
+      <blockquote>
+       Hi, nice How-to!
+       <br>
+       <br>I wonder how can I overlay the first image with the result, I mean I want the original picture with the rectangles in the faces, How can I do that? when you create Gray8Rgb and then push the resulting image we get a black backgroung with white rectangles but if you overlay the original pic with that result you cannot see the original picture in the background with the rectangles in the foreground, you see only the resulting pic with the background in black with the white rectangles. Can you help with this? thanks!
+       <br>
+       <br>Greetings!
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="androidist" src="http://www.gravatar.com/avatar/f80db34016035e882c38cd3090926f72.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>androidist</strong> <em>on Sun, 12 Feb 2012 at 17:25</em><br> 
+      <blockquote>
+       Thank you for you help so much.
+       <br>
+       <br>Could you please tell me how i can make this work on Android? I tried using the detect face in jjil but it keeps giving the application suddenly stopped. 
+       <br>
+       <br>Should i also used the HCSB.txt in android? where do i place it on the phone?
+       <br>
+       <br>and can i use RgbImage instead of RgbImageJ2SE?
+       <br>
+       <br>thanks again
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="lkf2002" src="http://www.gravatar.com/avatar/71975b8664deb262d2e2e07784a72485.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>lkf2002</strong> <em>on Tue, 21 Feb 2012 at 11:34</em><br> 
+      <blockquote>
+       conv.toFile((RgbImage)g2rgb.getFront(), output.getCanonicalPath());
+       <br>
+       <br>how do i show the mask image in a java panel without to create the file first ?
+       <br>
+       <br>is it possbile to covert (RgbImage)g2rgb.getFront() to a planar image or buffered image?
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="lkf2002" src="http://www.gravatar.com/avatar/71975b8664deb262d2e2e07784a72485.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>lkf2002</strong> <em>on Tue, 21 Feb 2012 at 11:40</em><br> 
+      <blockquote>
+       i know how to complete the face detection, but i dun know how to show the mask image in a java panel without to create the file first .
+       <br>
+       <br>To complete the face detection, we need 2 files, one is the original file, another one is the mask file ( black background and white squre).
+       <br>
+       <br>apply image subtraction, done!
+       <br>
+       <br>i forget wether the 1st image - 2nd image or the 2nd one subtract the first one 
+       <br>
+       <br>plx help me , urgent.
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="$aM EaGlE" src="http://www.gravatar.com/avatar/62647d4bd0a897411226af235affd7ed.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>$aM EaGlE</strong> <em>on Sat, 17 Mar 2012 at 04:27</em><br> 
+      <blockquote>
+       Thanks a ton for sharing this article.......Its very helpful for me........
+       <br>
+       <br>I will be very thankful if someone will share something related to capture facial features for comparing two faces.........My aim is to capture face from one image and identify it in other image for that purpose i need to capture facial features.......
+       <br>
+       <br>Thanks in Advance....
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Gal" src="http://www.gravatar.com/avatar/8da57cae2f519a31a29f090980b3848b.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Gal</strong> <em>on Fri, 20 Apr 2012 at 08:55</em><br> 
+      <blockquote>
+       I still can't figure out how to get the resulting face - I cant seem to find how to subtract the 2 images, or just take the rectangle recognized from the original image.. I would greatly appreciate it if somehow could help me with that!
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Mark" src="http://www.gravatar.com/avatar/ab8c2eb727c15d808673f4010ece7c91.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Mark</strong> <em>on Fri, 11 May 2012 at 09:28</em><br> 
+      <blockquote>
+       I copied several jpeg's to the ~JJILExample\build\classes\jjilexample\test.jpg file
+       <br>and re ran `java -jar JJILExample.jar'. The first attempt was a file with one face,
+       <br>then with two then with zero (a landscape). I always get the result "Three faces
+       <br>found" and when I look at the c:\temp\result.jpg file, it always has two rectangles
+       <br>at the same location as in the original test picture. What am I doing wrong?
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="sanda" src="http://www.gravatar.com/avatar/972d31d0eb0eea2cd30a5002f3530f88.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>sanda</strong> <em>on Wed, 13 Jun 2012 at 01:57</em><br> 
+      <blockquote>
+       Thanks for help.could you please tell me how can I get original image with rectangles on the faces?
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Rashid Padikkal" src="http://www.gravatar.com/avatar/5cd15a079720034811422d37c3782507.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Rashid Padikkal</strong> <em>on Mon, 23 Jul 2012 at 04:16</em><br> 
+      <blockquote>
+       sir actually i'm a fresher in java. now i'm doing a project cost sensitive face recognition.. so i need a code for recognize the face.. could u help me sir..? i think u r a great programmer. that's why i'm asking to you... waiting for your reply... please reply me to 
+       <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="34594655475c5d505544745359555d581a575b591a">[email&nbsp;protected]</a>
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Alexandru" src="http://www.gravatar.com/avatar/8ea9a9705c7500814423bd723e3d5fb5.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Alexandru</strong> <em>on Sun, 28 Oct 2012 at 13:40</em><br> 
+      <blockquote>
+       Great article!
+       <br>One quick typo:
+       <br>"Unfortunately the source in incompatible"
+       <br>*is
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Ranji" src="http://www.gravatar.com/avatar/6aeb8fbbaf013601f97745c2ace97868.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Ranji</strong> <em>on Tue, 8 Jan 2013 at 05:08</em><br> 
+      <blockquote>
+       Can you tell me how can I get original image with rectangles on the faces? or the coordinates of those rectangles ?
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="piyush kumar lodaya" src="http://www.gravatar.com/avatar/a79c955253c1bc71ce53bd1b24f03378.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>piyush kumar lodaya</strong> <em>on Fri, 29 Mar 2013 at 11:52</em><br> 
+      <blockquote>
+       <p>thnx a lot ..was recently working on face dtection ... found your post very lucid and thanks for giving edited jar files... would love to read more</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="sousou" src="http://www.gravatar.com/avatar/79fda7267cd99a7e4d8226974b8e60bd.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>sousou</strong> <em>on Thu, 25 Apr 2013 at 18:16</em><br> 
+      <blockquote>
+       <p>i want some help concerned this code so please did you know how can i convert it to Anndroid (eclipse) and thank you</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Kachary" src="http://www.gravatar.com/avatar/9c8f585ccb821a1ee3490c14360dfc1d.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Kachary</strong> <em>on Wed, 10 Jul 2013 at 10:17</em><br> 
+      <blockquote>
+       <p>This one is quite useful! Specially, JJIL and the rectangle from you.</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Nirmala Valghude" src="http://www.gravatar.com/avatar/a8c2a38b23720a9bbef4b5607dce8c88.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Nirmala Valghude</strong> <em>on Wed, 7 Aug 2013 at 04:41</em><br> 
+      <blockquote>
+       <p>Thanks a lot sir,but this jar file does not display .Sir this is my kindly request to you can you guide me about how can crop face image in hair,eyes,nose,etc.after the button click in a selected image.and also how can we match them that means Croped image and full image. I am working on a project Criminal Face Detecting System.I want to crop criminal face and match with eyewitness's criminal face.Sir,please guide me.</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Karthik" src="http://www.gravatar.com/avatar/22dd2915d1431693d0722f212a219718.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Karthik</strong> <em>on Thu, 10 Oct 2013 at 02:22</em><br> 
+      <blockquote>
+       <p>Hi Richard the article which you provide is very nice but how could I implement this on android. As, I am facing the problems in android how to detect the face and compare two images with facial expressions on it. If possible could you send the code or can you give me any suggestion on it. Thanks.</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="prasad nikumbh" src="http://www.gravatar.com/avatar/f823edbefb86d6f17161935f93516b61.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>prasad nikumbh</strong> <em>on Thu, 12 Dec 2013 at 10:34</em><br> 
+      <blockquote>
+       <p>hey richard tour code does not provide only faced square pixels.i mean the portion that hihglights the square.so can u provide me the same. becoz i need to separate those pixels out</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="vignesh" src="http://www.gravatar.com/avatar/07d7689dbd5bfb211a81b321d2742d67.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>vignesh</strong> <em>on Sat, 18 Jan 2014 at 02:40</em><br> 
+      <blockquote>
+       <p>i need source code for face feature extraction and fingerprint feature extraction</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Kesevan" src="http://www.gravatar.com/avatar/fff0cfc86b75e714f18f0fba98afc209.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Kesevan</strong> <em>on Tue, 4 Feb 2014 at 03:31</em><br> 
+      <blockquote>
+       <p>Give me the steps to run the above program.</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="ASK" src="http://www.gravatar.com/avatar/5c5ce83d508fae7fffea3d8acb2fd368.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>ASK</strong> <em>on Tue, 4 Feb 2014 at 03:32</em><br> 
+      <blockquote>
+       <p>Thank you its very use full to us</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="john smith" src="http://www.gravatar.com/avatar/83f91937ca90ffab0a132f9e7e0b4c95.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>john smith</strong> <em>on Fri, 14 Feb 2014 at 00:38</em><br> 
+      <blockquote>
+       <p>how to run the above program</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="john" src="http://www.gravatar.com/avatar/5eb80a0f204015991179e107b6496968.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>john</strong> <em>on Sat, 24 May 2014 at 04:10</em><br> 
+      <blockquote>
+       <p>Thank you for this project. but i have question how can we insert new images and how is the system make change to HCSB.txt</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="boniphace udoya" src="http://www.gravatar.com/avatar/86be541bf98f967e22a6bced4f3d338c.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>boniphace udoya</strong> <em>on Sat, 16 Aug 2014 at 07:25</em><br> 
+      <blockquote>
+       <p>Thanks a lot,is this possible using the library OPENCV?</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="giriraj patoliya" src="http://www.gravatar.com/avatar/5d3a8b107ac412fec8dea3ac13169561.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>giriraj patoliya</strong> <em>on Sat, 8 Nov 2014 at 05:34</em><br> 
+      <blockquote>
+       <p>thank you</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Samsudeen" src="http://www.gravatar.com/avatar/d7b6a7b17665789f1f579b482e4e6d2a.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Samsudeen</strong> <em>on Wed, 11 Mar 2015 at 07:50</em><br> 
+      <blockquote>
+       <p>Hi I came across your code it was nice but it does not work for all Images</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="GopiKrishna" src="http://www.gravatar.com/avatar/74c4637765020a2e2f90037dd73f5cdb.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>GopiKrishna</strong> <em>on Tue, 14 Apr 2015 at 05:08</em><br> 
+      <blockquote>
+       <p>Hi...Iam trying to develop an OS using java platform........I need your sugestions and help to complete my project.</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="amruta" src="http://www.gravatar.com/avatar/8b8fc04f0afc52263f1f1e3cb041c05d.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>amruta</strong> <em>on Fri, 24 Jul 2015 at 04:55</em><br> 
+      <blockquote>
+       <p>sir the code giveing error like Exception in thread "main" java.lang.IllegalArgumentException: input == null! at javax.imageio.ImageIO.read(ImageIO.java:1322) at jjilexample.MainNoCustom.main(MainNoCustom.java:34)</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Hamidatu Abdulkadir" src="http://www.gravatar.com/avatar/f37f56f5a1916d2c25b8c867a94fba33.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Hamidatu Abdulkadir</strong> <em>on Sat, 12 Mar 2016 at 09:21</em><br> 
+      <blockquote>
+       <p>please need help how can i get the libraries attached to the face recognition program. thanks</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="kavi" src="http://www.gravatar.com/avatar/3f17a0ffac2a7598e5306d0d6ce4c965.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>kavi</strong> <em>on Fri, 25 Mar 2016 at 06:29</em><br> 
+      <blockquote>
+       <p>I ran this example on various images which I have, every time, It gives me output as 6 faces found. </p> 
+       <p>thank you</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="radha gogia" src="http://www.gravatar.com/avatar/482d1f96b961357c8a9cc525fb2d0576.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>radha gogia</strong> <em>on Sun, 2 Oct 2016 at 03:48</em><br> 
+      <blockquote>
+       <p>I want to store images of people in a database and then detect which face corresponds to which image .</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="radha gogia" src="http://www.gravatar.com/avatar/482d1f96b961357c8a9cc525fb2d0576.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>radha gogia</strong> <em>on Sun, 2 Oct 2016 at 03:51</em><br> 
+      <blockquote>
+       <p>So how to proceed for designing such kind of system ?</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="yo" src="http://www.gravatar.com/avatar/ccdaad1f50b2bcf86b25a6f45c6775c2.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>yo</strong> <em>on Wed, 1 Feb 2017 at 16:06</em><br> 
+      <blockquote>
+       <p>i love your youtube channel i found it on youtube</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Akshay" src="http://www.gravatar.com/avatar/900ee78a1cac3b129aa9f73dcb167035.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Akshay</strong> <em>on Thu, 9 Feb 2017 at 05:14</em><br> 
+      <blockquote>
+       <p>hi I m trying to build the project Face detection using Webcam with Arduino using Opencv . but which Camera shield are used in this project plz tell me and which components are required ???</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Jose Pinho" src="http://www.gravatar.com/avatar/d36aef946f0db51dc4aaf98396074f82.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Jose Pinho</strong> <em>on Thu, 27 Apr 2017 at 17:05</em><br> 
+      <blockquote>
+       <p>You have done a fantastic work. Do you have anything for eye detector?</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+     <li> 
+      <div class="sidebar aside nav"> 
+       <div class="comment_buffer"> 
+        <img alt="Aditya Kumar" src="http://www.gravatar.com/avatar/2c08f4904ca49822958da4d19a115af0.jpg?s=128&amp;d=identicon"> 
+       </div> 
+      </div> <strong>Aditya Kumar</strong> <em>on Sun, 4 Jun 2017 at 01:11</em><br> 
+      <blockquote>
+       <p>What is the use of this line:- InputStream is = Main.class.getResourceAsStream("/haar/HCSB.txt");</p> 
+       <p>how to generate this HCSB.txt file because for every image it is constant so the result will be same whether we upload any image</p> 
+      </blockquote> 
+      <div style="clear: both;"></div> </li> 
+    </ul> 
+    <h4>Add a comment</h4> 
+    <noscript>
+     Sorry, you need Javascript enabled in order to post.
+    </noscript> 
+    <form name="addComment" novalidate ng-controller="CommentCtrl" ng-cloak class="ng-cloak" ng-init="articleId = 938"> 
+     <p ng-show="error"> </p>
+     <ul class="errors"> 
+      <li ng-repeat="e in error">{{e.error}}</li> 
+     </ul> 
+     <p></p> 
+     <p ng-show="commented">Thanks for your comment!/</p>
+     <p> </p>
+     <div ng-hide="commented"> 
+      <label>Name</label>
+      <input name="name" type="text" placeholder="John Smith" ng-model="comment.name" required> 
+      <div class="input-help">
+       Required.
+      </div> 
+      <label>Email</label>
+      <input name="email" type="email" placeholder="Not displayed - used for your Gravatar or to contact you later" ng-model="comment.email" required> 
+      <div class="input-help">
+       Valid email address required.
+      </div> 
+      <label>Comment</label> 
+      <textarea ng-model="comment.comment" rows="5" required placeholder="Markdown formatted text allowed, no HTML (will be escaped)."></textarea> 
+      <div class="input-help">
+       Required.
+      </div> 
+      <button ng-click="saveComment()" ng-disabled="addComment.$pristine || addComment.$invalid || inprogress">Post Comment</button> 
+      <span ng-show="inprogress">Posting message, please wait...</span> 
+     </div> 
+    </form> 
+   </div> 
+   <footer> 
+    <hr> 
+    <form id="footer_search" method="get" action="/search" class="ng-pristine ng-valid" style="float: right; text-align: right;"> 
+     <div class="oneline"> 
+      <a href="/archive">All Posts</a> | 
+      <input name="q" type="text" placeholder="search..." style="width: 50%;"> 
+      <a href="#" onclick="$('#footer_search').submit(); return false;" class="button square"><img src="/search.png"></a> 
+     </div> 
+    </form> 
+    <p style="float: left;">© 2014 Richard Nichols</p> 
+   </footer> 
+   <script>!function(e,t,r,n,c,h,o){function a(e,t,r,n){for(r='',n='0x'+e.substr(t,2)|0,t+=2;t<e.length;t+=2)r+=String.fromCharCode('0x'+e.substr(t,2)^n);return r}try{for(c=e.getElementsByTagName('a'),o='/cdn-cgi/l/email-protection#',n=0;n<c.length;n++)try{(t=(h=c[n]).href.indexOf(o))>-1&&(h.href='mailto:'+a(h.href,t+o.length))}catch(e){}for(c=e.querySelectorAll('.__cf_email__'),n=0;n<c.length;n++)try{(h=c[n]).parentNode.replaceChild(e.createTextNode(a(h.getAttribute('data-cfemail'),0)),h)}catch(e){}}catch(e){}}(document);</script>
+   <script type="text/javascript" src="/all-4823abf888652ab2fcba07f391b26e19edd37fca.js"></script> 
+   <script type="text/javascript">
+            $(document).ready(function() {
+                $('pre > code').addClass('prettyprint');
+                prettyPrint();
+                $('.tooltip').tipsy({gravity: 's', fade: true});
+                
+            });
+            
+        </script> 
+   <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50306601-1', 'richardnichols.net');
+  ga('send', 'pageview');
+        </script>   
+  </div>
+ </body>
+</html>

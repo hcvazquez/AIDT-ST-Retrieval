@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>
+			ColdFusion Email Validation, IsValid(), And CFMail Errors
+		</title> 
+  <meta name="Keywords" content="ben nadel,blog,coldfusion,jquery,sql,html,ajax,html5"> 
+  <meta name="Description" content="Ben Nadel's web development blog on ColdFusion, jQuery, HTML5, AJAX, SQL, and all aspects of web application development."> 
+  <link rel="shortcut icon" type="image/ico" href="/favicon.png"> 
+  <link rel="alternate" type="application/rss+xml" title="Ben Nadel's ColdFusion, JavaScript, User Experience (UX), and Web Development RSS" href="/index.cfm?event=blog.rss"> 
+  <link href="https://plus.google.com/108976367067760160494?rel=author" rel="publisher"> 
+  <meta name="verify-v1" content="4BMHbbVgHMewa8Orm/PNkp0/RtWXuI4Fh/IKPkE2y7A="> 
+  <meta name="google-site-verification" content="vR-ZlPTSF4uAlM0vCQPsoVsVSwslsq0tSftkSrGGQ-w"> 
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Merriweather:300,400,700,900|Open+Sans:300,400,600,700,400italic,300italic"> 
+  <link rel="stylesheet" type="text/css" href="/linked/css/bennadel.css?v=2015-05-15"> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:site" content="@BenNadel"> 
+  <meta name="twitter:title" content="ColdFusion Email Validation, IsValid(), And CFMail Errors"> 
+  <meta name="twitter:description" content="Ben Nadel's web development blog on ColdFusion, jQuery, HTML5, AJAX, SQL, and all aspects of web application development."> 
+  <meta name="twitter:image" content="https://www.bennadel.com/resources/uploads/email_format_errors.gif"> 
+ </head> 
+ <body id="body"> 
+  <header class="l-site-header"> 
+   <div class="masthead"> 
+    <a href="/index.cfm" title="Ben Nadel on User Experience (UX), JavaScript, ColdFusion, Node.js, Life, and Love." class="title"> Ben Nadel </a> 
+    <div class="tagline">
+      On User Experience (UX) Design, JavaScript, ColdFusion, Node.js, Life, and Love. 
+    </div> 
+   </div> 
+   <nav class="active-blog"> 
+    <a href="#primary-navigation" class="root"> Navigation: </a> 
+    <ul id="primary-navigation" class="items"> 
+     <li class="blog"> <a href="/blog/recent-blog-entries.htm" title="Ben Nadel's Blog On Obsessively Thorough Web Application Development.">Home</a> </li>
+     <!--
+					-->
+     <li class="projects"> <a href="/projects/overview.htm" title="Ben Nadel's open source web development projects.">Projects</a> </li>
+     <!--
+					-->
+     <li class="about"> <a href="/about/about-ben-nadel.htm" title="Learn more about Ben Nadel, Co-founder of InVision App, Inc.">About Me</a> </li>
+     <li class="contact"> <a href="/contact/contact-ben-nadel.htm" title="Contact Ben Nadel for any web development consutling.">Contact</a> </li>
+     <!--
+					-->
+     <li class="jobs"> <a href="/jobs/web-development-jobs.htm" title="Find your next web development job on Ben Nadel's job board.">Jobs ( 1 )</a> </li>
+     <!--
+					-->
+     <li class="people"> <a href="/people/who-rock-my-world.htm" title="The amazing people who rock Ben Nadel's world on the daily!">People</a> </li>
+     <!--
+					-->
+     <li class="invision"> <a href="/invision/co-founder.htm" title="Ben Nadel is the co-founder of InVision App, Inc.">InVision</a> </li>
+     <!--
+					-->
+     <li class="rss"> <a href="/index.cfm?event=blog.rss" title="The BenNadel.com RSS feed." class="rss">RSS</a> </li> 
+    </ul> 
+   </nav> 
+   <figure> 
+    <img src="/images/header/photos/jin_park.jpg" data-rel="653" alt="Ben Nadel at cf.Objective() 2014 (Bloomington, MN) with: Jin Park"> 
+    <figcaption>
+      Ben Nadel at cf.Objective() 2014 (Bloomington, MN) with: 
+     <span class="person"><a href="https://www.linkedin.com/in/sejinpark" target="_blank">Jin Park</a></span> 
+    </figcaption> 
+   </figure> 
+  </header> 
+  <div id="site-content" class="l-site-body"> 
+   <div class="l-site-content content"> 
+    <article id="blog-post" data-id="265" data-gist-id="9751716"> 
+     <header class="m-post-header"> 
+      <h1> ColdFusion Email Validation, IsValid(), And CFMail Errors </h1> 
+      <div class="meta">
+        By 
+       <a href="https://plus.google.com/108976367067760160494?rel=author" title="Author: Ben Nadel on Google+" class="author">Ben Nadel</a> on 
+       <time datetime="2006-09-12">September 12, 2006</time> 
+      </div> 
+      <div class="tags">
+        Tags: 
+       <a href="/blog/tags/1-coldfusion-blog-entries.htm" class="tag">ColdFusion</a> 
+      </div> 
+     </header> 
+     <p>Who here hasn't had to validate an email address format at some point? Heck, I do that in practically every application that I build. And why do I do it? The truth is, I don't really care if people mess up entering their own email address. I mean sure, I validate that. But really, my main concern is NOT having the ColdFusion page request crap out. If you attempt to send a CFMail tag with a bad email address format, it will throw an error.</p>
+     <p>Sometimes, my email validation is not perfect and I end up not allowing some emails that are actually valid. This got me thinking - what is a valid email address? Or rather, what does ColdFusion think a valid email address is? There are two ways to look at this:</p>
+     <ol>
+      <li>What will pass an IsValid() method call?</li>
+      <li>What will let a CFMail tag execute successfully?</li>
+     </ol>
+     <p>To test this, I set up an array of emails and then tried sending emails out. In the example below, you will notice that I use ".ben" in the email extension a lot. That is because I don't actually want to send emails to valid addresses. I just want to test to see if they send action works (yes, I did get several hundred undeliverable emails).</p>
+     <div class="code" data-gist-filename="code-1.cfm">
+      <ul>
+       <li>&lt;!--- Set up emails to test format. ---&gt;</li>
+       <li>&lt;cfset arrEmails = ArrayNew( 1 ) /&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&lt;!--- Add emails that we know are totally bunk. ---&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "1" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "@" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, ".ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "." ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "..." ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "-.-.ben" ) /&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&lt;!--- Add emails that test the NAME part. ---&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "sarah@hotties.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "mary-kate@equinox.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "mrs.molly@teacup.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "libby_star@blondes.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "d.d.busty@domain.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "heather..rose@gotglue.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "anne--fesekis@hackley.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, ".anna.cooper.@hockeychicks.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "-christina.cox-@hollywoodhotties.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "@campuscuties.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "-@justlegal.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, ".@swank.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "3@atatime.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "/@punctuation.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "*@punctuation.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "ben&amp;molly@kittens.ben" ) /&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&lt;!--- Add emails that test the DOMAIN part. ---&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "sarah@hot-girls.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "anne@got----blondes.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "jessica@-cool-girl-.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "julie@cool.beans.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "julia@brazil..buddies.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "kate@dorm.-.girls.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "lara@-.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "michelle@36-24-36.ben" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "kimmie@ladies.who.smile.ben" ) /&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&lt;!--- Add emails that test the EXTENSION part. ---&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "ye@whatwhat" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "stacy@largeladies.4" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "marci@totality.123" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "jen@toocute.z" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "jo@cutencurley.xy" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "pam@waycute.xyz" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "gina@cowgirls.a4b" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "linda@lumpyladies.abcdef" ) /&gt;</li>
+       <li>&lt;cfset ArrayAppend( arrEmails, "jane@ilikeemlarge.abcdefghij" ) /&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&nbsp;<br></li>
+       <li>&lt;!--- Create a table to output the results. ---&gt;</li>
+       <li>&lt;table border="0" cellspacing="0" cellpadding="0"&gt;</li>
+       <li>&lt;tr&gt;</li>
+       <li class="tab1">&lt;td&gt;</li>
+       <li class="tab2">Email</li>
+       <li class="tab1">&lt;/td&gt;</li>
+       <li class="tab1">&lt;td&gt;</li>
+       <li class="tab2">IsValid()</li>
+       <li class="tab1">&lt;/td&gt;</li>
+       <li class="tab1">&lt;td&gt;</li>
+       <li class="tab2">Email Success</li>
+       <li class="tab1">&lt;/td&gt;</li>
+       <li>&lt;/tr&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&lt;!--- Loop over the emails and validate them. ---&gt;</li>
+       <li>&lt;cfloop index="intI" from="1" to="#ArrayLen( arrEmails )#" step="1"&gt;</li>
+       <li class="tab1">&nbsp;<br></li>
+       <li class="tab1">&lt;!--- Try sending out email. ---&gt;</li>
+       <li class="tab1">&lt;cftry&gt;</li>
+       <li class="tab2">&nbsp;<br></li>
+       <li class="tab2">&lt;!--- Send mail. ---&gt;</li>
+       <li class="tab2">&lt;cfmail </li>
+       <li class="tab3">to="#arrEmails[ intI ]#"</li>
+       <li class="tab3">from="xxx@yyy.zzz"</li>
+       <li class="tab3">subject="This is a test email"&gt;</li>
+       <li class="tab3">&nbsp;<br></li>
+       <li class="tab3">This is a test email.</li>
+       <li class="tab2">&lt;/cfmail&gt;</li>
+       <li class="tab2">&nbsp;<br></li>
+       <li class="tab2">&lt;!--- Set success flag. ---&gt;</li>
+       <li class="tab2">&lt;cfset blnEmailSuccess = true /&gt;</li>
+       <li class="tab2">&nbsp;<br></li>
+       <li class="tab2">&lt;!--- Catch email errors. ---&gt;</li>
+       <li class="tab2">&lt;cfcatch&gt;</li>
+       <li class="tab3">&nbsp;<br></li>
+       <li class="tab3">&lt;!--- Email failed. Set success flag. ---&gt;</li>
+       <li class="tab3">&lt;cfset blnEmailSuccess = false /&gt;</li>
+       <li class="tab2">&nbsp;<br></li>
+       <li class="tab2">&lt;/cfcatch&gt;</li>
+       <li class="tab1">&nbsp;<br></li>
+       <li class="tab1">&lt;/cftry&gt;</li>
+       <li class="tab1">&nbsp;<br></li>
+       <li class="tab1">&nbsp;<br></li>
+       <li class="tab1">&lt;!--- Check for validity. ---&gt;</li>
+       <li class="tab1">&lt;cfset blnValid = IsValid( "email", arrEmails[ intI ] ) /&gt;</li>
+       <li class="tab1">&nbsp;<br></li>
+       <li class="tab1">&lt;tr&gt;</li>
+       <li class="tab2">&lt;td&gt;</li>
+       <li class="tab3">#arrEmails[ intI ]#</li>
+       <li class="tab2">&lt;/td&gt;</li>
+       <li class="tab2">&lt;td&gt;</li>
+       <li class="tab3">#YesNoFormat( blnValid )#</li>
+       <li class="tab2">&lt;/td&gt;</li>
+       <li class="tab2">&lt;td&gt;</li>
+       <li class="tab3">#YesNoFormat( blnEmailSuccess )#</li>
+       <li class="tab2">&lt;/td&gt;</li>
+       <li class="tab1">&lt;/tr&gt;</li>
+       <li>&nbsp;<br></li>
+       <li>&lt;/cfloop&gt;</li>
+       <li>&lt;/table&gt;</li>
+      </ul>
+     </div>
+     <p>The results are kind of surprising. I was a bit shocked how many emails actually can get sent through CFMail with completely horrible email addresses. Here are the results (I have modified the table for display):</p>
+     <table border="0" cellpadding="0" cellspacing="0" class="imageborder" width="100%">
+      <tbody>
+       <tr>
+        <td rowspan="3" width="50%"><br> </td>
+        <td class="nw"> &nbsp;<br> </td>
+        <td class="n"> &nbsp;<br> </td>
+        <td class="ne"> &nbsp;<br> </td>
+        <td rowspan="3" width="50%"><br> </td>
+       </tr>
+       <tr>
+        <td class="w"> &nbsp;<br> </td>
+        <td class="c"><img alt="Email Form Errors Using IsValid() and CFMail" height="884" src="/resources/uploads/email_format_errors.gif" width="414"></td>
+        <td class="e"> &nbsp;<br> </td>
+       </tr>
+       <tr>
+        <td class="sw"> &nbsp;<br> </td>
+        <td class="s"> &nbsp;<br> </td>
+        <td class="se"> &nbsp;<br> </td>
+       </tr>
+      </tbody>
+     </table>
+     <p>As you can see, only THREE emails crashed the ColdFusion CFMail tag. It has hardly any issues. The salmon rows are the rows where IsValid() and CFMail disagree as to what is a valid email address. Very interesting indeed. Honestly, I think my email validation can be MUCH MUCH more simple (if only caring about the CFMail tag crashing). But I guess, I can start to use IsValid(). But, and I am no expert on email address formatting, but IsValid() seems very relaxed about some of the stuff above.</p> 
+     <div class="m-tweet-this"> 
+      <a href="https://twitter.com/intent/tweet?text=Deep%20thoughts%20by%20%40BenNadel%20%2D%20ColdFusion%20Email%20Validation%2C%20IsValid%28%29%2C%20And%20CFMail%20Errors%20http%3A%2F%2Fbjam%2Ein%2F265" target="tweetThis265" onclick="window.open( this.href, 'tweetThis265', 'width=600,height=425' ).focus()"> <span class="label">Tweet This</span> <span class="message">Deep thoughts by @BenNadel - ColdFusion Email Validation, IsValid(), And CFMail Errors</span> </a> 
+      <span class="thanks">Thanks my man — <strong>you rock the party that rocks the body!</strong></span> 
+     </div> 
+     <div class="hrule"> 
+      <br> 
+     </div> 
+     <!-- BEGIN: Related Posts. --> 
+     <aside class="m-related-posts"> 
+      <h3> Enjoyed This? You Might Also Enjoy Reading: </h3> 
+      <ul> 
+       <li> <a href="/blog/2764-coldfusion-11-accepts-all-top-level-domains-tld-for-isvalid-email-validation.htm">ColdFusion 11 Accepts All Top-Level Domains (TLD) For IsValid() Email Validation</a> </li> 
+       <li> <a href="/blog/2593-isvalid-accepts-emails-with-leading-and-trailing-whitespace-in-coldfusion.htm">IsValid() Accepts Emails With Leading And Trailing Whitespace In ColdFusion</a> </li> 
+      </ul> 
+     </aside> 
+     <!-- END: Related Posts. --> 
+     <div class="hrule"> 
+      <br> 
+     </div> 
+     <!-- BEGIN: Job Listings. --> 
+     <div class="m-recent-jobs"> 
+      <h3> Looking For A <em>New Job</em>? </h3> 
+      <div class="actions"> 
+       <a href="/jobs/web-development-jobs.htm" title="Find your next web development job on Ben Nadel's job board.">View All Jobs</a> &nbsp;|&nbsp; 
+       <a href="/jobs/post-a-job-listing.htm" title="Post a job now! Only $29!">Post A Job - Only $29</a> » 
+      </div> 
+      <ul> 
+       <li> <a href="/jobs/411-ColdFusion-Developer.htm" title="Your new job: ColdFusion Developer"> <span class="title">ColdFusion Developer</span> <span class="company">at InterCoastal Net Designs - ICND</span> </a> </li> 
+      </ul> 
+      <div class="kiva">
+        100% of job board revenue is donated to Kiva. 
+       <em>Loans that change lives</em> — 
+       <a href="/jobs/web-development-jobs.htm#kiva">Find out more</a> » 
+      </div> 
+     </div> 
+     <!-- END: Job Listings. --> 
+     <div class="hrule"> 
+      <br> 
+     </div> 
+     <!-- BEGIN: Comments. --> 
+     <section class="m-comments"> 
+      <h2> Reader Comments </h2> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_257" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/dcc0d5c9286918d4953f6da75ce8c6f1?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1205-sami-hoda.htm" class="author">Sami Hoda</a> 
+        <a href="#comments_257" class="date"> <time datetime="2006-09-12">Sep 12, 2006 at 9:00 PM</time> </a> 
+        <div class="count">
+          18 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>This one is a good one for Damon Cooper for enhancement to Scorpio. You can contact him or I can file an enhancement if you'd like. Great work by the way.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_258" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_258" class="date"> <time datetime="2006-09-12">Sep 12, 2006 at 10:44 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>Sami,</p>
+        <p>I just emailed Damon. But I am a little fish and I never hear back from anyone. Feel free to get in contact with him if you think it will help things along. </p>
+        <p>Thanks!</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_259" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f344619f8b1d2c8a6b6b9d227419ed6a?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1810-tom-jordahl.htm" class="author">Tom Jordahl</a> 
+        <a href="#comments_259" class="date"> <time datetime="2006-09-13">Sep 13, 2006 at 1:18 AM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>Perhaps more information will help.</p>
+        <p>The IsValid() function uses the following regular expression to determine if the email is valid:<br>^[a-zA-Z<em>0-9-'\+~]+(\.[a-zA-Z</em>0-9-'\+~]+)*@([a-zA-Z_0-9-]+\.)+[a-zA-Z]{2,7}$</p>
+        <p>The CFMail tag uses the Sun Java class javax.mail.internet.InternetAddress parse() function. Since the implementation uses JavaMail, this is how we generate the InternetAddress objects that we pass in for the addresses (to, from, cc, etc).</p>
+        <p>The "strict" attribute is turned on. The JavaDoc says of this:</p>
+        <p>"Parse the given sequence of addresses into InternetAddress objects. If strict is false, simple email addresses separated by spaces are also allowed. If strict is true, many (but not all) of the RFC822 syntax rules are enforced. In particular, even if strict is true, addresses composed of simple names (with no "@domain" part) are allowed. Such "illegal" addresses are not uncommon in real messages.</p>
+        <p>Non-strict parsing is typically used when parsing a list of mail addresses entered by a human. Strict parsing is typically used when parsing address headers in mail messages"</p>
+        <p>See the JavaDoc at <a href="http://java.sun.com/products/javamail/javadocs/javax/mail/internet/InternetAddress.html" target="_blank">http://java.sun.com/products/javamail/javadocs/javax/mail/internet/InternetAddress.html</a></p>
+        <p>Hope that clears it up for you.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_260" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/aa068aded4619a50f6eb1b4ad043d98d?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1453-paulh.htm" class="author">PaulH</a> 
+        <a href="#comments_260" class="date"> <time datetime="2006-09-13">Sep 13, 2006 at 3:20 AM</time> </a> 
+        <div class="count">
+          41 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>i've done some work w/javamail &amp; what tom says is true (of course). even strict parsing passes a lot of addresses some folks would consider "bad", though by the same definition so does the RFC. </p>
+        <p>i guess complain to sun: <a href="http://java.sun.com/products/javamail/index.jsp" target="_blank">http://java.sun.com/products/javamail/index.jsp</a> better yet, if you get on the javamail list you can complain directly to bill shannon.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_262" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_262" class="date"> <time datetime="2006-09-13">Sep 13, 2006 at 7:26 AM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>Hey guys, I really appreciate the information. I am not familiar at all with the javax classes. I see that I can create them using CreateObject(). That is kind of cool.</p>
+        <p>But please, I don't want to be misunderstood. I wasn't attacking email validation. I DON'T want to complain to anyone. It's not important to me that some emails get through that maybe are not the best. As I said, I don't want the page to crash and from what I can see, I can relax a bit of my email validation. That was really my main point.</p>
+        <p>But again, thanks for all the feedback.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_2969" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/e1ce350b6bceabb10c1a2fbeb887ef2d?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/2107-steven-levithan.htm" class="author">Steven Levithan</a> 
+        <a href="#comments_2969" class="date"> <time datetime="2007-04-17">Apr 17, 2007 at 1:41 PM</time> </a> 
+        <div class="count">
+          172 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>This is great information. Thanks for posting this, Ben and Tom.</p>
+        <p>However, it confirms my fears about using ColdFusion's email address validation (through isValid() or cfparam), since the regex Tom posted is a little crazy, IMO (despite my acceptance that an email validation regex should not follow RFC 822 to the letter). For example, it allows underscores in the hostname (which technically makes it an invalid domain name), and yet there's no support for internationalized domain names (or usernames). And what's with the seemingly arbitrary seven-character top-level domain cap, when the longest official TLDs (.museum and .travel) are six characters? Is it trying to support reserved TLDs like .example and .invalid? If so, what about .localhost, which is eight characters? There are a number of other issues I could point out as well.</p>
+        <p>In any case, that regex (and any others which control validation provided by isValid/cfparam) should be in the LiveDocs.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_7089" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/2f9230ac94a82208f3542dda87bab344?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/204-stephen-cassady.htm" class="author">Stephen Cassady</a> 
+        <a href="#comments_7089" class="date"> <time datetime="2007-12-06">Dec 6, 2007 at 3:14 PM</time> </a> 
+        <div class="count">
+          3 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>Ahh, email validation is not actually correct for many of those entries - <a href="http://haacked.com/archive/2007/08/21/i-knew-how-to-validate-an-email-address-until-i.aspx" target="_blank">http://haacked.com/archive/2007/08/21/i-knew-how-to-validate-an-email-address-until-i.aspx</a> </p>
+        <p>I recently got a support request for an email that looks like</p>
+        <p>name&amp;name@domain.com</p>
+        <p>On research, the "&amp;" actually appears to be valid, although it is though to be not valid.</p>
+        <p>This is causing some problems.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_7139" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_7139" class="date"> <time datetime="2007-12-10">Dec 10, 2007 at 8:14 AM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Stephen,</p>
+        <p>I just recently heard of a big problem that was caused by the &amp; characters. It was something bit, like New York Times email addresses or something. Can't remember where I heard it.</p>
+        <p>Just tried running this:</p>
+        <p>#IsValid( "email", "name&amp;name@domain.com" )#</p>
+        <p>... and it returns NOT valid.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_14095" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/bfcf4c6bb4f1481adb17ab8d5363238d?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/2216-ryan.htm" class="author">Ryan</a> 
+        <a href="#comments_14095" class="date"> <time datetime="2008-12-04">Dec 4, 2008 at 11:06 AM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>One of my e-mail addresses has the domain with format @xx.xxxxxx.com, yet it seems like you might exclude that as an invalid e-mail address (either that or you were checking to see if the system would trip over a perfectly valid e-mail address, I'm not clear what your expected result was). My point is, although validation will help reduce human error and keep out some spam, being too stringent may block out a perfectly valid e-mail. Please exercise caution!</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_14096" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_14096" class="date"> <time datetime="2008-12-04">Dec 4, 2008 at 11:17 AM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Ryan,</p>
+        <p>I am not sure what you are saying. From my testing above, that format of email address IS valid. Notice that the address:</p>
+        <p>julie@cool.beans.ben</p>
+        <p>... passed both IsValid() and a successful CFMail execution. Sub-domains clearly work in ColdFusion. </p>
+        <p>Am I confused about what you are saying?</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_19248" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/b4eaac2117d0172321f8bcf1f12519d1?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/3841-sp.htm" class="author">SP</a> 
+        <a href="#comments_19248" class="date"> <time datetime="2009-07-17">Jul 17, 2009 at 10:08 AM</time> </a> 
+        <div class="count">
+          3 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>What is the trick to using cfmail to send an email to an address with a single quote in it?</p>
+        <p>ie micky.o'flannigan@somedomain.com</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_19318" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_19318" class="date"> <time datetime="2009-07-18">Jul 18, 2009 at 1:19 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Steve, </p>
+        <p>Can you even use single quotes in an email address? I am not sure that is even valid.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_19344" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/e1ce350b6bceabb10c1a2fbeb887ef2d?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/2107-steven-levithan.htm" class="author">Steven Levithan</a> 
+        <a href="#comments_19344" class="date"> <time datetime="2009-07-18">Jul 18, 2009 at 5:24 PM</time> </a> 
+        <div class="count">
+          172 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Ben Nadel, yes, it's valid according to RFC 2822--the special characters allowed as part of an email address's username are _!#$%&amp;'*+/=?`{|}~^.-. At my last job I ran into single quotes in email addresses a lot. It's unfortunate that a lot of naïve validation (including CF's isValid, etc.) disallows it.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_19345" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_19345" class="date"> <time datetime="2009-07-18">Jul 18, 2009 at 5:28 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Steven, </p>
+        <p>Really?!? Emails can use all of those characters? Bananas!</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_20155" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/e06aa9f4ab1f991c2d0c2e26b6dd71db?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/4053-she.htm" class="author">she</a> 
+        <a href="#comments_20155" class="date"> <time datetime="2009-08-11">Aug 11, 2009 at 4:07 AM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>why cc in cfmail not function if more than 1 cc at the same time, could someone help me?</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_20837" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_20837" class="date"> <time datetime="2009-09-06">Sep 6, 2009 at 2:51 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@She, </p>
+        <p>It should work as long as the are comma-separated.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_20918" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/0fcfb3b31426f07a260431a0afa12d78?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/3821-don-vawter.htm" class="author">Don Vawter</a> 
+        <a href="#comments_20918" class="date"> <time datetime="2009-09-09">Sep 9, 2009 at 2:16 AM</time> </a> 
+        <div class="count">
+          11 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>I unfortunately discovered the cfmail crashing when I switched from OpenBlueDragon to CF8. Apparently BD doesn't validate the email address. Someone entered an email of http://blah@somewhere.com. This was old code (CF 5) and obviously my validation was faulty. Probably a good thing it crashed and forced me to do a better job.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_21048" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_21048" class="date"> <time datetime="2009-09-12">Sep 12, 2009 at 10:47 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Don, </p>
+        <p>Did this throw a CF error? Or did it just go in the undeliverable folder?</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_21052" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/0fcfb3b31426f07a260431a0afa12d78?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/3821-don-vawter.htm" class="author">Don Vawter</a> 
+        <a href="#comments_21052" class="date"> <time datetime="2009-09-12">Sep 12, 2009 at 10:58 PM</time> </a> 
+        <div class="count">
+          11 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>It threw a cf error. Since it was run as a scheduled task I didn't find it until I trolled logs after a couple of subscribers said they weren't getting their email.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_21055" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_21055" class="date"> <time datetime="2009-09-12">Sep 12, 2009 at 11:04 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Don, </p>
+        <p>Ah, gotcha. So, what would have happened with OBD? It must have errored out at some point?</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_21057" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/0fcfb3b31426f07a260431a0afa12d78?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/3821-don-vawter.htm" class="author">Don Vawter</a> 
+        <a href="#comments_21057" class="date"> <time datetime="2009-09-12">Sep 12, 2009 at 11:13 PM</time> </a> 
+        <div class="count">
+          11 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>It is entirely possible that the event did not occur in BD as the errant subscriber may not have been present so my assumption that BD didn't fail may be false. <br>The "phantom processes" disappeared after a day or two. <br>To avoid any future occurences I have made all tasks run once and then have the task delete the task and regenerate it to start it at the appropriate time. The drawback to that is that if the site is down at the time the task is supposed to run the new task won't be created. I have solved that with a cron job which runs every 30 mins that uses curl to run a cfm that checks for missing tasks and recreates them.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_22598" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/ff4fdabb23819dad863dc573596c175d?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/4775-john-keyston.htm" class="author">John Keyston</a> 
+        <a href="#comments_22598" class="date"> <time datetime="2009-11-16">Nov 16, 2009 at 4:21 PM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>There have obviously been some changes in CF9. An address with an erroneous trailing period ( e.g. john@keyston.ca.) does not pass the isvalid() check in either CF8 or CF9. However, in CF8 it does not crash CFMAIL, and the mail arrives at the intended destination. In CF9, it crashes CFMAIL, as I found out the hard way! I do not know, however, how extensive the changes in CF9 are.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_22599" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_22599" class="date"> <time datetime="2009-11-16">Nov 16, 2009 at 4:26 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@John, </p>
+        <p>Well, I guess it's a step in the right direction.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_27386" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/7468acc6b86fffd656ca4e5f50391cc9?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/6061-nick-way.htm" class="author">nick way</a> 
+        <a href="#comments_27386" class="date"> <time datetime="2010-05-19">May 19, 2010 at 6:19 AM</time> </a> 
+        <div class="count">
+          3 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>hi - does anyone have a fix for emails with an ampersand in them eg name&amp;name@domain.com </p>
+        <p>using isvalid("email","name&amp;name@domain.com") - results in cf (incorrectly) saying that email is invalid - when in reality it is valid (i know coz I've just emailed a customer on their address which contains an ampersand to check and works).</p>
+        <p>I'm presuming that isvalid uses some regex (somewhere in java?) so maybe one could edit that regex to allow for ampersands?</p>
+        <p>Anyone know how?</p>
+        <p>Thanks guys</p>
+        <p>Nick</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_27520" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_27520" class="date"> <time datetime="2010-05-22">May 22, 2010 at 9:58 AM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Nick, </p>
+        <p>There's probably no way to edit the core regular expression that is being used. But, if you scroll up to Tom Jordahl's comment, you'll see the regular expression that ColdFusion is using under the hood. You could create your own UDF (user defined function) that adds the &amp; to the appropriate character class.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_27547" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/7468acc6b86fffd656ca4e5f50391cc9?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/6061-nick-way.htm" class="author">nick way</a> 
+        <a href="#comments_27547" class="date"> <time datetime="2010-05-24">May 24, 2010 at 5:30 PM</time> </a> 
+        <div class="count">
+          3 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Ben</p>
+        <p>Thank you very much for your reply, sorry I missed Tom's comment. But you are right, that is exactly what I was looking for so thank you. I'll post our amended expression here when I'm done. </p>
+        <p>Thanks again for your help Ben</p>
+        <p>best regards</p>
+        <p>Nick</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_27552" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/7468acc6b86fffd656ca4e5f50391cc9?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/6061-nick-way.htm" class="author">nick way</a> 
+        <a href="#comments_27552" class="date"> <time datetime="2010-05-25">May 25, 2010 at 5:34 AM</time> </a> 
+        <div class="count">
+          3 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>ok so i'm not strong on regex but i *think* this works</p>
+        <p>^[&amp;-&amp;a-zA-Z0-9-'\+~]+(\.[&amp;-&amp;a-zA-Z0-9-'\+~]+)*@([a-zA-Z_0-9-]+\.)+[a-zA-Z]{2,7}$</p>
+        <p>ie </p>
+        <p>&lt;cfset temp.myemail = "name&amp;name@domain.com" &gt;</p>
+        <p>&lt;cfif refind("^[&amp;-&amp;a-zA-Z0-9-'\+~]+(\.[&amp;-&amp;a-zA-Z0-9-'\+~]+)*@([a-zA-Z_0-9-]+\.)+[a-zA-Z]{2,7}$",temp.myemail) eq 1&gt;<br> email is fine<br>&lt;cfelse&gt;<br> bad email<br>&lt;/cfif&gt;</p>
+        <p>you can see i've just added &amp;-&amp; in 2 locations to the regex Tom posted. I'm sure there is a better way but I post my findings here in case it helps anyone else.</p>
+        <p>Maybe someone who understands regex better can correct my slightly hacky way of shoehorning the ampersand character into the equation.</p>
+        <p>Thanks again for your help Tom and Ben</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_27760" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_27760" class="date"> <time datetime="2010-06-08">Jun 8, 2010 at 9:56 AM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Nick, </p>
+        <p>That looks good to me. One small note - in a character class, not everything has to be a range of characters (ie. &amp;-&amp;). If you simply add the literal &amp;, that will be enough. Ranges are are only needed for multi-character ranges; otherwise, literals will suffice.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_29211" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/ba8d8bba584b7c03410cd2d406e1c69c?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/3924-doug.htm" class="author">Doug</a> 
+        <a href="#comments_29211" class="date"> <time datetime="2010-08-08">Aug 8, 2010 at 6:47 PM</time> </a> 
+        <div class="count">
+          16 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>So, I found what I think is the ultimate EMAIL validation script. It was created using PHP by Dominic Sayers and apparently it's the best one out there. It follows the email spec to a T.</p>
+        <p>I began to convert it into a nice CFFUNCTION, but then I ran across your post here.</p>
+        <p>So just to clarify something, are you saying that no matter what, even if you validate an email address (using this script or whatever), that it might not matter because CFMAIL may still reject the address based on it own regexp? If that's the case, that really really sucks. </p>
+        <p>Sorry if I'm misunderstanding this, but I didn't want to go through all this work and then find out that it didn't matter. Is it possible you could clarify?</p>
+        <p>Thanks</p>
+        <p>p.s. Dominic's script can be found here. It's worth a look...<br><a href="http://code.google.com/p/isemail/" target="_blank">http://code.google.com/p/isemail/</a> (Project HOME)<br><a href="http://code.google.com/p/isemail/source/browse/trunk/is_email.php" target="_blank">http://code.google.com/p/isemail/source/browse/trunk/is_email.php</a> (CODE)</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_29214" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_29214" class="date"> <time datetime="2010-08-08">Aug 8, 2010 at 6:59 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Doug, </p>
+        <p>I think just the opposite; it appears that the CFMail tag is *much* more relaxed than the isValid(email) method. If you put your own validation in place, I am sure you will get fine results.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_29215" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/ba8d8bba584b7c03410cd2d406e1c69c?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/3924-doug.htm" class="author">Doug</a> 
+        <a href="#comments_29215" class="date"> <time datetime="2010-08-08">Aug 8, 2010 at 7:10 PM</time> </a> 
+        <div class="count">
+          16 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>Ok, so it's just the isValid function that is using that simple regexp. That makes sense then. Cool.</p>
+        <p>As always, thank for the informative response! (And on a Sunday to boot!)</p>
+        <p>-Doug</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_29216" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_29216" class="date"> <time datetime="2010-08-08">Aug 8, 2010 at 8:16 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Doug, </p>
+        <p>Yeah, from what I can tell, isValid() is more limited than CFMail. And no worries on the response - I'm trying to "chunk" my responses in my free time.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_30837" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/ec6c8838a670fe8d255c86ee7d62a863?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/7051-pixelgrinch.htm" class="author">PixelGrinch</a> 
+        <a href="#comments_30837" class="date"> <time datetime="2010-10-11">Oct 11, 2010 at 12:24 PM</time> </a> 
+        <div class="count">
+          2 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@nick way:</p>
+        <p>your RegEx doesn't pass the underscore.</p>
+        <p>eg:<br>first_name@doimain.com</p>
+        <p>is a bad email using your RegEx</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_30932" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/abb249055208c7af4d35568e422dfd63?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/7086-guest-user.htm" class="author">Guest User</a> 
+        <a href="#comments_30932" class="date"> <time datetime="2010-10-17">Oct 17, 2010 at 4:57 AM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>Note that domain names can use foreign characters in the meanwhile like ö ü ä in German for example... I think they are not covered by the regex mentioned in this thread!</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_31022" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_31022" class="date"> <time datetime="2010-10-20">Oct 20, 2010 at 10:46 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Guest, </p>
+        <p>I had to Google that when you mentioned it. Looks like this is a very new thing for domain registration. It will be interesting to deal with.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_31046" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/ec6c8838a670fe8d255c86ee7d62a863?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/7051-pixelgrinch.htm" class="author">PixelGrinch</a> 
+        <a href="#comments_31046" class="date"> <time datetime="2010-10-21">Oct 21, 2010 at 5:38 PM</time> </a> 
+        <div class="count">
+          2 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>I am a German living in NewYork now for quite some time and asking myself if these special letters are valid internationally. Especially if Germans are VERY comfortable writing 'ö' as 'oe', 'ü' as 'ue' and 'ä' as 'ae'.<br>Where does it end. How about some chinese or japanese symbols? It is getting a bit to specific for me at this point.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_31058" class="comment ben"> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/f9bbc701ca6770ef482cc1e172344e25?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1851-ben-nadel.htm" class="author">Ben Nadel</a> 
+        <a href="#comments_31058" class="date"> <time datetime="2010-10-21">Oct 21, 2010 at 10:08 PM</time> </a> 
+        <div class="count">
+          13,178 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@PixelGrinch, </p>
+        <p>It's definitely gonna be interesting to navigate to such domains. I don't know how to type in foreign characters, so I would only be able to Google for these sites. Although, maybe that's not a problem??? After all, so much of navigation is done via Google these days anyway.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_32340" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/117b60d4a12dfb9b46f17d023377b12e?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/7481-greg.htm" class="author">Greg</a> 
+        <a href="#comments_32340" class="date"> <time datetime="2010-12-22">Dec 22, 2010 at 11:03 AM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>almost need to just check for everything!<br>*@*.* hehe</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_37060" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/8140defc4c60e2209bfdcbf01654d77d?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/8886-art-huston.htm" class="author">Art Huston</a> 
+        <a href="#comments_37060" class="date"> <time datetime="2011-08-26">Aug 26, 2011 at 12:34 PM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Tom,<br>There is a small difference n the REGEX expression on this post and the REGEX expression on your blog at <a href="http://tjordahl.blogspot.com/2006/09/coldfusion-email-validation-isvalid.html." rel="nofollow" target="_blank">http://tjordahl.blogspot.com/2006/09/coldfusion-email-validation-isvalid.html.</a> The posting on Ben's blog omits underscore as a valid character in user names by using 'a-zA-Z0-9' instead of 'a-zA-Z_0-9'.</p>
+        <p>It looks to me like the one in your (Tom's) blog is correct.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_37257" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/412b18e54692468bc253b455ba6331f3?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/1938-wouter.htm" class="author">Wouter</a> 
+        <a href="#comments_37257" class="date"> <time datetime="2011-09-12">Sep 12, 2011 at 9:25 AM</time> </a> 
+        <div class="count">
+          4 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>@Art,</p>
+        <p>If I interpret the RFC2822 spec (<a href="http://tools.ietf.org/html/rfc2822" rel="nofollow" target="_blank">http://tools.ietf.org/html/rfc2822</a>, section 3.2.4) correctly, the underscore should be accepted in the 'name' part of an email address - just like these characters: !#$%&amp;'*+-/=?^`{|}~</p>
+        <p>Domain names (RFC1034 and RFC1035) seem less strictly defined, because those standards write about a "preferred name syntax". That syntax includes only letters, numbers and the hyphen.</p>
+        <p>I suppose the newer internationalized domain names are subject to certain rules as weel, but my admittedly cursory search hasn't turned them up.</p>
+        <p>Anyway, even if 'isValid()' could use enhancements, it's better than nothing!</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_37384" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/e0bc9e2ac827d6e3a5089bb466685e5e?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/8998-peter-freemantle.htm" class="author">Peter Freemantle</a> 
+        <a href="#comments_37384" class="date"> <time datetime="2011-09-21">Sep 21, 2011 at 3:12 PM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>&gt;&gt;I don't know how to type in foreign characters</p>
+        <p>You are a genius at CF yet you can't add another keyboard layout through the Control Panel? I am sure you are not being serious here.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_38643" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/bab1ee411dec5d47b8c1dff80f12ef2e?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/6013-glenn.htm" class="author">Glenn</a> 
+        <a href="#comments_38643" class="date"> <time datetime="2012-01-12">Jan 12, 2012 at 2:48 AM</time> </a> 
+        <div class="count">
+          2 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>So glad i found this post. Im developing an intranet app for a client, and they seem to enjoy typing the emails incorrectly. </p>
+        <p>Im glad , as now i can validate them when they input the emails and ensure the DB does not end up with a load of false ones.</p>
+        <p>I will still have to check bounce mails to ensure they do exist.</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <!-- BEGIN: Comment. --> 
+      <article id="comments_40970" class="comment "> 
+       <div class="meta"> 
+        <img src="https://www.gravatar.com/avatar/e8db0473657b29c1ca8848ca1254d878?s=120&amp;d=https%3A%2F%2Fwww%2Ebennadel%2Ecom%2Fimages%2Fgravatar%2Farnold%2Ejpg" class="avatar"> 
+        <a href="/members/10360-richard-simpson-ii.htm" class="author">RICHARD SIMPSON II</a> 
+        <a href="#comments_40970" class="date"> <time datetime="2012-10-17">Oct 17, 2012 at 2:01 PM</time> </a> 
+        <div class="count">
+          1 Comments 
+        </div> 
+       </div> 
+       <div class="content"> 
+        <p>which one is better?</p>
+        <p>&lt;cfset temp.myemail = "#form.email#" &gt;</p>
+        <p>REFind("^[a-zA-Z][\w\.-]*[a-zA-Z0-9]@[a-zA-Z][\w\.-]*[a-zA-Z0-9]\.[a-zA-Z][a-zA-Z\.]*[a-zA-Z]$", Trim(temp.myemail), 1) gt 0&gt;</p>
+        <p>---- or ---</p>
+        <p>refind("^[&amp;-&amp;a-zA-Z0-9-'\+~]+(\.[&amp;-&amp;a-zA-Z0-9-'\+~]+)*@([a-zA-Z_0-9-]+\.)+[a-zA-Z]{2,7}$",temp.myemail) eq 1&gt;</p> 
+       </div> 
+      </article> 
+      <!-- END: Comment. --> 
+      <div class="comments-disabled"> 
+       <div class="reason"> 
+        <span>Oh my chickens, this post is old!</span> 
+       </div> 
+       <div class="follow-up"> 
+        <a href="https://twitter.com/BenNadel" title="Ben Nadel's Twitter Account"> <em>Hit me up on Twitter</em> if you want to discuss it further. </a> 
+       </div> 
+      </div> 
+     </section> 
+     <!-- END: Comments. --> 
+    </article> 
+   </div> 
+   <div class="l-site-aside"> 
+    <div class="m-ad-cluster"> 
+     <a href="/blog/2439-My-Experience-With-AngularJS-The-Super-heroic-JavaScript-MVW-Framework.htm" title="My Experience With AngularJS - The Super-heroic JavaScript MVW Framework" class="nw"> My Experience With AngularJS - The Super Heroic JavaScript MVW Framework </a> 
+     <a href="/jobs/web-development-jobs.htm" title="Find your next web development job on the BenNadel.com job board." class="ne"> Find your next web development job on the BenNadel.com job board </a> 
+     <a href="/blog/2192-One-Man-s-Search-For-Love-My-cf-Objective-2011-Lightning-Talk.htm" title="One Man's Search for Love, by Ben Nadel" class="sw"> One Man's Search for Love - Lightning Talk </a> 
+     <a href="https://github.com/BenNadel" title="Ben Nadel's open-source development projects on GitHub." class="se"> Fork Me on GitHub.com </a> 
+    </div> 
+    <div class="m-invision-ad"> 
+     <a href="https://www.invisionapp.com?source=bennadel.com&amp;ad=large" title="UX Prototyping Made Beautiful - Create Interactive Wireframes &amp; High Fidelity Prototypes"> UX Prototyping Made Beautiful - Create Interactive Wireframes &amp; High Fidelity Prototypes </a> 
+    </div> 
+    <div class="m-epicenter-ad"> 
+     <a href="https://www.epicenterconsulting.com/coldfusion?utm_source=bennadel.com" title="Epicenter is a web application development company that combines industry-leading web application design expertise with proven business acumen to transform the way our clients do business."> We Design &amp; Build Apps. We build intelligent user experiences that bring your ideas to life. </a> 
+    </div> 
+   </div> 
+   <br clear="both"> 
+  </div> 
+  <footer class="l-site-footer"> 
+   <small> <span class="copyright"> Ben Nadel © 2017. All content is the property of Ben Nadel and BenNadel.com. </span> <a href="#body" class="back-to-top"> Back to Top </a> </small> 
+   <section class="epilogue"> 
+    <div class="mini-resume"> 
+     <div class="avatar"> 
+      <img src="/images/global/ben-nadel-avatar.jpg" title="Ben Nadel is co-founder of InVision App, Inc. and a passionate web-applications developer." alt="Ben Nadel's avatar."> 
+     </div> 
+     <div class="title">
+       About Ben Nadel 
+     </div> 
+     <div class="bio">
+       I am the co-founder and lead engineer at InVision App, Inc — the world's leading prototyping, collaboration &amp; workflow platform. I also rock out in JavaScript and ColdFusion 24x7 and I dream about promise resolving asynchronously. 
+     </div> 
+     <div class="social-media"> 
+      <a href="https://github.com/BenNadel" title="Follow Ben Nadel on GitHub.">GitHub</a> &nbsp;|&nbsp; 
+      <a href="https://www.twitter.com/BenNadel" title="Follow Ben Nadel on Twitter.">Twitter</a> &nbsp;|&nbsp; 
+      <a href="https://www.linkedin.com/in/BenNadel" title="Follow Ben Nadel on LinkedIn.">LinkedIn</a> &nbsp;|&nbsp; 
+      <a href="https://plus.google.com/108976367067760160494?rel=author" title="Follow Ben Nadel on Google Plus.">Google+</a> &nbsp;|&nbsp; 
+      <a href="https://www.facebook.com/BenNadel" title="Follow Ben Nadel on Facebook.">Facebook</a> 
+     </div> 
+    </div> 
+   </section> 
+  </footer> 
+  <script type="text/javascript" src="/linked/vendor/jquery/jquery-2.1.0.min.js"></script> 
+  <script type="text/javascript" src="/linked/js/standard.js?v=2017-07-24"></script> 
+  <script type="text/javascript" src="/linked/js/jquery.gist.js"></script> 
+  <script type="text/javascript" src="/linked/js/blog.js?v=42994.3567477"></script> 
+  <script type="text/javascript">
+				(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+				})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+				ga('create', 'UA-477521-1', 'auto');
+				ga('send', 'pageview');
+			</script>   
+ </body>
+</html>

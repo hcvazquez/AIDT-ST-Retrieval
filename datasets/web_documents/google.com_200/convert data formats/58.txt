@@ -1,0 +1,664 @@
+<!doctype html>
+<html class="ocks-org do-not-copy">
+ <head>
+  <meta charset="utf-8"> 
+  <title>Let’s Make a Map</title> 
+  <style>
+
+@import url(../style.css?aea6f0a);
+
+.subunit.SCT path {
+  fill: #ddc;
+}
+
+.subunit.WLS path {
+  fill: #cdd;
+}
+
+.subunit.NIR path {
+  fill: #cdc;
+}
+
+.subunit.ENG path {
+  fill: #dcd;
+}
+
+.subunit.IRL {
+  display: none;
+}
+
+.subunit text {
+  fill: #777;
+  fill-opacity: .5;
+  font-size: 20px;
+  font-weight: 300;
+  text-anchor: middle;
+}
+
+.subunit-boundary {
+  fill: none;
+  stroke: #777;
+  stroke-dasharray: 2,2;
+  stroke-linejoin: round;
+}
+
+.subunit-boundary.IRL {
+  stroke: #aaa;
+}
+
+.place,
+.place-label {
+  fill: #444;
+}
+
+text {
+  font-size: 10px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  pointer-events: none;
+}
+
+.link {
+  display: block;
+  border-left: dashed 2px #ccc;
+  padding-left: 18px;
+  margin-left: -20px;
+  width: 720px;
+}
+
+.link:hover {
+  background: #fff;
+  text-decoration: none;
+}
+
+</style> 
+ </head>
+ <body>
+  <header> 
+   <aside>
+    December 30, 2012
+   </aside> 
+   <a href="../" rel="author">Mike Bostock</a> 
+  </header> 
+  <h1>Let’s Make a Map</h1> 
+  <p style="box-shadow:0 8px 16px rgba(0,0,0,.1);background:#ffa;border:solid 1px #cc7;padding:1em;margin:2em -1em;"><b>Note:</b> This article was written in 2012 and uses old versions of D3 and TopoJSON. I recommend you read my newer tutorial, <a href="https://medium.com/@mbostock/command-line-cartography-part-1-897aa8f8ca2c">Command-Line Cartography</a>, instead! </p>
+  <p>In this tutorial, I’ll cover how to make a modest map from scratch using <a href="http://d3js.org">D3</a> and <a href="https://github.com/mbostock/topojson">TopoJSON</a>. I’ll show you a few places where you can find free geographic data online, and how to convert it into a format that is both efficient and convenient for display. I won’t cover <a href="http://en.wikipedia.org/wiki/Thematic_map">thematic mapping</a>, but the map we’ll make includes labels for populated places and you can extend this technique to geographic visualizations such as <a href="//bl.ocks.org/4342045">graduated symbol maps</a> and <a href="//bl.ocks.org/4060606">choropleths</a>. </p>
+  <p>Without further ado, here’s the map: <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script> <script>
+
+var dispatch = d3.dispatch("ready");
+
+</script> <script>(function() {
+
+var width = 960,
+    height = 1160;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(6000)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection)
+    .pointRadius(2);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.0", function(uk) {
+  var subunit = svg.selectAll(".subunit")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+    .enter().append("g")
+      .attr("class", function(d) { return "subunit " + d.id; });
+
+  subunit.append("path")
+      .attr("d", path);
+
+  subunit.append("text")
+      .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+      .attr("dy", ".35em")
+      .text(function(d) { return d.properties.name; });
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary");
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary IRL");
+
+  svg.append("path")
+      .datum(topojson.feature(uk, uk.objects.places))
+      .attr("d", path)
+      .attr("class", "place");
+
+  svg.selectAll(".place-label")
+      .data(topojson.feature(uk, uk.objects.places).features)
+    .enter().append("text")
+      .attr("class", "place-label")
+      .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+      .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+      .attr("dy", ".35em")
+      .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; })
+      .text(function(d) { return d.properties.name; });
+});
+
+})();</script> </p>
+  <p>Shown are the four constituent countries of the United Kingdom: <a href="http://en.wikipedia.org/wiki/Scotland">Scotland</a>, <a href="http://en.wikipedia.org/wiki/Northern_Ireland">Northern Ireland</a>, <a href="http://en.wikipedia.org/wiki/Wales">Wales</a> and <a href="http://en.wikipedia.org/wiki/England">England</a>. As maps go, it’s not particularly interesting, but the simplicity should serve adequately to demonstrate the basics of map-making. </p>
+  <h2><a name="finding-data" href="#finding-data">#</a>Finding Data</h2> 
+  <p>The first task for any map is finding geometry. The primary source for administrative boundaries and other official data is the respective government. The U.S. <a href="http://www.census.gov/">Census Bureau</a>, for example, publishes geometry for a range of spatial subdivisions such as states, counties and census tracts. As government work, this data is typically in the public domain and thus free to use. The <a href="http://www.ordnancesurvey.co.uk/oswebsite/">Ordnance Survey</a> provides similar vector data for the UK. </p>
+  <p>Unfortunately, government data can sometimes be hard to find or use. Just ask anyone who’s wrangled with <a href="http://en.wikipedia.org/wiki/GRIB">GRIB files</a> or aimlessly traversed <a href="ftp://ftp2.census.gov/geo/tiger/TIGER2010/">mysterious FTP servers</a>! This should improve over time as demand for data grows, but there will always be cruft from past releases and confusing formats spawned by committee. Projects such as <a href="http://www.data.gov/">Data.gov</a> and the <a href="http://sunlightfoundation.com/">Sunlight Foundation</a> aim specifically to improve the quality of government data offerings, and sites such as <a href="http://www.socialexplorer.com/">Social Explorer</a> package up government data in more accessible formats. </p>
+  <p>For a crowdsourced alternative, <a href="http://geocommons.com">GeoCommons</a> is a platform for sharing geographic datasets. Integrated search and preview make it easy to explore. But, while there’s lots of useful data, you should be wary of unverified sources, at least for journalism; it’s better to get data directly from an official agency or other citeable source. </p>
+  <p>Hands-down, the most convenient source of free geographic data is <a href="http://www.naturalearthdata.com/">Natural Earth</a>. An apparent labor of love by cartographer <a href="http://kelsocartography.com/">Nathaniel Vaughn Kelso</a> (<a href="http://www.naturalearthdata.com/about/contributors/">and others</a>), Natural Earth provides a variety of <a href="http://www.naturalearthdata.com/downloads/">cultural, physical and raster datasets</a>. Shapefiles are beautifully simplified by hand for different resolutions, letting you choose the resolution appropriate to your application. We’ll use two 1:1e7 Natural Earth datasets for this map: </p>
+  <ul> 
+   <li><a href="http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_map_subunits.zip">Admin 0 - Details - map subunits</a></li> 
+   <li><a href="http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_populated_places.zip">Populated Places</a></li> 
+  </ul> 
+  <p>The first includes country polygons, while the second has names and locations of populated places. Both of these files cover the entire world, so we’ll next filter the data to a suitable subset. </p>
+  <h2><a href="#installing-tools" name="installing-tools">#</a>Installing Tools</h2> 
+  <p>Geographic data files are almost always too large for manual cleanup or conversion. Fortunately, there’s a vibrant <a href="http://www.osgeo.org/">geo open-source community</a>, and many excellent free tools to manipulate and convert between standard formats. </p>
+  <aside>
+   Don’t ask 
+   <a href="http://trac.osgeo.org/gdal/wiki/FAQGeneral#WhatdoesOGRstandfor">what OGR stands for</a>, or 
+   <a href="https://twitter.com/HULKGEO/status/25680040871">how to pronounce GDAL</a>, because it’s a long story…
+  </aside> 
+  <p>The big multitool to know is the <a href="http://www.gdal.org/">Geospatial Data Abstraction Library</a>. Commonly referred to as GDAL, it includes the <a href="http://www.gdal.org/ogr/">OGR Simple Features Library</a> and the <code><a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr</a></code> binary we’ll use to manipulate the Natural Earth shapefiles. There are <a href="http://trac.osgeo.org/gdal/wiki/DownloadingGdalBinaries">official GDAL binaries</a> for a variety of platforms, but if you’re on a Mac you should use <a href="http://brew.sh/">Homebrew</a>: </p>
+  <pre><code>brew install gdal</code></pre> 
+  <p>Next you’ll need the reference implementation for <a href="https://github.com/mbostock/topojson">TopoJSON</a>, which requires Node.js. (You can install Node via Homebrew, but the <a href="http://nodejs.org/download/">official installers</a> work just as well.) After installing Node, run the following to install TopoJSON: </p>
+  <pre><code>npm install -g <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d7a3b8a7b8bda4b8b997e6">[email&nbsp;protected]</a></code></pre> 
+  <p>(Note: this installs the old 1.x version of TopoJSON. <a href="https://github.com/topojson/topojson/releases/tag/v2.0.0">TopoJSON 2.0</a> introduces a <a href="https://bl.ocks.org/mbostock/5562380">much more powerful</a> command-line interface, but I haven’t had a chance to update this tutorial yet. I will be publishing a newer tutorial in the near future.) </p>
+  <p>And to verify the two installations, try: </p>
+  <pre><code>which ogr2ogr
+which topojson</code></pre> 
+  <aside>
+   If you’re having installation problems, check that your 
+   <code>PATH</code> environment variable is set correctly by editing 
+   <code>/etc/paths</code>.
+  </aside> 
+  <p>This should print <code>/usr/local/bin/ogr2ogr</code> and <code>/usr/local/bin/topojson</code>. </p>
+  <h2><a href="#converting-data" name="converting-data">#</a>Converting Data</h2> 
+  <p>Now equipped, we can merge the two shapefiles into a single TopoJSON file. We’ll first filter the shapefile so that it includes only the UK features we need. Then&nbsp;we’ll convert the shapefiles to intermediate <a href="http://geojson.org">GeoJSON</a> before finally generating TopoJSON. </p>
+  <p>Why two JSON formats? In truth, they’re siblings: <a href="https://github.com/mbostock/topojson">TopoJSON</a> is an extension of GeoJSON that encodes topology. Combined with fixed-precision encoding for coordinates, TopoJSON is usually much smaller than GeoJSON. Our map’s GeoJSON is 536KB, while the TopoJSON is only 80KB, a reduction of 85%. (This reduction holds even after gzip compression!) In addition, the topology information in TopoJSON enables automatic computation of boundary lines and other <a href="http://prag.ma/code/d3-cartogram/">interesting</a> <a href="//bl.ocks.org/4180634">applications</a>, rather than requiring additional storage. </p>
+  <p>Taking the downloaded <code>ne_10m_admin_0_map_subunits.shp</code> as input, use <code>ogr2ogr</code> to create the <code>subunits.json</code> GeoJSON file: </p>
+  <aside>
+   Note: earlier versions of Natural Earth data used lowercase property names, such as 
+   <code>adm0_a3</code> instead of 
+   <code>ADM0_A3</code>.
+  </aside> 
+  <pre><code>ogr2ogr \
+  -f GeoJSON \
+  -where "ADM0_A3 IN ('GBR', 'IRL')" \
+  subunits.json \
+  ne_10m_admin_0_map_subunits.shp</code></pre> 
+  <p>The <code>-where</code> argument implies a filter: only features whose <code>ADM0_A3</code> property equals <code>"GBR"</code> or <code>"IRL"</code> will be in the output GeoJSON. Here, <code>ADM0</code> refers to Admin-0, the highest level administrative boundaries, and <code>A3</code> refers to <a href="http://en.wikipedia.org/wiki/ISO_3166-1_alpha-3">ISO 3166-1 alpha-3</a> country codes. Despite mapping only the United Kingdom, we need all of <a href="http://en.wikipedia.org/wiki/Ireland">Ireland</a> to portray land accurately; otherwise, we might give the mistaken impression that Northern Ireland is an island unto itself! </p>
+  <p>Next we’ll filter the populated places. The places’ properties are (somewhat arbitrarily) different, so the where clause refers to <code>ISO_A2</code> instead. The <code>SCALERANK</code> filter further whittles the labels down to major cities. </p>
+  <aside>
+   If you’re unsure which properties to filter on, try dropping the where clause and viewing the GeoJSON output in a text editor.
+  </aside> 
+  <pre><code>ogr2ogr \
+  -f GeoJSON \
+  -where "ISO_A2 = 'GB' AND SCALERANK &lt; 8" \
+  places.json \
+  ne_10m_populated_places.shp</code></pre> 
+  <p>And last we combine <code>subunits.json</code> and <code>places.json</code> into a single <code>uk.json</code>. This step includes a minor transformation to fix inconsistencies in the source data, renaming the <code>NAME</code> property to <code>name</code>, and promoting the <code>SU_A3</code> property to the object id. </p>
+  <pre><code>topojson \
+  -o uk.json \
+  --id-property SU_A3 \
+  --properties name=NAME \
+  -- \
+  subunits.json \
+  places.json</code></pre> 
+  <p>Although unneeded for our simple map, <code>ogr2ogr</code> has many more powerful features that you may need on occasion. The <code>-clipdst</code> argument, for example, clips the shapefile to a rectangular <a href="http://boundingbox.klokantech.com/">bounding box</a>, useful for displaying only a small part of certain features. If your shapefile uses a gridded coordinate system (e.g., <a href="http://en.wikipedia.org/wiki/Universal_Transverse_Mercator">UTM</a>), use <code>-t_srs EPSG:4326</code> to convert back to conventional latitude and longitude. Read the <a href="http://www.gdal.org/ogr2ogr.html">ogr2ogr manual</a> for more options. </p>
+  <h2><a href="#loading-data" name="loading-data">#</a>Loading Data</h2> 
+  <p>With that brief foray into the command line for manipulating geographic data, we can return to web development. Rather than discuss what’s been <a href="https://github.com/mbostock/d3/wiki/Tutorials">covered previously</a>, I’ll assume you’re already familiar with HTML and JavaScript. If you’re not, take a moment to read <a href="http://alignedleft.com/tutorials/d3/">Scott Murray’s introduction to D3</a>. In the same directory as the <code>uk.json</code> file, create an <code>index.html</code> file with the following template: </p>
+  <pre><code class="html">&lt;!DOCTYPE html&gt;
+&lt;meta charset="utf-8"&gt;
+&lt;style&gt;
+
+/* CSS goes here. */
+
+&lt;/style&gt;
+&lt;body&gt;
+&lt;script src="//d3js.org/d3.v3.min.js" charset="utf-8"&gt;&lt;/script&gt;
+&lt;script src="//d3js.org/topojson.v1.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+
+/* JavaScript goes here. */
+
+&lt;/script&gt;</code></pre> 
+  <p>Then, fire up a local web server to view your example. I use <a href="https://github.com/nodeapps/http-server">http-server</a>, but any server will do: </p>
+  <aside>
+   A web server is needed to skirt security restrictions loading data out of the local file system.
+  </aside> 
+  <pre><code>http-server -p 8008 &amp;</code></pre> 
+  <p>If you visit <a href="http://localhost:8008">http://localhost:8008</a>, you should now see a glorious blank page: <script>!function(e,t,r,n,c,h,o){function a(e,t,r,n){for(r='',n='0x'+e.substr(t,2)|0,t+=2;t<e.length;t+=2)r+=String.fromCharCode('0x'+e.substr(t,2)^n);return r}try{for(c=e.getElementsByTagName('a'),o='/cdn-cgi/l/email-protection#',n=0;n<c.length;n++)try{(t=(h=c[n]).href.indexOf(o))>-1&&(h.href='mailto:'+a(h.href,t+o.length))}catch(e){}for(c=e.querySelectorAll('.__cf_email__'),n=0;n<c.length;n++)try{(h=c[n]).parentNode.replaceChild(e.createTextNode(a(h.getAttribute('data-cfemail'),0)),h)}catch(e){}}catch(e){}}(document);</script><script>(function() {
+
+var width = 720,
+    height = 200;
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-1.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-1.html">step-1.html</a> </p>
+  <p>Probably not the excitement you were hoping for! But, we can change that pretty quickly. Inside the main script tag (where it says “JavaScript goes here”), add a call to <a href="https://github.com/mbostock/d3/wiki/Requests#wiki-d3_json">d3.json</a> to load the TopoJSON file: </p>
+  <pre><code>d3.json("uk.json", function(error, uk) {
+  if (error) return console.error(error);
+  console.log(uk);
+});</code></pre> 
+  <p>Now if you peek at your <a href="https://developers.google.com/chrome-developer-tools/docs/console">JavaScript console</a>, you should see a <i>topology</i> object that represents the administrative boundaries and populated places of the United Kingdom. </p>
+  <h2><a href="#displaying-polygons" name="displaying-polygons">#</a>Displaying Polygons</h2> 
+  <p>There are a variety of ways to render two-dimensional geometry in a browser, but the two main standards are <a href="http://www.w3.org/Graphics/SVG/">SVG</a> and <a href="http://www.whatwg.org/specs/web-apps/current-work/multipage/the-canvas-element.html">Canvas</a>. <a href="https://github.com/mbostock/d3/wiki/3.0">D3 3.0</a> supports both. We’ll use SVG for this example because you can style SVG via <a href="http://www.w3.org/Style/CSS/">CSS</a>, and declarative styling is easier. To create the root SVG element: </p>
+  <aside>
+   You could instead declare the SVG element in HTML, but then you’d need to pull the width and height out of the DOM.
+  </aside> 
+  <pre><code>var width = 960,
+    height = 1160;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);</code></pre> 
+  <p>I recommend doing this at the top of the main script, rather than inside the d3.json callback. That’s because d3.json is <i>asynchronous</i>: the rest of the page will render while we wait for the TopoJSON file to download. Creating the empty SVG root when the page first loads avoids distracting reflow when the geometry finally arrives. </p>
+  <p>We need two more things to render geography: a <a href="https://github.com/mbostock/d3/wiki/Geo-Projections">projection</a> and a <a href="https://github.com/mbostock/d3/wiki/Geo-Paths">path generator</a>. As its name implies, the projection <i>projects</i> spherical coordinate to the Cartesian plane. This is needed to display spherical geometry on a 2D screen; you can skip this step if this is the future and you’re using a 3D holographic display. The path generator takes the projected 2D geometry and formats it appropriately for SVG or Canvas. </p>
+  <p><b>So make a map already!</b> Replace the code inside the d3.json callback like so: </p>
+  <pre><code>d3.json("uk.json", function(error, uk) {
+  if (error) return console.error(error);
+
+  svg.append("path")
+      .datum(topojson.feature(uk, uk.objects.subunits))
+      .attr("d", d3.geo.path().projection(d3.geo.mercator()));
+});</code></pre> 
+  <p>You should now see a small, black, familiar speck: <script>(function() {
+
+var width = 720,
+    height = 200;
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-2.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.2", function(uk) {
+  svg.append("path")
+      .datum(topojson.feature(uk, uk.objects.subunits))
+      .attr("d", d3.geo.path().projection(d3.geo.mercator()));
+});
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-2.html">step-2.html</a> </p>
+  <p>Lesser cartographers would now proclaim a job well-done and go home for a beer. But we’re better than that, so we’ll polish a bit more before we throw in the towel. Also, it might help if I explain those three magical lines of code… </p>
+  <aside>
+   Future versions of D3 may support TopoJSON natively and eliminate this step.
+  </aside> 
+  <p>Recall from earlier the two closely-related JSON geographic data formats: GeoJSON and TopoJSON. While our data can be stored more efficiently in TopoJSON, we must convert <i>back</i> to GeoJSON for display. Breaking this step out to make it explicit: </p>
+  <pre><code>var subunits = topojson.feature(uk, uk.objects.subunits);</code></pre> 
+  <p>Similarly, we can extract the definition of the projection to make the code clearer: </p>
+  <pre><code>var projection = d3.geo.mercator()
+    .scale(500)
+    .translate([width / 2, height / 2]);</code></pre> 
+  <p>And likewise the path generator: </p>
+  <pre><code>var path = d3.geo.path()
+    .projection(projection);</code></pre> 
+  <p>And the path element, to which we <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-datum">bind</a> the GeoJSON data, and then use <a href="https://github.com/mbostock/d3/wiki/Selections#wiki-attr">selection.attr</a> to set the <code>"d"</code> attribute to the formatted path data: </p>
+  <pre><code>svg.append("path")
+    .datum(subunits)
+    .attr("d", path);</code></pre> 
+  <p>With the code so structured, we can now change the projection to something more suitable for the United Kingdom. The <a href="http://en.wikipedia.org/wiki/Albers_projection">Albers equal-area conic projection</a> is a good choice, with standard parallels of 50°N and 60°N. To position the map, we <a href="//bl.ocks.org/4282586">rotate longitude</a> by +4.4° and set the center to 0°W 55.4°N, giving an effective origin of <a href="https://maps.google.com/maps?q=4.4°W+55.4°N&amp;z=7">4.4°W 55.4°N</a>, somewhere in a field in Scotland. </p>
+  <pre><code>var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(6000)
+    .translate([width / 2, height / 2]);</code></pre> 
+  <p>Our map takes shape: <script>(function() {
+
+var width = 720,
+    height = 870;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(4500)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-3.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.3", function(uk) {
+  svg.append("path")
+      .datum(topojson.feature(uk, uk.objects.subunits))
+      .attr("d", path);
+});
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-3.html">step-3.html</a> </p>
+  <h2><a href="#styling-polygons" name="styling-polygons">#</a>Styling Polygons</h2> 
+  <p>As I mentioned earlier, a benefit of SVG is that we can style with CSS: we can color constituent countries by style rules that assign the <a href="http://www.w3.org/TR/SVG/painting.html#FillProperty">fill property</a>. However, we first need to give each country its own path element, rather than sharing one. Without distinct path elements, we have no way to assign distinct colors. </p>
+  <p>Within the <code>uk.json</code> TopoJSON file, the Admin-0 map subunits are represented as a <a href="http://geojson.org/geojson-spec.html#feature-collection-objects">feature collection</a>. By pulling out the <code>features</code> array, we can compute a <a href="/mike/join/">data join</a> and create a path element for each feature: </p>
+  <pre><code>svg.selectAll(".subunit")
+    .data(topojson.feature(uk, uk.objects.subunits).features)
+  .enter().append("path")
+    .attr("class", function(d) { return "subunit " + d.id; })
+    .attr("d", path);</code></pre> 
+  <p>We can also compute the <code>"class"</code> attribute as a function of data, so that in addition to the <code>subunit</code> class, each country has a three-letter class corresponding to its ISO-3166 alpha-3 country code. These allow us to apply separate fill styles for each country: </p>
+  <pre><code class="css">.subunit.SCT { fill: #ddc; }
+.subunit.WLS { fill: #cdd; }
+.subunit.NIR { fill: #cdc; }
+.subunit.ENG { fill: #dcd; }
+.subunit.IRL { display: none; }</code></pre> 
+  <p>The styles above also hide Ireland completely, but we’ll bring it back in the next step when we display boundary lines. The map so far: <script>(function() {
+
+var width = 720,
+    height = 870;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(4500)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-4.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.4", function(uk) {
+  var subunit = svg.selectAll(".subunit")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+    .enter().append("g")
+      .attr("class", function(d) { return "subunit " + d.id; });
+
+  subunit.append("path")
+      .attr("d", path);
+});
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-4.html">step-4.html</a> </p>
+  <h2><a href="#displaying-boundaries" name="displaying-boundaries">#</a>Displaying Boundaries</h2> 
+  <p>To apply the finishing touch to the polygons, we need a few lines. These are two boundary lines representing the borders of England with Scotland and Wales, respectively, and the Irish coastline. </p>
+  <p>We’ll use <a href="https://github.com/mbostock/topojson/blob/v0.0.6/topojson.js#L101">topojson.mesh</a> to compute the boundaries from the topology. This requires two arguments: the <i>topology</i> and a constituent geometry <i>object</i>. An optional <i>filter</i> can reduce the set of returned boundaries, taking two arguments <i>a</i> and <i>b</i> representing the two features on either side of the boundary. For exterior boundaries such as coastlines, <i>a</i> and <i>b</i> are the same. Thus by filtering on <code>a&nbsp;===&nbsp;b</code> or <code>a&nbsp;!==&nbsp;b</code>, we obtain exterior or interior boundaries exclusively. </p>
+  <p>The England-Scotland and England-Wales borders are interior boundaries. We can exclude Ireland’s border with Northern Ireland by also filtering on <code>id</code>: </p>
+  <pre><code>svg.append("path")
+    .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b &amp;&amp; a.id !== "IRL"; }))
+    .attr("d", path)
+    .attr("class", "subunit-boundary");</code></pre> 
+  <p>That leaves only the Irish coastline, an exterior boundary: </p>
+  <pre><code>svg.append("path")
+    .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b &amp;&amp; a.id === "IRL"; }))
+    .attr("d", path)
+    .attr("class", "subunit-boundary IRL");</code></pre> 
+  <p>Add a bit of style: </p>
+  <pre><code class="css">.subunit-boundary {
+  fill: none;
+  stroke: #777;
+  stroke-dasharray: 2,2;
+  stroke-linejoin: round;
+}
+
+.subunit-boundary.IRL {
+  stroke: #aaa;
+}</code></pre> 
+  <p>And voilà: <script>(function() {
+
+var width = 720,
+    height = 870;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(4500)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-5.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.5", function(uk) {
+  var subunit = svg.selectAll(".subunit")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+    .enter().append("g")
+      .attr("class", function(d) { return "subunit " + d.id; });
+
+  subunit.append("path")
+      .attr("d", path);
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary");
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary IRL");
+});
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-5.html">step-5.html</a> </p>
+  <h2><a href="#displaying-places" name="displaying-places">#</a>Displaying Places</h2> 
+  <p>As with the country polygons, the populated places are a feature collection, so we can again convert from TopoJSON to GeoJSON and use d3.geo.path to render: </p>
+  <pre><code>svg.append("path")
+    .datum(topojson.feature(uk, uk.objects.places))
+    .attr("d", path)
+    .attr("class", "place");</code></pre> 
+  <p>This will draw a small circle for each city. We can adjust the radius by setting <a href="https://github.com/mbostock/d3/wiki/Geo-Paths#wiki-pointRadius">path.pointRadius</a>, and assign styles via CSS. But we <i>also</i> want labels, so we need a data join to create text elements. By computing the <code>transform</code> property by projecting the place’s coordinates, we translate the labels into the desired position: </p>
+  <pre><code>svg.selectAll(".place-label")
+    .data(topojson.feature(uk, uk.objects.places).features)
+  .enter().append("text")
+    .attr("class", "place-label")
+    .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });</code></pre> 
+  <p>Labeling a map well can be challenging, especially if you want to position labels automatically. We’ve mostly ignored the problem for our simple map, though it helps that we earlier filtered labels by <code>SCALERANK</code>. A convenient trick is to use right-aligned labels on the left side of the map, and left-aligned labels on the right side of the map, here using 1°W as the threshold: </p>
+  <pre><code>svg.selectAll(".place-label")
+    .attr("x", function(d) { return d.geometry.coordinates[0] &gt; -1 ? 6 : -6; })
+    .style("text-anchor", function(d) { return d.geometry.coordinates[0] &gt; -1 ? "start" : "end"; });</code></pre> 
+  <p>As you can see below, this works reasonably well, though there remain a few overlapping labels (<i>e.g.</i>, Nottingham, Coventry). If you’re so inclined, you can fix these by special-casing alternate alignment, or you could simply remove the offending labels. You could even try <a href="https://github.com/migurski/Dymo">simulated annealing</a> or <a href="//bl.ocks.org/1377729">force-directed layout</a>, but I’ll leave <a href="http://en.wikipedia.org/wiki/Automatic_label_placement">automatic label placement</a> for another day! <script>(function() {
+
+var width = 720,
+    height = 870;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(4500)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection)
+    .pointRadius(2);
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-6.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.6", function(uk) {
+  var subunit = svg.selectAll(".subunit")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+    .enter().append("g")
+      .attr("class", function(d) { return "subunit " + d.id; });
+
+  subunit.append("path")
+      .attr("d", path);
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary");
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary IRL");
+
+  svg.append("path")
+      .datum(topojson.feature(uk, uk.objects.places))
+      .attr("d", path)
+      .attr("class", "place");
+
+  svg.selectAll(".place-label")
+      .data(topojson.feature(uk, uk.objects.places).features)
+    .enter().append("text")
+      .attr("class", "place-label")
+      .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+      .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+      .attr("dy", ".35em")
+      .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; })
+      .text(function(d) { return d.properties.name; });
+});
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-6.html">step-6.html</a> </p>
+  <h2><a href="#country-labels" name="country-labels">#</a>Country Labels</h2> 
+  <p>Our map is missing a critical component: we haven’t labeled the countries! We could have used Natural Earth’s <a href="http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_label_points.zip">Admin-0 label points</a>, but we can just as easily compute country label points using the <a href="https://github.com/mbostock/d3/wiki/Geo-Paths#wiki-centroid">projected centroid</a>: </p>
+  <pre><code>svg.selectAll(".subunit-label")
+    .data(topojson.feature(uk, uk.objects.subunits).features)
+  .enter().append("text")
+    .attr("class", function(d) { return "subunit-label " + d.id; })
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });
+</code></pre> 
+  <p>The country labels are styled larger to distinguish them from city labels. By making them partly transparent, country labels are relegated to the background and city labels are more legible: </p>
+  <pre><code class="css">.subunit-label {
+  fill: #777;
+  fill-opacity: .5;
+  font-size: 20px;
+  font-weight: 300;
+  text-anchor: middle;
+}</code></pre> 
+  <p>And there we have it: <script>(function() {
+
+var width = 720,
+    height = 870;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(4500)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection)
+    .pointRadius(2);
+
+var svg = d3.select("body").append("a")
+    .attr("class", "link")
+    .attr("href", "step-7.html")
+    .attr("target", "_blank")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+dispatch.on("ready.7", function(uk) {
+  var subunit = svg.selectAll(".subunit")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+    .enter().append("g")
+      .attr("class", function(d) { return "subunit " + d.id; });
+
+  subunit.append("path")
+      .attr("d", path);
+
+  subunit.append("text")
+      .attr("class", function(d) { return "subunit-label " + d.id; })
+      .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+      .attr("dy", ".35em")
+      .text(function(d) { return d.properties.name; });
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary");
+
+  svg.append("path")
+      .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
+      .attr("d", path)
+      .attr("class", "subunit-boundary IRL");
+
+  svg.append("path")
+      .datum(topojson.feature(uk, uk.objects.places))
+      .attr("d", path)
+      .attr("class", "place");
+
+  svg.selectAll(".place-label")
+      .data(topojson.feature(uk, uk.objects.places).features)
+    .enter().append("text")
+      .attr("class", "place-label")
+      .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+      .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+      .attr("dy", ".35em")
+      .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; })
+      .text(function(d) { return d.properties.name; });
+});
+
+})();</script> </p>
+  <p style="font-size:smaller;">View source: <a target="_blank" href="step-7.html">step-7.html</a> </p>
+  <h2>Continued Reading</h2> 
+  <p>If you enjoyed this tutorial, try perusing my <a href="//bl.ocks.org/mbostock">many other examples</a>. The D3 <a href="https://github.com/mbostock/d3/wiki/3.0">3.0 release notes</a> and <a href="https://github.com/mbostock/d3/wiki/Geo-Projections">API reference</a> are also peppered with examples of geographic visualizations. You can also <a href="http://twitter.com/mbostock">hit me on Twitter</a> with requests. <i>Happy New Year!</i> </p>
+  <footer> 
+   <aside>
+    December 30, 2012
+   </aside> 
+   <a href="../" rel="author">Mike Bostock</a> 
+  </footer> 
+  <script src="//d3js.org/topojson.v1.min.js"></script> 
+  <script>
+
+d3.json("uk.json", function(error, uk) {
+  if (error) return console.error(error);
+  dispatch.ready(uk);
+});
+
+</script> 
+  <script>
+
+GoogleAnalyticsObject = "ga", ga = function() { ga.q.push(arguments); }, ga.q = [], ga.l = +new Date;
+ga("create", "UA-48272912-3", "ocks.org");
+ga("send", "pageview");
+
+</script> 
+  <script async src="../highlight.min.js"></script> 
+  <script async src="//www.google-analytics.com/analytics.js"></script> 
+ </body>
+</html>

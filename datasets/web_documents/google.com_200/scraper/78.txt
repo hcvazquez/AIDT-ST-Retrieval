@@ -1,0 +1,528 @@
+<!doctype html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!-->
+<html class="no-js" lang="en">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Writing Functions for AWS Lambda Using NPM and Grunt - :HIPSTER_DEV_BLOG</title> 
+  <meta name="author" content="Tim B."> 
+  <meta name="description" content="AWS recently announced a new compute product called Lambda allowing users to run Node.js functions on full managed infrastructure while paying only …"> 
+  <!-- http://t.co/dKP3o1e --> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="canonical" href="http://hipsterdevblog.com/blog/2014/12/06/writing-functions-for-aws-lambda-using-npm-and-grunt"> 
+  <link href="/favicon.png" rel="icon"> 
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css"> 
+  <link href="/atom.xml" rel="alternate" title=":HIPSTER_DEV_BLOG" type="application/atom+xml"> 
+  <script src="/javascripts/modernizr-2.0.js"></script> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script> 
+  <script src="/javascripts/octopress.js" type="text/javascript"></script> 
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts --> 
+  <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css"> 
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css"> 
+  <link href="http://fonts.googleapis.com/css?family=Fjalla+One" rel="stylesheet" type="text/css"> 
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-52141399-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script> 
+ </head> 
+ <body> 
+  <header role="banner">
+   <hgroup> 
+    <h1><a href="/">:HIPSTER_DEV_BLOG</a></h1> 
+    <h2>Another Octopress blog about programming and infrastructure.</h2> 
+   </hgroup> 
+  </header> 
+  <nav role="navigation">
+   <ul class="subscription" data-subscription="rss"> 
+    <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li> 
+   </ul> 
+   <form action="https://www.google.com/search" method="get"> 
+    <fieldset role="search"> 
+     <input type="hidden" name="q" value="site:hipsterdevblog.com"> 
+     <input class="search" type="text" name="q" results="0" placeholder="Search"> 
+    </fieldset> 
+   </form> 
+   <ul class="main-navigation"> 
+    <li><a href="/">Blog</a></li> 
+    <li><a href="/blog/archives">Archives</a></li> 
+   </ul> 
+  </nav> 
+  <div id="main"> 
+   <div id="content"> 
+    <div> 
+     <article class="hentry" role="article"> 
+      <header> 
+       <h1 class="entry-title">Writing Functions for AWS Lambda Using NPM and Grunt</h1> 
+       <p class="meta"> <time datetime="2014-12-06T17:51:16-08:00" pubdate data-updated="true">Dec 6<sup>th</sup>, 2014</time> </p> 
+      </header> 
+      <div class="entry-content">
+       <p>AWS <a href="http://aws.amazon.com/blogs/aws/run-code-cloud/">recently announced</a> a new compute product called <a href="http://aws.amazon.com/lambda/">Lambda</a> allowing users to run Node.js functions on full managed infrastructure while paying only for the actual compute time used.</p> 
+       <p><a href="https://www.npmjs.org/">NPM</a> is the primary package manager for Node.js, and while Lambda does not provide explicit NPM support it is possible to bundle NPM packages with your function to leverage 3rd party modules.</p> 
+       <p><a href="http://gruntjs.com/">Grunt</a> is a task runner for JavaScript, allowing easy automation of project tasks such as building and packaging. Recently I <a href="https://github.com/Tim-B/grunt-aws-lambda">released a Grunt plugin</a> to assist in testing Lambda functions and packaging functions including NPM dependencies.</p> 
+       <p>This blog post provides an example of how to use NPM, Grunt and the grunt-aws-lambda plugin to create a Lambda function which will scrape a web page and save a list of links within that page to S3 using the cheerio NPM package.</p> 
+       <!-- more --> 
+       <h1>Before starting</h1> 
+       <p>It is assumed that you have Node.js (and NPM) installed on your system. Also, you should have <code>grunt-cli</code> installed globally.</p> 
+       <p>This guide also assumes you have AWS credentials configured on your system. These will be used to both test the function and upload it to Lambda. The easiest way to install the <a href="http://docs.aws.amazon.com/cli/latest/userguide/installing.html">AWS CLI</a> and run <a href="http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html">aws configure</a>. Afterwards make sure ~/.aws/credentials is populated.</p> 
+       <p>For more information on the required AWS IAM permissions <a href="https://github.com/Tim-B/grunt-aws-lambda#aws-permissions">read here</a>, you will also need whatever permissions are required to invoke your function (eg. access to S3 buckets).</p> 
+       <h1>Creating your project</h1> 
+       <p>First, create a directory for your project and run <code>npm init</code>. After following the prompts you should end up with a package.json, open this file and edit values as necessary. Also add <code>grunt</code> and <code>grunt-aws-lambda</code> to the devDependencies. Don’t forget to update the version numbers if new releases are made in the future.</p> 
+       <p>Your package.json should looks something like the following.</p> 
+       <figure class="code">
+        <figcaption>
+         <span>package.json </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td>
+            <td class="code"><pre><code class="json"><span class="line"><span class="p">{</span> </span><span class="line"> <span class="nt">"name"</span><span class="p">:</span> <span class="s2">"link-scraper"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"version"</span><span class="p">:</span> <span class="s2">"1.0.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"description"</span><span class="p">:</span> <span class="s2">"Scrapes a page and saves links in a HTML page to S3"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"private"</span><span class="p">:</span> <span class="s2">"true"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"devDependencies"</span><span class="p">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"grunt"</span><span class="p">:</span> <span class="s2">"0.4.*"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"grunt-aws-lambda"</span><span class="p">:</span> <span class="s2">"0.*.*"</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nt">"author"</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span> </span><span class="line"> <span class="nt">"license"</span><span class="p">:</span> <span class="s2">"BSD"</span> </span><span class="line"><span class="p">}</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Next, create a Gruntfile.js with the following:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>Gruntfile.js </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">grunt</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'grunt'</span><span class="p">);</span> </span><span class="line"><span class="nx">grunt</span><span class="p">.</span><span class="nx">loadNpmTasks</span><span class="p">(</span><span class="s1">'grunt-aws-lambda'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">grunt</span><span class="p">.</span><span class="nx">initConfig</span><span class="p">({</span> </span><span class="line"> <span class="nx">lambda_invoke</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="k">default</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nx">lambda_deploy</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="k">default</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="nx">arn</span><span class="o">:</span> <span class="s1">'arn:aws:lambda:us-east-1:123456781234:function:my-function'</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nx">lambda_package</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="k">default</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">grunt</span><span class="p">.</span><span class="nx">registerTask</span><span class="p">(</span><span class="s1">'deploy'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'lambda_package'</span><span class="p">,</span> <span class="s1">'lambda_deploy'</span><span class="p">]);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Then create an index.js, .npmignore and event.json with the following:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>index.js </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'webpage = '</span> <span class="o">+</span> <span class="nx">event</span><span class="p">.</span><span class="nx">webpage</span><span class="p">);</span> </span><span class="line"> <span class="nx">context</span><span class="p">.</span><span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s1">'link-scraper complete.'</span><span class="p">);</span> </span><span class="line"><span class="p">};</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <figure class="code">
+        <figcaption>
+         <span>.npmignore </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class=""><span class="line">event.json </span><span class="line">Gruntfile.js </span><span class="line">dist </span><span class="line">*.iml</span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <figure class="code">
+        <figcaption>
+         <span>event.json </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td>
+            <td class="code"><pre><code class="json"><span class="line"><span class="p">{</span> </span><span class="line"> <span class="nt">"webpage"</span><span class="p">:</span> <span class="s2">"http://en.wikipedia.org/wiki/Main_Page"</span> </span><span class="line"><span class="p">}</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now run <code>npm install</code></p> 
+       <p>Then run <code>grunt lambda_invoke</code>, you should receive the following output:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>lambda_invoke </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td>
+            <td class="code"><pre><code class=""><span class="line">Running "lambda_invoke:default" (lambda_invoke) task </span><span class="line"> </span><span class="line">webpage = http://en.wikipedia.org/wiki/Main_Page </span><span class="line"> </span><span class="line">Message </span><span class="line">------- </span><span class="line">link-scraper complete. </span><span class="line"> </span><span class="line">Done, without errors.</span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Congratulations, you’ve created a Lambda function and executed it locally!</p> 
+       <h1>Using NPM packages with AWS Lambda</h1> 
+       <p>For most nontrivial functions you’re going to want to leverage 3rd party libraries. The grunt plugin makes using NPM packages with Lambda easy.</p> 
+       <p>In this example we’re going to use the following NPM packages:</p> 
+       <ul> 
+        <li><a href="https://www.npmjs.org/package/request">request</a> - Make a HTTP request to download the target page</li> 
+        <li><a href="https://www.npmjs.org/package/cheerio">cheerio</a> - Query the DOM of the page we download</li> 
+        <li><a href="https://www.npmjs.org/package/moment">moment</a> - Format the current time</li> 
+        <li><a href="https://www.npmjs.org/package/mustache">mustache</a> - Generate our HTML page using a template file</li> 
+        <li><a href="https://www.npmjs.org/package/aws-sdk">aws-sdk</a> - Access the AWS API to upload the page to S3</li> 
+       </ul> 
+       <p>As the aws-sdk is already available in the Lambda environment we’re only going to include it in the devDependencies, the rest belong in the regular dependencies.</p> 
+       <p>Update your package.json file with the following:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>package.json </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td>
+            <td class="code"><pre><code class="json"><span class="line"><span class="err">...</span> </span><span class="line"><span class="s2">"dependencies"</span><span class="err">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"cheerio"</span><span class="p">:</span> <span class="s2">"0.18.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"request"</span><span class="p">:</span> <span class="s2">"2.49.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"mustache"</span><span class="p">:</span> <span class="s2">"0.8.2"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"moment"</span><span class="p">:</span> <span class="s2">"2.8.4"</span> </span><span class="line"><span class="p">}</span><span class="err">,</span> </span><span class="line"><span class="s2">"devDependencies"</span><span class="err">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"grunt"</span><span class="p">:</span> <span class="s2">"0.4.*"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"grunt-aws-lambda"</span><span class="p">:</span> <span class="s2">"0.*.*"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"aws-sdk"</span><span class="p">:</span> <span class="s2">"2.0.23"</span> </span><span class="line"><span class="p">}</span><span class="err">,</span> </span><span class="line"><span class="s2">"bundledDependencies"</span><span class="err">:</span> <span class="p">[</span> </span><span class="line"> <span class="s2">"cheerio"</span><span class="p">,</span> </span><span class="line"> <span class="s2">"request"</span><span class="p">,</span> </span><span class="line"> <span class="s2">"mustache"</span><span class="p">,</span> </span><span class="line"> <span class="s2">"moment"</span> </span><span class="line"><span class="p">]</span><span class="err">,</span> </span><span class="line"><span class="err">...</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p><strong>Note that you must include any packages which are to be included in the Lambda package within the bundledDependencies list</strong>.</p> 
+       <p>Now run <code>npm install</code> again to install these new packages.</p> 
+       <h1>Developing a Lambda function using NPM packages</h1> 
+       <p>Now we can actually develop the Lambda function in index.js, below is an example of a Lambda function to download the page provided in the webpage attribute of the event, extract all the links, convert them to absolute URLs, then generate a list of these links from a mustache template and upload it to S3.</p> 
+       <p>Update your index.js with the following, don’t forget to replace <code>mybucket</code> with your actual destination bucket:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>index.js </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">cheerio</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'cheerio'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'request'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'url'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">fs</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'fs'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">mustache</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mustache'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">AWS</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'aws-sdk'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">moment</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'moment'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">request</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">webpage</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">response</span><span class="p">,</span> <span class="nx">body</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span> <span class="c1">// an error occurred</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">$</span> <span class="o">=</span> <span class="nx">cheerio</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">links</span> <span class="o">=</span> <span class="p">[];</span> </span><span class="line"> </span><span class="line"> <span class="nx">AWS</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">apiVersions</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">s3</span><span class="o">:</span> <span class="s1">'2006-03-01'</span><span class="p">,</span> </span><span class="line"> <span class="c1">// other service API versions</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">s3</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AWS</span><span class="p">.</span><span class="nx">S3</span><span class="p">();</span> </span><span class="line"> </span><span class="line"> <span class="nx">$</span><span class="p">(</span><span class="s2">"a"</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">anchor</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="k">this</span><span class="p">);</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">href</span> <span class="o">=</span> <span class="nx">anchor</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s2">"href"</span><span class="p">);</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">text</span> <span class="o">=</span> <span class="nx">anchor</span><span class="p">.</span><span class="nx">text</span><span class="p">();</span> </span><span class="line"> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">href</span> <span class="o">!==</span> <span class="s1">'undefined'</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">abs</span> <span class="o">=</span> <span class="nx">url</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">webpage</span><span class="p">,</span> <span class="nx">href</span><span class="p">);</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">text</span> <span class="o">==</span> <span class="s1">''</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">text</span> <span class="o">=</span> <span class="nx">abs</span><span class="p">;</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">new_item</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">text</span><span class="o">:</span> <span class="nx">text</span><span class="p">,</span> </span><span class="line"> <span class="nx">url</span><span class="o">:</span> <span class="nx">abs</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">links</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">new_item</span><span class="p">)</span> <span class="o">===</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">links</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">new_item</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="nx">fs</span><span class="p">.</span><span class="nx">readFile</span><span class="p">(</span><span class="s1">'template.html'</span><span class="p">,</span> <span class="s1">'utf8'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span> <span class="c1">// an error occurred</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">view</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">links</span><span class="o">:</span> <span class="nx">links</span><span class="p">,</span> </span><span class="line"> <span class="nx">page</span><span class="o">:</span> <span class="nx">event</span><span class="p">.</span><span class="nx">webpage</span><span class="p">,</span> </span><span class="line"> <span class="nx">time</span><span class="o">:</span> <span class="nx">moment</span><span class="p">().</span><span class="nx">format</span><span class="p">(</span><span class="s1">'MMMM Do YYYY, h:mm:ss a'</span><span class="p">)</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">output</span> <span class="o">=</span> <span class="nx">mustache</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">view</span><span class="p">);</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">s3_params</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">Bucket</span><span class="o">:</span> <span class="s1">'mybucket'</span><span class="p">,</span> </span><span class="line"> <span class="nx">Key</span><span class="o">:</span> <span class="s1">'links.html'</span><span class="p">,</span> </span><span class="line"> <span class="nx">ContentType</span><span class="o">:</span> <span class="s1">'text/html'</span><span class="p">,</span> </span><span class="line"> <span class="nx">Body</span><span class="o">:</span> <span class="nx">output</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> <span class="nx">s3</span><span class="p">.</span><span class="nx">putObject</span><span class="p">(</span><span class="nx">s3_params</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span> <span class="c1">// an error occurred</span> </span><span class="line"> <span class="nx">context</span><span class="p">.</span><span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s1">'link-scraper complete.'</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="p">})</span> </span><span class="line"><span class="p">};</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Also create template.html which will be used to generate the page:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>template.html </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+</pre></td>
+            <td class="code"><pre><code class="html"><span class="line"><span class="cp">&lt;!doctype html&gt;</span> </span><span class="line"><span class="nt">&lt;html</span> <span class="na">lang=</span><span class="s">""</span><span class="nt">&gt;</span> </span><span class="line"><span class="nt">&lt;head&gt;</span> </span><span class="line"> <span class="nt">&lt;title&gt;</span>List of links on {{page}}<span class="nt">&lt;/title&gt;</span> </span><span class="line"><span class="nt">&lt;/head&gt;</span> </span><span class="line"><span class="nt">&lt;body&gt;</span> </span><span class="line"><span class="nt">&lt;h1&gt;</span>List of links on {{page}}<span class="nt">&lt;/h1&gt;</span> </span><span class="line"> </span><span class="line"><span class="nt">&lt;ul&gt;</span> </span><span class="line"> {{#links}} </span><span class="line"> <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"{{{url}}}"</span> <span class="na">target=</span><span class="s">"_blank"</span><span class="nt">&gt;</span>{{text}}<span class="nt">&lt;/a&gt;&lt;/li&gt;</span> </span><span class="line"> {{/links}} </span><span class="line"><span class="nt">&lt;/ul&gt;</span> </span><span class="line"><span class="nt">&lt;p&gt;</span> </span><span class="line"> Generated {{time}} </span><span class="line"><span class="nt">&lt;/p&gt;</span> </span><span class="line"><span class="nt">&lt;/body&gt;</span> </span><span class="line"><span class="nt">&lt;/html&gt;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>If we run <code>grunt lambda_invoke</code> again the task should output:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>lambda_invoke </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td>
+            <td class="code"><pre><code class=""><span class="line">Running "lambda_invoke:default" (lambda_invoke) task </span><span class="line"> </span><span class="line"> </span><span class="line">Message </span><span class="line">------- </span><span class="line">link-scraper complete. </span><span class="line"> </span><span class="line">Done, without errors.</span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Then, if we look in our target bucket there should be a file called links.html, if you view it in your browser you should see something like:</p> 
+       <p><img src="/images/posts/lambda_example/linkspage.png"></p> 
+       <h1>Deploying to Lambda</h1> 
+       <p>Before running the deploy task in grunt, go to the Lambda section of the AWS console and create a function which matches the name in the lambda_deploy section of your Gruntfile. In the example above the function ARN is <code>arn:aws:lambda:us-east-1:123456781234:function:my-function</code>.</p> 
+       <p>When creating the function select the “Hello World” template, as the code will be overwritten when we deploy a zip.</p> 
+       <p><img src="/images/posts/lambda_example/lambda-list.png"></p> 
+       <p>If you’ve added a deploy task to your Gruntfile as above you can now run <code>grunt deploy</code>, otherwise run both the lambda_package and lambda_deploy tasks with <code>grunt lambda_package lambda_deploy</code>.</p> 
+       <p>After running that you should see something like:</p> 
+       <figure class="code">
+        <figcaption>
+         <span>lambda_deploy </span>
+        </figcaption> 
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td>
+            <td class="code"><pre><code class=""><span class="line">Running "lambda_package:default" (lambda_package) task </span><span class="line">link-scraper@1.0.0 ../../../../../../tmp/1417936030856.854/node_modules/link-scraper </span><span class="line">Created package at dist/link-scraper_1-0-0_2014-11-7-17-7-10.zip </span><span class="line"> </span><span class="line">Running "lambda_deploy:default" (lambda_deploy) task </span><span class="line">Uploading... </span><span class="line">Package deployed. </span><span class="line"> </span><span class="line">Done, without errors.</span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now if you go to the AWS console you should be able to successfully invoke the uploaded task:</p> 
+       <p><img src="/images/posts/lambda_example/test_console.png"></p> 
+       <p>After running you should see the date at the bottom of the generated links.html has been updated.</p> 
+       <p>If for whatever reason you need to access the zip package which was uploaded you can find it under the dist directory of your project.</p> 
+       <p>Congratulations, you’ve now successfully deployed a Lambda function using NPM packages and Grunt! In future you can invoke this function manually, via another application using the SDK, or you could modify it to respond to one of the supported Lambda events such as an S3 Put event.</p> 
+      </div> 
+      <footer> 
+       <p class="meta"> <span class="byline author vcard">Posted by <span class="fn">Tim B.</span></span> <time datetime="2014-12-06T17:51:16-08:00" pubdate data-updated="true">Dec 6<sup>th</sup>, 2014</time> <span class="categories"> <a class="category" href="/blog/categories/aws/">aws</a>, <a class="category" href="/blog/categories/grunt/">grunt</a>, <a class="category" href="/blog/categories/lambda/">lambda</a>, <a class="category" href="/blog/categories/node-dot-js/">node.js</a>, <a class="category" href="/blog/categories/npm/">npm</a> </span> </p> 
+       <div class="sharing"> 
+        <a href="//twitter.com/share" class="twitter-share-button" data-url="http://hipsterdevblog.com/blog/2014/12/06/writing-functions-for-aws-lambda-using-npm-and-grunt/" data-via="" data-counturl="http://hipsterdevblog.com/blog/2014/12/06/writing-functions-for-aws-lambda-using-npm-and-grunt/">Tweet</a> 
+        <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div> 
+       </div> 
+       <p class="meta"> <a class="basic-alignment left" href="/blog/2014/11/24/part-3-integrating-opsworks-and-codedeploy/" title="Previous Post: Part 3: Integrating OpsWorks and CodeDeploy">« Part 3: Integrating OpsWorks and CodeDeploy</a> <a class="basic-alignment right" href="/blog/2014/12/18/how-far-can-you-go-with-haproxy-and-a-t2-dot-micro/" title="Next Post: How far can you go with HAProxy and a t2.micro">How far can you go with HAProxy and a t2.micro »</a> </p> 
+      </footer> 
+     </article> 
+     <section> 
+      <h1>Comments</h1> 
+      <div id="disqus_thread" aria-live="polite">
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+      </div> 
+     </section> 
+    </div> 
+    <aside class="sidebar"> 
+     <section> 
+      <h1>Recent Posts</h1> 
+      <ul id="recent_posts"> 
+       <li class="post"> <a href="/blog/2015/07/28/deploying-from-codepipeline-to-opsworks-using-a-custom-action-and-lambda/">Deploying From CodePipeline to OpsWorks Using a Custom Action and Lambda</a> </li> 
+       <li class="post"> <a href="/blog/2015/05/30/analysing-dynamodb-index-usage-in-hive-queries/">Analysing DynamoDB Index Usage in Hive Queries</a> </li> 
+       <li class="post"> <a href="/blog/2015/04/21/building-zeroc-ice-projects-with-gradle-and-intellij/">Building ZeroC Ice 3.5 Projects With Gradle and IntelliJ</a> </li> 
+       <li class="post"> <a href="/blog/2015/02/28/part-2-exporting-and-analysing-cloudwatch-logs-with-data-pipeline-and-emr/">Part 2: Exporting and Analysing CloudWatch Logs With Data Pipeline and EMR</a> </li> 
+       <li class="post"> <a href="/blog/2015/02/24/part-1-exporting-and-analysing-cloudwatch-logs-with-data-pipeline-and-emr/">Part 1: Exporting and Analysing CloudWatch Logs With Data Pipeline and EMR</a> </li> 
+      </ul> 
+     </section> 
+    </aside> 
+   </div> 
+  </div> 
+  <footer role="contentinfo">
+   <p> Copyright © 2016. <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> and <a href="https://github.com/vladigleba/readify">Readify</a></span>. </p> 
+  </footer> 
+  <script type="text/javascript">
+      var disqus_shortname = 'hipsterdevblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://hipsterdevblog.com/blog/2014/12/06/writing-functions-for-aws-lambda-using-npm-and-grunt/';
+        var disqus_url = 'http://hipsterdevblog.com/blog/2014/12/06/writing-functions-for-aws-lambda-using-npm-and-grunt/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script> 
+  <div id="fb-root"></div> 
+  <script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script> 
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>   
+ </body>
+</html>

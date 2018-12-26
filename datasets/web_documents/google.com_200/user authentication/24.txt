@@ -1,0 +1,1145 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Authentication in React Applications, Part 1: Creating Components</title> 
+  <meta name="description" content="React is a JavaScript library for building easy-to-maintain user interfaces. It was created by Facebook and Instagram engineers and made public in May 2013."> 
+  <meta property="og:title" content="Authentication in React Applications, Part 1: Creating Components"> 
+  <meta property="og:url" content="http://vladimirponomarev.com/blog/authentication-in-react-apps-creating-components"> 
+  <link rel="stylesheet" href="/css/main.css"> 
+  <link rel="canonical" href="http://vladimirponomarev.com/blog/authentication-in-react-apps-creating-components"> 
+  <link rel="alternate" type="application/rss+xml" title="Vladimir Ponomarev" href="http://vladimirponomarev.com/feed.xml"> 
+ </head> 
+ <body> 
+  <header class="site-header"> 
+   <div class="wrapper"> 
+    <a class="site-title" href="/">Vladimir Ponomarev</a> 
+    <nav class="site-nav"> 
+     <a href="#" class="menu-icon"> 
+      <svg viewbox="0 0 18 15"> 
+       <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z" /> 
+       <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z" /> 
+       <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z" /> 
+      </svg> </a> 
+     <!--
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+      --> 
+    </nav> 
+   </div> 
+  </header> 
+  <div class="page-content"> 
+   <div class="wrapper"> 
+    <article class="post" itemscope itemtype="http://schema.org/BlogPosting"> 
+     <header class="post-header"> 
+      <h1 class="post-title" itemprop="name headline">Authentication in React Applications, Part 1: Creating Components</h1> 
+      <p class="post-meta"> <time datetime="2016-01-31T16:40:00+04:00" itemprop="datePublished">Jan 31, 2016</time> • Updated: <time datetime="2016-12-17T14:00:00+04:00" itemprop="dateModified">Dec 17, 2016</time> </p> 
+     </header> 
+     <div class="post-content" itemprop="articleBody"> 
+      <p>React is a JavaScript library for building easy-to-maintain user interfaces. It was created by Facebook and Instagram engineers and made public in May 2013.</p> 
+      <p>Why was React created? Apparently, engineers were unhappy with existing solutions. Libraries can be slow, do too little or too much. The code written using them can be hard to maintain. One of the main ideas behind React is that every DOM manipulation takes place in its own fast Virtual DOM and only after comparison with the old state of real DOM, decides to update changed elements. React is not bundled with a bunch of modules like an AJAX client. React doesn’t care how will you receive the data, it only cares about how to render components, how to process events and when to execute operations (before the rendering, or after it).</p> 
+      <p>In this series of tutorials, we will implement an authentication layer in a small React application. The tutorial has been split into two parts:</p> 
+      <ol> 
+       <li><strong>‘Creating Components’</strong>. In this part, we will install dependencies for our project and create a basic application server and essential React components. We will add handlers for AJAX requests on a server side and validate them.</li> 
+       <li><strong>‘JSON Web Token’</strong>. In this part, we will focus on a user registration using an email address. For authentication, we will use JSON Web Token (JWT).</li> 
+      </ol> 
+      <p>I’m not sure if the tutorial will be suitable for beginners in programming or JavaScript. But I hope it will be useful for readers who is pretty comfortable with JavaScript. And a command line interface and Node as well.</p> 
+      <div class="notice">
+        The source code for the project is available on 
+       <a href="https://github.com/vladimirponomarev/authentication-in-react-apps">Github</a>. 
+      </div> 
+      <h2 id="installing-dependencies">Installing Dependencies</h2> 
+      <p>In this series of tutorials, we will use only essential packages to get running. So we will leave out CSS preprocessors and template engines in this tutorial. And seriously you don’t need another library just to perform AJAX requests.</p> 
+      <p>At the time of writing, I used node 6.9.1 which is packed with npm 3.10.8.</p> 
+      <div class="notice"> 
+       <p>Let's quick review dependencies:</p> 
+       <ul> 
+        <li><strong>express</strong> is a lightweight web application framework we will base our app on. It's probably the most popular solution in the Node environment</li> 
+        <li><strong>body-parser</strong> is an HTTP message body parser</li> 
+        <li><strong>react</strong> is a library for building user interfaces</li> 
+        <li><strong>react-dom</strong> is a package for React for the DOM rendering</li> 
+        <li><strong>react-router</strong> is a routing library for React-based applications</li> 
+        <li><strong>react-tap-event-plugin</strong> is a plugin for fixing tap delay for touch devices</li> 
+        <li><strong>validator</strong> is a library we will use for a user input validation</li> 
+        <li><strong>material-ui</strong> is a set of React components that follows Google's Material Design guidelines</li> 
+        <li><strong>webpack</strong> is a module bundler we will use for building our React application</li> 
+        <li><strong>babel-core</strong>, <strong>babel-loader</strong>, and <strong>babel-preset-es2015</strong> are parts of Babel, that is useful for transforming a modern ES2015 code to a cross-browser solution</li> 
+        <li><strong>babel-preset-react</strong> is a Babel preset for all React plugins</li> 
+        <li><strong>nodemon</strong> is a wrapper for Node that monitor changes in an application code and automatically restart the server</li> 
+       </ul> 
+      </div> 
+      <p>In your project directory initialize a Node project by typing:</p> 
+      <figure class="highlight">
+       <pre><code class="language-bash" data-lang="bash"><span class="gp">$ </span>npm init</code></pre>
+      </figure> 
+      <p>You can leave all options as default or customize as you need.</p> 
+      <p>Now let’s install the packages:</p> 
+      <figure class="highlight">
+       <pre><code class="language-bash" data-lang="bash"><span class="gp">$ </span>npm i --save express body-parser react react-dom react-router material-ui react-tap-event-plugin validator
+<span class="gp">$ </span>npm i --save-dev webpack babel-core babel-loader babel-preset-es2015 babel-preset-react nodemon</code></pre>
+      </figure> 
+      <p>After installing all packages, my <code class="highlighter-rouge">package.json</code> file has looked almost like this:</p> 
+      <div class="filename">
+       package.json
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"authentication-in-react-apps"</span><span class="p">,</span><span class="w"> </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Authentication in React Applications, Part 1: Creating Components"</span><span class="p">,</span><span class="w"> </span><span class="nt">"main"</span><span class="p">:</span><span class="w"> </span><span class="s2">"index.js"</span><span class="p">,</span><span class="w"> </span><span class="nt">"scripts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"start"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nodemon --use_strict index.js"</span><span class="p">,</span><span class="w"> </span><span class="nt">"bundle"</span><span class="p">:</span><span class="w"> </span><span class="s2">"webpack"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"repository"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"git"</span><span class="p">,</span><span class="w"> </span><span class="nt">"url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://github.com/vladimirponomarev/authentication-in-react-apps.git"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"author"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Vladimir Ponomarev"</span><span class="p">,</span><span class="w"> </span><span class="nt">"license"</span><span class="p">:</span><span class="w"> </span><span class="s2">"MIT"</span><span class="p">,</span><span class="w"> </span><span class="nt">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"body-parser"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^1.15.2"</span><span class="p">,</span><span class="w"> </span><span class="nt">"express"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^4.14.0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"material-ui"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^0.16.4"</span><span class="p">,</span><span class="w"> </span><span class="nt">"react"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^15.4.1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"react-dom"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^15.4.1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"react-router"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^3.0.0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"react-tap-event-plugin"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^2.0.1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"validator"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^6.2.0"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"devDependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"babel-core"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^6.18.2"</span><span class="p">,</span><span class="w"> </span><span class="nt">"babel-loader"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^6.2.8"</span><span class="p">,</span><span class="w"> </span><span class="nt">"babel-preset-es2015"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^6.18.0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"babel-preset-react"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^6.16.0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"nodemon"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^1.11.0"</span><span class="p">,</span><span class="w"> </span><span class="nt">"webpack"</span><span class="p">:</span><span class="w"> </span><span class="s2">"^1.13.3"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span></code></pre>
+      </figure> 
+      <p>Notice, I added two lines to the scripts section:</p> 
+      <figure class="highlight">
+       <pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="w"> </span><span class="nt">"scripts"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"start"</span><span class="p">:</span><span class="w"> </span><span class="s2">"nodemon --use_strict index.js"</span><span class="p">,</span><span class="w"> </span><span class="nt">"bundle"</span><span class="p">:</span><span class="w"> </span><span class="s2">"webpack"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span></code></pre>
+      </figure> 
+      <p>The first command is for starting the application in the strict mode. The second one is for bundling client-side scripts by Webpack.</p> 
+      <h2 id="project-directory-structure">Project Directory Structure</h2> 
+      <p>At the end of this part of tutorial, the application will have the next directory structure:</p> 
+      <pre>
+.
+??? README.md
+??? client
+?&nbsp;&nbsp; ??? src
+?&nbsp;&nbsp;     ??? app.jsx
+?&nbsp;&nbsp;     ??? components
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? Base.jsx
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? HomePage.jsx
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? LoginForm.jsx
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? SignUpForm.jsx
+?&nbsp;&nbsp;     ??? containers
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? LoginPage.jsx
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? SignUpPage.jsx
+?&nbsp;&nbsp;     ??? routes.js
+??? index.js
+??? package.json
+??? server
+?&nbsp;&nbsp; ??? routes
+?&nbsp;&nbsp; ?&nbsp;&nbsp; ??? auth.js
+?&nbsp;&nbsp; ??? static
+?&nbsp;&nbsp;     ??? css
+?&nbsp;&nbsp;     ?&nbsp;&nbsp; ??? style.css
+?&nbsp;&nbsp;     ??? index.html
+??? webpack.config.js
+</pre> 
+      <h2 id="hello-from-react">Hello from React</h2> 
+      <p>The first thing we need to do is create an entry file for the application. Here is the <code class="highlighter-rouge">index.js</code> file:</p> 
+      <div class="filename">
+       index.js
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">const</span> <span class="nx">express</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'express'</span><span class="p">);</span>
+
+<span class="kr">const</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">express</span><span class="p">();</span>
+<span class="c1">// tell the app to look for static files in these directories</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="kr">static</span><span class="p">(</span><span class="s1">'./server/static/'</span><span class="p">));</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="kr">static</span><span class="p">(</span><span class="s1">'./client/dist/'</span><span class="p">));</span>
+
+<span class="c1">// start the server</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="mi">3000</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Server is running on http://localhost:3000 or http://127.0.0.1:3000'</span><span class="p">);</span>
+<span class="p">});</span></code></pre>
+      </figure> 
+      <p>Notice we haven’t specified the route for root path. Express will look for an <code class="highlighter-rouge">index.html</code> file located in the <code class="highlighter-rouge">server/static</code> directory. For this file we will use a simple HTML layout like below:</p> 
+      <div class="filename">
+       server/static/index.html
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-html" data-lang="html"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+<span class="nt">&lt;head&gt;</span>
+  <span class="nt">&lt;meta</span> <span class="na">charset=</span><span class="s">"utf-8"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;title&gt;</span>React App<span class="nt">&lt;/title&gt;</span>
+  <span class="nt">&lt;link</span> <span class="na">rel=</span><span class="s">"stylesheet"</span> <span class="na">href=</span><span class="s">"/css/style.css"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/head&gt;</span>
+<span class="nt">&lt;body&gt;</span>
+  <span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"react-app"</span><span class="nt">&gt;&lt;/div&gt;</span>
+
+  <span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"/js/app.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span></code></pre>
+      </figure> 
+      <p>And the stylesheet file. Many of the rules we will use later.</p> 
+      <div class="filename">
+       server/static/css/style.css
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-css" data-lang="css"><span class="nt">body</span> <span class="p">{</span>
+  <span class="nl">margin</span><span class="p">:</span> <span class="m">0</span><span class="p">;</span>
+  <span class="nl">font-size</span><span class="p">:</span> <span class="m">16px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nt">a</span> <span class="p">{</span>
+  <span class="nl">color</span><span class="p">:</span> <span class="m">#00bcd4</span><span class="p">;</span>
+  <span class="nl">font-weight</span><span class="p">:</span> <span class="nb">bold</span><span class="p">;</span>
+  <span class="nl">text-decoration</span><span class="p">:</span> <span class="nb">none</span><span class="p">;</span>
+  <span class="nl">transition</span><span class="p">:</span> <span class="n">color</span> <span class="m">0.4s</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nt">a</span><span class="nd">:hover</span> <span class="p">{</span>
+  <span class="nl">color</span><span class="p">:</span> <span class="m">#1976d2</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.text-center</span> <span class="p">{</span>
+  <span class="nl">text-align</span><span class="p">:</span> <span class="nb">center</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.top-bar</span> <span class="p">{</span>
+  <span class="nl">padding</span><span class="p">:</span> <span class="m">10px</span> <span class="m">15px</span><span class="p">;</span>
+  <span class="nl">margin-bottom</span><span class="p">:</span> <span class="m">50px</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nc">.top-bar</span><span class="nd">::after</span> <span class="p">{</span>
+  <span class="nl">content</span><span class="p">:</span> <span class="s2">''</span><span class="p">;</span>
+  <span class="nl">display</span><span class="p">:</span> <span class="nb">block</span><span class="p">;</span>
+  <span class="nl">clear</span><span class="p">:</span> <span class="nb">both</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.top-bar-left</span> <span class="p">{</span>
+  <span class="nl">float</span><span class="p">:</span> <span class="nb">left</span><span class="p">;</span>
+  <span class="nl">font-size</span><span class="p">:</span> <span class="m">1.5em</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.top-bar-right</span> <span class="p">{</span>
+  <span class="nl">float</span><span class="p">:</span> <span class="nb">right</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.top-bar</span> <span class="nt">a</span><span class="o">,</span>
+<span class="nc">.nav</span> <span class="nt">a</span> <span class="p">{</span>
+  <span class="nl">margin</span><span class="p">:</span> <span class="m">0</span> <span class="m">8px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.container</span> <span class="p">{</span>
+  <span class="nl">margin</span><span class="p">:</span> <span class="m">0</span> <span class="nb">auto</span><span class="p">;</span>
+  <span class="nl">text-align</span><span class="p">:</span> <span class="nb">center</span><span class="p">;</span>
+  <span class="nl">width</span><span class="p">:</span> <span class="m">700px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.card-heading</span> <span class="p">{</span>
+  <span class="nl">padding</span><span class="p">:</span> <span class="m">16px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.field-line</span><span class="o">,</span> <span class="nc">.button-line</span> <span class="p">{</span>
+  <span class="nl">padding</span><span class="p">:</span> <span class="m">16px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.error-message</span> <span class="p">{</span>
+  <span class="nl">padding</span><span class="p">:</span> <span class="m">0</span> <span class="m">16px</span><span class="p">;</span>
+  <span class="nl">color</span><span class="p">:</span> <span class="no">tomato</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nc">.success-message</span> <span class="p">{</span>
+  <span class="nl">padding</span><span class="p">:</span> <span class="m">0</span> <span class="m">16px</span><span class="p">;</span>
+  <span class="nl">color</span><span class="p">:</span> <span class="no">green</span><span class="p">;</span>
+<span class="p">}</span></code></pre>
+      </figure> 
+      <p>Let’s build our first React app. Create a file <code class="highlighter-rouge">client/src/app.jsx</code>:</p> 
+      <div class="filename">
+       client/src/app.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">ReactDom</span> <span class="nx">from</span> <span class="s1">'react-dom'</span><span class="p">;</span>
+
+<span class="nx">ReactDom</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">Hello</span> <span class="nx">from</span> <span class="nx">React</span><span class="o">&lt;</span><span class="sr">/h1&gt;, document.getElementById</span><span class="se">(</span><span class="sr">'react-app'</span><span class="se">))</span><span class="sr">;</span></code></pre>
+      </figure> 
+      <p>You’re probably confused by the HTML tag passed as the function argument. Well, it’s not HTML, it’s JSX, a XML-like syntax extension to ECMAScript. JSX is not supported by any browsers, we have to transform it to a plain JavaScript. For this task, we will use a Babel plugin.</p> 
+      <p>In our case, the string with JSX will be transformed to this:</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// original string</span>
+<span class="nx">ReactDom</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">Hello</span> <span class="nx">from</span> <span class="nx">React</span><span class="o">&lt;</span><span class="sr">/h1&gt;, document.getElementById</span><span class="se">(</span><span class="sr">'react-app'</span><span class="se">))</span><span class="err">; </span>
+<span class="c1">// transformed string</span>
+<span class="nx">ReactDom</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">React</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">'h1'</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="s1">'Hello from React'</span><span class="p">),</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'react-app'</span><span class="p">));</span></code></pre>
+      </figure> 
+      <p>The second argument, which is now simply null, is for passing HTML tag attributes. We will see a usage of them later. It’s not necessarily to use JSX though it’s a commonly recommended way of writing React code.</p> 
+      <p>To bundle React from npm and transform the JSX template to a plain script, which we will serve to a browser, we will use Webpack with the Babel loader. Webpack is not the only option to do the same task. It’s also possible to use Browserify but it’s out of the scope of this tutorial.</p> 
+      <p>Let’s create a config file for Webpack and review it. Save the config in <code class="highlighter-rouge">webpack.config.js</code> in the root directory of the project.</p> 
+      <div class="filename">
+       webpack.config.js
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">const</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="c1">// the entry file for the bundle</span>
+  <span class="na">entry</span><span class="p">:</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="s1">'/client/src/app.jsx'</span><span class="p">),</span>
+
+  <span class="c1">// the bundle file we will get in the result</span>
+  <span class="na">output</span><span class="p">:</span> <span class="p">{</span>
+    <span class="na">path</span><span class="p">:</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="s1">'/client/dist/js'</span><span class="p">),</span>
+    <span class="na">filename</span><span class="p">:</span> <span class="s1">'app.js'</span><span class="p">,</span>
+  <span class="p">},</span>
+
+  <span class="na">module</span><span class="p">:</span> <span class="p">{</span>
+
+    <span class="c1">// apply loaders to files that meet given conditions</span>
+    <span class="na">loaders</span><span class="p">:</span> <span class="p">[{</span>
+      <span class="na">test</span><span class="p">:</span> <span class="sr">/</span><span class="se">\.</span><span class="sr">jsx</span><span class="se">?</span><span class="sr">$/</span><span class="p">,</span>
+      <span class="na">include</span><span class="p">:</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="s1">'/client/src'</span><span class="p">),</span>
+      <span class="na">loader</span><span class="p">:</span> <span class="s1">'babel'</span><span class="p">,</span>
+      <span class="na">query</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">presets</span><span class="p">:</span> <span class="p">[</span><span class="s2">"react"</span><span class="p">,</span> <span class="s2">"es2015"</span><span class="p">]</span>
+      <span class="p">}</span>
+    <span class="p">}],</span>
+  <span class="p">},</span>
+
+  <span class="c1">// start Webpack in a watch mode, so Webpack will rebuild the bundle on changes</span>
+  <span class="na">watch</span><span class="p">:</span> <span class="kc">true</span>
+<span class="p">};</span></code></pre>
+      </figure> 
+      <p>In the config, we have set the loader plugins that will only apply to the files matching the regular expression. The expression is set in the <code class="highlighter-rouge">test</code> property of the passed object in the given directory (the property <code class="highlighter-rouge">include</code>). For these files we will use Babel with presets: ‘react’ and ‘es2015’. The preset ‘es2015’ will set Babel to compile the ES2015 code to ES5 in order to get to the application a cross-browser support.</p> 
+      <p>Let’s see our simple app in action. In your terminal open two windows (or tabs) and go to the project root directory. In the first window, run:</p> 
+      <figure class="highlight">
+       <pre><code class="language-bash" data-lang="bash"><span class="gp">$ </span>npm start</code></pre>
+      </figure> 
+      <p>And in the second window, run:</p> 
+      <figure class="highlight">
+       <pre><code class="language-bash" data-lang="bash"><span class="gp">$ </span>npm run bundle</code></pre>
+      </figure> 
+      <p>Or if you installed Webpack globally, you may bundle scripts by typing <code class="highlighter-rouge">webpack</code> in the command line in the root directory of the project.</p> 
+      <p><img src="/content/authentication-in-react-apps-1/terminal.png" alt="Terminal"></p> 
+      <p>Now in your browser, go to <strong>http://127.0.0.1:3000</strong> (or <strong>http://localhost:3000</strong>). If everything is okay you should see:</p> 
+      <p><img src="/content/authentication-in-react-apps-1/hello-from-react.png" alt="Hello from React"></p> 
+      <h2 id="creating-presentational-components">Creating Presentational Components</h2> 
+      <p>Before we get started we should understand what React components are. Components are the individual building blocks of UI. For example, an input field may be one of the components of the form. The whole form is also a component of a contact page on a site.</p> 
+      <p>A very interesting <a href="https://medium.com/@dan_abramov/smart-and-dumb-components-7ca2f9a7c7d0#.c8m0de1u3">pattern</a> to consider while creating components is dividing them into two categories. They called Container and Presentational components. Presentational components focus on how things look and Container components focus on how things work.</p> 
+      <p>Let’s create and review our first presentational component for the home page:</p> 
+      <div class="filename">
+       client/src/components/HomePage.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Card</span><span class="p">,</span> <span class="nx">CardTitle</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'material-ui/Card'</span><span class="p">;</span>
+
+
+<span class="kr">const</span> <span class="nx">HomePage</span> <span class="o">=</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">(</span>
+  <span class="o">&lt;</span><span class="nx">Card</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"container"</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="nx">CardTitle</span> <span class="nx">title</span><span class="o">=</span><span class="s2">"React Application"</span> <span class="nx">subtitle</span><span class="o">=</span><span class="s2">"This is the home page."</span> <span class="o">/&gt;</span>
+  <span class="o">&lt;</span><span class="sr">/Card</span><span class="err">&gt; </span><span class="p">);</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">HomePage</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>Since JSX is JavaScript, the <code class="highlighter-rouge">class</code> keyword already reserved, so instead of it, we have to use the <code class="highlighter-rouge">className</code> attribute. Another example is the <code class="highlighter-rouge">for</code> attribute, instead of it, we write <code class="highlighter-rouge">htmlFor</code>.</p> 
+      <p>Our presentational component uses Material UI’s components like <code class="highlighter-rouge">Card</code> and <code class="highlighter-rouge">CardTitle</code>. You may think of Material UI’s components like of elements with predefined behavior and CSS styles. Our component renders the simple text as a title and subtitle.</p> 
+      <p>An important notice: a component should have one root element (in our case this element is the <code class="highlighter-rouge">Card</code> component). Writing multiple components without a single parent is a syntax error.</p> 
+      <p>That’s it, we have defined the simple presentational component. Usually, it’s just a function that returns the markup. If we would want to render this component right now, we would need to import it, and then pass the component to the ReactDom’s render method like this:</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="p">...</span>
+<span class="kr">import</span> <span class="nx">HomePage</span> <span class="nx">from</span> <span class="s1">'./components/HomePage.jsx'</span><span class="p">;</span>
+
+
+<span class="nx">ReactDom</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="o">&lt;</span><span class="nx">HomePage</span> <span class="o">/&gt;</span><span class="p">,</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'react-app'</span><span class="p">));</span></code></pre>
+      </figure> 
+      <p>Now we will create a much more complex presentational component for the sign-up form:</p> 
+      <div class="filename">
+       client/src/components/SignUpForm.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Link</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react-router'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Card</span><span class="p">,</span> <span class="nx">CardText</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'material-ui/Card'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">RaisedButton</span> <span class="nx">from</span> <span class="s1">'material-ui/RaisedButton'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">TextField</span> <span class="nx">from</span> <span class="s1">'material-ui/TextField'</span><span class="p">;</span>
+
+
+<span class="kr">const</span> <span class="nx">SignUpForm</span> <span class="o">=</span> <span class="p">({</span>
+  <span class="nx">onSubmit</span><span class="p">,</span>
+  <span class="nx">onChange</span><span class="p">,</span>
+  <span class="nx">errors</span><span class="p">,</span>
+  <span class="nx">user</span><span class="p">,</span>
+<span class="p">})</span> <span class="o">=&gt;</span> <span class="p">(</span>
+  <span class="o">&lt;</span><span class="nx">Card</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"container"</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="nx">form</span> <span class="nx">action</span><span class="o">=</span><span class="s2">"/"</span> <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="nx">onSubmit</span><span class="p">}</span><span class="o">&gt;</span>
+      <span class="o">&lt;</span><span class="nx">h2</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"card-heading"</span><span class="o">&gt;</span><span class="nx">Sign</span> <span class="nx">Up</span><span class="o">&lt;</span><span class="sr">/h2</span><span class="err">&gt; </span>
+      <span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span> <span class="o">&amp;&amp;</span> <span class="o">&lt;</span><span class="nx">p</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"error-message"</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span><span class="p">}</span><span class="o">&lt;</span><span class="sr">/p&gt;</span><span class="err">} </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"field-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">TextField</span>
+          <span class="nx">floatingLabelText</span><span class="o">=</span><span class="s2">"Name"</span>
+          <span class="nx">name</span><span class="o">=</span><span class="s2">"name"</span>
+          <span class="nx">errorText</span><span class="o">=</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">name</span><span class="p">}</span>
+          <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="nx">onChange</span><span class="p">}</span>
+          <span class="nx">value</span><span class="o">=</span><span class="p">{</span><span class="nx">user</span><span class="p">.</span><span class="nx">name</span><span class="p">}</span>
+        <span class="sr">/</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"field-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">TextField</span>
+          <span class="nx">floatingLabelText</span><span class="o">=</span><span class="s2">"Email"</span>
+          <span class="nx">name</span><span class="o">=</span><span class="s2">"email"</span>
+          <span class="nx">errorText</span><span class="o">=</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">email</span><span class="p">}</span>
+          <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="nx">onChange</span><span class="p">}</span>
+          <span class="nx">value</span><span class="o">=</span><span class="p">{</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">}</span>
+        <span class="sr">/</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"field-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">TextField</span>
+          <span class="nx">floatingLabelText</span><span class="o">=</span><span class="s2">"Password"</span>
+          <span class="nx">type</span><span class="o">=</span><span class="s2">"password"</span>
+          <span class="nx">name</span><span class="o">=</span><span class="s2">"password"</span>
+          <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="nx">onChange</span><span class="p">}</span>
+          <span class="nx">errorText</span><span class="o">=</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">password</span><span class="p">}</span>
+          <span class="nx">value</span><span class="o">=</span><span class="p">{</span><span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">}</span>
+        <span class="sr">/</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"button-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">RaisedButton</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"submit"</span> <span class="nx">label</span><span class="o">=</span><span class="s2">"Create New Account"</span> <span class="nx">primary</span> <span class="o">/&gt;</span>
+      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">CardText</span><span class="o">&gt;</span><span class="nx">Already</span> <span class="nx">have</span> <span class="nx">an</span> <span class="nx">account</span><span class="p">?</span> <span class="o">&lt;</span><span class="nx">Link</span> <span class="nx">to</span><span class="o">=</span><span class="p">{</span><span class="s1">'/login'</span><span class="p">}</span><span class="o">&gt;</span><span class="nx">Log</span> <span class="k">in</span><span class="o">&lt;</span><span class="sr">/Link&gt;&lt;/</span><span class="nx">CardText</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="sr">/form</span><span class="err">&gt; </span>  <span class="o">&lt;</span><span class="sr">/Card</span><span class="err">&gt; </span><span class="p">);</span>
+
+<span class="nx">SignUpForm</span><span class="p">.</span><span class="nx">propTypes</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">onSubmit</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">func</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">onChange</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">func</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">errors</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">user</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span>
+<span class="p">};</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">SignUpForm</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>Let’s review the component step-by-step.</p> 
+      <p>Notice the extracted variables from the object passed as a function argument. It’s how we get data to show in a presentational component. We have four variables, <code class="highlighter-rouge">onSubmit</code> and <code class="highlighter-rouge">onChange</code> are event handler functions, <code class="highlighter-rouge">errors</code> and <code class="highlighter-rouge">users</code> are objects containing data. How can we pass an object to extract variables from? Each element can be passed as a property (in React properties simply called props):</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="o">&lt;</span><span class="nx">SignUpForm</span>
+  <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{(</span><span class="nx">e</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'submitted'</span><span class="p">)}</span>
+  <span class="nx">onChange</span><span class="o">=</span><span class="p">{(</span><span class="nx">e</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'changed'</span><span class="p">)}</span>
+  <span class="nx">errors</span><span class="o">=</span><span class="p">{{</span> <span class="na">email</span><span class="p">:</span> <span class="s1">'Invalid'</span> <span class="p">}}</span>
+  <span class="nx">user</span><span class="o">=</span><span class="p">{{</span> <span class="na">email</span><span class="p">:</span> <span class="s1">'jane@doe.com'</span><span class="p">,</span> <span class="na">name</span><span class="p">:</span> <span class="s1">'Jane Doe'</span> <span class="p">}}</span>
+<span class="sr">/&gt;</span></code></pre>
+      </figure> 
+      <p>In the form tag, you can see the usage of the function stored in the <code class="highlighter-rouge">onSubmit</code> variable for the form submission event.</p> 
+      <p>Since <code class="highlighter-rouge">if</code> conditions don’t work inside of JSX, we use statements like this:</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span> <span class="o">&amp;&amp;</span> <span class="o">&lt;</span><span class="nx">p</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"error-message"</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span><span class="p">}</span><span class="o">&lt;</span><span class="sr">/p&gt;}</span></code></pre>
+      </figure> 
+      <p>The element will be shown only if the property <code class="highlighter-rouge">errors.summary</code> contains something or equals true.</p> 
+      <p>Components like <code class="highlighter-rouge">TextField</code>, <code class="highlighter-rouge">RaisedButton</code>, <code class="highlighter-rouge">CardText</code> are parts of the Material UI library. These components are not only nice-looking elements but also have useful features. For example, the <code class="highlighter-rouge">TextField</code> component has a prop <code class="highlighter-rouge">errorText</code>` for showing an individual error tip.</p> 
+      <p>For building links in templates we use the <code class="highlighter-rouge">&lt;Link&gt;</code> component that will render an <code class="highlighter-rouge">a</code> tag with a proper <code class="highlighter-rouge">href</code> attribute.</p> 
+      <p>An important concept in React is type checking of props with <a href="https://facebook.github.io/react/docs/typechecking-with-proptypes.html">PropTypes</a>. With PropTypes we set rules for props of a component: what data type expected to be passed or whether it is required or not. Setting these rules is helpful and intended to prevent making errors while developing a React application:</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="nx">SignUpForm</span><span class="p">.</span><span class="nx">propTypes</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">onSubmit</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">func</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">onChange</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">func</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">errors</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">user</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span>
+<span class="p">};</span></code></pre>
+      </figure> 
+      <p>Let’s create another (almost identical to the sign-up form) component for the login form:</p> 
+      <div class="filename">
+       client/src/components/LoginForm.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Link</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react-router'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Card</span><span class="p">,</span> <span class="nx">CardText</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'material-ui/Card'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">RaisedButton</span> <span class="nx">from</span> <span class="s1">'material-ui/RaisedButton'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">TextField</span> <span class="nx">from</span> <span class="s1">'material-ui/TextField'</span><span class="p">;</span>
+
+
+<span class="kr">const</span> <span class="nx">LoginForm</span> <span class="o">=</span> <span class="p">({</span>
+  <span class="nx">onSubmit</span><span class="p">,</span>
+  <span class="nx">onChange</span><span class="p">,</span>
+  <span class="nx">errors</span><span class="p">,</span>
+  <span class="nx">user</span>
+<span class="p">})</span> <span class="o">=&gt;</span> <span class="p">(</span>
+  <span class="o">&lt;</span><span class="nx">Card</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"container"</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="nx">form</span> <span class="nx">action</span><span class="o">=</span><span class="s2">"/"</span> <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="nx">onSubmit</span><span class="p">}</span><span class="o">&gt;</span>
+      <span class="o">&lt;</span><span class="nx">h2</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"card-heading"</span><span class="o">&gt;</span><span class="nx">Login</span><span class="o">&lt;</span><span class="sr">/h2</span><span class="err">&gt; </span>
+      <span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span> <span class="o">&amp;&amp;</span> <span class="o">&lt;</span><span class="nx">p</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"error-message"</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span><span class="p">}</span><span class="o">&lt;</span><span class="sr">/p&gt;</span><span class="err">} </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"field-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">TextField</span>
+          <span class="nx">floatingLabelText</span><span class="o">=</span><span class="s2">"Email"</span>
+          <span class="nx">name</span><span class="o">=</span><span class="s2">"email"</span>
+          <span class="nx">errorText</span><span class="o">=</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">email</span><span class="p">}</span>
+          <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="nx">onChange</span><span class="p">}</span>
+          <span class="nx">value</span><span class="o">=</span><span class="p">{</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">}</span>
+        <span class="sr">/</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"field-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">TextField</span>
+          <span class="nx">floatingLabelText</span><span class="o">=</span><span class="s2">"Password"</span>
+          <span class="nx">type</span><span class="o">=</span><span class="s2">"password"</span>
+          <span class="nx">name</span><span class="o">=</span><span class="s2">"password"</span>
+          <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="nx">onChange</span><span class="p">}</span>
+          <span class="nx">errorText</span><span class="o">=</span><span class="p">{</span><span class="nx">errors</span><span class="p">.</span><span class="nx">password</span><span class="p">}</span>
+          <span class="nx">value</span><span class="o">=</span><span class="p">{</span><span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">}</span>
+        <span class="sr">/</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"button-line"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">RaisedButton</span> <span class="nx">type</span><span class="o">=</span><span class="s2">"submit"</span> <span class="nx">label</span><span class="o">=</span><span class="s2">"Log in"</span> <span class="nx">primary</span> <span class="o">/&gt;</span>
+      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">CardText</span><span class="o">&gt;</span><span class="nx">Don</span><span class="s1">'t have an account? &lt;Link to={'</span><span class="o">/</span><span class="nx">signup</span><span class="err">'</span><span class="p">}</span><span class="o">&gt;</span><span class="nx">Create</span> <span class="nx">one</span><span class="o">&lt;</span><span class="sr">/Link&gt;.&lt;/</span><span class="nx">CardText</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="sr">/form</span><span class="err">&gt; </span>  <span class="o">&lt;</span><span class="sr">/Card</span><span class="err">&gt; </span><span class="p">);</span>
+
+<span class="nx">LoginForm</span><span class="p">.</span><span class="nx">propTypes</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">onSubmit</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">func</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">onChange</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">func</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">errors</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span><span class="p">,</span>
+  <span class="na">user</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span>
+<span class="p">};</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">LoginForm</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>And the last presentational component that will work as a wrapper for the whole application:</p> 
+      <div class="filename">
+       client/src/components/Base.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">Link</span><span class="p">,</span> <span class="nx">IndexLink</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react-router'</span><span class="p">;</span>
+
+
+<span class="kr">const</span> <span class="nx">Base</span> <span class="o">=</span> <span class="p">({</span> <span class="nx">children</span> <span class="p">})</span> <span class="o">=&gt;</span> <span class="p">(</span>
+  <span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"top-bar"</span><span class="o">&gt;</span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"top-bar-left"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">IndexLink</span> <span class="nx">to</span><span class="o">=</span><span class="s2">"/"</span><span class="o">&gt;</span><span class="nx">React</span> <span class="nx">App</span><span class="o">&lt;</span><span class="sr">/IndexLink</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+      <span class="o">&lt;</span><span class="nx">div</span> <span class="nx">className</span><span class="o">=</span><span class="s2">"top-bar-right"</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="nx">Link</span> <span class="nx">to</span><span class="o">=</span><span class="s2">"/login"</span><span class="o">&gt;</span><span class="nx">Log</span> <span class="k">in</span><span class="o">&lt;</span><span class="sr">/Link</span><span class="err">&gt; </span>        <span class="o">&lt;</span><span class="nx">Link</span> <span class="nx">to</span><span class="o">=</span><span class="s2">"/signup"</span><span class="o">&gt;</span><span class="nx">Sign</span> <span class="nx">up</span><span class="o">&lt;</span><span class="sr">/Link</span><span class="err">&gt; </span>      <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+    <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span>
+    <span class="p">{</span><span class="nx">children</span><span class="p">}</span>
+
+  <span class="o">&lt;</span><span class="sr">/div</span><span class="err">&gt; </span><span class="p">);</span>
+
+<span class="nx">Base</span><span class="p">.</span><span class="nx">propTypes</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="na">children</span><span class="p">:</span> <span class="nx">PropTypes</span><span class="p">.</span><span class="nx">object</span><span class="p">.</span><span class="nx">isRequired</span>
+<span class="p">};</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">Base</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>The children object will be passed as a prop by a router that we will configure later.</p> 
+      <h2 id="creating-container-components">Creating Container Components</h2> 
+      <p>Now we will look at creating container components in action. Containers components do the hard work: update values for showing in presentational components, validate user’s input. In our case, in containers, we also will perform AJAX requests.</p> 
+      <p>Our first container component will be a component that will process the previously created the sign-up form:</p> 
+      <div class="filename">
+       client/src/containers/SignUpPage.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">SignUpForm</span> <span class="nx">from</span> <span class="s1">'../components/SignUpForm.jsx'</span><span class="p">;</span>
+
+
+<span class="kr">class</span> <span class="nx">SignUpPage</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+
+  <span class="cm">/** * Class constructor. */</span>
+  <span class="nx">constructor</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">super</span><span class="p">(</span><span class="nx">props</span><span class="p">);</span>
+
+    <span class="c1">// set the initial component state</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="na">errors</span><span class="p">:</span> <span class="p">{},</span>
+      <span class="na">user</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">email</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">name</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">password</span><span class="p">:</span> <span class="s1">''</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Change the user object. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">changeUser</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">const</span> <span class="nx">field</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="kr">const</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">;</span>
+    <span class="nx">user</span><span class="p">[</span><span class="nx">field</span><span class="p">]</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+      <span class="nx">user</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Process the form. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">processForm</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// prevent default action. in this case, action is the form submission event</span>
+    <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'name:'</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'email:'</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'password:'</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Render the component. */</span>
+  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="nx">SignUpForm</span>
+        <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">}</span>
+        <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">}</span>
+        <span class="nx">errors</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">errors</span><span class="p">}</span>
+        <span class="nx">user</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">}</span>
+      <span class="sr">/</span><span class="err">&gt; </span>    <span class="p">);</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">SignUpPage</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>As you see, container components are created by extending a class from the core React.Component class.</p> 
+      <p>In the constructor method, we have set the default component state. The <strong>state</strong> is a set of values only available within a component. The state initialization with default values should take place before a component is rendered.</p> 
+      <p>Why do we need so-called <code class="highlighter-rouge">state</code> if we got a regular class with fields? Sure we can set values to the <code class="highlighter-rouge">this</code>-reference and then get them in any other method of the class.</p> 
+      <p>At some point, we may need to re-render a component. For example, after receiving an updated list of products we need to make React re-render the component with updated values in the list. It’s the <code class="highlighter-rouge">state</code> for, we set initial values, then we update the state with the <code class="highlighter-rouge">setState</code> method and React will re-render a component.</p> 
+      <p>Look at the statements at the bottom of the constructor:</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="k">this</span><span class="p">.</span><span class="nx">processForm</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span></code></pre>
+      </figure> 
+      <p>It’s for passing the <code class="highlighter-rouge">this</code>-context, so we will have an access to class members from event handlers defined as methods.</p> 
+      <p>The first event handler defined in the method called <code class="highlighter-rouge">changeUser</code> will change the component state by taking the <code class="highlighter-rouge">name</code> attribute of an input element as a key. A value for this key will be taken from a user’s input.</p> 
+      <p>In the second event handler <code class="highlighter-rouge">processForm</code>, which would happen when a user submits the form, all we do at this moment is outputting current state values to the browser console.</p> 
+      <p>The last method <code class="highlighter-rouge">render</code> is <strong>required</strong> for every component created as a class. In this method, we render the presentational component <code class="highlighter-rouge">SignUpForm</code> with the passed event handlers and state values as props.</p> 
+      <p>The second container component will process the login form. The container at this point is almost the same as the <code class="highlighter-rouge">SignUpPage</code> container:</p> 
+      <div class="filename">
+       client/src/containers/LoginPage.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">LoginForm</span> <span class="nx">from</span> <span class="s1">'../components/LoginForm.jsx'</span><span class="p">;</span>
+
+
+<span class="kr">class</span> <span class="nx">LoginPage</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+
+  <span class="cm">/** * Class constructor. */</span>
+  <span class="nx">constructor</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">super</span><span class="p">(</span><span class="nx">props</span><span class="p">);</span>
+
+    <span class="c1">// set the initial component state</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="na">errors</span><span class="p">:</span> <span class="p">{},</span>
+      <span class="na">user</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">email</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">password</span><span class="p">:</span> <span class="s1">''</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Process the form. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">processForm</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// prevent default action. in this case, action is the form submission event</span>
+    <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'email:'</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'password:'</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Change the user object. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">changeUser</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">const</span> <span class="nx">field</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="kr">const</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">;</span>
+    <span class="nx">user</span><span class="p">[</span><span class="nx">field</span><span class="p">]</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+      <span class="nx">user</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Render the component. */</span>
+  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="nx">LoginForm</span>
+        <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">}</span>
+        <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">}</span>
+        <span class="nx">errors</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">errors</span><span class="p">}</span>
+        <span class="nx">user</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">}</span>
+      <span class="sr">/</span><span class="err">&gt; </span>    <span class="p">);</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">LoginPage</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>Now we need to set a routing for the application:</p> 
+      <div class="filename">
+       client/src/routes.js
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">Base</span> <span class="nx">from</span> <span class="s1">'./components/Base.jsx'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">HomePage</span> <span class="nx">from</span> <span class="s1">'./components/HomePage.jsx'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">LoginPage</span> <span class="nx">from</span> <span class="s1">'./containers/LoginPage.jsx'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">SignUpPage</span> <span class="nx">from</span> <span class="s1">'./containers/SignUpPage.jsx'</span><span class="p">;</span>
+
+
+<span class="kr">const</span> <span class="nx">routes</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="c1">// base component (wrapper for the whole application).</span>
+  <span class="na">component</span><span class="p">:</span> <span class="nx">Base</span><span class="p">,</span>
+  <span class="na">childRoutes</span><span class="p">:</span> <span class="p">[</span>
+
+    <span class="p">{</span>
+      <span class="na">path</span><span class="p">:</span> <span class="s1">'/'</span><span class="p">,</span>
+      <span class="na">component</span><span class="p">:</span> <span class="nx">HomePage</span>
+    <span class="p">},</span>
+
+    <span class="p">{</span>
+      <span class="na">path</span><span class="p">:</span> <span class="s1">'/login'</span><span class="p">,</span>
+      <span class="na">component</span><span class="p">:</span> <span class="nx">LoginPage</span>
+    <span class="p">},</span>
+
+    <span class="p">{</span>
+      <span class="na">path</span><span class="p">:</span> <span class="s1">'/signup'</span><span class="p">,</span>
+      <span class="na">component</span><span class="p">:</span> <span class="nx">SignUpPage</span>
+    <span class="p">}</span>
+
+  <span class="p">]</span>
+<span class="p">};</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">routes</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>The routes config is a JavaScript object containing the main component, which we will use as a wrapper for the application, and an array of child routes.</p> 
+      <p>As you see we have set the <code class="highlighter-rouge">HomePage</code> component as the index route of our application, the <code class="highlighter-rouge">SignUpPage</code> component for the <code class="highlighter-rouge">/signup</code> path and the <code class="highlighter-rouge">LoginPage</code> component for the <code class="highlighter-rouge">/login</code> path.</p> 
+      <p>The next step will be an updating the client-side entry file. We need to include our router config and apply Material UI’s theme manager:</p> 
+      <div class="filename">
+       client/src/app.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">ReactDom</span> <span class="nx">from</span> <span class="s1">'react-dom'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">injectTapEventPlugin</span> <span class="nx">from</span> <span class="s1">'react-tap-event-plugin'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">getMuiTheme</span> <span class="nx">from</span> <span class="s1">'material-ui/styles/getMuiTheme'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">MuiThemeProvider</span> <span class="nx">from</span> <span class="s1">'material-ui/styles/MuiThemeProvider'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="p">{</span> <span class="nx">browserHistory</span><span class="p">,</span> <span class="nx">Router</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react-router'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">routes</span> <span class="nx">from</span> <span class="s1">'./routes.js'</span><span class="p">;</span>
+
+<span class="c1">// remove tap delay, essential for MaterialUI to work properly</span>
+<span class="nx">injectTapEventPlugin</span><span class="p">();</span>
+
+<span class="nx">ReactDom</span><span class="p">.</span><span class="nx">render</span><span class="p">((</span>
+  <span class="o">&lt;</span><span class="nx">MuiThemeProvider</span> <span class="nx">muiTheme</span><span class="o">=</span><span class="p">{</span><span class="nx">getMuiTheme</span><span class="p">()}</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="nx">Router</span> <span class="nx">history</span><span class="o">=</span><span class="p">{</span><span class="nx">browserHistory</span><span class="p">}</span> <span class="nx">routes</span><span class="o">=</span><span class="p">{</span><span class="nx">routes</span><span class="p">}</span> <span class="sr">/</span><span class="err">&gt; </span>  <span class="o">&lt;</span><span class="sr">/MuiThemeProvider&gt;</span><span class="se">)</span><span class="sr">, document.getElementById</span><span class="se">(</span><span class="sr">'react-app'</span><span class="se">))</span><span class="sr">;</span></code></pre>
+      </figure> 
+      <p>If your instances of Webpack (npm run bundle) and Nodemon (npm start) are still working, you should see the welcome page by entering <code class="highlighter-rouge">http://localhost:3000</code> in a browser.</p> 
+      <p><img src="/content/authentication-in-react-apps-1/home-page-component.png" alt="Home Page Component"></p> 
+      <p>Go to the sign-up form. We have the event handler for the submit button, try to fill the fields and check an output in browser’s console.</p> 
+      <p><img src="/content/authentication-in-react-apps-1/initial-signup-component.png" alt="Initial Sign-Up Form Component"></p> 
+      <p>Check the login form:</p> 
+      <p><img src="/content/authentication-in-react-apps-1/initial-login-component.png" alt="Initial Login Form Component"></p> 
+      <h2 id="server-side-routes">Server-Side Routes</h2> 
+      <p>For the sake of shortness, we won’t implement the client-side validation as it’s not essential (yet, it’s very useful for UX) and will focus on the server-side one. The first thing we need to do is to be able to read a POST-data, so let’s configure our application server.</p> 
+      <p>Change the <code class="highlighter-rouge">index.js</code> file to this:</p> 
+      <div class="filename">
+       index.js
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">const</span> <span class="nx">express</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'express'</span><span class="p">);</span>
+<span class="kr">const</span> <span class="nx">bodyParser</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'body-parser'</span><span class="p">);</span>
+
+<span class="kr">const</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">express</span><span class="p">();</span>
+<span class="c1">// tell the app to look for static files in these directories</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="kr">static</span><span class="p">(</span><span class="s1">'./server/static/'</span><span class="p">));</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="kr">static</span><span class="p">(</span><span class="s1">'./client/dist/'</span><span class="p">));</span>
+<span class="c1">// tell the app to parse HTTP body messages</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">bodyParser</span><span class="p">.</span><span class="nx">urlencoded</span><span class="p">({</span> <span class="na">extended</span><span class="p">:</span> <span class="kc">false</span> <span class="p">}));</span>
+
+<span class="c1">// routes</span>
+<span class="kr">const</span> <span class="nx">authRoutes</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./server/routes/auth'</span><span class="p">);</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="s1">'/auth'</span><span class="p">,</span> <span class="nx">authRoutes</span><span class="p">);</span>
+
+<span class="c1">// start the server</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="mi">3000</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Server is running on http://localhost:3000 or http://127.0.0.1:3000'</span><span class="p">);</span>
+<span class="p">});</span></code></pre>
+      </figure> 
+      <p>We added the loading of the <code class="highlighter-rouge">body-parser</code> package and configured the application to use it. We also included routes.</p> 
+      <p>Let’s create these routes for processing the form data, which we will send via AJAX requests. To include a separate file with the route rules we’ve passed the middleware <code class="highlighter-rouge">app.use('/auth', authRoutes)</code>.</p> 
+      <p>Save the routes:</p> 
+      <div class="filename">
+       server/routes/auth.js
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">const</span> <span class="nx">express</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'express'</span><span class="p">);</span>
+<span class="kr">const</span> <span class="nx">validator</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'validator'</span><span class="p">);</span>
+
+<span class="kr">const</span> <span class="nx">router</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">express</span><span class="p">.</span><span class="nx">Router</span><span class="p">();</span>
+
+<span class="cm">/** * Validate the sign up form * * @param {object} payload - the HTTP body message * @returns {object} The result of validation. Object contains a boolean validation result, * errors tips, and a global message for the whole form. */</span>
+<span class="kd">function</span> <span class="nx">validateSignupForm</span><span class="p">(</span><span class="nx">payload</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">errors</span> <span class="o">=</span> <span class="p">{};</span>
+  <span class="kd">let</span> <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="kd">let</span> <span class="nx">message</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">payload</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">email</span> <span class="o">!==</span> <span class="s1">'string'</span> <span class="o">||</span> <span class="o">!</span><span class="nx">validator</span><span class="p">.</span><span class="nx">isEmail</span><span class="p">(</span><span class="nx">payload</span><span class="p">.</span><span class="nx">email</span><span class="p">))</span> <span class="p">{</span>
+    <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nx">errors</span><span class="p">.</span><span class="nx">email</span> <span class="o">=</span> <span class="s1">'Please provide a correct email address.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">payload</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">password</span> <span class="o">!==</span> <span class="s1">'string'</span> <span class="o">||</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">password</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nx">errors</span><span class="p">.</span><span class="nx">password</span> <span class="o">=</span> <span class="s1">'Password must have at least 8 characters.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">payload</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">name</span> <span class="o">!==</span> <span class="s1">'string'</span> <span class="o">||</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">name</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nx">errors</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="s1">'Please provide your name.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">isFormValid</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">message</span> <span class="o">=</span> <span class="s1">'Check the form for errors.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">success</span><span class="p">:</span> <span class="nx">isFormValid</span><span class="p">,</span>
+    <span class="nx">message</span><span class="p">,</span>
+    <span class="nx">errors</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="cm">/** * Validate the login form * * @param {object} payload - the HTTP body message * @returns {object} The result of validation. Object contains a boolean validation result, * errors tips, and a global message for the whole form. */</span>
+<span class="kd">function</span> <span class="nx">validateLoginForm</span><span class="p">(</span><span class="nx">payload</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">errors</span> <span class="o">=</span> <span class="p">{};</span>
+  <span class="kd">let</span> <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+  <span class="kd">let</span> <span class="nx">message</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">payload</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">email</span> <span class="o">!==</span> <span class="s1">'string'</span> <span class="o">||</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">email</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nx">errors</span><span class="p">.</span><span class="nx">email</span> <span class="o">=</span> <span class="s1">'Please provide your email address.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">payload</span> <span class="o">||</span> <span class="k">typeof</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">password</span> <span class="o">!==</span> <span class="s1">'string'</span> <span class="o">||</span> <span class="nx">payload</span><span class="p">.</span><span class="nx">password</span><span class="p">.</span><span class="nx">trim</span><span class="p">().</span><span class="nx">length</span> <span class="o">===</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">isFormValid</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+    <span class="nx">errors</span><span class="p">.</span><span class="nx">password</span> <span class="o">=</span> <span class="s1">'Please provide your password.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">isFormValid</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">message</span> <span class="o">=</span> <span class="s1">'Check the form for errors.'</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="na">success</span><span class="p">:</span> <span class="nx">isFormValid</span><span class="p">,</span>
+    <span class="nx">message</span><span class="p">,</span>
+    <span class="nx">errors</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="nx">router</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/signup'</span><span class="p">,</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">validationResult</span> <span class="o">=</span> <span class="nx">validateSignupForm</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">validationResult</span><span class="p">.</span><span class="nx">success</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">400</span><span class="p">).</span><span class="nx">json</span><span class="p">({</span>
+      <span class="na">success</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="na">message</span><span class="p">:</span> <span class="nx">validationResult</span><span class="p">.</span><span class="nx">message</span><span class="p">,</span>
+      <span class="na">errors</span><span class="p">:</span> <span class="nx">validationResult</span><span class="p">.</span><span class="nx">errors</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">200</span><span class="p">).</span><span class="nx">end</span><span class="p">();</span>
+<span class="p">});</span>
+
+<span class="nx">router</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/login'</span><span class="p">,</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="kr">const</span> <span class="nx">validationResult</span> <span class="o">=</span> <span class="nx">validateLoginForm</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">validationResult</span><span class="p">.</span><span class="nx">success</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">400</span><span class="p">).</span><span class="nx">json</span><span class="p">({</span>
+      <span class="na">success</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="na">message</span><span class="p">:</span> <span class="nx">validationResult</span><span class="p">.</span><span class="nx">message</span><span class="p">,</span>
+      <span class="na">errors</span><span class="p">:</span> <span class="nx">validationResult</span><span class="p">.</span><span class="nx">errors</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">200</span><span class="p">).</span><span class="nx">end</span><span class="p">();</span>
+<span class="p">});</span>
+
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">router</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>In the file, we’ve set the two POST-method routes, for <code class="highlighter-rouge">/auth/signup</code> and for <code class="highlighter-rouge">/auth/login</code>. Also, we added the validation functions with basic rules to check if passed data contains a valid email address and to ensure if a password contains at least 8 characters. We should get an HTTP response with the status code 400 (bad request) and a JSON object containing error messages if validation doesn’t pass. If everything is okay and validation passes, we will get an HTTP response with the status code 200 (success).</p> 
+      <p>It’s the time to add AJAX requests to our components. Change the <code class="highlighter-rouge">SignUpPage</code> container component:</p> 
+      <div class="filename">
+       client/src/containers/SignUpPage.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">SignUpForm</span> <span class="nx">from</span> <span class="s1">'../components/SignUpForm.jsx'</span><span class="p">;</span>
+
+
+<span class="kr">class</span> <span class="nx">SignUpPage</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+
+  <span class="cm">/** * Class constructor. */</span>
+  <span class="nx">constructor</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">super</span><span class="p">(</span><span class="nx">props</span><span class="p">);</span>
+
+    <span class="c1">// set the initial component state</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="na">errors</span><span class="p">:</span> <span class="p">{},</span>
+      <span class="na">user</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">email</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">name</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">password</span><span class="p">:</span> <span class="s1">''</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Change the user object. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">changeUser</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">const</span> <span class="nx">field</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="kr">const</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">;</span>
+    <span class="nx">user</span><span class="p">[</span><span class="nx">field</span><span class="p">]</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+      <span class="nx">user</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Process the form. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">processForm</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// prevent default action. in this case, action is the form submission event</span>
+    <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+
+    <span class="c1">// create a string for an HTTP body message</span>
+    <span class="kr">const</span> <span class="nx">name</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="kr">const</span> <span class="nx">email</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+    <span class="kr">const</span> <span class="nx">password</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">);</span>
+    <span class="kr">const</span> <span class="nx">formData</span> <span class="o">=</span> <span class="err">`</span><span class="nx">name</span><span class="o">=</span><span class="nx">$</span><span class="p">{</span><span class="nx">name</span><span class="p">}</span><span class="o">&amp;</span><span class="nx">email</span><span class="o">=</span><span class="nx">$</span><span class="p">{</span><span class="nx">email</span><span class="p">}</span><span class="o">&amp;</span><span class="nx">password</span><span class="o">=</span><span class="nx">$</span><span class="p">{</span><span class="nx">password</span><span class="p">}</span><span class="err">`</span><span class="p">;</span>
+
+    <span class="c1">// create an AJAX request</span>
+    <span class="kr">const</span> <span class="nx">xhr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'post'</span><span class="p">,</span> <span class="s1">'/auth/signup'</span><span class="p">);</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">'Content-type'</span><span class="p">,</span> <span class="s1">'application/x-www-form-urlencoded'</span><span class="p">);</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseType</span> <span class="o">=</span> <span class="s1">'json'</span><span class="p">;</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// success</span>
+
+        <span class="c1">// change the component-container state</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+          <span class="na">errors</span><span class="p">:</span> <span class="p">{}</span>
+        <span class="p">});</span>
+
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'The form is valid'</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// failure</span>
+
+        <span class="kr">const</span> <span class="nx">errors</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">errors</span> <span class="p">?</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">errors</span> <span class="p">:</span> <span class="p">{};</span>
+        <span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">message</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+          <span class="nx">errors</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">formData</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Render the component. */</span>
+  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="nx">SignUpForm</span>
+        <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">}</span>
+        <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">}</span>
+        <span class="nx">errors</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">errors</span><span class="p">}</span>
+        <span class="nx">user</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">}</span>
+      <span class="sr">/</span><span class="err">&gt; </span>    <span class="p">);</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">SignUpPage</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>We added an AJAX request to the <code class="highlighter-rouge">processForm</code> method. In the method, we change the component state values depending on an HTTP response status code.</p> 
+      <p>Similar to the sign-up page container we will change the login form container:</p> 
+      <div class="filename">
+       client/src/containers/LoginPage.jsx
+      </div> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">PropTypes</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">'react'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">LoginForm</span> <span class="nx">from</span> <span class="s1">'../components/LoginForm.jsx'</span><span class="p">;</span>
+
+
+<span class="kr">class</span> <span class="nx">LoginPage</span> <span class="kr">extends</span> <span class="nx">React</span><span class="p">.</span><span class="nx">Component</span> <span class="p">{</span>
+
+  <span class="cm">/** * Class constructor. */</span>
+  <span class="nx">constructor</span><span class="p">(</span><span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">super</span><span class="p">(</span><span class="nx">props</span><span class="p">);</span>
+
+    <span class="c1">// set the initial component state</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="na">errors</span><span class="p">:</span> <span class="p">{},</span>
+      <span class="na">user</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">email</span><span class="p">:</span> <span class="s1">''</span><span class="p">,</span>
+        <span class="na">password</span><span class="p">:</span> <span class="s1">''</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Process the form. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">processForm</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// prevent default action. in this case, action is the form submission event</span>
+    <span class="nx">event</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+
+    <span class="c1">// create a string for an HTTP body message</span>
+    <span class="kr">const</span> <span class="nx">email</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+    <span class="kr">const</span> <span class="nx">password</span> <span class="o">=</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">);</span>
+    <span class="kr">const</span> <span class="nx">formData</span> <span class="o">=</span> <span class="err">`</span><span class="nx">email</span><span class="o">=</span><span class="nx">$</span><span class="p">{</span><span class="nx">email</span><span class="p">}</span><span class="o">&amp;</span><span class="nx">password</span><span class="o">=</span><span class="nx">$</span><span class="p">{</span><span class="nx">password</span><span class="p">}</span><span class="err">`</span><span class="p">;</span>
+
+    <span class="c1">// create an AJAX request</span>
+    <span class="kr">const</span> <span class="nx">xhr</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="s1">'post'</span><span class="p">,</span> <span class="s1">'/auth/login'</span><span class="p">);</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="s1">'Content-type'</span><span class="p">,</span> <span class="s1">'application/x-www-form-urlencoded'</span><span class="p">);</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseType</span> <span class="o">=</span> <span class="s1">'json'</span><span class="p">;</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s1">'load'</span><span class="p">,</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// success</span>
+
+        <span class="c1">// change the component-container state</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+          <span class="na">errors</span><span class="p">:</span> <span class="p">{}</span>
+        <span class="p">});</span>
+
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'The form is valid'</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="c1">// failure</span>
+
+        <span class="c1">// change the component state</span>
+        <span class="kr">const</span> <span class="nx">errors</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">errors</span> <span class="p">?</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">errors</span> <span class="p">:</span> <span class="p">{};</span>
+        <span class="nx">errors</span><span class="p">.</span><span class="nx">summary</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">message</span><span class="p">;</span>
+
+        <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+          <span class="nx">errors</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+    <span class="nx">xhr</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">formData</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Change the user object. * * @param {object} event - the JavaScript event object */</span>
+  <span class="nx">changeUser</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kr">const</span> <span class="nx">field</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="kr">const</span> <span class="nx">user</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">;</span>
+    <span class="nx">user</span><span class="p">[</span><span class="nx">field</span><span class="p">]</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">value</span><span class="p">;</span>
+
+    <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span>
+      <span class="nx">user</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+
+  <span class="cm">/** * Render the component. */</span>
+  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="nx">LoginForm</span>
+        <span class="nx">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">processForm</span><span class="p">}</span>
+        <span class="nx">onChange</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">changeUser</span><span class="p">}</span>
+        <span class="nx">errors</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">errors</span><span class="p">}</span>
+        <span class="nx">user</span><span class="o">=</span><span class="p">{</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">user</span><span class="p">}</span>
+      <span class="sr">/</span><span class="err">&gt; </span>    <span class="p">);</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">LoginPage</span><span class="p">;</span></code></pre>
+      </figure> 
+      <p>Let’s see the components in action. In a browser, try to submit sign-up form the form with the empty fields or with a very short password.</p> 
+      <p><img src="/content/authentication-in-react-apps-1/signup-form-with-errors.png" alt="Sign-up form with errors"></p> 
+      <p>If the form is valid you should see the phrase ‘The form is valid’ in console:</p> 
+      <p><img src="/content/authentication-in-react-apps-1/signup-form-is-valid.png" alt="Valid sign-up form"></p> 
+      <p>Check if the login form works properly too.</p> 
+      <p><img src="/content/authentication-in-react-apps-1/login-form-with-errors.png" alt="Login form with errors"></p> 
+      <p><img src="/content/authentication-in-react-apps-1/login-form-is-valid.png" alt="Valid login form"></p> 
+      <h2 id="conclusion">Conclusion</h2> 
+      <p>This part of the tutorial covered essentials concepts of JSX syntax, React components, state and props values. It’s also showed how to use tools like Webpack.</p> 
+      <p>In the <a href="/blog/authentication-in-react-apps-jwt">next part</a>, we will continue to build the application and implement the authentication layer using an email address.</p> 
+     </div> 
+     <!--
+  <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
+  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+  --> 
+     <div id="disqus_thread"></div> 
+     <script>
+    var disqus_config = function () {
+        this.page.url = "http://vladimirponomarev.com/blog/authentication-in-react-apps-creating-components";
+        this.page.identifier = "/blog/authentication-in-react-apps-creating-components";
+    };
+
+    (function() {  // DON'T EDIT BELOW THIS LINE
+        var d = document, s = d.createElement('script');
+
+        s.src = '//vladimirponomarevsblog.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+    </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+     </noscript> 
+    </article> 
+   </div> 
+  </div> 
+  <footer class="site-footer"> 
+   <div class="wrapper"> 
+    <div class="footer-col-wrapper"> 
+     <div class="footer-col footer-col-1"> 
+      <ul class="contact-list"> 
+       <li>© 2016 Vladimir Ponomarev</li> 
+       <li>Togliatti, Russia</li> 
+      </ul> 
+     </div> 
+     <div class="footer-col footer-col-2"> 
+      <ul class="social-media-list"> 
+       <li> <a href="https://github.com/vladimirponomarev"><span class="icon icon--github">
+          <svg viewbox="0 0 16 16">
+           <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z" />
+          </svg> </span><span class="username">vladimirponomarev</span></a> </li> 
+       <li> <a href="https://twitter.com/vldmrponomarev"><span class="icon icon--twitter">
+          <svg viewbox="0 0 16 16">
+           <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z" />
+          </svg> </span><span class="username">vldmrponomarev</span></a> </li> 
+      </ul> 
+     </div> 
+     <div class="footer-col footer-col-3"> 
+      <p>Powered by <a href="https://jekyllrb.com/">Jekyll</a></p> 
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <script>
+
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-72084844-1', 'auto');
+  ga('send', 'pageview');
+</script> 
+  <!-- Yandex.Metrika counter --> 
+  <script type="text/javascript">
+    (function (d, w, c) {
+        (w[c] = w[c] || []).push(function() {
+            try {
+                w.yaCounter34571075 = new Ya.Metrika({
+                    id:34571075,
+                    clickmap:true,
+                    trackLinks:true,
+                    accurateTrackBounce:true
+                });
+            } catch(e) { }
+        });
+
+        var n = d.getElementsByTagName("script")[0],
+            s = d.createElement("script"),
+            f = function () { n.parentNode.insertBefore(s, n); };
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+        if (w.opera == "[object Opera]") {
+            d.addEventListener("DOMContentLoaded", f, false);
+        } else { f(); }
+    })(document, window, "yandex_metrika_callbacks");
+</script> 
+  <noscript>
+   <div>
+    <img src="https://mc.yandex.ru/watch/34571075" style="position:absolute; left:-9999px;" alt="">
+   </div>
+  </noscript> 
+  <!-- /Yandex.Metrika counter -->   
+ </body>
+</html>

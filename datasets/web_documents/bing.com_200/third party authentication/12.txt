@@ -1,0 +1,451 @@
+<!--?xml version="1.0" encoding="UTF-8" standalone="no"?--><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ext="http://exslt.org/common" class="chrometwo">
+ <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>13.2.11.&nbsp;Use A Third-Party Authentication System In Your Application</title>
+  <meta name="generator" content="publican v3.9.9">
+  <meta name="package" content="JBoss_Enterprise_Application_Platform-Development_Guide-6-en-US-0.1-3.400">
+  <link rel="stylesheet" type="text/css" href="../../../../../chrome.css">
+  <link rel="stylesheet" type="text/css" href="../../../../../db4.css">
+  <link rel="stylesheet" type="text/css" href="../../../../../JBoss/en-US/css/brand.css">
+  <link rel="stylesheet" type="text/css" href="../../../../../print.css" media="print">
+  <link rel="stylesheet" type="text/css" href="../../../../../site_overrides.css">
+  <script type="text/javascript" src="../../../../../jquery-1.7.1.min.js"></script>
+  <script type="text/javascript" src="../../../../labels.js"></script>
+  <script type="text/javascript" src="../../../../../toc.js"></script>
+  <meta name="keywords" content=" Security ,  Application Development ,  Extending the Enterprise Application Platform ,  EAP 6.0.0 GA ">
+  <link rel="home" href="index.html" title="Development Guide">
+  <link rel="up" href="sect-Role-Based_Security_in_Applications.html" title="13.2.&nbsp;Role-Based Security in Applications">
+  <link rel="prev" href="Use_Role-Based_Security_In_Servlets.html" title="13.2.10.&nbsp;Use Role-Based Security In Servlets">
+  <link rel="next" href="sect-Security_Realms.html" title="13.3.&nbsp;Security Realms">
+  <link rel="stylesheet" href="https://access.redhat.com/chrome_themes/umbra/s/chrometwo.css">
+  <script src="https://access.redhat.com/webassets/avalon/j/lib/require.js"></script>
+  <script src="../../../../../JBoss/en-US/scripts/css_conflicts.js"></script>
+  <script>
+			fixCSSConflicts("JBoss", "en-US");
+			chrometwo_require(["jquery"], function(ajq) {
+				ajq("document").ready(function() {
+					 runAnalytics(ajq);
+				});
+			});
+		</script>
+ </head>
+ <body class="chrometwo">
+  <div id="chrometwo">
+   <div id="main">
+    <div id="navigation"></div>
+    <ul class="docnav top">
+     <li class="previous"><a accesskey="p" href="Use_Role-Based_Security_In_Servlets.html"><strong>Prev</strong></a></li>
+     <li class="doctoc"></li>
+     <li class="next"><a accesskey="n" href="sect-Security_Realms.html"><strong>Next</strong></a></li>
+    </ul>
+    <div xml:lang="en-US" class="section" lang="en-US">
+     <div class="titlepage">
+      <div>
+       <div>
+        <h3 class="title"><a id="Use_A_Third-Party_Authentication_System_In_Your_Application"></a>13.2.11.&nbsp;Use A Third-Party Authentication System In Your Application</h3>
+       </div>
+      </div>
+     </div>
+     <div class="para">
+       You can integrate third-party security systems with JBoss Enterprise Application Platform. These types of systems are usually token-based. The external system performs the authentication and passes a token back to the Web application through the request headers. This is often referred to as 
+      <em class="firstterm">perimeter authentication</em>. To configure perimeter security in your application, add a custom authentication valve. If you have a valve from a third-party provider, be sure it is in your classpath and follow the examples below, along with the documentation for your third-party authentication module. 
+     </div>
+     <div xmlns:d="http://docbook.org/ns/docbook" class="note">
+      <div class="admonition_header">
+       <p><strong>Note</strong></p>
+      </div>
+      <div class="admonition">
+       <div class="para">
+         The location for configuring valves has changed in JBoss Enterprise Application Platform 6. There is no longer a 
+        <code class="filename">context.xml</code> deployment descriptor. Valves are configured directly in the 
+        <code class="filename">jboss-web.xml</code> descriptor instead. The 
+        <code class="filename">context.xml</code> is now ignored. 
+       </div>
+      </div>
+     </div>
+     <div class="example">
+      <a id="idp25295328"></a>
+      <p class="title"><strong>Example&nbsp;13.1.&nbsp;Basic Authentication Valve</strong></p>
+      <div class="example-contents">
+       <pre class="programlisting XML"><span class="perl_Keyword">&lt;jboss-web&gt;</span>
+  <span class="perl_Keyword">&lt;valve&gt;</span>
+    <span class="perl_Keyword">&lt;class-name&gt;</span>org.jboss.security.negotiation.NegotiationAuthenticator<span class="perl_Keyword">&lt;/class-name&gt;</span>
+  <span class="perl_Keyword">&lt;/valve&gt;</span>
+<span class="perl_Keyword">&lt;/jboss-web&gt;</span>
+</pre>
+       <div class="para">
+         This valve is used for Kerberos-based SSO. It also shows the most simple pattern for specifying a third-party authenticator for your Web application. 
+       </div>
+      </div>
+     </div>
+     <br class="example-break">
+     <div class="example">
+      <a id="idp26799504"></a>
+      <p class="title"><strong>Example&nbsp;13.2.&nbsp;Custom Valve With Header Attributes Set</strong></p>
+      <div class="example-contents">
+       <pre class="programlisting XML"><span class="perl_Keyword">&lt;jboss-web&gt;</span>
+  <span class="perl_Keyword">&lt;valve&gt;</span>
+    <span class="perl_Keyword">&lt;class-name&gt;</span>org.jboss.web.tomcat.security.GenericHeaderAuthenticator<span class="perl_Keyword">&lt;/class-name&gt;</span>
+    <span class="perl_Keyword">&lt;param&gt;</span>
+      <span class="perl_Keyword">&lt;param-name&gt;</span>httpHeaderForSSOAuth<span class="perl_Keyword">&lt;/param-name&gt;</span>
+      <span class="perl_Keyword">&lt;param-value&gt;</span>sm_ssoid,ct-remote-user,HTTP_OBLIX_UID<span class="perl_Keyword">&lt;/param-value&gt;</span>
+    <span class="perl_Keyword">&lt;/param&gt;</span>
+    <span class="perl_Keyword">&lt;param&gt;</span>
+      <span class="perl_Keyword">&lt;param-name&gt;</span>sessionCookieForSSOAuth<span class="perl_Keyword">&lt;/param-name&gt;</span>
+      <span class="perl_Keyword">&lt;param-value&gt;</span>SMSESSION,CTSESSION,ObSSOCookie<span class="perl_Keyword">&lt;/param-value&gt;</span>
+    <span class="perl_Keyword">&lt;/param&gt;</span>
+  <span class="perl_Keyword">&lt;/valve&gt;</span>
+<span class="perl_Keyword">&lt;/jboss-web&gt;</span>
+</pre>
+       <div class="para">
+         This example shows how to set custom attributes on your valve. The authenticator checks for the presence of the header ID and the session key, and passes them into the JAAS framework which drives the security layer, as the username and password value. You need a custom JAAS login module which can process the username and password and populate the subject with the correct roles. If no header values match the configured values, regular form-based authentication semantics apply. 
+       </div>
+      </div>
+     </div>
+     <br class="example-break">
+     <div class="formalpara">
+      <div xmlns:d="http://docbook.org/ns/docbook" class="title">
+       Writing a Custom Authenticator
+      </div> Writing your own authenticator is out of scope of this document. However, the following Java code is provided as an example. 
+     </div>
+     <div class="example">
+      <a id="idp26055152"></a>
+      <p class="title"><strong>Example&nbsp;13.3.&nbsp;GenericHeaderAuthenticator.java</strong></p>
+      <div class="example-contents">
+       <pre class="programlisting JAVA"><span class="perl_Comment">/*</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * JBoss, Home of Professional Open Source.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * Copyright 2006, Red Hat Middleware LLC, and individual contributors</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * as indicated by the @author tags. See the copyright.txt file in the</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * distribution for a full listing of individual contributors.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> *</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * This is free software; you can redistribute it and/or modify it</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * under the terms of the GNU Lesser General Public License as</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * published by the Free Software Foundation; either version 2.1 of</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * the License, or (at your option) any later version.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> *</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * This software is distributed in the hope that it will be useful,</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * but WITHOUT ANY WARRANTY; without even the implied warranty of</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * Lesser General Public License for more details.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> *</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * You should have received a copy of the GNU Lesser General Public</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * License along with this software; if not, write to the Free</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * 02110-1301 USA, or see the FSF site: http://www.fsf.org.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> */</span>
+ 
+package org.<span class="perl_Function">jboss</span>.<span class="perl_Function">web</span>.<span class="perl_Function">tomcat</span>.<span class="perl_Function">security</span>;
+
+<span class="perl_Keyword">import</span> java.io.IOException;
+<span class="perl_Keyword">import</span> java.security.Principal;
+<span class="perl_Keyword">import</span> java.util.StringTokenizer;
+
+<span class="perl_Keyword">import</span> javax.management.JMException;
+<span class="perl_Keyword">import</span> javax.management.ObjectName;
+<span class="perl_Keyword">import</span> javax.servlet.http.Cookie;
+<span class="perl_Keyword">import</span> javax.servlet.http.HttpServletRequest;
+<span class="perl_Keyword">import</span> javax.servlet.http.HttpServletResponse;
+
+<span class="perl_Keyword">import</span> org.apache.catalina.Realm;
+<span class="perl_Keyword">import</span> org.apache.catalina.Session;
+<span class="perl_Keyword">import</span> org.apache.catalina.authenticator.Constants;
+<span class="perl_Keyword">import</span> org.apache.catalina.connector.Request;
+<span class="perl_Keyword">import</span> org.apache.catalina.connector.Response;
+<span class="perl_Keyword">import</span> org.apache.catalina.deploy.LoginConfig;
+<span class="perl_Keyword">import</span> org.jboss.logging.Logger;
+
+<span class="perl_Keyword">import</span> org.jboss.as.web.security.ExtendedFormAuthenticator;
+
+<span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * JBAS-2283: Provide custom header based authentication support</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * Header Authenticator that deals with userid from the request header Requires</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * two attributes configured on the Tomcat Service - one for the http header</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * denoting the authenticated identity and the other is the SESSION cookie</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * </span><span class="perl_Keyword">@author &lt;a</span><span class="perl_Others"> href=</span><span class="perl_String">"mailto:Anil.Saldhana@jboss.org"</span><span class="perl_Keyword">&gt;</span><span class="perl_Comment">Anil Saldhana</span><span class="perl_Keyword">&lt;/a&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * </span><span class="perl_Keyword">@author &lt;a</span><span class="perl_Others"> href=</span><span class="perl_String">"mailto:sguilhen@redhat.com"</span><span class="perl_Keyword">&gt;</span><span class="perl_Comment">Stefan Guilhen</span><span class="perl_Keyword">&lt;/a&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * </span><span class="perl_Keyword">@version </span><span class="perl_Comment">$Revision$</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> * </span><span class="perl_Keyword">@since </span><span class="perl_Comment">Sep 11, 2006</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment"> */</span>
+<span class="perl_Keyword">public</span> <span class="perl_Keyword">class</span> GenericHeaderAuthenticator <span class="perl_Keyword">extends</span> ExtendedFormAuthenticator {
+  <span class="perl_Keyword">protected</span> <span class="perl_DataType">static</span> Logger log = Logger
+      .<span class="perl_Function">getLogger</span>(GenericHeaderAuthenticator.<span class="perl_Function">class</span>);
+
+  <span class="perl_Keyword">protected</span> <span class="perl_DataType">boolean</span> trace = log.<span class="perl_Function">isTraceEnabled</span>();
+
+  <span class="perl_Comment">// JBAS-4804: GenericHeaderAuthenticator injection of ssoid and</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span>  <span class="perl_Comment">// sessioncookie name.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span>  <span class="perl_Keyword">private</span> String httpHeaderForSSOAuth = <span class="perl_Keyword">null</span>;
+
+  <span class="perl_Keyword">private</span> String sessionCookieForSSOAuth = <span class="perl_Keyword">null</span>;
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Obtain the value of the </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">httpHeaderForSSOAuth</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> attribute. This</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * attribute is used to indicate the request header ids that have to be</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * checked in order to retrieve the SSO identity set by a third party</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * security system.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;/p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@return </span><span class="perl_Comment">a </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">String</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> containing the value of the</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   *         </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">httpHeaderForSSOAuth</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> attribute.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">public</span> String <span class="perl_Function">getHttpHeaderForSSOAuth</span>() {
+    <span class="perl_Keyword">return</span> httpHeaderForSSOAuth;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Set the value of the </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">httpHeaderForSSOAuth</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> attribute. This</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * attribute is used to indicate the request header ids that have to be</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * checked in order to retrieve the SSO identity set by a third party</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * security system.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;/p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param httpHeaderForSSOAuth</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   *            a </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">String</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> containing the value of the</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   *            </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">httpHeaderForSSOAuth</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> attribute.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">public</span> <span class="perl_DataType">void</span> <span class="perl_Function">setHttpHeaderForSSOAuth</span>(String httpHeaderForSSOAuth) {
+    <span class="perl_Keyword">this</span>.<span class="perl_Function">httpHeaderForSSOAuth</span> = httpHeaderForSSOAuth;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Obtain the value of the </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">sessionCookieForSSOAuth</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> attribute.</span>
+<span class="perl_Comment">   * This attribute is used to indicate the names of the SSO cookies that may</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * be present in the request object.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;/p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@return </span><span class="perl_Comment">a </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">String</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> containing the names (separated by a</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   *         </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">','</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment">) of the SSO cookies that may have been set by a</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   *         third party security system in the request.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">public</span> String <span class="perl_Function">getSessionCookieForSSOAuth</span>() {
+    <span class="perl_Keyword">return</span> sessionCookieForSSOAuth;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Set the value of the </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">sessionCookieForSSOAuth</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> attribute. This</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * attribute is used to indicate the names of the SSO cookies that may be</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * present in the request object.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;/p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param sessionCookieForSSOAuth</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   *            a </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">String</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment"> containing the names (separated by a</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   *            </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">','</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment">) of the SSO cookies that may have been set by</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   *            a third party security system in the request.</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">public</span> <span class="perl_DataType">void</span> <span class="perl_Function">setSessionCookieForSSOAuth</span>(String sessionCookieForSSOAuth) {
+    <span class="perl_Keyword">this</span>.<span class="perl_Function">sessionCookieForSSOAuth</span> = sessionCookieForSSOAuth;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Creates an instance of </span><span class="perl_Keyword">&lt;code&gt;</span><span class="perl_Comment">GenericHeaderAuthenticator</span><span class="perl_Keyword">&lt;/code&gt;</span><span class="perl_Comment">.</span>
+<span class="perl_Comment">   * </span><span class="perl_Keyword">&lt;/p&gt;</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">public</span> <span class="perl_Function">GenericHeaderAuthenticator</span>() {
+    <span class="perl_Keyword">super</span>();
+  }
+
+  <span class="perl_Keyword">public</span> <span class="perl_DataType">boolean</span> <span class="perl_Function">authenticate</span>(Request request, HttpServletResponse response,
+      LoginConfig config) <span class="perl_Keyword">throws</span> IOException {
+    log.<span class="perl_Function">trace</span>(<span class="perl_String">"Authenticating user"</span>);
+
+    Principal principal = request.<span class="perl_Function">getUserPrincipal</span>();
+    <span class="perl_Keyword">if</span> (principal != <span class="perl_Keyword">null</span>) {
+      <span class="perl_Keyword">if</span> (trace)
+        log.<span class="perl_Function">trace</span>(<span class="perl_String">"Already authenticated '"</span> + principal.<span class="perl_Function">getName</span>() + <span class="perl_String">"'"</span>);
+      <span class="perl_Keyword">return</span> <span class="perl_Keyword">true</span>;
+    }
+
+    Realm realm = context.<span class="perl_Function">getRealm</span>();
+    Session session = request.<span class="perl_Function">getSessionInternal</span>(<span class="perl_Keyword">true</span>);
+
+    String username = <span class="perl_Function">getUserId</span>(request);
+    String password = <span class="perl_Function">getSessionCookie</span>(request);
+
+    <span class="perl_Comment">// Check if there is sso id as well as sessionkey</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span>    <span class="perl_Keyword">if</span> (username == <span class="perl_Keyword">null</span> || password == <span class="perl_Keyword">null</span>) {
+      log.<span class="perl_Function">trace</span>(<span class="perl_String">"Username is null or password(sessionkey) is null:fallback to form auth"</span>);
+      <span class="perl_Keyword">return</span> <span class="perl_Keyword">super</span>.<span class="perl_Function">authenticate</span>(request, response, config);
+    }
+    principal = realm.<span class="perl_Function">authenticate</span>(username, password);
+
+    <span class="perl_Keyword">if</span> (principal == <span class="perl_Keyword">null</span>) {
+      <span class="perl_Function">forwardToErrorPage</span>(request, response, config);
+      <span class="perl_Keyword">return</span> <span class="perl_Keyword">false</span>;
+    }
+
+    session.<span class="perl_Function">setNote</span>(Constants.<span class="perl_Function">SESS_USERNAME_NOTE</span>, username);
+    session.<span class="perl_Function">setNote</span>(Constants.<span class="perl_Function">SESS_PASSWORD_NOTE</span>, password);
+    request.<span class="perl_Function">setUserPrincipal</span>(principal);
+
+    <span class="perl_Function">register</span>(request, response, principal, HttpServletRequest.<span class="perl_Function">FORM_AUTH</span>,
+        username, password);
+    <span class="perl_Keyword">return</span> <span class="perl_Keyword">true</span>;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Get the username from the request header</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param request</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   * @return</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">protected</span> String <span class="perl_Function">getUserId</span>(Request request) {
+    String ssoid = <span class="perl_Keyword">null</span>;
+    <span class="perl_Comment">// We can have a comma-separated ids</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span>    String ids = <span class="perl_String">""</span>;
+    <span class="perl_Keyword">try</span> {
+      ids = <span class="perl_Keyword">this</span>.<span class="perl_Function">getIdentityHeaderId</span>();
+    } <span class="perl_Keyword">catch</span> (JMException e) {
+      <span class="perl_Keyword">if</span> (trace)
+        log.<span class="perl_Function">trace</span>(<span class="perl_String">"getUserId exception"</span>, e);
+    }
+    <span class="perl_Keyword">if</span> (ids == <span class="perl_Keyword">null</span> || ids.<span class="perl_Function">length</span>() == <span class="perl_Float">0</span>)
+      <span class="perl_Keyword">throw</span> <span class="perl_Keyword">new</span> IllegalStateException(
+          <span class="perl_String">"Http headers configuration in tomcat service missing"</span>);
+
+    StringTokenizer st = <span class="perl_Keyword">new</span> StringTokenizer(ids, <span class="perl_String">","</span>);
+    <span class="perl_Keyword">while</span> (st.<span class="perl_Function">hasMoreTokens</span>()) {
+      ssoid = request.<span class="perl_Function">getHeader</span>(st.<span class="perl_Function">nextToken</span>());
+      <span class="perl_Keyword">if</span> (ssoid != <span class="perl_Keyword">null</span>)
+        <span class="perl_Keyword">break</span>;
+    }
+    <span class="perl_Keyword">if</span> (trace)
+      log.<span class="perl_Function">trace</span>(<span class="perl_String">"SSOID-"</span> + ssoid);
+    <span class="perl_Keyword">return</span> ssoid;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Obtain the session cookie from the request</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param request</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   * @return</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">protected</span> String <span class="perl_Function">getSessionCookie</span>(Request request) {
+    Cookie[] cookies = request.<span class="perl_Function">getCookies</span>();
+    log.<span class="perl_Function">trace</span>(<span class="perl_String">"Cookies:"</span> + cookies);
+    <span class="perl_DataType">int</span> numCookies = cookies != <span class="perl_Keyword">null</span> ? cookies.<span class="perl_Function">length</span> : <span class="perl_Float">0</span>;
+
+    <span class="perl_Comment">// We can have comma-separated ids</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span>    String ids = <span class="perl_String">""</span>;
+    <span class="perl_Keyword">try</span> {
+      ids = <span class="perl_Keyword">this</span>.<span class="perl_Function">getSessionCookieId</span>();
+      log.<span class="perl_Function">trace</span>(<span class="perl_String">"Session Cookie Ids="</span> + ids);
+    } <span class="perl_Keyword">catch</span> (JMException e) {
+      <span class="perl_Keyword">if</span> (trace)
+        log.<span class="perl_Function">trace</span>(<span class="perl_String">"checkSessionCookie exception"</span>, e);
+    }
+    <span class="perl_Keyword">if</span> (ids == <span class="perl_Keyword">null</span> || ids.<span class="perl_Function">length</span>() == <span class="perl_Float">0</span>)
+      <span class="perl_Keyword">throw</span> <span class="perl_Keyword">new</span> IllegalStateException(
+          <span class="perl_String">"Session cookies configuration in tomcat service missing"</span>);
+
+    StringTokenizer st = <span class="perl_Keyword">new</span> StringTokenizer(ids, <span class="perl_String">","</span>);
+    <span class="perl_Keyword">while</span> (st.<span class="perl_Function">hasMoreTokens</span>()) {
+      String cookieToken = st.<span class="perl_Function">nextToken</span>();
+      String val = <span class="perl_Function">getCookieValue</span>(cookies, numCookies, cookieToken);
+      <span class="perl_Keyword">if</span> (val != <span class="perl_Keyword">null</span>)
+        <span class="perl_Keyword">return</span> val;
+    }
+    <span class="perl_Keyword">if</span> (trace)
+      log.<span class="perl_Function">trace</span>(<span class="perl_String">"Session Cookie not found"</span>);
+    <span class="perl_Keyword">return</span> <span class="perl_Keyword">null</span>;
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Get the configured header identity id in the tomcat service</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * @return</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@throws JMException</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">protected</span> String <span class="perl_Function">getIdentityHeaderId</span>() <span class="perl_Keyword">throws</span> JMException {
+    <span class="perl_Keyword">if</span> (<span class="perl_Keyword">this</span>.<span class="perl_Function">httpHeaderForSSOAuth</span> != <span class="perl_Keyword">null</span>)
+      <span class="perl_Keyword">return</span> <span class="perl_Keyword">this</span>.<span class="perl_Function">httpHeaderForSSOAuth</span>;
+    <span class="perl_Keyword">return</span> (String) mserver.<span class="perl_Function">getAttribute</span>(<span class="perl_Keyword">new</span> ObjectName(
+        <span class="perl_String">"jboss.web:service=WebServer"</span>), <span class="perl_String">"HttpHeaderForSSOAuth"</span>);
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Get the configured session cookie id in the tomcat service</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * @return</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@throws JMException</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">protected</span> String <span class="perl_Function">getSessionCookieId</span>() <span class="perl_Keyword">throws</span> JMException {
+    <span class="perl_Keyword">if</span> (<span class="perl_Keyword">this</span>.<span class="perl_Function">sessionCookieForSSOAuth</span> != <span class="perl_Keyword">null</span>)
+      <span class="perl_Keyword">return</span> <span class="perl_Keyword">this</span>.<span class="perl_Function">sessionCookieForSSOAuth</span>;
+    <span class="perl_Keyword">return</span> (String) mserver.<span class="perl_Function">getAttribute</span>(<span class="perl_Keyword">new</span> ObjectName(
+        <span class="perl_String">"jboss.web:service=WebServer"</span>), <span class="perl_String">"SessionCookieForSSOAuth"</span>);
+  }
+
+  <span class="perl_Comment">/**</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * Get the value of a cookie if the name matches the token</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param cookies</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   *            array of cookies</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param numCookies</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   *            number of cookies in the array</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@param </span><span class="perl_Comment">t</span><span class="perl_Keyword">oken</span>
+<span class="perl_Keyword"></span><span class="perl_Comment">   *            Key</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   * </span><span class="perl_Keyword">@return </span><span class="perl_Comment">value of cookie</span><span class="perl_Comment"></span>
+<span class="perl_Comment"></span><span class="perl_Comment">   */</span>
+  <span class="perl_Keyword">protected</span> String <span class="perl_Function">getCookieValue</span>(Cookie[] cookies, <span class="perl_DataType">int</span> numCookies,
+      String token) {
+    <span class="perl_Keyword">for</span> (<span class="perl_DataType">int</span> i = <span class="perl_Float">0</span>; i &lt; numCookies; i++) {
+      Cookie cookie = cookies[i];
+      log.<span class="perl_Function">trace</span>(<span class="perl_String">"Matching cookieToken:"</span> + token + <span class="perl_String">" with cookie name="</span>
+          + cookie.<span class="perl_Function">getName</span>());
+      <span class="perl_Keyword">if</span> (token.<span class="perl_Function">equals</span>(cookie.<span class="perl_Function">getName</span>())) {
+        <span class="perl_Keyword">if</span> (trace)
+          log.<span class="perl_Function">trace</span>(<span class="perl_String">"Cookie-"</span> + token + <span class="perl_String">" value="</span> + cookie.<span class="perl_Function">getValue</span>());
+        <span class="perl_Keyword">return</span> cookie.<span class="perl_Function">getValue</span>();
+      }
+    }
+    <span class="perl_Keyword">return</span> <span class="perl_Keyword">null</span>;
+  }
+}
+</pre>
+      </div>
+     </div>
+     <br class="example-break">
+     <div class="simplesect">
+      <div class="titlepage">
+       <div>
+        <div>
+         <h4 class="title"><a id="idp16785168"></a></h4>
+        </div>
+       </div>
+      </div>
+      <div class="RoleCreateBugPara RoleCreateBugPara"> 
+       <a href="https://bugzilla.redhat.com/enter_bug.cgi?cf_environment=Instance+Name%3A+Not+Defined%0ABuild%3A+CSProcessor+Builder+Version+1.7%0ABuild+Name%3A+8699%2C+Development+Guide-6-2%0ABuild+Date%3A+20-12-2012+13%3A59%3A28&amp;cf_build_id=7825-332303+20+Dec+2012+13%3A59+en-US+%5BSpecified%5D&amp;short_desc=Use+A+Third-Party+Authentication+System+In+Your+Application&amp;assigned_to=misty%40redhat.com&amp;product=JBoss+Enterprise+Application+Platform+6&amp;component=doc-Development_Guide">Report a bug</a> 
+      </div>
+     </div>
+    </div>
+    <div id="site_footer"></div>
+    <script type="text/javascript">
+                chrometwo_require(["jquery"], function(ajq) {
+                    ajq("#site_footer").load("../../../../../footer.html");
+                });
+            </script>
+    <ul class="docnav bottom">
+     <li class="previous"><a accesskey="p" href="Use_Role-Based_Security_In_Servlets.html"><strong>Prev</strong></a></li>
+     <li class="doctoc"></li>
+     <li class="next"><a accesskey="n" href="sect-Security_Realms.html"><strong>Next</strong></a></li>
+    </ul>
+   </div>
+  </div>
+  <script type="text/javascript">
+                            current_book = 'Development_Guide';
+                            current_version = '6';
+                            current_product = 'JBoss_Enterprise_Application_Platform';
+                        
+
+                        initializeBreadcrumbs('../../../..', current_product, current_version, current_book);
+                    </script> 
+ </body>
+</html>

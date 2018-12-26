@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>OWIN/OAuth2 3rd party login: Authentication from Client App, Authorization from Web API - authentication</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <meta Name="keywords" Content="authentication - OWIN/OAuth2 3rd party login: Authentication from Client App, Authorization from Web API authentication"> 
+  <meta Name="description" Content="authentication - OWIN/OAuth2 3rd party login: Authentication from Client App, Authorization from Web API authentication"> 
+  <base href="http://javascript.wekeepcoding.com:80/"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <link href="css/style.css" type="text/css" rel="stylesheet"> 
+ </head> 
+ <body> 
+  <div id="page_wrapper"> 
+   <!--banner------------------------------------------------------> 
+   <div id="header_wrapper"> 
+    <div id="header"> 
+     <h1>Keep <font color="#FFDF8C">Coding</font></h1> 
+     <h2>javascript, c, laravel, python-3.x, excel-vba.</h2> 
+    </div> 
+   </div> 
+   <!--banner------------------------------------------------------> 
+   <div style="height: 5px;"></div> 
+   <!--content-----------------------------------------------------> 
+   <div id="content">
+    <div id="contentbody"> 
+     <h3>authentication</h3> 
+     <div class="featurebox_center"> 
+     </div> 
+     <br> 
+     <h4>OWIN/OAuth2 3rd party login: Authentication from Client App, Authorization from Web API</h4> 
+     <div style="margin-left:1px;margin-right:1px;margin-top:40px;float:left;"> 
+      <script type="text/javascript">
+    google_ad_client = "ca-pub-4875541507549899";
+    google_ad_slot = "2101133563";
+    google_ad_width = 300;
+    google_ad_height = 600;
+</script> 
+      <!-- crawl top 300 600 --> 
+      <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+     </div> 
+     <br> 
+     <div class="featurebox_center_content"> 
+      <pre style="white-space: pre-wrap;word-wrap: break-word;">I am trying to create a Web API that allows the API's clients (native mobile apps) to login using a 3rd party cloud storage provider. I'm using the following general flow from Microsoft:
+Here is what I am trying to achieve:
+I am using the default ASP.NET Web API Visual Studio template with external authentication, along with the OWin.Security.Providers Nuget package for Dropbox login functionality, and the existing built-in login functionality for Google (Drive) and Microsoft (OneDrive).
+The issue I'm having is that the built-in functionality all seems to do the authentication and authorization as part of one flow. For example, if I set up the following in Startup.Auth.cs:
+DropboxAuthenticationOptions dropboxAuthOptions = new DropboxAuthenticationOptions
+{
+AppKey = _dropboxAppKey,
+AppSecret = _dropboxAppSecret
+};
+app.UseDropboxAuthentication(dropboxAuthOptions);
+... and navigate to this url from my web browser:
+http://&lt;api_base_url&gt;/api/Account/ExternalLogin?provider=Dropbox&amp;response_type=token&amp;client_id=self&amp;redirect_uri=&lt;api_base_url&gt;
+I am successfully redirected to Dropbox to login:
+https://www.dropbox.com/1/oauth2/authorize?response_type=code&amp;client_id=&lt;id&gt;&amp;redirect_uri=&lt;redirect_uri&gt;
+... and then after I grant access, am redirected back to:
+http://&lt;api_base_url&gt;/Help#access_token=&lt;access_token&gt;&amp;token_type=bearer&amp;expires_in=1209600
+... as you can see the token is part of that, so could be extracted. The problem is that the client needs to be the one navigating to Dropbox and returning the authorization code back up to the Web API, and the Web API would send the authorization code back to the third party to get the token which would then be returned to the client... as shown in the diagram above. I need the ExternalLogin action in the AccountController to somehow retrieve the Dropbox url and return that to the client (it would just be a json response), but I don't see a way to retrieve that (it just returns a ChallengeResult, and the actual Dropbox url is buried somewhere). Also, I think I need a way to separately request the token from the third party based on the authorization code.
+This post seems a little similar to what I am trying to do:
+Registering Web API 2 external logins from multiple API clients with OWIN Identity
+... but the solution there seems to require the client to be an MVC application, which is not necessarily the case for me. I want to keep this as simple as possible on the client side, follow the flow from my diagram above, but also not reinvent the wheel (reuse as much as possible of what already exists in the OWIN/OAuth2 implementation). Ideally I don't want the client to have to reference any of the OWIN/OAuth libraries since all I really need the client to do is access an external url provided by the API (Dropbox in my example), have the user input their credentials and give permission, and send the resulting authorization code back up to the api.
+Conceptually this doesn't sound that hard but I have no idea how to implement it and still use as much of the existing OAuth code as possible. Please help!
+</pre> 
+     </div> 
+     <br> 
+     <div class="featurebox_center_content"> 
+      <pre style="white-space: pre-wrap;word-wrap: break-word;">
+To be clear, the sample I mentioned in the link you posted CAN be used with any OAuth2 client, using any supported flow (implicit, code or custom). When communicating with your own authorization server, you can of course use the implicit flow if you want to use JS or mobile apps: you just have to build an authorization request using response_type=token and extract the access token from the URI fragment on the JS side.
+http://localhost:55985/connect/authorize?client_id=myClient&amp;redirect_uri=http%3a%2f%2flocalhost%3a56854%2f&amp;response_type=token
+For reference, here's the sample: https://github.com/aspnet-security/AspNet.Security.OpenIdConnect.Server/tree/dev/samples/Mvc/Mvc.Server
+In case you'd prefer a simpler approach (that would involve no custom OAuth2 authorization server), here's another option using the OAuth2 bearer authentication middleware and implementing a custom IAuthenticationTokenProvider to manually validate the opaque token issued by Dropbox. Unlike the mentioned sample (that acts like an authorization proxy server between Dropbox and the MVC client app), the JS app is directly registered with Dropbox.
+You'll have to make a request against the Dropbox profile endpoint (https://api.dropbox.com/1/account/info) with the received token to validate it and build an adequate ClaimsIdentity instance for each request received by your API. Here's a sample (but please don't use it as-is, it hasn't been tested):
+public sealed class DropboxAccessTokenProvider : AuthenticationTokenProvider {
+public override async Task ReceiveAsync(AuthenticationTokenReceiveContext context) {
+using (var client = new HttpClient()) {
+var request = new HttpRequestMessage(HttpMethod.Get, "https://api.dropbox.com/1/account/info");
+request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.Token);
+var response = await client.SendAsync(request);
+if (response.StatusCode != HttpStatusCode.OK) {
+return;
+}
+var payload = JObject.Parse(await response.Content.ReadAsStringAsync());
+var identity = new ClaimsIdentity("Dropbox");
+identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, payload.Value&lt;string&gt;("uid")));
+context.SetTicket(new AuthenticationTicket(identity, new AuthenticationProperties()));
+}
+}
+}
+You can easily plug it via the AccessTokenProvider property:
+app.UseOAuthBearerAuthentication(new OAuthBearerAuthenticationOptions {
+AccessTokenProvider = new DropboxAccessTokenProvider()
+});
+It has its own downsides: it requires caching to avoid flooding the Dropbox endpoint and is not the right way to go if you want to accept tokens issued by different providers (e.g Dropbox, Microsoft, Google, Facebook).
+Not to mention that if offers a very low security level: since you can't verify the audience of the access token (i.e the party the token was issued to), you can't ensure that the access token was issued to a client application you fully trust, which allows any third party developer to use his own Dropbox tokens with your API without having to request user's consent.
+This is - obviously - a major security concern and that's why you SHOULD prefer the approach used in the linked sample. You can read more about confused deputy attacks on this thread: http://stackoverflow.com/a/17439317/542757.
+Good luck, and don't hesitate if you still need help.</pre> 
+     </div> 
+     <br> 
+     <div class="featurebox_center_content" style="padding:0px;padding-left:10px"> 
+      <script type="text/javascript">
+    google_ad_client = "ca-pub-4875541507549899";
+    google_ad_slot = "5054599966";
+    google_ad_width = 728;
+    google_ad_height = 90;
+</script> 
+      <!-- crawl bottom 728 90 --> 
+      <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+     </div> 
+     <!--content-----------------------------------------------------> 
+     <!--related-----------------------------------------------------> 
+     <div class="featurebox_center"> 
+      <a href="" onclick="window.history.go(-1)">Previous Page</a> | 
+      <a href="/category/1413/authentication" title="authentication"> authentication </a> | 
+      <a href="">HOME</a> 
+     </div> 
+     <br> 
+     <h3>Related Links</h3> 
+     <p> <a href="/article/15976018/Can't+get+Token+based+authentication+working+with+NancyFX" title="Can't get Token based authentication working with NancyFX"> Can't get Token based authentication working with NancyFX </a><br> <a href="/article/15976197/Using+SAML+in+Portal+to+Authenticate+with+3d+party+website" title="Using SAML in Portal to Authenticate with 3d party website"> Using SAML in Portal to Authenticate with 3d party website </a><br> <a href="/article/15976270/Spring+Security+-+Secure+Remote+Password+protocol+-+SRP+-+Authentication+Provider" title="Spring Security - Secure Remote Password protocol - SRP - Authentication Provider"> Spring Security - Secure Remote Password protocol - SRP - Authentication Provider </a><br> <a href="/article/15977111/DynamoDB+Session+State+%26+Authentication+in+ServiceStack+4.0.32" title="DynamoDB Session State &amp; Authentication in ServiceStack 4.0.32"> DynamoDB Session State &amp; Authentication in ServiceStack 4.0.32 </a><br> <a href="/article/15978384/Using+Scrapy+for+Crawling+Pages+Post+Authentication" title="Using Scrapy for Crawling Pages Post Authentication"> Using Scrapy for Crawling Pages Post Authentication </a><br> <a href="/article/15991653/HTTPS+and+Firebase+authentication" title="HTTPS and Firebase authentication"> HTTPS and Firebase authentication </a><br> <a href="/article/15992581/Sentry+2%3a+Using+multiple+login+attributes" title="Sentry 2: Using multiple login attributes"> Sentry 2: Using multiple login attributes </a><br> <a href="/article/15992596/MVC+Identity+-+Use+UserManager.ConfirmEmailAsync+to+check+token+expired.%2c" title="MVC Identity - Use UserManager.ConfirmEmailAsync to check token expired.,"> MVC Identity - Use UserManager.ConfirmEmailAsync to check token expired., </a><br> <a href="/article/15998314/SAML+redirects+each+SP+request+to+IDP+for+checking+authentication+after+successful+IDP+authentication%3f" title="SAML redirects each SP request to IDP for checking authentication after successful IDP authentication?"> SAML redirects each SP request to IDP for checking authentication after successful IDP authentication? </a><br> <a href="/article/15998526/TYPO3+-+external+authentication+of+be_users+with+tx_sv_authbase" title="TYPO3 - external authentication of be_users with tx_sv_authbase"> TYPO3 - external authentication of be_users with tx_sv_authbase </a><br> <a href="/article/15999333/Mirror+API+always+request+auth+-+java+example+code" title="Mirror API always request auth - java example code"> Mirror API always request auth - java example code </a><br> <a href="/article/16001801/Flickr%3a+How+to+generate+the+Authentication+Signature%3f" title="Flickr: How to generate the Authentication Signature?"> Flickr: How to generate the Authentication Signature? </a><br> <a href="/article/16004953/ZF2+authentication+without+password" title="ZF2 authentication without password"> ZF2 authentication without password </a><br> <a href="/article/16009887/Two+authentication+modes+in+Testlink" title="Two authentication modes in Testlink"> Two authentication modes in Testlink </a><br> <a href="/article/16015566/Authentication+with+custom+authenticator+via+Azure+Mobile+Services+and+cordova+app" title="Authentication with custom authenticator via Azure Mobile Services and cordova app"> Authentication with custom authenticator via Azure Mobile Services and cordova app </a><br> <a href="/article/16016560/ColdFusion+application+timing+out+even+with+large+values+for+cflogin+idletimeout+and+session+timeout" title="ColdFusion application timing out even with large values for cflogin idletimeout and session timeout"> ColdFusion application timing out even with large values for cflogin idletimeout and session timeout </a><br> </p> 
+    </div>
+   </div> 
+   <!--related-----------------------------------------------------> 
+   <!--left------------------------------------------------------> 
+   <div id="left_side"> 
+    <h3>Categories</h3> 
+    <p> <a href="/category/0/HOME" title="HOME">HOME</a><br><a href="/category/1063/c" title="c">c</a><br><a href="/category/1083/visual-studio-2017" title="visual-studio-2017">visual-studio-2017</a><br><a href="/category/1463/curl" title="curl">curl</a><br><a href="/category/1613/chemistry" title="chemistry">chemistry</a><br><a href="/category/1779/for-loop" title="for-loop">for-loop</a><br><a href="/category/2144/primeng" title="primeng">primeng</a><br><a href="/category/3779/openfire" title="openfire">openfire</a><br><a href="/category/3836/unmanaged" title="unmanaged">unmanaged</a><br><a href="/category/4036/deployit" title="deployit">deployit</a><br><a href="/category/4163/angular2-mdl" title="angular2-mdl">angular2-mdl</a><br><a href="/category/4194/gatling" title="gatling">gatling</a><br><a href="/category/4213/azure-cli2" title="azure-cli2">azure-cli2</a><br><a href="/category/4379/distributed" title="distributed">distributed</a><br><a href="/category/4563/canjs" title="canjs">canjs</a><br><a href="/category/4636/mantis" title="mantis">mantis</a><br><a href="/category/4863/registerstartupscript" title="registerstartupscript">registerstartupscript</a><br><a href="/category/4933/laravel-pagination" title="laravel-pagination">laravel-pagination</a><br><a href="/category/5079/diff" title="diff">diff</a><br><a href="/category/5186/pg-promise" title="pg-promise">pg-promise</a><br><a href="/category/5263/win-universal-app" title="win-universal-app">win-universal-app</a><br><a href="/category/5529/ado" title="ado">ado</a><br><a href="/category/5833/pairing" title="pairing">pairing</a><br><a href="/category/6336/font-face" title="font-face">font-face</a><br><a href="/category/6844/ssh-keys" title="ssh-keys">ssh-keys</a><br><a href="/category/7029/jaws-screen-reader" title="jaws-screen-reader">jaws-screen-reader</a><br><a href="/category/7133/sinopia" title="sinopia">sinopia</a><br><a href="/category/7213/google-admob" title="google-admob">google-admob</a><br><a href="/category/7463/sql-navigator" title="sql-navigator">sql-navigator</a><br><a href="/category/7483/pusher" title="pusher">pusher</a><br><a href="/category/7783/cloud9" title="cloud9">cloud9</a><br><a href="/category/7929/video-encoding" title="video-encoding">video-encoding</a><br><a href="/category/7986/jsf-1.2" title="jsf-1.2">jsf-1.2</a><br><a href="/category/8029/android-proguard" title="android-proguard">android-proguard</a><br><a href="/category/8979/cashapelayer" title="cashapelayer">cashapelayer</a><br><a href="/category/9213/wildfly-8" title="wildfly-8">wildfly-8</a><br><a href="/category/9229/sql-workbench-j" title="sql-workbench-j">sql-workbench-j</a><br><a href="/category/10129/exponentjs" title="exponentjs">exponentjs</a><br><a href="/category/10486/alteryx" title="alteryx">alteryx</a><br><a href="/category/10613/textinput" title="textinput">textinput</a><br><a href="/category/11036/angular2-injection" title="angular2-injection">angular2-injection</a><br><a href="/category/11144/text-indent" title="text-indent">text-indent</a><br><a href="/category/11313/preventdefault" title="preventdefault">preventdefault</a><br><a href="/category/12479/apex-framework" title="apex-framework">apex-framework</a><br><a href="/category/12529/prettyphoto" title="prettyphoto">prettyphoto</a><br><a href="/category/12679/scrollreveal.js" title="scrollreveal.js">scrollreveal.js</a><br><a href="/category/13063/jprogressbar" title="jprogressbar">jprogressbar</a><br><a href="/category/13394/google-product-search" title="google-product-search">google-product-search</a><br><a href="/category/13486/apache-cordova" title="apache-cordova">apache-cordova</a><br><a href="/category/13494/jung2" title="jung2">jung2</a><br><a href="/category/14029/httpserver" title="httpserver">httpserver</a><br><a href="/category/14229/cfengine" title="cfengine">cfengine</a><br><a href="/category/14344/codedom" title="codedom">codedom</a><br><a href="/category/14386/winpcap" title="winpcap">winpcap</a><br><a href="/category/14629/jmxtrans" title="jmxtrans">jmxtrans</a><br><a href="/category/14983/blazegraph" title="blazegraph">blazegraph</a><br><a href="/category/15029/django-reversion" title="django-reversion">django-reversion</a><br><a href="/category/15186/ruby-1.9.3" title="ruby-1.9.3">ruby-1.9.3</a><br><a href="/category/15229/expansion" title="expansion">expansion</a><br><a href="/category/16186/btrieve" title="btrieve">btrieve</a><br><a href="/category/16333/wso2bps" title="wso2bps">wso2bps</a><br><a href="/category/16344/nosuchfileexception" title="nosuchfileexception">nosuchfileexception</a><br><a href="/category/16386/yahoo-squidb" title="yahoo-squidb">yahoo-squidb</a><br><a href="/category/16613/groovy-sql" title="groovy-sql">groovy-sql</a><br><a href="/category/17129/mshtml" title="mshtml">mshtml</a><br><a href="/category/17133/youtube-channels" title="youtube-channels">youtube-channels</a><br><a href="/category/17279/berksfile" title="berksfile">berksfile</a><br><a href="/category/17594/writetofile" title="writetofile">writetofile</a><br><a href="/category/17933/grunt-angular-gettext" title="grunt-angular-gettext">grunt-angular-gettext</a><br><a href="/category/17963/lamson" title="lamson">lamson</a><br><a href="/category/18363/oprofile" title="oprofile">oprofile</a><br><a href="/category/18779/outbound" title="outbound">outbound</a><br><a href="/category/18836/regasm" title="regasm">regasm</a><br><a href="/category/19029/auto-populate" title="auto-populate">auto-populate</a><br><a href="/category/19263/integer-division" title="integer-division">integer-division</a><br><a href="/category/19336/variadic-functions" title="variadic-functions">variadic-functions</a><br><a href="/category/19536/c%2b%2bbuilder-xe" title="c++builder-xe">c++builder-xe</a><br><a href="/category/19613/http-put" title="http-put">http-put</a><br><a href="/category/20036/yoxos" title="yoxos">yoxos</a><br><a href="/category/20394/maildir" title="maildir">maildir</a><br><a href="/category/20429/sql-server-native-client" title="sql-server-native-client">sql-server-native-client</a><br><a href="/category/20686/getselection" title="getselection">getselection</a><br><a href="/category/21086/bitmapsource" title="bitmapsource">bitmapsource</a><br><a href="/category/21333/fbjs" title="fbjs">fbjs</a><br><a href="/category/21344/phpflickr" title="phpflickr">phpflickr</a><br><a href="/category/21363/managed" title="managed">managed</a><br><a href="/category/21736/ironjs" title="ironjs">ironjs</a><br><a href="/category/21786/rup" title="rup">rup</a><br><a href="/category/21836/webpage-rendering" title="webpage-rendering">webpage-rendering</a><br><a href="/category/21894/nested-resources" title="nested-resources">nested-resources</a><br><a href="/category/21986/gwt-designer" title="gwt-designer">gwt-designer</a><br><a href="/category/22194/messageformat" title="messageformat">messageformat</a><br><a href="/category/22236/parallel-extensions" title="parallel-extensions">parallel-extensions</a><br><a href="/category/22283/google-gears" title="google-gears">google-gears</a><br><a href="/category/22486/bde" title="bde">bde</a><br><a href="/category/22694/vpc" title="vpc">vpc</a><br> </p> 
+   </div> 
+   <!--left------------------------------------------------------> 
+   <!--right------------------------------------------------------> 
+   <div id="right_side"> 
+    <br>
+    <br> 
+    <script type="text/javascript">
+    google_ad_client = "ca-pub-4875541507549899";
+    google_ad_slot = "8147667162";
+    google_ad_width = 160;
+    google_ad_height = 600;
+</script> 
+    <!-- crawl right 160 600 --> 
+    <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+    <br>
+    <br> 
+    <a href="http://www.mobileapps-dev.com/" target="_blank">Mobile Apps Dev</a> 
+    <br> 
+    <a href="http://www.databaseusers.com/" target="_blank">Database Users</a> 
+    <br> 
+    <a href="http://javascript.wekeepcoding.com/" target="_blank">javascript</a> 
+    <br> 
+    <a href="http://java.wekeepcoding.com/" target="_blank">java</a> 
+    <br> 
+    <a href="http://csharp.wekeepcoding.com/" target="_blank">csharp</a> 
+    <br> 
+    <a href="http://php.wekeepcoding.com/" target="_blank">php</a> 
+    <br> 
+    <a href="http://android.wekeepcoding.com/" target="_blank">android</a> 
+    <br> 
+   </div> 
+   <!--right------------------------------------------------------> 
+   <!--footer-----------------------------------------------------> 
+   <div id="footer">
+     Copyright @ 2017 www.wekeepcoding.com , All Rights Reserved 
+   </div> 
+   <!--footer-----------------------------------------------------> 
+  </div>   
+ </body>
+</html>

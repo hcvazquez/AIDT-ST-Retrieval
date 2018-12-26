@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en-US" prefix="og: http://ogp.me/ns#" ng-app="AP" ng-strict-di>
+ <head> 
+  <title>AngularJS App With Stripe Payments Integration</title> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="robots" content="index, follow"> 
+  <meta name="description" content="AngularJS expert Uri Shaked shows how to quickly integrate Stripe payments into an Angular app."> 
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="AngularJS App With Stripe Payments Integration">
+  <meta property="og:description" content="AngularJS expert Uri Shaked shows how to quickly integrate Stripe payments into an Angular app.">
+  <meta property="og:image" content="https://airpair-blog.s3.amazonaws.com/wp-content/uploads/2014/09/angular-stripe-head.png">
+  <meta property="og:url" content="https://www.airpair.com/javascript/integrating-stripe-into-angular-app">
+  <link rel="canonical" href="http://www.airpair.com/javascript/integrating-stripe-into-angular-app"> 
+  <link rel="alternate" href="https://www.airpair.com/rss" type="application/rss+xml" title="AirPair RSS"> 
+  <link rel="stylesheet" href="https://static.airpair.com/css/libs-9dca10bf21.css" type="text/css"> 
+  <link rel="stylesheet" href="https://static.airpair.com/css/app-6174feeeb2.css" type="text/css">
+  <meta name="msapplication-TileColor" content="#ffffff"> 
+  <meta name="msapplication-TileImage" content="https://static.airpair.com/ico/ms-icon-144x144.png"> 
+  <base href="/"> 
+ </head> 
+ <body> 
+  <header> 
+   <a href="https://www.airpair.com/" tile="Top software developers | AirPair" target="_self"></a> 
+   <ul> 
+    <li><a href="/software-experts" target="_self">Software experts</a></li>
+   </ul> 
+  </header> 
+  <div class="main-wrap"> 
+   <div notifications></div> 
+   <main ng-view> 
+    <div id="srv">
+     <article class="blogpost"> 
+      <h1 class="entry-title" itemprop="headline">AngularJS App With Stripe Payments Integration</h1> 
+      <div class="railMarker"></div> 
+      <h4 id="table-of-contents">Table of Contents</h4> 
+      <ul> 
+       <li><a href="#1-introduction">1 Introduction</a></li> 
+       <li><a href="#2-before-we-get-started">2 Before we get started</a>
+        <ul> 
+         <li><a href="#2-1-prerequisites">2.1 Prerequisites</a></li> 
+         <li><a href="#2-2-angularjs-modules-for-working-with-stripe">2.2 AngularJS modules for working with Stripe</a></li> 
+         <li><a href="#2-3-the-demo-code">2.3 The demo code</a></li> 
+        </ul> </li> 
+       <li><a href="#3-the-integration">3 The integration</a>
+        <ul> 
+         <li><a href="#3-1-the-stripe-js-library">3.1 The Stripe.js library</a></li> 
+         <li><a href="#3-2-angular-payment">3.2 Angular-payment</a></li> 
+         <li><a href="#3-3-creating-the-checkout-form">3.3 Creating the checkout form</a></li> 
+         <li><a href="#3-4-field-formatting">3.4 Field formatting</a></li> 
+         <li><a href="#3-5-form-validation">3.5 Form Validation</a></li> 
+         <li><a href="#3-6-sending-the-token-to-your-server">3.6 Sending the token to your server</a></li> 
+        </ul> </li> 
+       <li><a href="#4-next-steps-and-wrapping-up">4 Next steps and wrapping up</a>
+        <ul> 
+         <li><a href="#4-1-making-the-actual-charge">4.1 Making the actual charge</a></li> 
+         <li><a href="#4-2-recurring-payments">4.2 Recurring payments</a></li> 
+         <li><a href="#4-3-demo-project">4.3 Demo project</a></li> 
+         <li><a href="#4-4-final-words">4.4 Final words</a></li> 
+        </ul> </li> 
+      </ul> 
+      <figure class="author"> 
+       <img alt="Uri Shaked" src="https://avatars.githubusercontent.com/u/892318?v=3?s=100"> 
+       <hr> 
+       <div> 
+        <label>Uri Shaked</label> 
+        <figcaption>
+          Uri works for WatchDox, lectures at the Israel Institute of Technology and organizes the Tel Aviv Google Developers Group. 
+        </figcaption> 
+       </div> 
+       <hr> 
+      </figure> 
+      <p class="asset"><img src="https://airpair-blog.s3.amazonaws.com/wp-content/uploads/2014/09/angular-stripe-head.png"></p> 
+      <hr> 
+      <post no-compile>
+       <h2 id="1-introduction">1 Introduction</h2> 
+       <p>Stripe is a popular online payment processing service used by Lyft, TaskRabbit, Instacart, and many other well-known companies. They charge a fixed fee of 2.9% + $0.30 per transaction, and their service can be easily integrated into web and mobile applications.</p> 
+       <p>In this tutorial, you are going to learn how to integrate Stripe into your AngularJS web application. We will build a simple web application that displays a credit card form and uses Stripe for billing.</p> 
+       <h2 id="2-before-we-get-started">2 Before we get started</h2> 
+       <h3 id="2-1-prerequisites">2.1 Prerequisites</h3> 
+       <p>In order to process credit card details, your web application must be hosted on an HTTPS server. You will need to get a valid HTTPS certificate from a certification authority, but don't worry — a certificate can cost as low as 10-20$ and can be issued within minutes. Check out <a href="https://stripe.com/help/ssl">Stripe's SSL page</a> for information.</p> 
+       <h3 id="2-2-angularjs-modules-for-working-with-stripe">2.2 AngularJS modules for working with Stripe</h3> 
+       <p>If you perform a quick search on GitHub, you will find that there are at least six different libraries / modules aiming to bring Stripe payments to Angular. This is not uncommon — in fact, for most tasks you want to perform, you will usually end up with several open source alternatives, and choosing is not always easy.</p> 
+       <p>There is the list of all the alternatives that I could find at the time of writing this article:</p> 
+       <ul> 
+        <li><a href="https://github.com/laurihy/angular-payments">https://github.com/laurihy/angular-payments</a></li> 
+        <li><a href="https://github.com/seandesmond/angular-payment">https://github.com/seandesmond/angular-payment</a></li> 
+        <li><a href="https://github.com/gtramontina/stripe-angular">https://github.com/gtramontina/stripe-angular</a></li> 
+        <li><a href="https://github.com/bendrucker/angular-stripe">https://github.com/bendrucker/angular-stripe</a></li> 
+        <li><a href="https://github.com/Venturocket/angular-stripe-js">https://github.com/Venturocket/angular-stripe-js</a></li> 
+        <li><a href="https://github.com/raaspazasu/ngPayments">https://github.com/raaspazasu/ngPayments</a></li> 
+       </ul> 
+       <p>I decided to go with laurihy/angular-payments, as it has been starred much more than all the others. Open source projects with many stars are usually a better choice, as the amount of stars is usually a good indicator of how many happy users the project has.</p> 
+       <h3 id="2-3-the-demo-code">2.3 The demo code</h3> 
+       <p>The source code that is presented in this tutorial is also available on <a href="https://github.com/airpair/ng-stripe-tutorial">GitHub</a>. There are three sub-directories corresponding to three tutorial steps, and there is also a <a href="http://www.airpair.com/wp-content/themes/epik/stripe-angular/">nice demo project</a> which implements a pet shop with a simple cart module and a checkout form.</p> 
+       <p><a href="http://www.airpair.com/wp-content/themes/epik/stripe-angular/"><img src="http://airpair-blog.s3.amazonaws.com/wp-content/uploads/2014/09/stripe-angular-demo-project.jpg" alt=""></a></p> 
+       <h2 id="3-the-integration">3 The integration</h2> 
+       <h3 id="3-1-the-stripe-js-library">3.1 The Stripe.js library</h3> 
+       <p>Stripe provides a JavaScript client library for interacting with their API. Add the following line to include their library in your HTML page:</p> 
+       <!-- code lang=markup linenums=true --> 
+       <pre><code>&lt;script type="text/javascript" src="https://js.stripe.com/v2/"&gt;&lt;/script&gt;
+</code></pre>
+       <p>After loading the library, you need to initialize it with your publisher key. You can initialize it even before you load AngularJS, but I personally prefer to initialize it within my AngularJS config block:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>angular.module('myApp').config(function($window) {
+    $window.Stripe.setPublishableKey('YOUR-KEY-COMES-HERE');
+});
+</code></pre>
+       <p>An alternative approach would be to load the Stripe.js library asynchronously, after your Angular.js application has loaded and initialized. You can use <a href="https://github.com/urish/angular-load">angular-load</a> — an open-source Angular module written by the author of this article — to achieve that.</p> 
+       <h3 id="3-2-angular-payment">3.2 Angular-payment</h3> 
+       <p>The next step would be to load the angular-payment module to your page. The preferred method is to use the <a href="http://bower.io/">Bower Package Manager</a> install the library:</p> 
+       <!-- code lang=bash linenums=true --> 
+       <pre><code>$ bower install --save angular-payments
+</code></pre>
+       <p>Unfortunately, angular-payments still doesn't have any version tags in its repository, which means that your code may suddenly fail if they release a new version and break some APIs. However, there is a way to get around this — you can define a specific commit hash to lock the dependency to a particular version:</p> 
+       <!-- code lang=bash linenums=true --> 
+       <pre><code>$ bower install --save angular-payments#2472bc9befa25678
+</code></pre>
+       <p>Depending on your project setup, you may also need to include the library in your HTML page file:</p> 
+       <!-- code lang=markup linenums=true --> 
+       <pre><code>&lt;script type="text/javascript" 
+        src="bower_components/angular-payments/lib/angular-payments.js"&gt;
+&lt;/script&gt;
+</code></pre>
+       <p>Finally, you need to add the <code>angularPayments</code> module as a dependency of your AngularJS application:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>angular.module('myApp', ['angularPayments'])
+</code></pre>
+       <p>In the demo application we also have a few other dependencies:</p> 
+       <ul> 
+        <li><a href="https://github.com/pineconellc/angular-foundation">mm.foundation</a> - AngularJS directives for <a href="http://foundation.zurb.com/">Zurb's Foundation CSS Framework</a></li> 
+        <li><a href="https://docs.angularjs.org/guide/animations">ngAnimate</a> - Used for animating the entrance of the checkout pane.</li> 
+        <li><a href="https://github.com/urish/angular-spinner">angularSpinner</a> - Displays a nice spinner animation during checkout (this is actually a module that I wrote)</li> 
+       </ul> 
+       <p>Now that we're all set, we are ready to move on and create our checkout form.</p> 
+       <h3 id="3-3-creating-the-checkout-form">3.3 Creating the checkout form</h3> 
+       <p>Angular-payment uses a declarative approach for setting up the checkout form. Let's start with the basics — add the following code to your view template:</p> 
+       <!-- code lang=markup linenums=true --> 
+       <pre><code>&lt;form stripe-form="stripeCallback"&gt;
+    &lt;input ng-model="number" placeholder="Card Number" /&gt;
+    &lt;input ng-model="expiry" placeholder="Expiration" /&gt;
+    &lt;input ng-model="cvc" placeholder="CVC" /&gt;
+    &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+       <p>...and create a callback on your scope:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>// Stripe Response Handler
+$scope.stripeCallback = function (code, result) {
+    if (result.error) {
+        window.alert('it failed! error: ' + result.error.message);
+    } else {
+        window.alert('success! token: ' + result.id);
+    }
+};
+</code></pre>
+       <h4 id="3-3-1-how-does-this-work-">3.3.1 How does this work?</h4> 
+       <p>The <code>stripe-form</code> directive is the brain behind this checkout form. It attaches to the form's submit event, extracts all the values from the form's scope, and submits them to Stripe. Finally, when Stripe returns a response, it invokes the specified callback with the response.</p> 
+       <p>If you want to call your Stripe response handler a different name, make sure you change the value of the <code>stripe-form</code> attribute to match the name of your Stripe response handler function.</p> 
+       <h4 id="3-3-2-optional-fields-demo">3.3.2 Optional fields &amp; demo</h4> 
+       <p>According to <a href="https://stripe.com/docs/stripe.js">Stripe's documentation</a>, you could also include the following fields in your form:</p> 
+       <ul> 
+        <li><code>name</code> - The full name of the card's holder</li> 
+        <li><code>address_line1</code>, <code>address_line2</code>, <code>address_city</code>, <code>address_state</code>, <code>address_zip</code>, <code>address_country</code>- The billing address.</li> 
+       </ul> 
+       <p>Those fields are not required and do not affect the validation of the credit card during the creation of the token.</p> 
+       <p>Check out the <a href="http://www.airpair.com/wp-content/themes/epik/stripe-angular/">online demo</a> for our checkout form. Input the following information to get a positive response:</p> 
+       <p>Card number: <strong>4242-4242-4242-4242</strong> Expiry: <strong>12/16</strong> (or any other date in the near future) CVC: <strong>999</strong></p> 
+       <h3 id="3-4-field-formatting">3.4 Field formatting</h3> 
+       <p>Angular-payments provides a directive for formatting the card number, expiration and CVC input fields. The directive will take care of enforcing numerical input, splitting the card number into groups of four digits as the user types it, splitting the expiration date into month and year, and will also set the maximum input length for each of the fields automatically.</p> 
+       <p>Adding the payments-format directive to our form is very simple:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>&lt;input ng-model="number" placeholder="Card Number" payments-format="card" /&gt;
+&lt;input ng-model="expiry" placeholder="Expiration" payments-format="expiry"/&gt;
+&lt;input ng-model="cvc" placeholder="CVC" payments-format="cvc" /&gt;
+</code></pre>
+       <p>Check out the <a href="http://urish.github.io/ng-stripe-tutorial/step2/step2.html">online demo</a> for this step.</p> 
+       <h3 id="3-5-form-validation">3.5 Form Validation</h3> 
+       <p>There is one more step before we can declare our checkout form complete — adding input validation for the fields. Credit card numbers <a href="https://en.wikipedia.org/wiki/Bank_card_number">have a very specific format</a> which includes a set of predefined issuer prefixes, as well as a final digit which is used for validating the number by applying the <a href="https://en.wikipedia.org/wiki/Luhn_algorithm">Luhn algorithm</a>.</p> 
+       <p>Fortunately, you don't have to deal with all those details yourself, as angular-payments already includes all the necessary validation mechanisms. In addition, it integrates nicely with Angular's <a href="https://docs.angularjs.org/guide/forms#binding-to-form-and-control-state">Form Validation mechanism</a>.</p> 
+       <p>We start by adding the payments-validate directive to our input elements:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>&lt;input ng-model="number" placeholder="Card Number" payments-format="card"
+   payments-validate="card" /&gt;
+&lt;input ng-model="expiry" placeholder="Expiration" payments-format="expiry"
+   payments-validate="expiry" /&gt;
+&lt;input ng-model="cvc" placeholder="CVC" payments-format="cvc"
+   payments-validate="cvc" /&gt;
+</code></pre>
+       <p>Then, we add a new CSS rule that will be triggered for invalid input values:</p> 
+       <!-- code lang=css linenums=true --> 
+       <pre><code>.ng-invalid {
+    color: red;
+}
+</code></pre>
+       <p>We can also display an error message in case of invalid input data. In order to do this, we give our form and each of those inputs a name:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>&lt;form stripe-form="stripeCallback" name="checkoutForm"&gt;&gt;
+    &lt;input ng-model="number" placeholder="Card Number" 
+             payments-format="card" payments-validate="card" name="card" /&gt;
+    &lt;input ng-model="expiry" placeholder="Expiration" 
+             payments-format="expiry" payments-validate="expiry"                
+             name="expiry" /&gt;
+    &lt;input ng-model="cvc" placeholder="CVC" payments-format="cvc" payments-validate="cvc" name="cvc" /&gt;
+    &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/form&gt;    
+</code></pre>
+       <p>Finally, we can check the validation status of each of the fields and display an error message as needed. For example, here is the code for displaying an error message based on the validity of the card number:</p> 
+       <!-- code lang=javascript linenums=true --> 
+       <pre><code>&lt;div ng-if="checkoutForm.card.$invalid"&gt;
+    Error: invalid card number!
+&lt;/div&gt;
+</code></pre>
+       <p>You can experiment with the validation code in the <a href="http://urish.github.io/ng-stripe-tutorial/step3/step3.html">online demo</a> for step 3.</p> 
+       <h3 id="3-6-sending-the-token-to-your-server">3.6 Sending the token to your server</h3> 
+       <p>Once you have successfully acquired a single-use credit card token, you need to send this token to your server to complete the billing process. You will probably want to use Angular's built-in <a href="https://docs.angularjs.org/api/ng/service/$http"><code>$http module</code></a> or a third-party REST API library (such as <a href="https://github.com/mgonto/restangular">RestAngular</a>) for sending the credit card token to your server.</p> 
+       <h2 id="4-next-steps-and-wrapping-up">4 Next steps and wrapping up</h2> 
+       <h3 id="4-1-making-the-actual-charge">4.1 Making the actual charge</h3> 
+       <p>Check out <a href="https://stripe.com/docs/tutorials/charges">this tutorial from Stripe</a> for an explanation how to actually charge the user using the single-use credit card token. They have code samples for Node.js, PHP, Python and Ruby. If you use a different language for the backend code, check out their <a href="https://stripe.com/docs/libraries">API Libraries page</a> or interface directly with their <a href="https://stripe.com/docs/api/curl">REST API</a>.</p> 
+       <h3 id="4-2-recurring-payments">4.2 Recurring payments</h3> 
+       <p>Stripe has built-in support for subscriptions, which you can use for charging recurring payments. For your AngularJS application the flow is essentially the same, and concludes by sending a single user credit card token to your back end code. On the back end, you will need to create a Subscription Plan first, and then you will be able to subscribe customers to the plan and make recurring payments. You can find the complete details in the <a href="https://stripe.com/docs/tutorials/subscriptions">creating your first subscription tutorial</a> by Stripe.</p> 
+       <h3 id="4-3-demo-project">4.3 Demo project</h3> 
+       <p>The source code for demo project of this tutorial is available <a href="https://github.com/airpair/ng-stripe-tutorial">here</a>. You can see the actual checkout form in <code>checkout.html</code> and the source code for the controller inside <code>scripts.js</code>.</p> 
+       <h3 id="4-4-final-words">4.4 Final words</h3> 
+       <p>I hope that you enjoyed reading this tutorial, and I wish you many successful Stripe transactions and a lot of success with your project. Until the next time!</p> 
+      </post> 
+      <div class="share"> 
+       <div class="pw-widget pw-size-large pw-counter-show" pw:twitter-via="airpair"> 
+        <a class="pw-button-twitter"></a>
+        <a class="pw-button-facebook"></a>
+        <a class="pw-button-linkedin"></a>
+        <a class="pw-button-googleplus"></a> 
+        <a class="pw-button-post"></a> 
+       </div> 
+      </div> 
+      <div class="rail1CTA"> 
+      </div> 
+     </article> 
+     <div id="reviews" post-reviews reviews="[{&quot;_id&quot;:&quot;55092a4d1a2d210c00cefe7c&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Jai Vijay&quot;,&quot;pic&quot;:&quot;https://0.gravatar.com/avatar/6bb72cc9b38e025096ad14407648f244&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;good work&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;550c1e8dbbbbef0c004b4bfb&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Ryan Cole&quot;,&quot;pic&quot;:&quot;https://0.gravatar.com/avatar/3897869974bf15ab60fda4d7b2f474e0&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;Clearly written with good explanation of what's going on. Also cats.&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;552e2ab52306af11002860c0&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Juan Luis Suarez&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/141210&quot;,&quot;gh&quot;:&quot;jlsuarezs&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;Thank you! Good job!&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;55640995e575511100602e45&quot;,&quot;by&quot;:{&quot;pic&quot;:&quot;https://0.gravatar.com/avatar/null&quot;},&quot;val&quot;:4,&quot;said&quot;:&quot;Really useful&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;55659c951acf981100721ec2&quot;,&quot;by&quot;:{&quot;pic&quot;:&quot;https://0.gravatar.com/avatar/null&quot;},&quot;val&quot;:3,&quot;said&quot;:&quot;dfd&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;55bfa0535b8f261100751364&quot;,&quot;by&quot;:{&quot;pic&quot;:&quot;https://0.gravatar.com/avatar/null&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;very helpful!&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;5669f812e752d41100e513ee&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Göran&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/15160419&quot;,&quot;gh&quot;:&quot;appernetic&quot;},&quot;val&quot;:2,&quot;said&quot;:&quot;Trying to avoid servers and mongodb...&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;569613964c61551100766916&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Vlad Shevtsov&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/13778304&quot;,&quot;gh&quot;:&quot;vlad-shevtsov&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;Thank you&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;56e5a0d238ce8f1100599cb5&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Nicolas Fodor&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/877973&quot;,&quot;gh&quot;:&quot;nfodor&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;Good job, saved me a lot of time, thank you.&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;570135482034dd110059925a&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;Vetri Vellore&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/17693&quot;,&quot;gh&quot;:&quot;VetriVellore&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;Well written!&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]}]" byid="5395ec661c67d1a4859d3443"></div> 
+     <footer class="postfooter "> 
+      <h5>Tagged under</h5> 
+      <ul class="tags">
+       <li><a href="/stripe-payments" target="_self" title="Stripe Payments tutorials &amp; Stripe guides">stripe-payments</a></li>
+       <li><a href="/angularjs/posts" target="_self" title="AngularJS tutorials &amp; Angular guides">angularjs</a></li>
+      </ul> 
+      <div class="share-horizontal"> 
+       <div class="pw-widget pw-counter-vertical" pw:twitter-via="airpair"> 
+        <a class="pw-button-twitter pw-look-native"></a> 
+        <a class="pw-button-googleplus pw-look-native"></a> 
+        <a class="pw-button-facebook pw-look-native"></a> 
+        <a class="pw-button-linkedin pw-look-native"></a> 
+        <a class="pw-button-tumblr pw-look-native"></a> 
+        <a class="pw-button-reddit pw-look-native"></a> 
+        <a class="pw-button-email pw-look-native"></a> 
+       </div> 
+      </div> 
+     </footer> 
+     <div id="posts"> 
+      <section id="allposts" class="similar"> 
+       <h3 class="underline">Similar posts <a href="/software-experts" class="btn btn-sm btn-inverse" target="_self">All posts</a></h3> 
+       <div class="similar ">
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="http://www.airpair.com/ruby-on-rails/posts/adding-stripe-to-rails-with-webhooks" title="Adding Stripe Payments to a Rails App Using Webhooks" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://i.imgur.com/i2vPyHu.jpg" align="left"> 
+           <div class="glass"></div> 
+           <p> <span class="entry-categories"> <em>ruby-on-rails</em> <em>stripe-payments</em> </span> Developer David Nance walks through the process of integrating Stripe into a Rails project by building a simple e-commerce app. </p> 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6></h6> 
+           <ul class="stars"></ul> 
+           <h2 class="entry-title" itemprop="headline">Adding Stripe Payments to a Rails App Using Webhooks</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Dave Nance</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" src="https://0.gravatar.com/avatar/7ac4ffdab21aec303310f1edb712664e?s=50"> 
+         </footer> 
+        </article> 
+       </div> 
+      </section> 
+      <section id="allposts" class="byauthor"> 
+       <h3 class="underline">Other posts </h3> 
+       <div class="similar">
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="http://www.airpair.com/js/javascript-framework-comparison" title="AngularJS vs. Backbone.js vs. Ember.js" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://i.imgur.com/qQlWHtq.png" align="left"> 
+           <div class="glass"></div> 
+           <p> <span class="entry-categories"> </span> </p> 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6></h6> 
+           <ul class="stars"></ul> 
+           <h2 class="entry-title" itemprop="headline">AngularJS vs. Backbone.js vs. Ember.js</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Uri Shaked</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" src="https://avatars.githubusercontent.com/u/892318?v=3?s=50"> 
+         </footer> 
+        </article> 
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="https://www.airpair.com/angularjs/posts/angularjs-expert-uri-shaked-1" title="AngularJS Expert - Uri Shaked" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://img.youtube.com/vi/7C6bt-sLam0/hqdefault.jpg" align="left"> 
+           <div class="glass"></div> 
+           <p> <span class="entry-categories"> </span> </p> 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6></h6> 
+           <ul class="stars"></ul> 
+           <h2 class="entry-title" itemprop="headline">AngularJS Expert - Uri Shaked</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Uri Shaked</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" src="https://avatars.githubusercontent.com/u/892318?v=3?s=50"> 
+         </footer> 
+        </article> 
+       </div> 
+      </section> 
+     </div> 
+    </div> 
+   </main> 
+  </div> 
+  <script type="text/javascript" src="https://static.airpair.com/js/app-bf30f0b10d.js"></script> 
+  <script type="text/javascript">
+
+  function trackpageview() { ga('send', 'pageview') }
+
+  window.pageData = {
+    session: {"authenticated":false,"id":"TZvAQUIJQOL3tBmb9Ki9jwrHdPI14NE8"}, 
+  }
+
+  </script> 
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-40569487-1', 'auto');
+    trackpageview();
+  
+  </script>   
+ </body>
+</html>

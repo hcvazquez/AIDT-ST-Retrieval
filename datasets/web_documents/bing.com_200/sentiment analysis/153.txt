@@ -1,0 +1,1240 @@
+<!doctype html>
+<!--[if lt IE 7]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if (IE 7)&!(IEMobile)]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9 lt-ie8"><![endif]-->
+<!--[if (IE 8)&!(IEMobile)]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Real-time Sentiment Analysis of Twitter Hashtags with Spark - Watson Data Platform</title> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="apple-touch-icon" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/ibm-favicon.png"> 
+  <link rel="icon" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/ibm-favicon.png"> 
+  <link href="//1.www.s81c.com/common/v18/css/www.css" rel="stylesheet"> 
+  <link rel="stylesheet" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/css/style.css"> 
+  <script src="//1.www.s81c.com/common/stats/ida_stats.js"></script> 
+  <!--[if IE]>
+    <link rel="shortcut icon" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/favicon.ico">
+  <![endif]--> 
+  <meta name="msapplication-TileColor" content="#f01d4f"> 
+  <meta name="msapplication-TileImage" content="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/ibm-favicon.png"> 
+  <meta name="theme-color" content="#121212"> 
+  <!-- google analytics --> 
+  <meta name="google-site-verification" content="ZOQeHRygaaWj2MxEwU36AgbPigyRTIM9RmNd6jwoNUk"> 
+  <!-- This site is optimized with the Yoast SEO plugin v4.4 - https://yoast.com/wordpress/plugins/seo/ --> 
+  <meta name="description" content="How to implement real-time Spark streaming analytics and publish the output to a live dashboard web app featuring dynamic graphics that update continuously."> 
+  <meta name="robots" content="noodp"> 
+  <link rel="canonical" href="https://developer.ibm.com/clouddataservices/2016/01/15/real-time-sentiment-analysis-of-twitter-hashtags-with-spark/"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Real-time Sentiment Analysis of Twitter Hashtags with Spark - Watson Data Platform"> 
+  <meta property="og:description" content="How to implement real-time Spark streaming analytics and publish the output to a live dashboard web app featuring dynamic graphics that update continuously."> 
+  <meta property="og:url" content="https://developer.ibm.com/clouddataservices/2016/01/15/real-time-sentiment-analysis-of-twitter-hashtags-with-spark/"> 
+  <meta property="og:site_name" content="Watson Data Platform"> 
+  <meta property="article:section" content="Analytics"> 
+  <meta property="article:published_time" content="2016-01-15T16:02:35+00:00"> 
+  <meta property="article:modified_time" content="2017-03-06T16:42:18+00:00"> 
+  <meta property="og:updated_time" content="2017-03-06T16:42:18+00:00"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/Spark-Watson-Twiiter-Part2-Architecture.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/10/add_obj_stor.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/10/tone_analyz_creds.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/09/twitter_app_keys.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/message-hub-topics.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/KafkaProducer-RunConfiguration.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/DStream-micro-batches.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/Object-Storage-Credentials.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/streaming-analytics-1.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/streaming-analytics-2.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-3.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-4.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-5.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-61.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-7.png"> 
+  <meta property="og:image" content="https://deployment-tracker.mybluemix.net/stats/1cf78b25577e3e58e5c33589753beae8/button.svg"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/Running-Spark-Streaming.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/Running-Spark-Dashboard.png"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:description" content="How to implement real-time Spark streaming analytics and publish the output to a live dashboard web app featuring dynamic graphics that update continuously."> 
+  <meta name="twitter:title" content="Real-time Sentiment Analysis of Twitter Hashtags with Spark - Watson Data Platform"> 
+  <meta name="twitter:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/Spark-Watson-Twiiter-Part2-Architecture.png"> 
+  <!-- / Yoast SEO plugin. --> 
+  <link rel="dns-prefetch" href="//s0.wp.com"> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Watson Data Platform » Feed" href="https://developer.ibm.com/clouddataservices/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Watson Data Platform » Comments Feed" href="https://developer.ibm.com/clouddataservices/comments/feed/"> 
+  <meta name="segment" property="(developerWorks)" productTitle="developerWorks" value="Cloud Data Services (developerWorks)"> 
+  <link rel="alternate" type="application/rss+xml" title="Watson Data Platform » Real-time Sentiment Analysis of Twitter Hashtags with Spark Comments Feed" href="https://developer.ibm.com/clouddataservices/2016/01/15/real-time-sentiment-analysis-of-twitter-hashtags-with-spark/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.2.1\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.2.1\/svg\/","svgExt":".svg","source":{"concatemoji":"\/\/dw1.s81c.com\/dw\/wp-includes\/js\/wp-emoji-release.min.js"}};
+			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),!(j.toDataURL().length<3e3)&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57331,65039,8205,55356,57096),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57331,55356,57096),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55357,56425,55356,57341,8205,55357,56507),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55357,56425,55356,57341,55357,56507),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="events-manager-css" href="https://developer.ibm.com/clouddataservices/wp-content/plugins/events-manager/includes/css/events_manager.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="tab-styles-css" href="https://developer.ibm.com/clouddataservices/wp-content/plugins/projectnext-shortcodes/tab-styles.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="googleFonts-css" href="//fonts.googleapis.com/css?family=Lato%3A400%2C700%2C400italic%2C700italic" type="text/css" media="all"> 
+  <!--[if lt IE 9]>
+<link rel='stylesheet' id='bones-ie-only-css'  href='https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/css/ie.css' type='text/css' media='all' />
+<![endif]--> 
+  <link rel="stylesheet" id="jetpack_css-css" href="https://developer.ibm.com/clouddataservices/wp-content/plugins/jetpack/css/jetpack.css" type="text/css" media="all"> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/jquery.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/jquery-migrate.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/core.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/widget.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/position.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/mouse.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/sortable.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/datepicker.min.js"></script> 
+  <script type="text/javascript">
+jQuery(document).ready(function(jQuery){jQuery.datepicker.setDefaults({"closeText":"Close","currentText":"Today","monthNames":["January","February","March","April","May","June","July","August","September","October","November","December"],"monthNamesShort":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"nextText":"Next","prevText":"Previous","dayNames":["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"dayNamesShort":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],"dayNamesMin":["S","M","T","W","T","F","S"],"dateFormat":"MM d, yy","firstDay":1,"isRTL":false});});
+</script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/menu.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/wp-a11y.min.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var uiAutocompleteL10n = {"noResults":"No results found.","oneResult":"1 result found. Use up and down arrow keys to navigate.","manyResults":"%d results found. Use up and down arrow keys to navigate.","itemSelected":"Item selected."};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/autocomplete.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/resizable.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/draggable.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/button.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/dialog.min.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var EM = {"ajaxurl":"https:\/\/developer.ibm.com\/clouddataservices\/wp-admin\/admin-ajax.php","locationajaxurl":"https:\/\/developer.ibm.com\/clouddataservices\/wp-admin\/admin-ajax.php?action=locations_search","firstDay":"1","locale":"en","dateFormat":"dd\/mm\/yy","ui_css":"https:\/\/developer.ibm.com\/clouddataservices\/wp-content\/plugins\/events-manager\/includes\/css\/jquery-ui.min.css","show24hours":"0","is_ssl":"1","bookingInProgress":"Please wait while the booking is being submitted.","tickets_save":"Save Ticket","bookingajaxurl":"https:\/\/developer.ibm.com\/clouddataservices\/wp-admin\/admin-ajax.php","bookings_export_save":"Export Bookings","bookings_settings_save":"Save Settings","booking_delete":"Are you sure you want to delete?","bb_full":"Sold Out","bb_book":"Book Now","bb_booking":"Booking...","bb_booked":"Booking Submitted","bb_error":"Booking Error. Try again?","bb_cancel":"Cancel","bb_canceling":"Canceling...","bb_cancelled":"Cancelled","bb_cancel_error":"Cancellation Error. Try again?","txt_search":"Search","txt_searching":"Searching...","txt_loading":"Loading..."};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/events-manager/includes/js/events-manager.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/projectnext-shortcodes/tab-dropdown.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/expose$.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/libs/modernizr.custom.min.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/libs/jquery-ui.min.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var dev_advo = {"siteurl":"http:\/\/developer.ibm.com\/clouddataservices"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/search-tool.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/resources_menu.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/infobox.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/tray-interaction.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/events-filter.js"></script> 
+  <link rel="https://api.w.org/" href="https://developer.ibm.com/clouddataservices/wp-json/"> 
+  <link rel="shortlink" href="https://wp.me/p6nwVO-1je"> 
+  <link rel="alternate" type="application/json+oembed" href="https://developer.ibm.com/clouddataservices/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdeveloper.ibm.com%2Fclouddataservices%2F2016%2F01%2F15%2Freal-time-sentiment-analysis-of-twitter-hashtags-with-spark%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="https://developer.ibm.com/clouddataservices/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdeveloper.ibm.com%2Fclouddataservices%2F2016%2F01%2F15%2Freal-time-sentiment-analysis-of-twitter-hashtags-with-spark%2F&amp;format=xml"> 
+  <link rel="dns-prefetch" href="//v0.wordpress.com"> 
+  <style type="text/css">img#wpstats{display:none}</style>
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+ </head> 
+ <body id="ibm-com"> 
+  <!-- MASTHEAD_BEGIN --> 
+  <!-- Masthead mobile --> 
+  <div id="ibm-masthead" role="banner" aria-label="IBM"> 
+   <div id="ibm-mast-options"> 
+    <ul role="toolbar" aria-labelledby="ibm-masthead"> 
+     <li id="ibm-geo" role="presentation"> <a href="http://www.ibm.com/planetwide/select/selector.html">United States</a> </li> 
+    </ul> 
+   </div> 
+   <div id="ibm-universal-nav"> 
+    <div id="ibm-home">
+     <a href="http://www.ibm.com/us-en/">IBM®</a>
+    </div> 
+    <ul id="ibm-menu-links" role="toolbar" aria-label="Site map"> 
+     <li><a href="http://www.ibm.com/sitemap/us/en/">Site map</a></li> 
+    </ul> 
+    <div id="ibm-search-module" role="search" aria-labelledby="ibm-masthead"> 
+     <form id="ibm-search-form" action="//www.ibm.com/Search/" method="get"> 
+      <p> <label for="q"><span class="ibm-access">Search</span></label> <input type="text" maxlength="100" value="" name="q" id="q"> <input type="hidden" value="18" name="v"> <input type="hidden" value="utf" name="en"> <input type="hidden" value="en" name="lang"> <input type="hidden" value="us" name="cc"> <input type="submit" id="ibm-search" class="ibm-btn-search" value="Submit"> </p> 
+     </form> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- MASTHEAD_END --> 
+  <div class="ibm-sitenav-menu-container ibm-hide" data-sticky="false"> 
+   <div class="ibm-sitenav-menu-name">
+    <a href="https://developer.ibm.com/clouddataservices">IBM Developer Advocacy</a>
+   </div> 
+   <div class="ibm-sitenav-menu-list"> 
+    <ul role="menubar"> 
+     <li role="presentation" class="ibm-haschildlist ibm-highlight"> <span role="menuitem">Services</span> 
+      <ul role="menu"> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/cloudant/">IBM Cloudant</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/compose/">IBM Compose</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/spark/">IBM Analytics for Apache Spark</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/ibm-analytics-engine/">IBM Analytics Engine</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/ibm-data-science-experience/">IBM Data Science Experience</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/data-refinery/">IBM Data Refinery</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/ibm-watson-machine-learning/">IBM Watson Machine Learning</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/data-catalog/">IBM Data Catalog</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/streaming-analytics/">IBM Streaming Analytics</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/dataconnect/">IBM Bluemix Data Connect</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/lift/">IBM Bluemix Lift</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/biginsights/">IBM BigInsights on Cloud</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/graph/">IBM Graph</a></li> 
+      </ul> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Blog</a> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Showcases</a> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Search Resources</a> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Events</a> </li> 
+    </ul> 
+   </div> 
+  </div> 
+  <!-- End of all Masthead works --> 
+  <div id="container" class="container"> 
+   <header class="header" role="banner" itemscope itemtype="http://schema.org/WPHeader"> 
+    <div id="inner-header" class="cf"> 
+     <!-- wrap wrap-tc  --> 
+     <nav class="tray search-resources service-resources"> 
+      <div class="tray-container services"> 
+       <div class="top-content clearfix"> 
+        <div class="intro-text clearfix">
+          Services to 
+         <span>get</span>, 
+         <span>build</span>, and 
+         <span>analyze</span> data on the ibm cloud 
+        </div> 
+        <div class="close clearfix">
+         <a href="#"><img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/close-x.png" alt="close"></a>
+        </div> 
+       </div> 
+       <div class="service-list"> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/cloudant/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/06/cloudant64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Cloudant
+          </div> </a> 
+         <p> A fully-managed NoSQL database as a service (DBaaS) built from the ground up to scale globally, run non-stop, and handle a wide variety of data… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/compose/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/08/mongodb_lg.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Compose
+          </div> </a> 
+         <p> Production-ready hosting for the following databases: MongoDB with SSL, Elasticsearch, RethinkDB, PostgreSQL, Redis, etcd, and RabbitMQ. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/spark/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/10/apacheSpark_50x.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Analytics for Apache Spark
+          </div> </a> 
+         <p> Analytics for Apache Spark provides fast, in-memory, distributed analytics processing of large data sets. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/ibm-analytics-engine/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/09/spark-hadoop_logo_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Analytics Engine
+          </div> </a> 
+         <p> IBM Analytics Engine is a combined Apache Spark and Apache Hadoop service that provides an environment for developing and deploying advanced analytics applications. It uses… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/ibm-data-science-experience/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/01/DSx-Icon-2.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Data Science Experience
+          </div> </a> 
+         <p> IBM Data Science Experience (DSx) is an interactive, collaborative, cloud-based environment where data scientists can use multiple tools to activate their insights. Data scientists can… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/data-refinery/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/09/temp-logo.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Data Refinery
+          </div> </a> 
+         <p> IBM Data Refinery is a self-service data preparation client for data scientists, data engineers, and business analysts. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/ibm-watson-machine-learning/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/01/icon-WML.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Watson Machine Learning
+          </div> </a> 
+         <p> Machine learning is everywhere – influencing nearly everything we do. You’ve likely heard that Uber is world’s largest taxi company, yet owns no vehicles. Facebook,… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/data-catalog/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/09/logo_dataCatalog.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Data Catalog
+          </div> </a> 
+         <p> A secure enterprise catalog to index, classify, and govern your data with greater efficiency. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/streaming-analytics/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/02/StreamingAnalytics-FA-64x64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Streaming Analytics
+          </div> </a> 
+         <p> Perform real-time analysis on data in motion as part of your Bluemix® applications by using IBM® Streaming Analytics for Bluemix. Streaming Analytics is powered by… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/dataconnect/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/06/DATAWORKS_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Bluemix Data Connect
+          </div> </a> 
+         <p> Data Connect is a cloud-based data refinery that transforms raw data into relevant and actionable information. Find data, shape it, and deliver it to applications… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/lift/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/09/DATAWORKS_LIFT_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Bluemix Lift
+          </div> </a> 
+         <p> Migrate data from on-premises to the cloud quickly and securely. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/biginsights/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/05/BIonCloud_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM BigInsights on Cloud
+          </div> </a> 
+         <p> IBM BigInsights on Cloud provides Hadoop-as-a-service on IBM’s SoftLayer global cloud infrastructure. It offers the performance and security of an on-premises deployment without the cost… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/graph/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/08/GraphDB-FA-big-hero.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Graph
+          </div> </a> 
+         <p> IBM Graph is an easy-to-use, fully managed graph database service for storing, querying, and visualizing data points, their connections, and properties. IBM Graph is based… </p> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="tray-container search"> 
+       <div class="search-area"> 
+        <form id="search-form-tray" method="get"> 
+         <input type="text" name="search"> 
+         <button type="submit" class="project-btn">Search</button> 
+        </form> 
+        <div class="close clearfix">
+         <a href="#"><img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/close-x.png" alt="close"></a>
+        </div> 
+       </div> 
+       <div class="topics"> 
+        <div class="topic-list" id="topic"> 
+         <span class="topic-title">Topic</span> 
+         <ul></ul> 
+         <span><a href="https://developer.ibm.com/clouddataservices/how-tos" class="advanced">Advanced Search</a></span> 
+        </div> 
+        <div class="topic-list" id="language"> 
+         <span class="topic-title">Language</span> 
+         <ul></ul> 
+        </div> 
+        <div class="topic-list" id="technology"> 
+         <span class="topic-title">Technology</span> 
+         <ul></ul> 
+         <span> <a href="#" class="engine-info">Powered by the Simple Search Service</a> <a href="#" class="engine-info">i</a> </span> 
+         <div class="modal powered"> 
+          <div class="arrow-up"></div> 
+          <div class="powered-info"> 
+           <span>What's This?</span> 
+           <p> The most popular Topics, Technologies and Languages are determined by the Simple Search Service - a microservice that lets you quickly create a faceted search engine. See what else IBM can do for you. </p> 
+           <a href="https://developer.ibm.com/clouddataservices/simple-search-service"><p class="powered-cta">Learn More about the Simple Search Service</p></a> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </nav> 
+     <nav role="navigation" class="navigation-main"> 
+      <div class="home"> 
+       <a href="https://developer.ibm.com/clouddataservices" class="home-link "> <span><span class="cds-logo-text">CloudDataServices</span> <span class="labs-logo-text">Labs</span></span> <button class="nav-trigger">Open Menu</button> </a> 
+      </div>  
+      <ul class="main-menu"> 
+       <li class="tablet-logo"> <a href="https://developer.ibm.com/clouddataservices"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/IBM-Logo.svg" alt="logo"> </span> </a> </li> 
+       <li> <a href="#" class="expanded " data-target="services"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/services-icon.svg" alt="services"> </span> <span class="title">Services</span> <span class="arrow"> 
+          <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+           <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+          </svg> </span> </a> 
+        <ul class="sub-menu"> 
+         <li class="back"> <a href="#"> <span class="arrow"> 
+            <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+             <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+            </svg> </span> <span class="title">Back to Navigation</span> </a> </li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/data-refinery/">IBM Data Refinery</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/ibm-analytics-engine/">IBM Analytics Engine</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/data-catalog/">IBM Data Catalog</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/streaming-analytics/">IBM Streaming Analytics</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/ibm-data-science-experience/">IBM Data Science Experience</a></li> 
+        </ul> </li> 
+       <li> <a href="https://developer.ibm.com/clouddataservices/blog/#" class="active"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/blog-icon.svg" alt="blog"> </span> <span class="title">Blog</span> </a> </li> 
+       <li> <a href="https://developer.ibm.com/clouddataservices/showcases/#"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/showcases-icon.svg" alt="showcases"> </span> <span class="title">Showcases</span> </a> </li> 
+       <li class="search-submenu"> <a href="#" class="expanded special " data-target="search"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/search-icon.svg" alt="search resources"> </span> <span class="title special">Search resources</span> <span class="arrow special"> 
+          <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+           <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+          </svg> </span> </a> 
+        <ul class="sub-menu"> 
+         <li class="back"> <a href="#"> <span class="arrow"> 
+            <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+             <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+            </svg> </span> <span class="title">Back to Navigation</span> </a> </li> 
+        </ul> </li>  
+       <li> <a href="https://developer.ibm.com/clouddataservices/events/#"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/events-icon.svg" alt="events"> </span> <span class="title">Events</span> </a> </li> 
+      </ul> 
+     </nav> 
+    </div> 
+    <div class="logo"> 
+     <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/IBM-Logo.svg" alt="logo"> 
+    </div> 
+   </header> 
+   <div id="content" class="blog-single content"> 
+    <div class="top-art"> 
+     <div class="wrap"> 
+      <div class="page-title"> 
+       <h1>Real-time Sentiment Analysis of Twitter Hashtags with Spark</h1> 
+       <hr> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="inner-content" class="wrap cf"> 
+     <hr class="line"> 
+     <div class="blog-content clearfix"> 
+      <article id="post-5036" class="cf post-5036 post type-post status-publish format-standard hentry category-analytics category-community category-message-hub category-spark" role="article"> 
+       <div class="blog-author clearfix"> 
+        <div class="more-info">
+         <img alt="" src="//www.ibm.com/developerworks/community/profiles/photo.do?userid=120000DCBU" srcset="//www.ibm.com/developerworks/community/profiles/photo.do?userid=120000DCBU" class="avatar avatar-96 photo" height="96" width="96">
+        </div> 
+        <div class="more-info">
+         David Taieb
+        </div> 
+        <div>
+         1/15/16
+        </div> 
+       </div> 
+       <div class="modal author"> 
+        <div class="arrow-up"></div> 
+        <div class="exit clearfix">
+         <a href="#"><img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/close-x.png" alt="close"></a>
+        </div> 
+        <div class="clearfix"> 
+         <p>David Taieb</p> 
+         <p>For the last 4 years, David has been the lead architect for the Watson Core UI &amp; Tooling team based in Littleton, Massachusetts. During that time, he led the design and development of a Unified Tooling Platform to support all the Watson Tools including accuracy analysis, test experiments, corpus ingestion,…</p> 
+         <a class="project-btn" href="https://developer.ibm.com/clouddataservices/author/david_taieb/">Learn More</a> 
+        </div> 
+        <div class="clearfix"> 
+         <span class="modal-subhead">Recent Posts</span> 
+         <ul class="recent-posts"> 
+          <li> <a class="recent-title" href="https://developer.ibm.com/clouddataservices/2016/10/11/pixiedust-magic-for-python-notebook/">PixieDust: Magic for Your Python Notebook</a> <span class="excerpt"> Introducing a new open source helper library for Jupyter Python notebooks that improves data visualization… </span> </li> 
+          <li> <a class="recent-title" href="https://developer.ibm.com/clouddataservices/2016/08/04/predict-flight-delays-with-apache-spark-mllib-flightstats-and-weather-data/">Predict Flight Delays with Apache Spark MLLib, FlightStats, and Weather Data</a> <span class="excerpt"> Build a Machine Learning model with Apache Spark MLLib to predict flight delays based on… </span> </li> 
+          <li> <a class="recent-title" href="https://developer.ibm.com/clouddataservices/2016/07/15/intro-to-apache-spark-graphframes/">Getting started with GraphFrames in Apache Spark</a> <span class="excerpt"> In this post, I'll show you how to create a graph composed of airports as… </span> </li> 
+         </ul> 
+        </div> 
+       </div> 
+       <div class="blog-article"> 
+        <p> </p>
+        <p><em>Since this tutorial was published, IBM’s Message Connect service has been discontinued. This tutorial contains a workaround that lets you bypass that service, so you can still complete the steps here. But for the absolute latest, try the <a href="https://medium.com/ibm-watson-data-lab/real-time-sentiment-analysis-of-twitter-hashtags-with-spark-7ee6ca5c1585">new version of this tutorial</a></em>.</p> 
+        <p>In my <a href="/clouddataservices/sentiment-analysis-of-twitter-hashtags/" target="_blank">Sentiment Analysis of Twitter Hashtags tutorial</a>, we explored how to build a Spark Streaming app that uses Watson Tone Analyzer to perform sentiment analysis on a set of Tweets. </p> 
+        <p>In that tutorial, Spark Streaming collects the Twitter data for a finite period. But it doesn’t run streaming analytics in real-time. It just accumulates the data into a static Resilient Data Set (RDD) for analysis in an IPython Notebook.</p> 
+        <p>Here, I’ll show how to rebuild the analytics from that first tutorial for real-time streaming analytics. We’ll also publish the output to a live dashboard web app that displays and continuously updates graphic visualizations.</p> 
+        <p><em><strong>Note:</strong> You don’t need to complete the <a href="/clouddataservices/sentiment-analysis-of-twitter-hashtags/" target="_blank">prior tutorial</a> in order to follow the steps in this tutorial.</em></p> 
+        <h2 id="toc_2">Overall Architecture</h2> 
+        <p>The following diagram represents all the different components for this application</p> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/Spark-Watson-Twiiter-Part2-Architecture.png" alt="Spark+Watson+Twitter Part 2 Architecture"></p> 
+        <ol> 
+         <li><a href="https://console.ng.bluemix.net/docs/services/MessageConnect/index.html#gettingstartedeventhub" target="_blank"><strong>Message Connect Service</strong></a>: Streaming service available on Bluemix that connects to Twitter Stream and publishes the tweets to Kafka.</li> 
+         <li><a href="https://www.ng.bluemix.net/docs/services/MessageHub/index.html" target="_blank"><strong>Message Hub Service</strong></a>: High throughput, message bus Service powered by <a href="http://kafka.apache.org/" target="_blank">Apache Kafka</a></li> 
+         <li><a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/tone-analyzer.html" target="_blank"><strong>Watson Tone Analyzer</strong></a>: provide sentiment analysis in the form of emotional, social, and writing tone scores.</li> 
+         <li><strong>Spark Streaming</strong> application: Scala library consumes tweet events from Message Hub, enriches the data with Watson sentiment scores, runs the streaming analytics, and re-publishes the results to Message Hub as separate topics.</li> 
+         <li><strong>Node.js</strong> web app: Provides a real-time dashboard that consumes the output of the streaming analytics from Message Hub and visualizes them as charts.</li> 
+        </ol> 
+        <p>This tutorial explains how to build the app and covers these 5 components in detail.</p> 
+        <h2 id="toc_3">Initial Setup</h2> 
+        <p>You’ll want to have a few things in place before you dive in. First, initiate Apache Spark and Watson Tone Analyzer services on Bluemix (IBM’s open cloud platform for building, running, and managing applications). You’ll also create a Scala notebook where we’ll store credentials and control streaming. Finally, you’ll want to get OAuth credentials from Twitter so you can access actual tweets.</p> 
+        <h3 id="toc_4">Initiate IBM Analytics for Apache Spark Service and Add a Notebook</h3> 
+        <ol> 
+         <li><a href="https://console.ng.bluemix.net/catalog/?search=dashdb" target="_blank">Login to Bluemix (or sign up for a free trial)</a>.</li> 
+         <li>On your Bluemix dashboard, click <strong>Work with Data</strong>. </li>
+         <li>Click <strong>New Service</strong>.</li> 
+         <li>Find and click <strong>Apache Spark</strong> then click <strong>Choose Apache Spark </strong> </li> 
+         <li>Click <strong>Create</strong>.</li> 
+         <li>Click <strong>Open</strong>.</li> 
+         <li>Click the <strong>Object Storage</strong> tab.</li> 
+         <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/10/add_obj_stor.png" alt="add_obj_stor" width="375" height="175" class="aligncenter size-full wp-image-3821" srcset="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/10/add_obj_stor.png 375w, https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/10/add_obj_stor-300x140.png 300w" sizes="(max-width: 375px) 100vw, 375px">  </p>
+         <li>Click the <strong>Add Object Storage</strong> button and click <strong>Create</strong>.</li> 
+         <li>Click the <strong>My Notebooks</strong> tab.</li> 
+         <li>Click the <strong>Create Notebook</strong> button. </li>
+         <li>Click the <strong>From URL</strong> tab.</li> 
+         <li>Enter any name, and under <strong>Notebook URL</strong> enter <code>https://github.com/ibm-cds-labs/spark.samples/raw/master/streaming-twitter/notebook/Spark%20Streaming%20Twitter-Watson-MessageHub.ipynb</code></li> 
+         <li>Click <strong>Create Notebook</strong></li> 
+         <li>Leave this notebook open. You’ll return here in a minute to enter information.</li> 
+        </ol> 
+        <h3 id="toc_5">Initiate Watson Tone Analyzer Service</h3> 
+        <ol> 
+         <li>In a new browser tab or window, open Bluemix, go to the top menu, and click <strong>Catalog</strong>.</li> 
+         <li>In the search box, type <strong>Tone Analyzer</strong>.</li> 
+         <li>Click the <strong>Tone Analyzer</strong> tile, then click <strong>Create</strong>. </li> 
+         <li>On left side of the screen, click <strong>Service Credentials</strong><br> <img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/10/tone_analyz_creds.png" alt="tone_analyz_creds" width="391" height="261" class="aligncenter size-full wp-image-3735" srcset="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/10/tone_analyz_creds.png 391w, https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/10/tone_analyz_creds-300x200.png 300w" sizes="(max-width: 391px) 100vw, 391px"> </li> 
+         <li>Copy and paste the username and password values into the Scala Notebook you just created. In the <code>//Watson Tone Analyzer service</code> section, replace the XXXXs for each Watson credential. <pre><code> "credentials": {
+       "url":"XXXXX",
+       "username":"XXXXX",
+       "password":"XXXXX"
+  }</code></pre> <p>Leave this notebook open in a browser window. You’ll add more credentials in a few minutes. </p></li>  
+        </ol> 
+        <h3 id="toc_6">Generate OAuth Credentials for Twitter</h3> 
+        <p><em>You’ll need these OAuth credentials to create the Message Connect Twitter stream.</em></p> 
+        <p>Create a new app on your Twitter account and configure the OAuth credentials.</p> 
+        <ol> 
+         <li>Go to <a href="https://apps.twitter.com/" target="_blank">https://apps.twitter.com/</a>. Sign in and click the <strong>Create New App</strong> button</li> 
+         <li>Complete the required fields: 
+          <ul> 
+           <li><strong>Name</strong> and <strong>Description</strong> can be anything you want. </li> 
+           <li><strong>Website.</strong> It doesn’t matter what URL you enter here, as long as it’s valid. For example, I used my Bluemix account URL: <em>https://davidtaiebspark.mybluemix.net</em> .</li> 
+          </ul> </li> 
+         <li>Below the developer agreement, turn on the <strong>Yes, I agree</strong> check box and click <strong>Create your Twitter application</strong>.</li> 
+         <li>Click the <strong>Keys and Access Tokens</strong> tab.</li> 
+         <li>Scroll to the bottom of the page and click the <strong>Create My Access Tokens</strong> button.</li> 
+         <li>Copy the <strong>Consumer Key</strong>, <strong>Consumer Secret</strong>, <strong>Access Token</strong>, and <strong>Access Token Secret</strong>. You will need them in a few minutes.<br> <img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/09/twitter_app_keys.png" alt="twitter_keys"></li> 
+        </ol> 
+        <h2 id="toc_7">Message Hub Service</h2> 
+        <p>Now you’re ready to start laying down infrastucture for live-streaming. Start by creating a Message Hub instance in Bluemix:</p> 
+        <ol> 
+         <li>In Bluemix, on top menu, click <strong>Catalog</strong>. </li> 
+         <li>At the top of the page, type <strong>Message Hub</strong> in the search box then click the <strong>Message Hub</strong> tile that appears. </li> 
+         <li>On the right side of the screen, in the <strong>Service Name</strong> box type: <code>messagehub-spark</code>.</li> 
+         <li>Accept the other default settings (Standard plan is currently the only choice and leave the service unbound for now) and click <strong>Create</strong>. <p>The service launches.</p> </li> 
+        </ol> 
+        <p>The Scala notebook provides a convenient and consistent mechanism to pass credentials for the many services this app uses. To do so, it uses the following setConfig methods in a Scala notebook cell:</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">   val demo = com.ibm.cds.spark.samples.MessageHubStreamingTwitter
+    val config = demo.getConfig()
+    ...
+    //bootstrap.servers contains the list of brokers referenced in the
+    //"kafka_brokers_sasl" field of the credential json
+    config.setConfig("bootstrap.servers","kafka01-prod01.messagehub.services.us-south.bluemix.net:9094,kafka02-prod01.messagehub.services.us-south.bluemix.net:9094,kafka03-prod01.messagehub.services.us-south.bluemix.net:9094,kafka04-prod01.messagehub.services.us-south.bluemix.net:9094,kafka05-prod01.messagehub.services.us-south.bluemix.net:9094")
+
+    config.setConfig("api_key","XXXX")
+    config.setConfig("kafka.user.name","XXXX")
+    config.setConfig("kafka.user.password","XXXX")
+    config.setConfig("kafka_rest_url","https://kafka-rest-prod01.messagehub.services.us-south.bluemix.net:443")
+
+    //"ka'fka.topic.tweet" contains the name of the topic used to publish the tweets.
+        //You'll configure this value in the Message Connect Service section e.g twitter-spark
+    config.setConfig("kafka.topic.tweet","twitter-spark")</pre> 
+        <p>We’ll enter these credentials for Message Hub in a few minutes, after we deploy our dashboard app.</p> 
+        <h2 id="toc_8">Message Connect Service</h2> 
+        <p><em><strong>Note:</strong> Message Connect requires an existing instance of Message Hub. So, you must complete the Message Hub section, before following these steps.</em></p> 
+        <p>To create an Message Connect instance:</p> 
+        <ol> 
+         <li>In Bluemix, go to the top menu and click <strong>Catalog</strong>. </li> 
+         <li>Scroll down to the bottom of the page and click the <strong>Bluemix Labs Catalog</strong> link. </li> 
+         <li>At the top of the page, type <strong>Message Connect</strong> in the search box. </li> 
+         <li>Click the <strong>Message Connect</strong> tile that appears. </li> 
+         <li>Accept the default settings (Experimental plan is currently the only choice and leave the service unbound for now) and click <strong>Create</strong>. <p>The service launches.</p> 
+          <blockquote>
+           <p> <strong>IBM Message Connect for Bluemix</strong> is a streaming service that can connect to multiple streaming data sources, generate events and publish them to Message Hub. Message Connect supports the following connectors (with more to come in the future):<br> &nbsp;</p> 
+           <p> – Twitter<br> – SalesForce<br> – MQ Light: Connect to an on-premise MQ Light instance<br> – IBM Cloudant</p> 
+          </blockquote> <p><em><strong>Something went wrong?</strong> If you get an error here that something went wrong, ignore it and move on to the next section. This tutorial provides workarounds for cases where this experimental service may not be available.</em> </p></li> 
+         <li>Click the <strong>Create your first stream</strong> button. <p></p> </li> 
+         <li>Enter a name for your stream like <strong>twitter-spark</strong>.<p></p> </li> 
+         <li> <p>Click the <strong>Twitter</strong> tile. A form opens at the bottom of the screen.</p> </li> 
+         <li> <p>Enter your <code>Consumer Key</code>, <code>Consumer Secret</code>, <code>Access Token</code>, and <code>Access Token Secret</code> (see this tutorial’s <strong>Initial Setup</strong> section to read how to get your Twitter OAuth credentials).</p> </li> 
+         <li> <p>(optional) If you want to filter the tweets by keywords and users, enter values in those fields.</p> </li> 
+         <li> <p>Click <strong>Create Stream</strong>.</p> <p>Initialization will take a minute, then you see your stream with status <strong>Running</strong> in the Message Connect dashboard.</p> </li> 
+        </ol> 
+        <p>The Message Connect service automatically detected that a Message Hub instance was created in the same space and started publishing tweets using a topic name based on the name given to the stream. In this case, the topic is <em>twitter-spark</em> (all lowercase, spaces replaced by a dash).</p> 
+        <p><em><strong>Note:</strong> As you see at the end of the Message Hub section, the scala notebook specifies the topic name with:</em></p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title=""> config.setConfig("kafka.topic.tweet","twitter-spark")</pre> 
+        <p> To verify that all pieces are connected, go to your Message Hub dashboard and check that the twitter-spark topic has been created.</p> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/message-hub-topics.png" alt="Message Hub Topics"></p> 
+        <p><em><strong>Note:</strong> Message Connect is still an experimental service and may occasionally be not working. If that happens to you, you can use one of these 2 workarounds:</em></p>
+        <em> 
+         <ul> 
+          <li>The Scala notebook you’ll run in a few minutes has 2 optional cells you can run to temporarily fill in for the Message Connect Service.</li> 
+          <li>Or, you can run the <a href="https://github.com/ibm-cds-labs/spark.samples/blob/master/streaming-twitter/src/main/scala/com/ibm/cds/spark/samples/KafkaProducerTest.scala" target="_blank">KafkaProducerTest</a> from the scala ide. The following screenshot shows how to create a run configuration in eclipse (You can use this <a href="https://github.com/ibm-cds-labs/spark.samples/blob/master/streaming-twitter/sampleConfig/sampleconf.properties">Sample configuration properties file</a> as a starting point)<br> <img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/KafkaProducer-RunConfiguration.png" alt="Kafka Producer Run configuration"></li> 
+         </ul> </em>
+        <p><em></em></p> 
+        <h2 id="toc_9">Spark Streaming Application</h2> 
+        <p><em><strong>Tip:</strong> This section talks about code you’ll find in <a href="https://github.com/ibm-cds-labs/spark.samples/tree/master/streaming-twitter/src/main/scala/com/ibm/cds/spark/samples" target="_blank">this GitHub directory</a>.</em></p> 
+        <h3 id="toc_10">A Word About Spark Streaming</h3> 
+        <p>In our <a href="/clouddataservices/sentiment-analysis-of-twitter-hashtags/" target="_blank">first tutorial on Sentiment Analysis with Spark</a>, we showed how to build analytics on the Twitter + Watson data using notebooks. The data was statically stored in a Spark SQL Table or an RDD. For this app, we rebuild these analytics so you can run them continuously on the streaming data received from Twitter. To achieve that, we’ll use <a href="http://spark.apache.org/docs/latest/streaming-programming-guide.html" target="_blank">Spark Streaming</a> which is an extension to the core Spark API.</p> 
+        <p>Spark Streaming uses Discretized Streams (DStream) as opposed to RDDs for Spark Core. A DStream abstracts the streaming data into a continuous micro-batch of RDDs as shown in this diagram:</p> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/DStream-micro-batches.png" alt="DStream micro-batches"></p> 
+        <h3 id="toc_11">Creating a Streaming Context</h3> 
+        <p>When building a Spark Streaming app, the first step is to create a StreamingContext from a SparkContext and specify the batch time interval (after which a new RDD is generated by the DStream). Also, you must enable checkpointing on the StreamingContext, which lets you persist RDD metadata information periodically. Checkpointing lets you:</p> 
+        <ol> 
+         <li>Resume operations after a restart (normal restart or due to failure)</li> 
+         <li>Enable stateful transformations between micro-batch by using the updateStateByKey API</li> 
+        </ol> 
+        <p>The following code shows how to create a StreamingContext with a Batch Time Interval of 5 seconds, then set the checkpoint directory:</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">   ssc = new StreamingContext( sc, Seconds(5) )
+    ssc.checkpoint(kafkaProps.getConfig( MessageHubConfig.CHECKPOINT_DIR_KEY ));</pre> 
+        <h3 id="toc_12">Configure Spark Streaming Checkpointing to use Swift Object Storage</h3> 
+        <p>Checkpoint directory is identified by a URI that must point to a hadoop compatible filesystem, which means that the filesystem must provide an implementation of the org.apache.hadoop.fs.FileSystem class, like any of the following:</p> 
+        <ul> 
+         <li><strong>file</strong>. local filesystem</li> 
+         <li><strong>HDFS</strong>. Hadoop File System</li> 
+         <li> <strong>FTP</strong>. File Transfer Protocol</li> 
+         <li><strong>S3</strong>. Amazon S3</li> 
+         <li><strong>swift</strong>. OpenStack Object Store supported by Bluemix and Softlayer.</li> 
+        </ul> 
+        <p>When running this app on Bluemix, you can use the Object Storage container associated with your Spark instance as the checkpoint directory. Here’s how that works:</p> 
+        <ol> 
+         <li>Url must have the following format: <pre class="brush: bash; light: true; title: ; notranslate" title="">swift://notebook.&lt;name&gt;/&lt;container&gt;</pre> <p> where:</p> 
+          <ul> 
+           <li><code>&lt;name&gt;</code> is an abritrary string, like <strong>spark</strong>, that you’ll use later in the hadoop configuration step</li> 
+           <li><code>&lt;container&gt;</code> is the name of the container or folder where all the files will live, like <strong>ssc</strong>.</li> 
+          </ul> </li> 
+         <li>Hadoop configuration for swift: set the following key/values pair in the hadoopConfiguration hashmap, as in this scala code: <pre class="brush: scala; light: true; title: ; notranslate" title="">
+val prefix = "fs.swift.service.&lt;name&gt;"
+val hconf = sc.hadoopConfiguration
+hconf.set(prefix + ".auth.url", "&lt;auth_url&gt;/v2.0/tokens")
+hconf.set(prefix + ".auth.endpoint.prefix", "endpoints")
+hconf.set(prefix + ".tenant", "&lt;project_id&gt;")
+hconf.set(prefix + ".username", "&lt;user_id&gt;")
+hconf.set(prefix + ".password", "&lt;password&gt;")
+hconf.setInt(prefix + ".http.port", 8080)
+hconf.set(prefix + ".region", "&lt;region&gt;")
+hconf.setBoolean(prefix + ".public", true)</pre> <p>As I mentioned, <code>&lt;name&gt;</code> must match the name specified in swift url. Other values, like <code>auth_url</code>, <code>project_id</code>, etc. come from your Object Storage service credentials in Bluemix.</p> <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/Object-Storage-Credentials.png" alt="Object Storage Credentials"></p> <p> For convenience and consistency, the application also supports passing the variables directly via the setConfig method in the Scala Notebook:</p> <pre class="brush: scala; light: true; title: ; notranslate" title="">
+val demo = com.ibm.cds.spark.samples.MessageHubStreamingTwitter
+val config = demo.getConfig()
+...
+config.setConfig("name","spark");
+config.setConfig("auth_url","https://identity.open.softlayer.com");
+config.setConfig("project_id","XXXXXXXXXXXXXXXXXXXXX");
+config.setConfig("region","dallas");
+config.setConfig("user_id","XXXXXXXXXXXXXXXXXX");
+config.setConfig("password","XXXXXXXXXX");</pre> </li> 
+        </ol> 
+        <p>For this tutorial, that’s the method we’ll use. So follow these steps, to enter the proper credentials in your Scala Notebook:</p> 
+        <ol> 
+         <li>In Bluemix, go to your dashboard.</li> 
+         <li>Click your Apache Spark Object Storage service to open it.</li> 
+         <li>Within the menu on the left, click <strong>Service Credentials</strong>.</li> 
+         <li>Copy and paste the 3 object storage credentials (<code>Project_ID</code>, <code>userId</code>, and <code>password</code>), replacing the XXX’s in your Scala notebook’s <code>//Spark Streaming checkpointing configuration</code> section. </li> 
+         <li>Again, leave this notebook open. You’ll return here to enter one last set of credentials in a minute.</li> 
+        </ol> 
+        <h3 id="toc_13">Create a Custom Receiver for MessageHub/Kafka</h3> 
+        <p>Apache Spark already provides a Kafka connector for Spark Streaming based on Kafka 0.8, but we can’t use it here because Message Hub requires Kafka 0.9. So, I built a custom Spark Streaming receiver for Message Hub using Kafka 0.9 (see <a href="https://github.com/ibm-cds-labs/spark.samples/blob/master/streaming-twitter/build.sbt" target="_blank">build.sbt</a> updates to point at Kafka 0.9 libraries from Maven repository)</p> 
+        <p><em><strong>Tip:</strong> You can find the code in <a href="https://github.com/ibm-cds-labs/spark.samples/blob/master/streaming-twitter/src/main/scala/com/ibm/cds/spark/samples/dstream/KafkaInputDStream.scala" target="_blank">KafkaInputDStream.scala</a></em>.</p> 
+        <p>To create a new receiver, you need to create a scala class that inherits from <code>org.apache.spark.streaming.dstream.ReceiverInputDStream</code> and override the getReceiver method which returns an instance of type <code>org.apache.spark.streaming.receiver.Receiver</code><br> In turn, the Receiver must implement the following lifecycle methods:</p> 
+        <ul> 
+         <li>onStart: called when the receiver is started. Starts a new Thread that will poll MessageHub for new messages and store them in Spark’s memory.</li> 
+         <li>onStop: called when the receiver is stopped. Cleans up all resources and stops the Thread.</li> 
+        </ul> 
+        <p><a href="http://spark.apache.org/docs/latest/streaming-custom-receivers.html" target="_blank">See custom receiver full documentation</a></p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title=""> def onStart() {
+    ...
+
+    //Create a new kafka consumer and subscribe to the relevant topics
+    kafkaConsumer = new KafkaConsumer[K, V](kafkaParams)
+    kafkaConsumer.subscribe( topics )
+
+    new Thread( new Runnable {
+        def run(){
+            try{
+                while( kafkaConsumer != null ){
+                    var it:Iterator[ConsumerRecord[K, V]] = null;
+                    if ( kafkaConsumer != null ){
+                        kafkaConsumer.synchronized{
+                            //Poll for new events
+                            it = kafkaConsumer.poll(1000L).iterator
+                            while( it != null &amp;&amp; it.hasNext() ){
+                                //Get the record and store it
+                                val record = it.next();
+                            store( (record.key, record.value) )
+                            }
+                            kafkaConsumer.commitSync
+                        }
+                    }
+                    Thread.sleep( 1000L )
+                }
+                println("Exiting Thread")
+            }catch{
+                case e:Throwable =&gt; {
+                    reportError( "Error in KafkaConsumer thread", e);
+                    e.printStackTrace()
+                }
+            }
+        }
+    }).start
+}</pre> 
+        <p>For convenience, I also created an implicit method called createKafkaStream that can be called from a StreamingContext object.</p> 
+        <h3 id="toc_14">Build the streaming analytics</h3> 
+        <p><em><strong>Tip:</strong> To follow the discussion in this section, refer to the code implemented in the runAnalytics method in <a href="https://github.com/ibm-cds-labs/spark.samples/blob/master/streaming-twitter/src/main/scala/com/ibm/cds/spark/samples/MessageHubStreamingTwitter.scala" target="_blank">MessageHubStreamingTwitter.scala</a>.</em></p> 
+        <p>We want to re-implement the last 2 analytics from <a href="https://developer.ibm.com/clouddataservices/sentiment-analysis-of-twitter-hashtags/" target="_blank">our earlier static data version of this app</a>, but this time, in Scala and using the Spark Streaming APIs (DStream).</p> 
+        <p>Since Watson Tone Analyzer understands only English, the first transformation is to filter the tweets, keeping only those in English:</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title=""> val tweets = stream.map( t =&gt; t._2)
+  .filter { status =&gt;
+    Option(status.getUser).flatMap[String] {
+      u =&gt; Option(u.getLang)
+    }.getOrElse("").startsWith("en") &amp;&amp; CharMatcher.ASCII.matchesAllOf(status.getText) &amp;&amp; ( keys.isEmpty || keys.exists{status.getText.contains(_)})
+  }</pre> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/streaming-analytics-1.png" alt="StreamingAnalytic1"></p> 
+        <p>The next transformation invokes Watson Tone Analyzer for each tweet and combines the sentiment scores with the tweet data:</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">     val rowTweets = tweets.map(status=&gt; {
+      lazy val client = PooledHttp1Client()
+      val sentiment = ToneAnalyzer.computeSentiment( client, status, broadcastVar )
+      var scoreMap : Map[String, Double] = Map()
+      if ( sentiment != null ){
+        for ( tone &lt;- Option( sentiment.children ).getOrElse( Seq() ) ){
+          for ( result &lt;- Option( tone.children ).getOrElse( Seq() ) ){
+            scoreMap.put( result.id, (BigDecimal(result.normalized_score).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble) * 100.0 )
+          }
+        }
+      }
+
+      EnrichedTweet(
+          status.getUser.getName,
+          status.getCreatedAt.toString,
+          status.getUser.getLang,
+          status.getText,
+          Option(status.getGeoLocation).map{ _.getLatitude}.getOrElse(0.0),
+          Option(status.getGeoLocation).map{_.getLongitude}.getOrElse(0.0),
+          scoreMap
+      )
+    })</pre> 
+        <p>EnrichedTweet is a helper <a href="http://docs.scala-lang.org/tutorials/tour/case-classes.html" target="_blank">case class</a> that defines the combined data model, like Tweet + Sentiment scores</p> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2015/12/streaming-analytics-2.png" alt="StreamingAnalytics2"></p> 
+        <p>Now, extract the hashtags into a flat map of encoded values with the proper encoding.</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">    val metricsStream = rowTweets.flatMap { eTweet =&gt; {
+     val retList = ListBuffer[String]()
+     for ( tag &lt;- eTweet.text.split("\s+") ){
+       if ( tag.startsWith( "#") &amp;&amp; tag.length &gt; 1 ){
+           for ( tone &lt;- Option( eTweet.sentimentScores.keys ).getOrElse( Seq() ) ){
+               retList += (tag + delimTagTone + tone + delimToneScore + eTweet.sentimentScores.getOrElse( tone, 0.0))
+           }
+       }
+     }
+     retList.toList
+   }}</pre> 
+        <p>The app extracts each hastag from the tweets and encodes as tag-tone-sentiment value.<br> <img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-3.png" alt="StreamingAnalytics3"></p> 
+        <p>The next transformations are focused on preparing the data for the visualizations:</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">     .map { fullTag =&gt; {
+       val split = fullTag.split(delimToneScore);
+       (split(0), split(1).toFloat)
+    }}</pre> 
+        <p>This transformation uses the map function to transform the tag-tone-sentiment value into a (tag-tone,sentiment) pair</p> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-4.png" alt="StreamingAnalytic4"></p> 
+        <p>Now we can compute the average sentiment score for each tag-tone pair. To do that, we use the combineByKey method which lets us combine the elements using custom functions. In this case, we want to compute the total sum and count for each tag-tone pair.</p> 
+        <p>combineByKey is a higher order function that takes 3 functions:</p> 
+        <ol> 
+         <li><strong>createCombiner</strong> creates an initial Value when a key is first encountered </li> 
+         <li><strong>mergeValue</strong> is invoked when a value has already been created for the key to process (merge) the new value to the existing one.</li> 
+         <li><strong>mergeCombiner</strong> merges together values created on different partitions</li> 
+        </ol> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">     .combineByKey(
+       (x:Float) =&gt; (x,1),  //CreateCombiner creates list of tuples (sum, count)
+       (x:(Float,Int), y:Float) =&gt; (x._1 + y, x._2+1), //mergeValue
+       (x:(Float,Int),y:(Float,Int)) =&gt; (x._1 + y._1, x._2 + y._2), //mergeCombiner
+       new HashPartitioner(sc.defaultParallelism)
+    )</pre> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-5.png" alt="StreamingAnalytics5"></p> 
+        <p>The next transformation maps the output of the previous transformation which is (tag-tone, (sum,count)) pair into (tag, List(sentimentLabel, average)). Notice that we wrap the (sentimentLabel, average) tuple into a List. This prepares for the next transformation which reduces all the keys into a (tag, List( (sentimentLabel, average) )</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">     .map[(String,(Long/*count*/, List[(String, Double)]))]{ t =&gt; {
+     val key = t._1;
+     val ab = t._2;
+     val split = key.split(delimTagTone)
+     (split(0), (ab._2, List((split(1), BigDecimal(ab._1/ab._2).setScale(2, BigDecimal.RoundingMode.HALF_UP).toDouble ))))
+   }}</pre> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-61.png" alt="StreamingAnalytics6"></p> 
+        <p>The next transformation reduces the map by Key and aggregates all the associated values (tone,average_score) into a list of tuples. Using the mapValues transformation, we call the unzip function to separate the list of tones from their respective scores (to make it easier to write code that will create the chart). We end up with a DStream of (Tag, (count, List of Tones, List of average scores)) pairs.</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">    .reduceByKey(
+        (t,u) =&gt; (t._1+u._1, (t._2 ::: u._2)
+            .sortWith( (l,r) =&gt; l._1.compareTo( r._1 ) &lt; 0 ))
+    )
+    .mapValues( (item:(Long, List[(String,Double)])) =&gt; {
+     val unzip = item._2.unzip
+     (item._1/(item._2.size), unzip._1, unzip._2)
+   })</pre> 
+        <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/streaming-analytics-7.png" alt="StreamingAnalytics7"></p> 
+        <p>For the last transformation, we need to maintain state within the DStream so that the next micro-batch can include the metrics calculated before. For that, we call updateStateByKey which maintains arbitrary state data for each key of the DStream. This function applies only to (key,value) pair DStream, which is what we’ve got here.<br> The following code calls the closure for each key, passing the previous value to be merged.</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">    .updateStateByKey( (a:scala.collection.Seq[(Long, List[String], List[Double])], b: Option[(Long, List[String], List[Double])]) =&gt; {
+        val safeB = b.getOrElse( (0L, List(), List() ) )
+        var listTones = safeB._2
+        var listScores = safeB._3
+        var count = safeB._1
+        for( item &lt;- a ){
+        count += item._1
+        listScores = listScores.zipAll( item._3, 0.0, 0.0).map{ case(a,b)=&gt;(a+b)/2 }.toList
+        listTones = item._2
+        }
+
+        Some( (count, listTones, listScores) )
+   })</pre> 
+        <h3 id="toc_15">Publish the Results to MessageHub/Kafka</h3> 
+        <p>We successively apply (chain) the set of transformations described in the previous section to produce the metricsStream DStream. Transformations are lazy, which means that they execute only when an action is called, like collecting output from the DStream.</p> 
+        <p>In the following code, we collect the first 5 records (knowing that they’re already sorted correctly) and publish them as JSON format to Message Hub:</p> 
+        <pre class="brush: scala; light: true; title: ; notranslate" title="">    metricsStream.foreachRDD( rdd =&gt;{
+     val topHashTags = rdd.sortBy( f =&gt; f._2._1, false ).take(5)
+     if ( !topHashTags.isEmpty){
+       queue.synchronized{
+         queue += (("topHashTags", TweetsMetricJsonSerializer.serialize(topHashTags.map( f =&gt; (f._1, f._2._1 )))))
+         queue += (("topHashTags.toneScores", ToneScoreJsonSerializer.serialize(topHashTags)))
+           try{
+             queue.notify
+           }catch{
+             case e:Throwable=&gt;logError(e.getMessage, e)
+           }
+       }
+     }
+   })
+  }</pre> 
+        <p>Notice that we don’t directly call the kafka api to send the event. This is because the Spark framework requires the transformation closure (anonymous function passed as arguments to high-order functions), and unfortunately some of the needed kafka classes (like org.apache.kafka.clients.producer.ProducerRecord) are not serializable. To work around this issue, we post the JSON record in an asynchronous queue and have a separate Thread publish them to Message Hub asynchronously. The Thread is created only on the driver machine, but this is OK because the closure passed to the foreachRDD method executes only in the driver machine.</p> 
+        <h2 id="toc_16">Real-time Dashboard Node.js Web Application</h2> 
+        <p>Now that we have completed the streaming analytics, the next step is to display the results in a dashboard that updates continuously.</p> 
+        <p><em><strong>Tip:</strong> To follow this discussion, see the code in this Node.js app’s <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard" target="_blank">GitHub repository</a>. Also be sure to deploy your own copy.</em></p> 
+        <h3>Deploy the App</h3> 
+        <p>The fastest way to deploy this app to Bluemix, is to click the <strong>Deploy to Bluemix</strong> button.</p> 
+        <p><a href="https://bluemix.net/deploy?repository=https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard" target="_blank"><img src="https://deployment-tracker.mybluemix.net/stats/1cf78b25577e3e58e5c33589753beae8/button.svg"></a></p> 
+        <p>If you’d rather deploy manually, refer to the <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/README.md" target="_blank">readme</a>.</p> 
+        <h3>Enter Message Hub Credentials in Notebook</h3> 
+        <ol> 
+         <li>In bluemix, go to the dashboard.</li> 
+         <li>Click your new <strong>Twitter-Spark-Watson-Dashboard</strong> app to open it.</li> 
+         <li>In the menu on the left, click <strong>Environment Variables</strong>. <p>You see the following json.</p> <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+{
+   "messagehub": [
+      {
+         "name": "messagehub-spark",
+         "label": "messagehub",
+         "plan": "standard",
+         "credentials": {
+            "api_key": "XXXX",
+            "kafka_admin_url": "https://kafka-admin-prod01.messagehub.services.us-south.bluemix.net:443",
+            "kafka_rest_url": "https://kafka-rest-prod01.messagehub.services.us-south.bluemix.net:443",
+            "kafka_brokers_sasl": [
+               "kafka01-prod01.messagehub.services.us-south.bluemix.net:9093",
+               "kafka02-prod01.messagehub.services.us-south.bluemix.net:9093",
+               "kafka03-prod01.messagehub.services.us-south.bluemix.net:9093",
+               "kafka04-prod01.messagehub.services.us-south.bluemix.net:9093",
+               "kafka05-prod01.messagehub.services.us-south.bluemix.net:9093"
+            ],
+            "user": "XXXX",
+            "password": "XXXX"
+         }
+      }
+   ]
+}
+</pre> </li> 
+         <li>Copy and paste the 3 Message Hub credentials (<code>api_key</code>, <code>user</code>, and <code>password</code>), replacing the XXX’s in your Scala notebook’s <code>//Message Hub/Kafka service</code> section. </li> 
+         <li>Again, leave this notebook open. You’ll return here to run some code in a minute.</li> 
+        </ol> 
+        <h3 id="toc_17">Mozaik Dashboard Framework</h3> 
+        <p>To build this dashboard, we chose the <a href="https://github.com/plouc/mozaik" target="_blank">Mozaik</a> framework because it provides an easy-to-use widget framework based on <a href="https://facebook.github.io/react/" target="_blank">ReactJS</a> components. It also provides automated calling of api endpoints via WebSockets. Mozaik actually supports multiple dashboards. If more than one is defined, then the framework automatically rotates between them according to a customizable rotation duration. In this sample app, we define only one dashboard that contains 2 widgets:</p> 
+        <ol> 
+         <li>Pie chart showing the top 5 hashtags by number of occurences.</li> 
+         <li>Multi-series bar charts showing the average of all tone scores for tweets containing the top 5 hashtags</li> 
+        </ol> 
+        <h3 id="toc_18">Defining the layout declaratively</h3> 
+        <p>With Mozaik, the layout of each dashboard is conveniently defined declaratively in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/config.js" target="_blank">config.js</a> using a json syntax:</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">    ...
+    dashboards: [
+        {
+            columns: 5,
+            rows: 100,
+            widgets: [
+                {
+                    type: 'sparkTwitter.top_hash_tags',
+                    columns: 3, rows: 45,
+                    x: 1, y: 4
+                },
+                {
+                    type: 'sparkTwitter.tone_breakdown',
+                    columns: 3, rows: 45,
+                    x: 1, y: 51
+                }
+            ]
+        }
+    ]</pre> 
+        <p>The <code>dashboards</code> field is an array of JSON objects that each define a dashboard layout. The <code>columns</code> and <code>rows</code> fields represent the number of columns and rows in the tabular layout. The <code>widgets</code> field contains an array of JSON objects that describe a rectangular area. Each of these objects contains the following information:</p> 
+        <ul> 
+         <li> <code>columns</code> number of columns taken by the area</li> 
+         <li> <code>rows</code> number of rows taken by the area</li> 
+         <li> <code>x</code> 1-based index indicating the start x-position of the area</li> 
+         <li> <code>y</code> 1-based index indicating the start y-position of the area</li> 
+         <li> <code>type</code> an id that identifies the widget being rendered in the specified area.</li> 
+        </ul> 
+        <p>The <code>type</code> consists of 2 parts: the extensions id and the widget id.</p> 
+        <p>You’ll find the extension id definition in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/server/dashboard/App.jsx" target="_blank">App.jsx</a>:</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">...
+var extensions = {
+    sparkTwitter: sparkTwitterComponents
+};
+...</pre> 
+        <p>In turn, the widget type definition is in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/server/dashboard/mozaik-ext-sparkTwitterComponents.js" target="_blank">mozaik-ext-sparkTwitterComponents.js</a>.</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">module.exports = {
+    topHashTags: require('./sparkTwitterTopHashTags.jsx'),
+    toneBreakdown: require('./sparkTwitterToneBreakdown.jsx')
+};</pre> 
+        <p><em><strong>Note:</strong> We declare the id using camel case format in the Node.js module. But in config.js, we need to use snake case format (<code>topHashTags</code> becomes <code>top_hash_tags</code>)</em></p> 
+        <p>As you see, the widget implementation is in the module referenced by the require statement. For example, the <code>topHashTags</code> widget is implemented in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/server/dashboard/sparkTwitterTopHashTags.jsx" target="_blank">sparkTwitterTopHashTags.jsx</a>. We’ll discuss the lifecycle of these widgets in a minute. For now, please take some time to look over these different files and to consult the documentation for the different frameworks used, like ReactJS and C3/D3.</p> 
+        <h3 id="toc_19">Access Message Hub Events Using message-hub-rest Node Module</h3> 
+        <p>The dashboard uses API endpoints to get regular data updates. In turn, these API endpoints get updates by subscribing to Message Hub using the <a href="http://www.confluent.io/blog/a-comprehensive-open-source-rest-proxy-for-kafka/" target="_blank">Kafka Rest Proxy apis</a>. For convenience, this app uses the<a href="https://github.com/ibm-messaging/message-hub-rest" target="_blank"> message-hub-rest</a> module which provides high-level APIs to create a new consumer instance and publish/subscribe events to/from this instance.</p> 
+        <p>The following code (available in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/server/messageHubBridge.js" target="_blank">messageHubBridge.js</a>) shows how to create a new instance by reading the credentials from the VCAP_SERVICES. We first grab the VCAP_SERVICES data that contains the credentials for the Message Hub Service. We then use them to create a new MessageHub object, which provides the interface to communicate with Message Hub. In this sample app, we subscribe to 2 topics: topHashTags and topHashTags.toneScores. Note that Message Hub doesn’t auto-create them, so to avoid an error, we call createTopicIfNecessary first, to make sure they exist.</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">    var consumerInstanceName = "spark_twitter_consumer_instance";
+    var topics = ["topHashTags", "topHashTags.toneScores"];
+
+    ...
+
+    var services = process.env.VCAP_SERVICES || configManager.get("DEV_VCAP_CONFIG");
+    var instance = new MessageHub(services);
+    instance.topics.get()
+        .then( function(response){
+            console.log("List of topics: ", response);
+
+            //Change in MessageHub on 11/2/2015: topics are not autocreated anymore         var createTopicIfNecessary = function( topic ){
+                if ( !_.find( response, function( t ){ return t === topic || (t.hasOwnProperty("name") &amp;&amp; t.name === topic) })){
+                    instance.topics.create(topic)
+                    .then(function(res){
+                        console.log("Successfully created topic " + topic);
+                    })
+                    .fail( function(error){
+                        console.log("Unable to create topic "+topic, error);
+                    })
+                }
+            }
+
+            _.forEach( topics, function(topic){
+                createTopicIfNecessary(topic);
+            })
+            ...
+        })
+        .fail( function(error){
+            console.log("Failed to get list of topics: " + error);
+        });</pre> 
+        <p>We then call the consumeTopic routine that periodically polls the Message Hub server to get new data:</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">//Helper that consumer a topic from MessageHub
+    var consumeTopic = function( topic ){
+        console.log("Create MessageHub consumer for topic: " + topic );
+        instance.consume('consumer_' + topic, consumerInstanceName, { 'auto.offset.reset': 'largest' })
+            .then( function( response ){
+                var consumerInstance = response[0];
+                var inProgress = false;
+                //Set the interval for messages consuming
+                setInterval( function(){
+                    if ( inProgress ){
+                        return;
+                    }
+                    inProgress = true;
+                    consumerInstance.get(topic)
+                        .then(function(data) {
+                            inProgress = false;
+                            if ( _.isArray(data) ){
+                                if ( data.length &gt; 0 ){
+                                    //Take only the last value
+                                    try{
+                                        messagesByTopics[topic] = JSON.parse( data[data.length - 1] );
+                                    }catch(e){
+                                        console.log("Unable to parse Message Hub data", e, data[data.length-1]);
+                                    }
+                                }
+                            }else{
+                                messagesByTopics[topic] = data;
+                            }
+                        })
+                        .fail(function(error) {
+                            inProgress = false;
+                            console.log("Unable to consume topic: " + topic, error);
+                        });
+                }, 4000);
+            })
+            .fail( function(error){
+                console.log("Unable to get consumer instance for topic: " + topic, error);
+            })
+    };
+</pre> 
+        <p>The data received from Kafka Topics is stored in the <code>messagesByTopics</code> variable to be read later by the API endpoint when the dashboard sends a new request over WebSocket channel. The APIs endpoint implementation is located in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/server/dashboard/sparkTwitterApiClient.js" target="_blank">sparkTwitterApiClient.js</a>. Each API is declared as a field to the main object and must return a Promise object that returns the selected topic data from the MessageHubBridge. The <code>runInterval</code> field indicates how often the data refreshes from the browser.</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">    var client = function (mozaik) {
+        return {
+            runInterval: 2000,
+            getTopHashTags: function(params) {
+                return new Promise( function( resolve, reject){
+                        resolve();
+                    })
+                    .then(function (res) {
+                        console.log("Calling Api with params: ", params);
+                        return messageHubBridge.getTopicMessage(params.topic);
+                    });
+            },
+            getToneBreakdown:function(params) {
+                return new Promise( function( resolve, reject){
+                        resolve();
+                    })
+                    .then(function (res) {
+                        console.log("Calling Api with params: ", params);
+                        return messageHubBridge.getTopicMessage(params.topic);
+                    });
+            }
+        };
+    };</pre> 
+        <p>That’s it! The framework automatically sets the WebSocket connection and periodically calls the api to get new data. Next, you see how widgets consume the data to refresh the charts.</p> 
+        <h3 id="toc_20">Visualize the results</h3> 
+        <p>As mentioned, each widget is implemented as a ReactJS Component, which provides a set of lifecycle events. Some that we used in our app are:</p> 
+        <ul> 
+         <li> <strong>getInitialState</strong> initializes the widget state before the component is mounted.</li> 
+         <li> <strong>getApiRequest</strong> specifies the API id configured in the main App.jsx module.</li> 
+         <li> <strong>onApiData</strong> runs when the Mozaik framework gets new data from the WebSocket channel.</li> 
+         <li> <strong>componentDidMount</strong> is invoked immediately after the widget renders. This is where the widget content is dynamically created. For example, the WinsOverTime widget creates the c3 chart.</li> 
+         <li> <strong>componentDidUpdate</strong> is invoked when the new data has been received so that the widget can be refreshed accordingly.</li> 
+         <li><strong>componentWillUnmount</strong> is invoked when the component is about to be destroyed, so the widget can clean up any associated resources.</li> 
+         <li> <strong>render</strong> returns the html fragment that will contain the widget. </li> 
+        </ul> 
+        <p>You read how the data updates by consuming topics from Message Hub. Once new data comes in, the Mozaik framework automatically calls onApiData. The widget component then updates the state with a call to the <code>setState</code> method which in turn, triggers a refresh of the charts. For example, in <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard/blob/master/server/dashboard/sparkTwitterToneBreakdown.jsx" target="_blank">sparkTwitterToneBreakdown.jsx</a>:</p> 
+        <pre class="brush: jscript; light: true; title: ; notranslate" title="">    ...
+    onApiData(metrics) {
+        this.setState({"colData":metrics});
+    }
+
+    componentDidUpdate() {
+        if ( this.state.colData.length &gt; 0 ){
+            this.chart.load(this.getChartData());
+            this.onResize();
+        }
+    }
+    ...</pre> 
+        <p>The C3 framework creates the chart object and provides a high-level programming model that is much easier to use than manipulating d3 apis directly.</p> 
+        <h2 id="toc_22">Running the application from a Scala Notebook</h2> 
+        <p>Here’s how to quickly run the app from the Scala Notebook, you copied in the first section:</p> 
+        <ol> 
+         <li>Confirm you’ve filled in all credentials. (You shouldn’t see an more XXXX entries.)</li> 
+         <li>In the Scala notebook, run code cells 1-2 to load the jar and connect to services.</li> 
+         <li>If Message Connect isn’t working for you, enter your Twitter credentials in cell 3, and run it. This code will fill in for Message Connect to gather tweets.</li> 
+         <li>Run cell 4 to kick off Spark Streaming.<br> You’ll see results streaming into your notebook. Let it run.<br> <img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/01/Running-Spark-Streaming.png" alt="Spark Streaming running"></li> 
+         <li>Launch the dashboard app.<br> In a separate browser tab or window, to go your Bluemix dashboard and launch your <strong>Twitter-Spark-Watson-Dashboard</strong> app by opening its URL.<p></p> <p>You see the chart updating every few seconds:</p> <p><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/02/Running-Spark-Dashboard.png" alt="Running Realtime dashboard"></p> </li> 
+        </ol> 
+        <h2 id="toc_23">Conclusion</h2> 
+        <p>Now you know how to use IBM Analytics for Apache Spark in combination with Message Hub and Message Connect to deliver real-time streaming analytics. You’ve even got a <strong><em>live</em></strong> dashboard web app featuring charts and graphics that update continously, so your corner-office decision-makers can see trends as they happen.</p> 
+        <p>Feel free to <a href="https://github.com/ibm-cds-labs/Spark-Twitter-Watson-Dashboard" target="_blank">fork and enhance this code</a>. Some suggestions:</p> 
+        <ul> 
+         <li>select hashtags you want to monitor </li> 
+         <li>set alerts based on emotion thresholds </li> 
+         <li>display select tweets</li> 
+        </ul> 
+        <p>The possibilities are endless. IBM Bluemix has an unparalleled selection of services (data, cognitive, mobile, etc.) that you can use to build the next killer feature. When you do, don’t forget to let us know about it!</p> 
+        <p></p> 
+       </div> 
+      </article> 
+      <aside class="post-aside"> 
+       <ul> 
+        <li class="blog-category"><a href="#">Analytics</a></li> 
+        <li class="blog-category"><a href="#">Community</a></li> 
+        <li class="blog-category"><a href="#">Message Hub</a></li> 
+        <li class="blog-category"><a href="#">Spark</a></li> 
+       </ul> 
+      </aside> 
+     </div> 
+     <div id="comments" class="pn-post-comments"> 
+      <div id="respond"> 
+       <div id="disqus_thread"></div> 
+       <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: * * */
+    var disqus_shortname = 'ibmclouddataservicesdevelopercenter';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+       <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <footer class="footer" role="contentinfo" itemscope itemtype="http://schema.org/WPFooter"> 
+    <div id="inner-footer" class="wrap cf"> 
+     <div class="footer-github"> 
+      <h1 class="resource-logo"> <a target="_blank" href="https://github.com/ibm-cds-labs"><img class="github-logo" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/github-logo-lt.png" alt="Github"></a> </h1> 
+      <h2>Recent Updates</h2> 
+      <ul> 
+      </ul> 
+     </div> 
+     <ul class="footer-blog"> 
+      <li class="resource">Blog</li> 
+      <li>Recent Post</li> 
+      <li><a href="https://developer.ibm.com/clouddataservices/2017/02/24/moving-to-medium/">Moving to Medium</a></li> 
+      <li>2/24/17</li> 
+      <li class="snippet"> We're now the IBM Watson Data Lab on Medium. More on what that means for… </li> 
+      <li class="snippet"> <span class="avatar"><img alt="" src="//www.ibm.com/developerworks/community/profiles/photo.do?userid=2700077V4E" srcset="//www.ibm.com/developerworks/community/profiles/photo.do?userid=2700077V4E" class="avatar avatar-96 photo" height="96" width="96"></span> <span class="name">Mike Broberg</span> </li> 
+     </ul> 
+    </div> 
+   </footer> 
+   <!-- This div is opened in header-devadv.php --> 
+  </div> 
+  <script>
+        jQuery(document).ready(function($){
+          var dcName = 'clouddataservices';
+          // $('a').each(function(){
+          //   if(this.href.match('bluemix.net')){
+          //     if(this.search){
+          //       this.href = this.href + '&cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+          //     }else{
+          //       this.href = this.href + '?cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+          //     }
+          //   }
+          // });
+
+          jQuery('a[href*="bluemix.net"]').each(function(){
+            if(this.search){
+              this.href = this.href + '&cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+            }else{
+              this.href = this.href + '?cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+            }
+          });
+
+        });
+      </script> 
+  <div style="display:none"> 
+   <div class="grofile-hash-map-378dc7b09fd6d34c51ecfa5889318786"> 
+   </div> 
+   <div class="grofile-hash-map-12aeaf1b54aec9892cd05cdb37f13d62"> 
+   </div> 
+  </div> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shCore.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushScala.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushBash.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushJScript.js"></script> 
+  <script type="text/javascript">
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "https://developer.ibm.com/clouddataservices/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "https://developer.ibm.com/clouddataservices/wp-content/plugins/syntaxhighlighter-rdarkcds/shthemecdsrdark.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '?';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
+	SyntaxHighlighter.defaults['class-name'] = 'cds-syntax';
+	SyntaxHighlighter.defaults['gutter'] = false;
+	SyntaxHighlighter.defaults['light'] = true;
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script> 
+  <script type="text/javascript" src="https://s0.wp.com/wp-content/js/devicepx-jetpack.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/page-links-to/js/new-tab.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/comment-reply.min.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/scripts.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/main.compiled.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/libs/slick.min.js"></script> 
+  <script type="text/javascript">
+if (typeof window._analytics === "undefined") {
+					              	window._analytics = {};
+					              }  
+					              window._analytics["segment_key"] = "HU3dbkAG5wE0F1IkRf9S1RexlAqo3jby";
+</script> 
+  <script type="text/javascript" src="//console.ng.bluemix.net/analytics/build/bluemix-analytics.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/wp-embed.min.js"></script> 
+  <script type="text/javascript" src="https://stats.wp.com/e-201740.js" async defer></script> 
+  <script type="text/javascript">
+	_stq = window._stq || [];
+	_stq.push([ 'view', {v:'ext',j:'1:4.9',blog:'94266152',post:'5036',tz:'-4',srv:'developer.ibm.com'} ]);
+	_stq.push([ 'clickTrackerInit', '94266152', '5036' ]);
+</script> 
+  <script>
+      digitalData = {
+          page: {
+              category: {
+                  primaryCategory: 'Replace'              //formerly IBM.WTMCategory meta tag
+              },
+              pageInfo: {
+                  effectiveDate: 'Replace',       //formerly IBM.Effective meta tag
+                  expiryDate: 'Replace',          //formerly IBM.Expires meta tag
+                  language: 'en-US',                  //formerly DC.Language meta tag
+                  publishDate: 'Replace',         //formerly DC.Date meta tag, same as dcterms.date
+                  publisher: 'Replace',       //formerly DC.Publisher meta tag
+                  version: 'v18',                     //version part of Source meta tag (e.g. v17)
+                  ibm: {
+                      contentDelivery: 'Replace', //"delivery" portion of Source meta tag
+                      contentProducer: 'Replace', //"authoring" portion of the Source meta tag
+                      country: 'US',                  //formerly IBM.Country meta tag, same as geo.country
+                      industry: 'ZZ',                 //formerly IBM.Industry meta tag
+                      owner: 'Corporate Webmaster/New York/IBM',  //formerly Owner meta tag
+                      subject: 'Replace',             //formerly DC.Subject meta tag
+                      type: 'Replace'                 //formerly DC.Type meta tag
+                  }
+              }
+          }
+      };
+      // Page-testing specific:
+  </script> 
+  <script src="//1.www.s81c.com/common/v18/js/www.js"></script> 
+  <script type="text/javascript">
+    IBMCore.common.util.config.set({
+      "masthead":{
+        "type":"alternate",
+        "sticky": {
+            "enabled": false
+        }
+      }
+    });
+  </script> 
+  <script type="text/javascript" src="https://ibm-cds-labs.github.io/dW/js/tracker.js" siteid="cds.devcenter" trackerurl="http://simple-logging-service-ms.mybluemix.net/tracker">
+  </script>   
+  <!-- end of site. what a ride! --> 
+ </body>
+</html>

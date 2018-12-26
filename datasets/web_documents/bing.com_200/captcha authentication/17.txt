@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>Spring Security Login Captcha integration - java</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <meta Name="keywords" Content="java - Spring Security Login Captcha integration java"> 
+  <meta Name="description" Content="java - Spring Security Login Captcha integration java"> 
+  <base href="http://java.wekeepcoding.com:80/"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <link href="css/style.css" type="text/css" rel="stylesheet"> 
+ </head> 
+ <body> 
+  <div id="page_wrapper"> 
+   <!--banner------------------------------------------------------> 
+   <div id="header_wrapper"> 
+    <div id="header"> 
+     <h1>Keep <font color="#FFDF8C">Coding</font></h1> 
+     <h2>java, maven, image, vim, multithreading.</h2> 
+    </div> 
+   </div> 
+   <!--banner------------------------------------------------------> 
+   <div style="height: 5px;"></div> 
+   <!--content-----------------------------------------------------> 
+   <div id="content">
+    <div id="contentbody"> 
+     <h3>java</h3> 
+     <div class="featurebox_center"> 
+     </div> 
+     <br> 
+     <h4>Spring Security Login Captcha integration</h4> 
+     <div style="margin-left:1px;margin-right:1px;margin-top:40px;float:left;"> 
+      <script type="text/javascript">
+    google_ad_client = "ca-pub-4875541507549899";
+    google_ad_slot = "2101133563";
+    google_ad_width = 300;
+    google_ad_height = 600;
+</script> 
+      <!-- crawl top 300 600 --> 
+      <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+     </div> 
+     <br> 
+     <div class="featurebox_center_content"> 
+      <pre style="white-space: pre-wrap;word-wrap: break-word;">I have integrated a Captcha plugin on Spring MVC Security. The problem is that even if i have a bad captcha but good credentials it will login but show me bad captcha.
+I think my problem is in the spring-security file:
+&lt;beans:beans xmlns="http://www.springframework.org/schema/security"
+xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+http://www.springframework.org/schema/security
+http://www.springframework.org/schema/security/spring-security-3.2.xsd"&gt;
+&lt;!-- enable use-expressions --&gt;
+&lt;http auto-config="true" use-expressions="true"&gt;
+&lt;intercept-url pattern="/admin**/**" access="hasRole('ROLE_ADMIN')" /&gt;
+&lt;intercept-url pattern="/jtabuleiros/play/*" access="authenticated" /&gt;
+&lt;intercept-url pattern="/details" access="hasRole('ROLE_CONCORRENTE')" /&gt;
+&lt;custom-filter ref="captchaCaptureFilter" before="FORM_LOGIN_FILTER"/&gt;
+&lt;custom-filter ref="captchaVerifierFilter" after="FORM_LOGIN_FILTER"/&gt;
+&lt;!-- access denied page --&gt;
+&lt;access-denied-handler error-page="/403" /&gt;
+&lt;form-login
+login-page="/login"
+default-target-url="/welcome"
+authentication-failure-url="/login?error"
+username-parameter="username"
+password-parameter="password" /&gt;
+&lt;logout logout-success-url="/login?logout" /&gt;
+&lt;!-- enable csrf protection --&gt;
+&lt;csrf /&gt;
+&lt;/http&gt;
+&lt;!-- &lt;authentication-manager&gt; --&gt;
+&lt;!-- &lt;authentication-provider user-service-ref="myUserDetailsService" &gt; --&gt;
+&lt;!-- &lt;password-encoder hash="bcrypt" /&gt; --&gt;
+&lt;!-- &lt;/authentication-provider&gt; --&gt;
+&lt;!-- &lt;/authentication-manager&gt; --&gt;
+&lt;beans:bean id="customUserDetailsService"
+class="com.setelog.spring.service.CustomUserDetailsService"&gt;
+&lt;beans:property name="usersByUsernameQuery" value="select * from users where username = ?"/&gt;
+&lt;beans:property name="authoritiesByUsernameQuery" value="select username, role from user_roles where username =?" /&gt;
+&lt;beans:property name="dataSource" ref="dataSource" /&gt;
+&lt;/beans:bean&gt;
+&lt;beans:bean id="userDetailsDao" class="com.setelog.spring.dao.UserDetailsDaoImpl" &gt;
+&lt;beans:property name="dataSource" ref="dataSource" /&gt;
+&lt;/beans:bean&gt;
+&lt;beans:bean id="encoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/&gt;
+&lt;beans:bean id="authenticationProvider"
+class="com.setelog.spring.handler.LimitLoginAuthenticationProvider"&gt;
+&lt;beans:property name="userDetailsService" ref="customUserDetailsService" /&gt;
+&lt;beans:property name="userDetailsDao" ref="userDetailsDao" /&gt;
+&lt;beans:property name="passwordEncoder" ref="encoder" /&gt;
+&lt;/beans:bean&gt;
+&lt;!-- For capturing CAPTCHA fields --&gt;
+&lt;beans:bean id="captchaCaptureFilter" class="com.setelog.spring.businessrules.CaptchaCaptureFilter" /&gt;
+&lt;!-- For verifying CAPTCHA fields --&gt;
+&lt;!-- Private key is assigned by the reCATPCHA service --&gt;
+&lt;beans:bean id="captchaVerifierFilter" class="com.setelog.spring.businessrules.CaptchaVerifierFilter"&gt;
+&lt;beans:property name="useProxy" value="false"/&gt;
+&lt;beans:property name="proxyPort" value=""/&gt;
+&lt;beans:property name="failureUrl" value="/login?error"/&gt;
+&lt;beans:property name="captchaCaptureFilter" ref="captchaCaptureFilter"/&gt;
+&lt;beans:property name="privateKey" value="6LeTVQcTAAAAAI_NiPSYXAix-OKYp4KcC0aQ5ce2"/&gt;
+&lt;/beans:bean&gt;
+&lt;authentication-manager&gt;
+&lt;authentication-provider ref="authenticationProvider" /&gt;
+&lt;/authentication-manager&gt;
+&lt;/beans:beans&gt;
+Any help suggestion is highly appreciated
+</pre> 
+     </div> 
+     <br> 
+     <div class="featurebox_center_content"> 
+      <pre style="white-space: pre-wrap;word-wrap: break-word;">
+I managed to solve my problem by redirecting to the logout page whenever the captcha is wrong. And my login page is also my logout.</pre> 
+     </div> 
+     <br> 
+     <div class="featurebox_center_content" style="padding:0px;padding-left:10px"> 
+      <script type="text/javascript">
+    google_ad_client = "ca-pub-4875541507549899";
+    google_ad_slot = "5054599966";
+    google_ad_width = 728;
+    google_ad_height = 90;
+</script> 
+      <!-- crawl bottom 728 90 --> 
+      <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+     </div> 
+     <!--content-----------------------------------------------------> 
+     <!--related-----------------------------------------------------> 
+     <div class="featurebox_center"> 
+      <a href="" onclick="window.history.go(-1)">Previous Page</a> | 
+      <a href="/category/1021/java" title="java"> java </a> | 
+      <a href="">HOME</a> 
+     </div> 
+     <br> 
+     <h3>Related Links</h3> 
+     <p> <a href="/article/12465882/Load+Rdf+file+in+streamer+CSparql" title="Load Rdf file in streamer CSparql"> Load Rdf file in streamer CSparql </a><br> <a href="/article/12465887/Getting+information+about+a+WiFi+network" title="Getting information about a WiFi network"> Getting information about a WiFi network </a><br> <a href="/article/12465906/Make+Asynctask+return+Cursor" title="Make Asynctask return Cursor"> Make Asynctask return Cursor </a><br> <a href="/article/12465908/jax2b+maven+plugin+simple+type" title="jax2b maven plugin simple type"> jax2b maven plugin simple type </a><br> <a href="/article/12465909/will+javax+validation+annotations+work+on+object+fields+which+is+in+list" title="will javax validation annotations work on object fields which is in list"> will javax validation annotations work on object fields which is in list </a><br> <a href="/article/12465937/How+to+properly+use+QueryDSL's+contains(Expression%3cE%3e)+method" title="How to properly use QueryDSL's contains(Expression<E>) method"> How to properly use QueryDSL's contains(Expression&lt;E&gt;) method </a><br> <a href="/article/12465959/FileChooser+and+Scanner" title="FileChooser and Scanner"> FileChooser and Scanner </a><br> <a href="/article/12465966/Pyro4%3a+how+to+cast+a+list+of+tuples+with+Pyrolite+in+Java%3f" title="Pyro4: how to cast a list of tuples with Pyrolite in Java?"> Pyro4: how to cast a list of tuples with Pyrolite in Java? </a><br> <a href="/article/12465970/Java+trim+character+and+whitespaces" title="Java trim character and whitespaces"> Java trim character and whitespaces </a><br> <a href="/article/12465984/Right+way+to+exclude+R.java+from+javadoc+using+gradle" title="Right way to exclude R.java from javadoc using gradle"> Right way to exclude R.java from javadoc using gradle </a><br> <a href="/article/12465985/JSP+c%3aimport+parameter+in+code+scope" title="JSP c:import parameter in code scope"> JSP c:import parameter in code scope </a><br> <a href="/article/12465994/How+to+add+lists+to+SelectBox+in+libgdx" title="How to add lists to SelectBox in libgdx"> How to add lists to SelectBox in libgdx </a><br> <a href="/article/12466033/Why+the+items+I+add+to+my+ObservableList+are+only+accessible+from+the+function+they+are+declared" title="Why the items I add to my ObservableList are only accessible from the function they are declared"> Why the items I add to my ObservableList are only accessible from the function they are declared </a><br> <a href="/article/12466062/How+do+i+show+different+JFrame+for+employee+or+manager+depending+on+the+login+information" title="How do i show different JFrame for employee or manager depending on the login information"> How do i show different JFrame for employee or manager depending on the login information </a><br> <a href="/article/12466083/Quartz+Job+%23ExecuteInJTATransaction+-+failed+to+get+UserTransaction+in+wildfly+10" title="Quartz Job #ExecuteInJTATransaction - failed to get UserTransaction in wildfly 10"> Quartz Job #ExecuteInJTATransaction - failed to get UserTransaction in wildfly 10 </a><br> <a href="/article/12466108/Hosting+HTTPS+server+inside+OSGi" title="Hosting HTTPS server inside OSGi"> Hosting HTTPS server inside OSGi </a><br> </p> 
+    </div>
+   </div> 
+   <!--related-----------------------------------------------------> 
+   <!--left------------------------------------------------------> 
+   <div id="left_side"> 
+    <h3>Categories</h3> 
+    <p> <a href="/category/0/HOME" title="HOME">HOME</a><br><a href="/category/1307/gitlab" title="gitlab">gitlab</a><br><a href="/category/1609/oracle11g" title="oracle11g">oracle11g</a><br><a href="/category/1969/react-virtualized" title="react-virtualized">react-virtualized</a><br><a href="/category/2157/platform-builder" title="platform-builder">platform-builder</a><br><a href="/category/2227/objectgears" title="objectgears">objectgears</a><br><a href="/category/2369/xmpp" title="xmpp">xmpp</a><br><a href="/category/2409/routes" title="routes">routes</a><br><a href="/category/2507/at-command" title="at-command">at-command</a><br><a href="/category/2669/yarn" title="yarn">yarn</a><br><a href="/category/3177/ojdbc" title="ojdbc">ojdbc</a><br><a href="/category/3209/ezpublish" title="ezpublish">ezpublish</a><br><a href="/category/3569/android-youtube-api" title="android-youtube-api">android-youtube-api</a><br><a href="/category/3771/primary-key" title="primary-key">primary-key</a><br><a href="/category/4319/google-apps-marketplace" title="google-apps-marketplace">google-apps-marketplace</a><br><a href="/category/4609/hex-editors" title="hex-editors">hex-editors</a><br><a href="/category/4909/lombok" title="lombok">lombok</a><br><a href="/category/5277/propel" title="propel">propel</a><br><a href="/category/5521/contextmenu" title="contextmenu">contextmenu</a><br><a href="/category/5709/introduction" title="introduction">introduction</a><br><a href="/category/5721/emulator" title="emulator">emulator</a><br><a href="/category/5769/predix" title="predix">predix</a><br><a href="/category/6007/scriptcs" title="scriptcs">scriptcs</a><br><a href="/category/6019/jasonette" title="jasonette">jasonette</a><br><a href="/category/6171/facebook-instant-articles" title="facebook-instant-articles">facebook-instant-articles</a><br><a href="/category/6359/kudan" title="kudan">kudan</a><br><a href="/category/6457/captiveportal" title="captiveportal">captiveportal</a><br><a href="/category/6577/dxf" title="dxf">dxf</a><br><a href="/category/6809/tdd" title="tdd">tdd</a><br><a href="/category/7059/user-interaction" title="user-interaction">user-interaction</a><br><a href="/category/7509/wtx" title="wtx">wtx</a><br><a href="/category/7569/large-file-upload" title="large-file-upload">large-file-upload</a><br><a href="/category/7577/jaxb2" title="jaxb2">jaxb2</a><br><a href="/category/8027/stormpath" title="stormpath">stormpath</a><br><a href="/category/8071/junit5" title="junit5">junit5</a><br><a href="/category/8209/twilio-api" title="twilio-api">twilio-api</a><br><a href="/category/8477/column-family" title="column-family">column-family</a><br><a href="/category/8609/framemaker" title="framemaker">framemaker</a><br><a href="/category/8727/subset-sum" title="subset-sum">subset-sum</a><br><a href="/category/8959/mapbox-gl" title="mapbox-gl">mapbox-gl</a><br><a href="/category/8977/force-layout" title="force-layout">force-layout</a><br><a href="/category/9007/mpmediaquery" title="mpmediaquery">mpmediaquery</a><br><a href="/category/9227/io-redirection" title="io-redirection">io-redirection</a><br><a href="/category/9307/main" title="main">main</a><br><a href="/category/9457/web-mining" title="web-mining">web-mining</a><br><a href="/category/9509/hot-module-replacement" title="hot-module-replacement">hot-module-replacement</a><br><a href="/category/9527/swift3.0.2" title="swift3.0.2">swift3.0.2</a><br><a href="/category/10377/grid.mvc" title="grid.mvc">grid.mvc</a><br><a href="/category/10507/jvm-languages" title="jvm-languages">jvm-languages</a><br><a href="/category/10659/arena-simulation" title="arena-simulation">arena-simulation</a><br><a href="/category/10707/turbogears" title="turbogears">turbogears</a><br><a href="/category/10757/outlook-api" title="outlook-api">outlook-api</a><br><a href="/category/11177/avconv" title="avconv">avconv</a><br><a href="/category/11321/azure-application-gateway" title="azure-application-gateway">azure-application-gateway</a><br><a href="/category/11421/komodoedit" title="komodoedit">komodoedit</a><br><a href="/category/11471/pango" title="pango">pango</a><br><a href="/category/11659/pnotify" title="pnotify">pnotify</a><br><a href="/category/12027/nstextview" title="nstextview">nstextview</a><br><a href="/category/12107/darcs" title="darcs">darcs</a><br><a href="/category/12219/kbuild" title="kbuild">kbuild</a><br><a href="/category/12459/windows-iot-core-10" title="windows-iot-core-10">windows-iot-core-10</a><br><a href="/category/12557/python-cryptography" title="python-cryptography">python-cryptography</a><br><a href="/category/13057/pycaffe" title="pycaffe">pycaffe</a><br><a href="/category/13077/objective-c-swift-bridge" title="objective-c-swift-bridge">objective-c-swift-bridge</a><br><a href="/category/13527/slicknav" title="slicknav">slicknav</a><br><a href="/category/13759/asp.net-4.5" title="asp.net-4.5">asp.net-4.5</a><br><a href="/category/13819/google-web-starter-kit" title="google-web-starter-kit">google-web-starter-kit</a><br><a href="/category/14319/ready-api" title="ready-api">ready-api</a><br><a href="/category/14459/dlna" title="dlna">dlna</a><br><a href="/category/14521/dataview" title="dataview">dataview</a><br><a href="/category/14619/design-by-contract" title="design-by-contract">design-by-contract</a><br><a href="/category/14871/ford-fulkerson" title="ford-fulkerson">ford-fulkerson</a><br><a href="/category/15169/cartesian-product" title="cartesian-product">cartesian-product</a><br><a href="/category/15269/thredds" title="thredds">thredds</a><br><a href="/category/15277/collapse" title="collapse">collapse</a><br><a href="/category/15359/jmeter-maven-plugin" title="jmeter-maven-plugin">jmeter-maven-plugin</a><br><a href="/category/16069/fluid-dynamics" title="fluid-dynamics">fluid-dynamics</a><br><a href="/category/16321/dereference" title="dereference">dereference</a><br><a href="/category/16707/clicktag" title="clicktag">clicktag</a><br><a href="/category/17021/fpml" title="fpml">fpml</a><br><a href="/category/17477/article" title="article">article</a><br><a href="/category/17709/expected-exception" title="expected-exception">expected-exception</a><br><a href="/category/17721/system.net.webexception" title="system.net.webexception">system.net.webexception</a><br><a href="/category/17977/concurrent-collections" title="concurrent-collections">concurrent-collections</a><br><a href="/category/18269/gnu-smalltalk" title="gnu-smalltalk">gnu-smalltalk</a><br><a href="/category/19021/random-seed" title="random-seed">random-seed</a><br><a href="/category/19221/flashvars" title="flashvars">flashvars</a><br><a href="/category/19227/smtp-auth" title="smtp-auth">smtp-auth</a><br><a href="/category/19259/http-unit" title="http-unit">http-unit</a><br><a href="/category/19271/ocunit" title="ocunit">ocunit</a><br><a href="/category/19457/e4x" title="e4x">e4x</a><br><a href="/category/19507/mhtml" title="mhtml">mhtml</a><br><a href="/category/20159/enter" title="enter">enter</a><br><a href="/category/20171/reddot" title="reddot">reddot</a><br><a href="/category/20719/genshi" title="genshi">genshi</a><br><a href="/category/20757/coercion" title="coercion">coercion</a><br><a href="/category/20909/javax.script" title="javax.script">javax.script</a><br><a href="/category/20927/appender" title="appender">appender</a><br><a href="/category/20971/recent-documents" title="recent-documents">recent-documents</a><br><a href="/category/21277/html-input" title="html-input">html-input</a><br><a href="/category/21427/zend-translate" title="zend-translate">zend-translate</a><br><a href="/category/21671/filtered-index" title="filtered-index">filtered-index</a><br><a href="/category/21977/audio-capture" title="audio-capture">audio-capture</a><br><a href="/category/22007/sef" title="sef">sef</a><br><a href="/category/22027/libs" title="libs">libs</a><br><a href="/category/22207/xetex" title="xetex">xetex</a><br><a href="/category/22257/yagni" title="yagni">yagni</a><br><a href="/category/22319/text-coloring" title="text-coloring">text-coloring</a><br><a href="/category/22459/private-members" title="private-members">private-members</a><br><a href="/category/22677/rtml" title="rtml">rtml</a><br><a href="/category/22707/lzh" title="lzh">lzh</a><br> </p> 
+   </div> 
+   <!--left------------------------------------------------------> 
+   <!--right------------------------------------------------------> 
+   <div id="right_side"> 
+    <br>
+    <br> 
+    <script type="text/javascript">
+    google_ad_client = "ca-pub-4875541507549899";
+    google_ad_slot = "8147667162";
+    google_ad_width = 160;
+    google_ad_height = 600;
+</script> 
+    <!-- crawl right 160 600 --> 
+    <script type="text/javascript" src="//pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+    <br>
+    <br> 
+    <a href="http://www.mobileapps-dev.com/" target="_blank">Mobile Apps Dev</a> 
+    <br> 
+    <a href="http://www.databaseusers.com/" target="_blank">Database Users</a> 
+    <br> 
+    <a href="http://javascript.wekeepcoding.com/" target="_blank">javascript</a> 
+    <br> 
+    <a href="http://java.wekeepcoding.com/" target="_blank">java</a> 
+    <br> 
+    <a href="http://csharp.wekeepcoding.com/" target="_blank">csharp</a> 
+    <br> 
+    <a href="http://php.wekeepcoding.com/" target="_blank">php</a> 
+    <br> 
+    <a href="http://android.wekeepcoding.com/" target="_blank">android</a> 
+    <br> 
+   </div> 
+   <!--right------------------------------------------------------> 
+   <!--footer-----------------------------------------------------> 
+   <div id="footer">
+     Copyright @ 2017 www.wekeepcoding.com , All Rights Reserved 
+   </div> 
+   <!--footer-----------------------------------------------------> 
+  </div>   
+ </body>
+</html>

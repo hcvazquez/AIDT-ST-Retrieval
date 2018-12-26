@@ -1,0 +1,2368 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" prefix="og: http://opengraphprotocol.org/schema/ fb: http://www.facebook.com/2010/fbml d: http://dictionary.com/2011/dml">
+ <head> 
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8"> 
+  <base href="http://www.dictionary.com/"> 
+  <title>Difference | Define Difference at Dictionary.com</title> 
+  <script type="text/javascript">
+    var cookiesManager = function (){
+        'use strict';
+
+        var persistentValues = [];
+
+        return {
+            getCookieValue : function(name) {
+                var value = null,
+                    cookies = document.cookie,
+                    searchedCookie = cookies.indexOf(" " + name + "=");
+
+                // it's worth to check, if cookie is not first cookie
+                if (searchedCookie === -1) {
+                    var checkFirstCookie = cookies.indexOf(name + "=");
+                    searchedCookie = checkFirstCookie == 0 ? 0 : -1;
+                }
+
+                if (searchedCookie > -1) {
+                    var startPositionOfValue = cookies.indexOf("=", searchedCookie) + 1,
+                        endPositionOfValue = cookies.indexOf(";", searchedCookie);
+
+                    if (endPositionOfValue === -1) {
+                        endPositionOfValue = searchedCookie.length;
+                    }
+
+                    value = cookies.substring(startPositionOfValue,endPositionOfValue);
+                }
+
+                return value;
+            },
+
+            setCookie: function(name, value, hours, domain) {
+                var expires = '',
+                    domain  = domain || UrlHelper.getCurrentDomain();
+
+                if(hours !== undefined) {
+                    var now     = new Date(),
+                        time    = now.getTime();
+
+                    time += (3600 * hours) * 1000;
+                    now.setTime(time);
+
+                    expires = ';expires=' + now.toGMTString();
+                }
+
+                document.cookie =
+                    name + '=' + value +
+                        expires +
+                        ';path=/' +
+                        ';domain=' + domain;
+            },
+
+            /*
+            * This method ensures, that everywhere on the page value of cookie will be the same.
+            * It's important in case of cookie, which value can change across the page.
+            */
+            getPersistentCookieValue: function(name) {
+                if (typeof persistentValues[name] === 'undefined') {
+                    persistentValues[name] = this.getCookieValue(name);
+                    // after reading value, cookie has to be removed
+                    this.setCookie(name, null, -1);
+                }
+
+                return persistentValues[name];
+            }
+        }
+    }();
+</script>
+  <script type="text/javascript">
+    /*jslint browser: true */
+
+    var UrlHelper = function() {
+        var COOKIE_DOMAIN_THESAURUS     = '.thesaurus.com';
+        var COOKIE_DOMAIN_DICTIONARY    = '.dictionary.com';
+        var COOKIE_DOMAIN_REFERENCE     = '.reference.com';
+
+        var domain = null;
+        var currentURL = null;
+        var spanidsUrl = null;
+
+        function getSpanidsUrl(bid, sid, currentDomain) {
+            var url     = 'http://';
+            var source  = '';
+
+            if(currentDomain == COOKIE_DOMAIN_DICTIONARY) {
+                url += 'spanids.reference.com/?';
+                source = 'd';
+            } else if (currentDomain == COOKIE_DOMAIN_REFERENCE){
+                url += 'spanids.dictionary.com/?';
+                source = 'r';
+            } else {
+                url += 'spanids.dictionary.com/?';
+                source = 't';
+            }
+
+            url += 'bid=' + bid + '&asid=' + sid + '&bidnew=1&asidnew=1&source=' + source + '&site=app';
+
+
+            return url;
+        }
+
+        function getCurrentDomain() {
+            var host = window.location.host;
+            var value = "";
+            if(host.indexOf(COOKIE_DOMAIN_THESAURUS) > -1) {
+                value = COOKIE_DOMAIN_THESAURUS;
+            } else if(host.indexOf(COOKIE_DOMAIN_DICTIONARY) > -1) {
+                value = COOKIE_DOMAIN_DICTIONARY;
+            } else if(host.indexOf(COOKIE_DOMAIN_REFERENCE) > -1){
+                value = COOKIE_DOMAIN_REFERENCE;
+            }
+
+            return value;
+        }
+
+        return {
+            getCurrentDomain : function() {
+                if(domain === null) {
+                    domain = getCurrentDomain();
+                }
+                return domain;
+            },
+
+            getCurrentDomainFromRequest : function() {
+                return window.location.host;
+            },
+
+            getCurrentUrl : function() {
+                if(currentURL === null) {
+                    currentURL = window.location.protocol + "//" + window.location.host + "" + window.location.pathname;
+                }
+                return currentURL;
+            },
+
+            getSpanidsUrl : function(bid, sid, domain) {
+                if(spanidsUrl === null) {
+                    spanidsUrl = getSpanidsUrl(bid, sid, domain);
+                }
+
+                return spanidsUrl;
+            }
+        }
+    }();
+</script>
+  <script type="text/javascript">
+    var BidSidGenerator = (function () {
+        'use strict';
+        var COOKIE_NAME_BID = 'bid',
+            COOKIE_NAME_SID = 'sid',
+            COOKIE_NAME_SPANIDS = 'spanids',
+            COOKIE_BID_EXPIRES = 17520, //two years
+            COOKIE_SID_EXPIRES = 0.5, //half an hour
+            bidCookieValue = null,
+            sidCookieValue = null,
+            bidCookieCreated = false,
+            sidCookieCreated = false,
+            spanIdsCookiePresent = false;
+
+        // generates value of bid/sid cookie
+        function generateCookieValue() {
+            var max = 999999,
+                min = 100000,
+                rand = Math.floor(Math.random() * (max - min)) + min,
+                time = new Date().getTime();
+
+            return rand + "-" + time;
+        }
+
+        // sets value of spanIdsCookiePresent attribute to true and delete spanids cookie,
+        // if cookie exist and have appropriate value
+        function processSpanIdsCookie() {
+            var spanIdsValue = cookiesManager.getCookieValue(COOKIE_NAME_SPANIDS);
+
+            if(spanIdsValue === '1') {
+                cookiesManager.setCookie(COOKIE_NAME_SPANIDS, 0, -1); //removes spanids cookie
+                spanIdsCookiePresent = true;
+            }
+
+            return false;
+        }
+
+        return {
+            init: function () {
+                bidCookieValue  = cookiesManager.getCookieValue(COOKIE_NAME_BID);
+                sidCookieValue  = cookiesManager.getCookieValue(COOKIE_NAME_SID);
+
+                if (bidCookieValue == null || bidCookieValue.length == 0) {
+                    bidCookieValue = generateCookieValue();
+                    cookiesManager.setCookie(COOKIE_NAME_BID, bidCookieValue, COOKIE_BID_EXPIRES);
+                    bidCookieCreated = true;
+                }
+
+                if (sidCookieValue == null || sidCookieValue.length == 0) {
+                    sidCookieValue = generateCookieValue();
+                    sidCookieCreated = true;
+                }
+
+                processSpanIdsCookie();
+                cookiesManager.setCookie(COOKIE_NAME_SID, sidCookieValue, COOKIE_SID_EXPIRES);
+            },
+            propagateCookies: function() {
+                if (bidCookieCreated || sidCookieCreated || spanIdsCookiePresent) {
+                    var url = UrlHelper.getSpanidsUrl(bidCookieValue, sidCookieValue, UrlHelper.getCurrentDomain()),
+                        iFrame = '<iframe id="spanids" style="width:1px;height:1px;margin-left:-1;position:absolute;border:none;" src="' + url + '"></iframe>';
+                    document.write(iFrame);
+                }
+            },
+            touchSidCookie: function () {
+                sidCookieValue  = cookiesManager.getCookieValue(COOKIE_NAME_SID);
+                if (sidCookieValue == null || sidCookieValue.length == 0) {
+                    sidCookieValue = generateCookieValue();
+                    sidCookieCreated = true;
+                }
+
+                cookiesManager.setCookie(COOKIE_NAME_SID, sidCookieValue, COOKIE_SID_EXPIRES);
+            },
+            isSidCookieCreated: function () {
+                return sidCookieCreated;
+            },
+            isSpanIdsCookiePresent: function () {
+                return spanIdsCookiePresent;
+            }
+        };
+    }());
+
+    BidSidGenerator.init();
+    BidSidGenerator.propagateCookies();
+</script> 
+  <script type="text/javascript">
+    /*
+    This partial is used only on DCOM SERP. It's responsible for read "searchOrgQuery" cookie, which is set during redirection
+    for Index Divorce project and only then. After read this cookie, cookie is deleted, but value is still accessible via SOQR api.
+     */
+    var DARCI = DARCI || {};
+
+    DARCI.OQR = (function(){
+        'use strict';
+
+        var COOKIE_NAME = 'OriginalQuery',
+            value = -1;
+
+        function setValue() {
+            value = cookiesManager.getCookieValue(COOKIE_NAME);
+
+            if (value !== null) {
+                value = decodeURIComponent(value);
+            }
+        }
+
+        function deleteCookie() {
+            cookiesManager.setCookie(COOKIE_NAME, null, -1);
+        }
+
+        function init() {
+            setValue();
+            deleteCookie();
+        }
+
+        return {
+            getValue: function() {
+                if (value === -1) {
+                    init();
+                }
+
+                return value;
+            }
+        }
+    })();
+</script>
+  <script>
+    var DARCI = DARCI || {},
+        u = "http://track.dictionary.com/main.gif?ev=ps&qr=%25%25QUERY%25%25&rf_qr=%25%25REFQUERY%25%25&pn=dic&st=dict&ab=&dc=desktop",
+        s = location.search.match(new RegExp('[\?\&]s=([^\&]*)(\&?)', 'i')),
+        ms = (typeof ms === 'undefined') ? cookiesManager.getCookieValue('mseg') || "" : ms,
+
+        /**
+         * Because this file is added only in case when CSL is enabled,
+         * we can be sure cookieManager will be available.
+         */
+        refQuery = cookiesManager.getPersistentCookieValue('ReferrerQuery'),
+        query, orgQuery;
+
+    DARCI.SearchBoxClickLinkId = '59wn52';
+
+            orgQuery = typeof DARCI.OQR !== 'undefined' ? DARCI.OQR.getValue() : null;
+        query =  orgQuery !== null ? orgQuery : "difference";
+
+        u = u.replace('%25%25QUERY%25%25', query);
+    
+
+    if (s != null && s[1]) {
+        if (s[1] == 't' || s[1] == 'ts' || s[1] == 'tn') {
+            var ev = u.indexOf('ev=');
+            if (ev !== -1) {
+                ev = ev + 3;
+                u = u.slice(0, ev) + 'c' + u.slice(ev) + '&cl=59wn52&sc=1';
+                u = u.replace('%25%25REFQUERY%25%25', refQuery);
+            }
+        }
+    }
+
+    new Image().src = u + "&ms=" + ms + "&rf=" + encodeURIComponent(document.referrer) + "&cb=" + Math.floor((Math.random() * 899999999) + 100000000);
+</script> 
+  <link rel="dns-prefetch" href="//static.sfdict.com">
+  <link rel="dns-prefetch" href="//pixel.quantserve.com">
+  <link rel="dns-prefetch" href="//partner.googleadservices.com">
+  <link rel="dns-prefetch" href="//pubads.g.doubleclick.net">
+  <link rel="dns-prefetch" href="//pagead2.googlesyndication.com">
+  <link rel="dns-prefetch" href="//pr.ybp.yahoo.com">
+  <link rel="dns-prefetch" href="//ads.yahoo.com">
+  <link rel="dns-prefetch" href="//u.openx.net">
+  <link rel="dns-prefetch" href="//ib.adnxs.com">
+  <link rel="dns-prefetch" href="//ox-d.bstk.servedbyopenx.com">
+  <link rel="dns-prefetch" href="https://ad.doubleclick.net">
+  <script>
+    /**
+     * The module is responsible for setting/incrementing the value of sc cookie which contains "sessionCount,pageviewCount" values.
+     *
+     * init: sets the cookie with default values or increments; actions performed are based on condition whether the
+     *          sid cookie was created or already existed. The default expiration time for sc cookie is 0.5 year
+     *
+     * global BidSidGenerator
+     * global cookiesManager
+     * global UrlHelper
+     */
+    var SCCookie = function () {
+        var COOKIE_NAME_SC = "sc",
+            DELIMITER = ",",
+            sessionCountValue = 0,
+            pageviewCountValue  = 0,
+            cookieExpiration  = 180 * 24; // half a year
+
+        /**
+         * Reads "sc" cookie and parses the value into appropriate variables.
+         * @returns {boolean} Was the cookie present?
+         */
+        function readCookie()
+        {
+            var cookieValue = cookiesManager.getCookieValue(COOKIE_NAME_SC),
+                cookieValuesArray,
+                cookieSessionCountValue,
+                cookiePageviewCountValue;
+
+            if (cookieValue == null) {
+                return false;
+            }
+
+            cookieValuesArray = cookieValue.split(DELIMITER);
+            cookieSessionCountValue = parseInt(cookieValuesArray[0], 10);
+            cookiePageviewCountValue = parseInt(cookieValuesArray[1], 10);
+
+            if (cookieSessionCountValue > 0) {
+                sessionCountValue = cookieSessionCountValue;
+            }
+
+            if (cookiePageviewCountValue > 0) {
+                pageviewCountValue = cookiePageviewCountValue;
+            }
+
+            return true;
+        }
+
+        /**
+         * Writes current variable values into the "sc" cookie.
+         */
+        function writeCookie()
+        {
+            cookiesManager.setCookie(COOKIE_NAME_SC, sessionCountValue + DELIMITER + pageviewCountValue, cookieExpiration, UrlHelper.getCurrentDomainFromRequest());
+        }
+
+        return {
+            init: function () {
+                if (typeof BidSidGenerator !== 'undefined') {
+                    var cookiePresent = readCookie();
+
+                    if (!cookiePresent) {
+                        sessionCountValue = 1;
+                        pageviewCountValue = 1;
+                    } else {
+                        if (BidSidGenerator.isSidCookieCreated() || BidSidGenerator.isSpanIdsCookiePresent()) {
+                            pageviewCountValue = 1;
+                            sessionCountValue++;
+                        } else {
+                            pageviewCountValue++;
+                        }
+                    }
+
+                    writeCookie();
+                }
+            },
+
+            getPageViewCount: function () {
+                return pageviewCountValue;
+            },
+
+            getSessionCount: function () {
+                return sessionCountValue;
+            }
+        }
+
+    }();
+
+    SCCookie.init();
+</script> 
+  <script type="text/javascript">
+    var src = null;
+                        var retina = window.devicePixelRatio > 1;
+            if(retina) {
+                new Image().src = 'http://www.dictionary.com/drc/img/responsive/serp-highdpi-3146e.png';
+            } else {
+                new Image().src = 'http://www.dictionary.com/drc/img/responsive/serp-lowdpi-6c95e.png';
+            }
+            </script>
+  <meta property="fb:admins" content="100000304287730;109125464873">
+  <meta property="og:site_name" content="Dictionary.com">
+  <meta property="og:image" content="http://static.sfdict.com/dcom/img/social_logo-b8e2f.png">
+  <meta property="fb:app_id" content="127444090629600">
+  <meta name="msvalidate.01" content="DF5542D7723770377E9ABFF59AC1DC97">
+  <meta http-equiv="imagetoolbar" content="no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="keywords" content="difference, online dictionary, English dictionary, difference definition, define difference, definition of difference,
+        difference pronunciation, difference meaning, difference origin, difference examples">
+  <meta property="og:title" content="the definition of difference">
+  <meta name="description" content="Difference definition, the state or relation of being different; dissimilarity: There is a great difference between the two. See more.">
+  <meta property="og:url" content="http://www.dictionary.com/browse/difference">
+  <link rel="shortcut icon" href="http://static.sfdict.com/dcom/favicon.ico">
+  <link rel="search" type="application/opensearchdescription+xml" href="http://www.dictionary.com/opensearch_desc.xml" title="Dictionary.com">
+  <link rel="publisher" href="https://plus.google.com/117428481782081853923">
+  <link rel="canonical" href="http://www.dictionary.com/browse/difference">
+  <link rel="stylesheet" href="http://www.dictionary.com/drc/css/combinedSerp-935a5.css" type="text/css" media="all">
+  <script type="text/javascript">
+    var searchURL = "http://www.dictionary.com/browse/%40%40queryText%40%40?s=t";var pageName = "dic";</script> 
+  <script type="text/javascript">
+    var UserController = function() {
+        var USER_STATUS_LOGGED_IN = 'L';
+        var USER_STATUS_NOT_LOGGED = 'N';
+
+        var USER_UNDER_13 = 'Y';
+        var USER_OVER_13 = 'N';
+
+        var COOKIE_NAME_SESS = 'sess';
+        var COOKIE_NAME_FAV = 'fav';
+        var COOKIE_NAME_SUPERSESS = 'ss';
+
+        var PREMIUM_STATUS_VALUE = 9;
+        var FAV_COOKIE_PREMIUM_STATUS_KEY = 0;
+        var FAV_COOKIE_FAV_COUNT_KEY = 1;
+        var FAV_COOKIE_USER_UNDER_13_KEY = 2;
+
+        var isLoggedIn = null;
+        var isPremium = null;
+        var isSuperSess = null;
+        var favNumber = null;
+        var isUnder13 = null;
+        var displayAds = null;
+
+        /**
+         * Checking if user is under 13 using value from fav cookie
+         * @returns {boolean}
+         */
+        function checkIsUserUnder13() {
+            if (isLoggedIn !== true) {
+                return false;
+            }
+
+            var isUnder13 = USER_OVER_13;
+            var favCookieValue = cookiesManager.getCookieValue(COOKIE_NAME_FAV);
+
+            if(favCookieValue != null) {
+                favCookieValue = decodeURIComponent(favCookieValue);
+                isUnder13 = favCookieValue.split('|')[FAV_COOKIE_USER_UNDER_13_KEY];
+            }
+
+            return isUnder13 === USER_UNDER_13;
+        }
+
+        function checkIsUserLoggedIn() {
+            var userStatus = USER_STATUS_NOT_LOGGED;
+            var sessCookieValue = cookiesManager.getCookieValue(COOKIE_NAME_SESS);
+
+            if(sessCookieValue != null) {
+                userStatus = sessCookieValue.charAt(0);
+            }
+
+            return userStatus === USER_STATUS_LOGGED_IN;
+        }
+
+        function checkIfUserIsPremium() {
+            var premiumStatus = null;
+            var favCookieValue = cookiesManager.getCookieValue(COOKIE_NAME_FAV);
+
+            if(favCookieValue != null) {
+                favCookieValue = decodeURIComponent(favCookieValue);
+                premiumStatus = favCookieValue.split('|')[FAV_COOKIE_PREMIUM_STATUS_KEY];
+            }
+
+            return premiumStatus == PREMIUM_STATUS_VALUE;
+        }
+
+        function getFavNum() {
+            var count = 0;
+            var favCookieValue = cookiesManager.getCookieValue(COOKIE_NAME_FAV);
+
+            if(favCookieValue != null) {
+                favCookieValue = decodeURIComponent(favCookieValue);
+                count = favCookieValue.split('|')[FAV_COOKIE_FAV_COUNT_KEY];
+            }
+
+            return count;
+        }
+
+
+        /**
+         * Checking super session cookie and calling ajax endpoint if cookie exists
+         * @returns {boolean}
+         */
+        function checkIfUserHasSuperSession() {
+            // get ss cookie value
+            var superSessionCookieValue = cookiesManager.getCookieValue(COOKIE_NAME_SUPERSESS);
+
+            // if there is ss cookie then make ajax (cors) call to check ss cookie and get response on callback
+            if(superSessionCookieValue !== null){
+
+                var xhr = createCORSRequest('GET', 'http://app.dictionary.com/supersession/check/' + superSessionCookieValue);
+
+                if (xhr){
+                    // Define a callback function
+                    xhr.onload = function(){
+                        var responseData = xhr.responseText;
+                        var data = JSON.parse(responseData);
+                        // process the response.
+
+                        // if response is null then do nothing
+                        if(data == null) {
+                            // do nothing
+                        } else {
+                            // otherwise set the session cookie
+                            cookiesManager.setCookie("sess", data['sessionCookie']);
+
+                            // change header appropriately
+                            changeBodyClassNameForUser();
+                        }
+                    };
+
+                    // Send request
+                    xhr.send();
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * A method to create cors request
+         * @param method
+         * @param url
+         * @returns {XMLHttpRequest}
+         */
+        function createCORSRequest(method, url) {
+            var xhr = new XMLHttpRequest();
+            if ("withCredentials" in xhr) {
+
+                // Check if the XMLHttpRequest object has a "withCredentials" property.
+                // "withCredentials" only exists on XMLHTTPRequest2 objects.
+                xhr.open(method, url, true);
+
+            } else if (typeof XDomainRequest != "undefined") {
+
+                // Otherwise, check if XDomainRequest.
+                // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+                xhr = new XDomainRequest();
+                xhr.open(method, url);
+
+            } else {
+
+                // Otherwise, CORS is not supported by the browser.
+                xhr = null;
+
+            }
+
+            return xhr;
+        }
+
+        /**
+         * Checking user status and setting correct body className for user
+         */
+        function changeBodyClassNameForUser() {
+            if(isPremium)
+                document.body.className+=' premium';
+            if(isLoggedIn)
+                document.body.className+=' loggedin';
+            if(isUnder13)
+                document.body.className+=' isUnder13';
+        }
+
+        return {
+
+            initHead: function() {
+                isLoggedIn = checkIsUserLoggedIn();
+                isPremium = checkIfUserIsPremium();
+                isUnder13 = checkIsUserUnder13();
+            },
+
+            initBody: function(){
+                // on initialization check user status and change append body class name accordingly
+                changeBodyClassNameForUser();
+
+                // if the user is not logged in then check to see if the user has an ss cookie
+                if(isLoggedIn !== true) {
+                    // call function responsible for checking ss cookie and calling ajax endpoint
+                    isSuperSess = checkIfUserHasSuperSession();
+                }
+            },
+
+            isLoggedIn : function() {
+                return isLoggedIn;
+            },
+
+            isPremium : function() {
+                return isPremium
+            },
+
+            getFavNumber : function() {
+                if(favNumber === null) {
+                    favNumber = getFavNum();
+                }
+                return favNumber;
+            },
+
+            isUnder13 : function() {
+                return isUnder13;
+            },
+
+            shouldDisplayAds: function() {
+                if(displayAds === null) {
+                    displayAds = !isPremium && !checkIsUserUnder13();
+                }
+                return displayAds;
+            }
+        }
+
+
+    }();
+    UserController.initHead();
+</script> 
+  <script type="text/javascript">
+    var _sp_=function(n){function t(e){if(o[e])return o[e].exports;var r=o[e]={i:e,l:!1,exports:{}};return n[e].call(r.exports,r,r.exports,t),r.l=!0,r.exports}var o={};return t.m=n,t.c=o,t.i=function(n){return n},t.d=function(n,o,e){t.o(n,o)||Object.defineProperty(n,o,{configurable:!1,enumerable:!0,get:e})},t.n=function(n){var o=n&&n.__esModule?function(){return n["default"]}:function(){return n};return t.d(o,"a",o),o},t.o=function(n,t){return Object.prototype.hasOwnProperty.call(n,t)},t.p="",t(t.s=2)}([function(n,t,o){function e(n,t){r&&console[n].apply(console,["[bootstrap]"].concat(Array.prototype.slice.call(t)))}var r=(o(0),!1);n.exports={debug:function(){e("debug",arguments)},info:function(){e("info",arguments)},time:function(){e("time",arguments)},warn:function(){e("warn",arguments)},error:function(){e("error",arguments)},useDefaults:function(){r=!0},DEBUG:1}},function(n,t,o){"use strict";function e(){D||(D=!0,z=h.config=h.config||{},s(),N=z.bootstrap&&z.bootstrap.contentControlCallback||z.content_control_callback,B=z.accountId||z.account_id||z.client_id||window.sp_cid,G=z.beacon&&z.beacon.contentControlEndpoint||z.content_control_beacon_endpoint||v.a,z.debug_level&&"OFF"!==z.debug_level.toString().toUpperCase()||z.debug&&z.debug.level&&"OFF"!==z.debug.level.toString().toUpperCase()?q=!0:window.location.search&&null!=window.location.search.match(/_sp_debug_level=(?!off|OFF)/)&&(q=!0),q&&m.useDefaults({defaultLevel:m.DEBUG}))}function r(n,t,e){function r(o,e){var r=new Image;r.src="//"+G+"/cct?v="+encodeURIComponent(v.b)+"&ct="+_+"&cid="+encodeURIComponent(B)+"&l="+encodeURIComponent(n.toString())+"&rc="+encodeURIComponent(t)+"&d0="+encodeURIComponent(i)+(o?"&d1="+encodeURIComponent(o):"")+(e?"&d2="+encodeURIComponent(e):""),g.info("sending beacon: "+r.src),a&&a()}var i=arguments.length>3&&void 0!==arguments[3]?arguments[3]:"",c=arguments[4],a=arguments[5];if(c){var u=e.lastIndexOf("."),d=e.lastIndexOf("/"),s=-1===u||d>u?e+".png":e.substring(0,u)+".png",l=new Image;l.addEventListener("load",function(){r("1",s)}),l.addEventListener("error",function(){o.i(f.a)(s,function(n,t,o){r("0",s+"::"+o)})}),l.src=s}else r()}function i(n,t,o,e){var r=arguments.length>4&&void 0!==arguments[4]?arguments[4]:{},c=arguments.length>5&&void 0!==arguments[5]&&arguments[5],a=function(){i(n,t,o,e,r,!0)};n(t,c?o:a,e,r)}function c(n,t,o,e){function r(o,r){t(o,n,r,e.enableImageLoad)}function i(t,r){o(t,n,r,e.enableImageLoad),e.onError&&e.onError(r)}var c=document.createElement("script");c.src=n,c.onload=function(){e.onLoad&&e.onLoad()},c.onerror=function(){function t(n){return o.indexOf(n)>-1}var o=(navigator.userAgent||navigator.vendor||window.opera).toLowerCase();t("mobi")||t("ipad")||t("android")||t("iphone")?i(C):t("exabot")?i(k):t("bingbot")||t("bingpreview")?i(U):t("googlebot")||t("adsbot-google")||t("mediapartners-google")?i(I):t("googleweblight")?i(O):window.location.host===w?i(E):window.location.host.indexOf(b)>-1?i(j):t("msie 10")||t("msie 9")||t("msie 8")?i(S):a(n,r,i)},document.head.appendChild(c),document.querySelector('script[src="'+n+'"]')||-1!==window.location.host.indexOf(b)||(g.info("Script not present"),r(L,n))}function a(n,t,e){o.i(f.a)(n,function(o,r,i,c){(o||r?t:e)(c,n+"::"+i)})}function u(n,t,o,e){if(F)return void d(R+"::"+n,o);r(x,n,t,o,e,function(){if(N){if(q){g.error("bootstrap locking",x,n,t,o,e);debugger}setTimeout(function(){N()},250)}})}function d(n,t,o,e){r(y,n,t,o,e)}function s(){h._networkListenerData||(h._networkListenerData=o.i(p.a)())}function l(n,t){e(),g.info("bootstrap called with",n,t),i(c,n,u,d,t)}Object.defineProperty(t,"__esModule",{value:!0});var f=o(4),p=o(5),v=o(3),g=o(0),m=void 0;m=o(0);var w=["w","e","b","c","a","c","h","e",".","g","o","o","g","l","e","u","s","e","r","c","o","n","t","e","n","t",".","c","o","m"].join(""),b=["o","p","t","i","m","i","z","e","l","y","p","r","e","v","i","e","w",".","c","o","m"].join(""),h=window._sp_||{},_=1,y=0,x=1,L="s",C="m",I="g",E="gw",O="gl",S="i",U="b",k="e",R="n",j="o",D=!1,F=!1,q=!1,z=void 0,N=void 0,B=void 0,G=void 0;window.addEventListener("beforeunload",function(){F=!0}),window._sp_=h,h.setupNetworkListeners=s,h.bootstrap=l,window.spBootstrap=l,t["default"]=h},function(n,t,o){o(0);n.exports=o(1)["default"]},function(n,t,o){"use strict";function e(n){return n.join("")}o.d(t,"b",function(){return r}),o.d(t,"a",function(){return i});var r=(o(0),"2.0.913"),i=(e(["w","w","w",".","s","u","m","m","e","r","h","a","m","s","t","e","r",".","c","o","m"]),e(["w","w","w",".","r","o","o","s","t","e","r","f","i","r","e","w","o","r","k",".","c","o","m"]));e(["/","/","f","s","m","1","0","1","9",".","g","l","o","b","a","l",".","s","s","l",".","f","a","s","t","l","y",".","n","e","t","/","f","s","m","/","d","s"]),e(["h","t","t","p","s",":","/","/","d","2","z","v","5","r","k","i","i","4","6","m","i","q",".","c","l","o","u","d","f","r","o","n","t",".","n","e","t","/","0","/","2",".","0",".","9","1","3","/","r","e","c","o","v","e","r","y","_","d","f","p","_","i","n","t","e","r","n","a","l","-","v","2",".","0",".","9","1","3",".","j","s"]),e(["h","t","t","p","s",":","/","/","d","2","z","v","5","r","k","i","i","4","6","m","i","q",".","c","l","o","u","d","f","r","o","n","t",".","n","e","t","/","0","/","2",".","0",".","9","1","3","/","r","e","c","o","v","e","r","y","_","l","i","b","_","a","p","i","_","i","f","r","a","m","e","-","v","2",".","0",".","9","1","3",".","h","t","m","l"]),e(["h","t","t","p","s",":","/","/","d","2","z","v","5","r","k","i","i","4","6","m","i","q",".","c","l","o","u","d","f","r","o","n","t",".","n","e","t","/","0","/","2",".","0",".","9","1","3","/","r","e","c","o","v","e","r","y","_","l","i","b","_","r","i","d","_","i","f","r","a","m","e","-","v","2",".","0",".","9","1","3",".","h","t","m","l"])},function(n,t,o){"use strict";function e(n,t){function o(n){try{return n&&n.timeStamp?n.timeStamp:window.performance.now()}catch(n){return Date.now()}}var e=document.createElement("a");if(e.href=n,"https:"===window.location.protocol&&e.protocol!==window.location.protocol)return void t(!1,!1,e.protocol,u);var d=new XMLHttpRequest;try{d.open("GET",n)}catch(n){return void t(!0,!1,n.toString(),c,d)}var s=void 0,l=void 0;d.onloadstart=function(n){s=o(n)},d.onreadystatechange=function(n){if(4===this.readyState){l=o(n)-s;var e=0===this.status,c="2"===this.status.toString()[0],a=c?i:r;return void t(e,c,this.status+"::"+l,a,d)}};try{d.send()}catch(n){return void t(!0,!1,n.toString(),a,d)}}t.a=e;var r=(o(0),"n"),i="nx",c="xo",a="xs",u="p"},function(n,t,o){"use strict";function e(){var n=arguments.length>0&&void 0!==arguments[0]?arguments[0]:document,t=[],o=[],e=r.bind(null,t),i=r.bind(null,o);return n.addEventListener("load",e,!0),n.addEventListener("error",i,!0),{load:{events:t,listener:e},error:{events:o,listener:i}}}function r(n,t){if(t.target){var o="string"==typeof t.target.tagName?t.target.tagName.toLowerCase():"",e=t.target.src||"";"iframe"!==o&&n.push({tagName:o,src:e})}}t.a=e;o(0)}]);
+//# sourceMappingURL=https://s3.amazonaws.com/d3jlsadfjkuern/2.0.913/Ym9vdHN0cmFwLmpz.map
+    (function () {
+        
+window.DARCI = window.DARCI || {};
+window.DARCI.gptLoadedCallback = function () {
+window.gptLoaded = true;
+resetAndLoadGPTRecovery();
+};
+
+function resetAndLoadGPTRecovery() {
+if (gptLoaded && isBlocking) {
+resetGpt();
+window._sp_.dfp.loadGPT();
+}
+}
+
+function resetGpt () {
+googletag.cmd.push(function () {
+googletag.destroySlots();
+});
+
+if(typeof spots_deferred !== 'undefined') {
+for(var i in spots_deferred) spots_deferred[i].code = spots_deferred[i].code_sp;
+}
+
+window.googletag = {};
+window.googletag.cmd = [];
+window.googletag.slots = {};
+
+googletag.cmd.push(function () {
+googletag.slots["dcom-serp-lb-728x90"] = googletag.defineSlot("/23219321/iac.dict.dictry.dw/dic/serp_0_y", [[728,90],[970,90],[970,250]], "dcom-serp-lb-728x90").addService(googletag.pubads()).setTargeting("pos", "top").setTargeting("pos2", "728x90_1").setTargeting("tx1", "results").setTargeting("tx2", "serp_0_y").setTargeting("ptype", "content").setTargeting("spe", "y");googletag.slots["dcom-serp-a-top-300x250"] = googletag.defineSlot("/23219321/iac.dict.dictry.dw/dic/serp_0_y", [[300,250],[300,600]], "dcom-serp-a-top-300x250").addService(googletag.pubads()).setTargeting("pos", "top").setTargeting("pos2", "300x250_1").setTargeting("tx1", "results").setTargeting("tx2", "serp_0_y").setTargeting("ptype", "content").setTargeting("spe", "y");googletag.slots["dcom-serp-a-mid-300x250"] = googletag.defineSlot("/23219321/iac.dict.dictry.dw/dic/serp_0_y", [300,250], "dcom-serp-a-mid-300x250").addService(googletag.pubads()).setTargeting("pos", "mid").setTargeting("pos2", "300x250_2").setTargeting("tx1", "results").setTargeting("tx2", "serp_0_y").setTargeting("ptype", "content").setTargeting("spe", "y");googletag.slots["dcom-serp-bottom-lb-728x90"] = googletag.defineSlot("/23219321/iac.dict.dictry.dw/dic/serp_0_y", [728,90], "dcom-serp-bottom-lb-728x90").addService(googletag.pubads()).setTargeting("pos", "bot").setTargeting("pos2", "728x90_2").setTargeting("tx1", "results").setTargeting("tx2", "serp_0_y").setTargeting("ptype", "content").setTargeting("spe", "y");googletag.slots["dcom-serp-bot-300x250"] = googletag.defineSlot("/23219321/iac.dict.dictry.dw/dic/serp_0_y/sticky", [300,250], "dcom-serp-bot-300x250").addService(googletag.pubads()).setTargeting("pos", "bot").setTargeting("pos2", "300x250_3").setTargeting("tx1", "results").setTargeting("tx2", "serp_0_y").setTargeting("ptype", "content").setTargeting("spe", "y");adStatus.renderedAdsCount = 0;
+adStatus.spotsCount = 4;
+googletag.pubads().addEventListener('slotRenderEnded', handleSlotRender);
+googletag.pubads().enableSingleRequest();
+googletag.enableServices();
+for(var i = 0; i < adStatus.displayedSpots.length; i++)
+    googletag.display(adStatus.displayedSpots[i]);
+});
+}
+        window._sp_ = window._sp_ || {};
+window._sp_.config = window._sp_.config || {};
+window._sp_.config.account_id = 294;
+window._sp_.config.publisher_base = '//spb.dictionary.com/proxy';
+window._sp_.config.gpt_auto_load = false;
+window._sp_.config.enable_rid = false;
+window._sp_.config.content_control_callback = function () {
+    window.location.href = "http://www.dictionary.com/why-am-i-seeing-ads";
+};
+window._sp_.config.enable_vid= false;
+window._sp_.config.vid_control_callback = function() {
+    console.log("VID Triggered!");
+};
+
+document.addEventListener('sp.blocking', function (e) {
+isBlocking = true;
+resetAndLoadGPTRecovery();
+});
+
+        window._sp_.bootstrap('http://www.dictionary.com/js/sp.js');
+
+    })();
+</script> 
+  <script>
+            var iacjs = iacjs || {};
+            iacjs.a9done = true;
+        </script> 
+  <script type="text/javascript">
+var get_request_identifier = (function () { return Math.random().toString(36).substr(2) }()),
+    get_modified_page_url = (function () {
+        sep = window.location.search.length >= 0 && window.location.href.indexOf("?") !== -1 ? "&" : "?";
+        return window.location.href + sep + "rquid=" + get_request_identifier
+    })();
+
+var ad_config = {
+    pageTargeting: {
+        ref: window.document.referrer.search("dictionary.com|thesaurus.com|reference.com") > -1 ? "organic" : "direct",
+        lang: window.navigator.userLanguage || window.navigator.language,
+        rpv: Math.floor((Math.random() * 100) + 1).toString(),
+        dc_ref: encodeURIComponent(get_modified_page_url),
+        loc: 'US',
+        ld: '0',
+        dow: new Date().getDay().toString(),
+        page_url: get_modified_page_url,
+        rquid: get_request_identifier,
+    }
+};
+ad_config.pageTargeting.tx1 = 'results';
+ad_config.pageTargeting.tx2 = 'serp_0_n';
+ad_config.pageTargeting.ptype = 'content';
+ad_config.pageTargeting.spe = 'n';
+ad_config.pageTargeting.pv = typeof SCCookie !== 'undefined' ? SCCookie.getPageViewCount() + '' : '';
+ad_config.slots = [{"placement":"dcom-serp-lb-728x90","code":"\/23219321\/iac.dict.dictry.dw\/dic\/serp_0_n","ad_uuid":"728x90_top","targeting":{"pos":"top","pos2":"728x90_1"},"sizes":[[728,90],[970,90],[970,250]]},{"placement":"dcom-serp-a-top-300x250","code":"\/23219321\/iac.dict.dictry.dw\/dic\/serp_0_n","ad_uuid":"300x250_top","targeting":{"pos":"top","pos2":"300x250_1"},"sizes":[[300,250],[300,600]]},{"placement":"dcom-serp-a-mid-300x250","code":"\/23219321\/iac.dict.dictry.dw\/dic\/serp_0_n","ad_uuid":"300x250_mid","targeting":{"pos":"mid","pos2":"300x250_2"},"sizes":[[300,250]]},{"placement":"dcom-serp-bottom-lb-728x90","code":"\/23219321\/iac.dict.dictry.dw\/dic\/serp_0_n","ad_uuid":"728x90_bot","targeting":{"pos":"bot","pos2":"728x90_2"},"sizes":[[728,90]]}];
+</script> 
+  <script type="text/javascript">
+var adStatus = {
+    spotsCount: 4,
+    renderedSpots: [],
+    renderedSpotsCount: 0,
+    displayedSpots: [],
+    set: function(name, size) {
+        this.renderedSpots[name] = {
+            size: size
+        };
+    },
+    get: function(name) {
+        return this.renderedSpots[name];
+    },
+    getSlotKey: function(slot) {
+        var slotKey;
+        for (slotKey in googletag.slots) {
+            if(googletag.slots[slotKey] == slot) {
+                break;
+            }
+        }
+        return slotKey;
+    },
+    adsLoaded: function() {
+        return this.renderedSpotsCount >= this.spotsCount;
+    }
+};
+
+adStatus.dispatchLoadedEvent = function () {
+    if(adStatus.adsLoaded()) {
+        if (document.createEvent) {
+            var event = new CustomEvent('gptAdsLoaded');
+            document.dispatchEvent(event);
+        } else {
+            var event = document.createEventObject();
+            event.eventType = "gptAdsLoaded";
+            document.fireEvent("ongptAdsLoaded", event);
+        }
+    }
+};
+
+var handleSlotRender = function(data) {
+    var key = adStatus.getSlotKey(data.slot);
+    adStatus.set(key, data.size);
+    adStatus.renderedSpotsCount += 1;
+        adStatus.dispatchLoadedEvent();
+    };
+</script> 
+  <script type="text/javascript">
+    var googletag = googletag || {};
+    googletag.cmd = googletag.cmd || [];
+    googletag.slots = googletag.slots || {};
+    var iacjs = iacjs || {};
+    iacjs.que = iacjs.que || [];
+    var gptLoaded = false, isBlocking = false;
+
+    CONTAINER_TIMEOUT = 1500;
+
+    iacjs.asynLoader = function(scriptInfo, callback) {
+        var p, tag = document.createElement("script"),
+            node = document.getElementsByTagName("script")[0];
+        tag.async = true;
+        tag.onload = tag.onerror = function() {
+            typeof callback === 'function' && callback()
+        };
+        for (p in scriptInfo) {
+            if (scriptInfo.hasOwnProperty(p)) {
+                tag[p] = scriptInfo[p];
+            }
+        }
+        node.parentNode.insertBefore(tag, node);
+    };
+
+    function initAdServer() {
+        if (iacjs.initAdserverSet) return;
+        iacjs.asynLoader({
+            src: "//www.googletagservices.com/tag/js/gpt.js"
+        }, function () {
+            if (typeof window.DARCI !== 'undefined' && typeof window.DARCI.gptLoadedCallback === 'function')
+                window.DARCI.gptLoadedCallback();
+        });
+        iacjs.initAdserverSet = true;
+    }
+
+    iacjs.asynLoader({
+        src: "http://www.iacpublish.com/iacpublisher.min-dictionary.js"
+    });
+
+    function bidsBackHandler(type) {
+        if (type === 'a9') {
+            iacjs.a9done = true;
+        }
+
+        if (type === 'ayc')
+            iacjs.aycDone = true;
+
+        if (iacjs.a9done && iacjs.aycDone) {
+            window.initAdServer();
+        }
+    }
+
+    iacjs.que.push(function() {
+        iacjs.pageTargeting = ad_config.pageTargeting;
+
+                iacjs.addAdUnits(ad_config.slots);
+        iacjs.requestBids({
+            bidsBackHandler: function() {
+                window.bidsBackHandler('ayc');
+            }
+        });
+        
+    });
+
+    (function() {
+        var slots = ad_config.slots || [];
+        var outofpageslots = ad_config.outofpageslots || []; //for virool spots on mweb
+        var index, pageTarget;
+        var pageTargeting = ad_config.pageTargeting || {};
+
+        iacjs.setSlotTargeting = function (slot, googletag) {
+         for (var target in slot.targeting) {
+             if (slot.targeting.hasOwnProperty(target)) {
+                 googletag.slots[slot.placement].setTargeting(target, slot.targeting[target])
+             }
+         }
+       };
+
+        var defineSlot = function(slot) {
+            if (typeof slot === 'object') {
+                (function(slot) {
+                    googletag.cmd.push(function() {
+                        googletag.slots[slot.placement] = googletag.defineSlot(slot.code, slot.sizes, slot.placement).addService(googletag.pubads());
+                        for (target in slot.targeting) {
+                            if (slot.targeting.hasOwnProperty(target)) {
+                                googletag.slots[slot.placement].setTargeting(target, slot.targeting[target])
+                            }
+                        }
+                        if (typeof(slot.sizeMapping) === 'function') {
+                            googletag.slots[slot.placement].defineSizeMapping(slot.sizeMapping(googletag))
+                        }
+                    })
+                })(slot)
+            } else {
+                log.error('slot not defined', slot)
+            }
+        };
+
+        var defineOutOfPageSlot = function (slot) {
+         if (typeof slot === 'object') {
+             (function (slot) {
+                 googletag.cmd.push(function () {
+                     googletag.slots[slot.placement] = googletag.defineOutOfPageSlot(slot.code, slot.placement).addService(googletag.pubads());
+                     iacjs.setSlotTargeting(slot, googletag);
+                 })
+               })(slot);
+         }
+       };
+
+        var setRefreshPageTargeting = function(page_level_targeting) {
+            var pageTargeting = page_level_targeting || {};
+            for (pageTarget in pageTargeting) {
+                if (pageTargeting.hasOwnProperty(pageTarget)) {
+                    (function(key, value) {
+                        googletag.cmd.push(function() {
+                            googletag.pubads().setTargeting(key, value)
+                        })
+                    })(pageTarget, pageTargeting[pageTarget])
+                }
+            }
+        }
+
+        window.defineSlot = defineSlot;
+        window.setRefreshPageTargeting = setRefreshPageTargeting;
+
+                for (index = 0; index < slots.length; index++) {
+            defineSlot(slots[index]);
+        }
+        
+        
+        setRefreshPageTargeting(pageTargeting);
+
+        googletag.cmd.push(function() {
+            googletag.pubads().enableSingleRequest();
+            googletag.enableServices();
+        });
+
+                googletag.cmd.push(function() {
+            iacjs.que.push(function() {
+                iacjs.setTargetingForGPTAsync();
+            });
+        });
+        
+        iacjs.timeout = window.setTimeout(initAdServer, CONTAINER_TIMEOUT);
+    })();
+
+    iacjs.createNewSlot = function(slot) {
+        if (typeof slot === "object" && typeof slot.placement === "string") {
+            adStatus.displayedSpots.push(slot.placement);
+            googletag.cmd.push(function() {
+                defineSlot(slot);
+                if (typeof iacjs.libLoaded !== "undefined") {
+                    iacjs.que.push(function() {
+                        iacjs.addAdUnits(slot);
+                        iacjs.requestBids({
+                            adUnitCodes: [slot.placement],
+                            bidsBackHandler: function() {
+                                iacjs.setTargetingForGPTAsync({
+                                    adUnitCodes: [slot.placement]
+                                });
+                                googletag.display(slot.placement);
+                            }
+                        });
+                    });
+                } else {
+                    iacjs.setTargetingForGPTAsync({
+                        adUnitCodes: [slot.placement]
+                    });
+                    googletag.display(slot.placement);
+                }
+            });
+        }
+    };
+
+    iacjs.refreshAd = function(valid_ad_units, slots) {
+        if (typeof iacjs.libLoaded !== "undefined") {
+            iacjs.que.push(function() {
+                if (valid_ad_units.length > 0) {
+                    iacjs.requestBids({
+                        timeout: CONTAINER_TIMEOUT,
+                        adUnitCodes: valid_ad_units,
+                        bidsBackHandler: function() {
+                            iacjs.setTargetingForGPTAsync({
+                                adUnitCodes: valid_ad_units
+                            });
+                            googletag.pubads().refresh(slots)
+                        }
+                    });
+                } else {
+                    iacjs.requestBids({
+                        timeout: CONTAINER_TIMEOUT,
+                        bidsBackHandler: function() {
+                            iacjs.setTargetingForGPTAsync();
+                            googletag.pubads().refresh()
+                        }
+                    });
+                }
+            });
+        } else {
+            if (valid_ad_units.length > 0) {
+                googletag.pubads().refresh(slots)
+            } else {
+                googletag.pubads().refresh()
+            }
+        }
+    }
+</script> 
+  <script type="text/javascript">
+var spots_deferred = {"dcom-serp-bot-300x250":{"placement":"dcom-serp-bot-300x250","code":"\/23219321\/iac.dict.dictry.dw\/dic\/serp_0_n\/sticky","code_sp":"\/23219321\/iac.dict.dictry.dw\/dic\/serp_0_y\/sticky","ad_uuid":"300x250_bot","targeting":{"pos":"bot","pos2":"300x250_3"},"sizes":[[300,250]]}};
+</script>
+  <script>
+    googletag.cmd.push(function () {
+                googletag.pubads().enableSingleRequest();
+                        googletag.pubads().enableAsyncRendering();
+                        googletag.pubads().addEventListener('slotRenderEnded', handleSlotRender);
+        googletag.enableServices();
+    });
+</script> 
+  <script type="text/javascript">
+    window.dataLayer = window.dataLayer || [];
+
+    dataLayer.push({
+        'event': 'pageview',
+        'device': 'Desktop',
+        'pageName': 'dic',
+        'LDid': '0',
+        'mseg': cookiesManager.getCookieValue("mseg"),
+        'sessionId': cookiesManager.getCookieValue("sid"),
+        'browserId': cookiesManager.getCookieValue("bid")    });
+</script>
+  <!-- Begin Quantcast Tag, part 1 --> 
+  <script type="text/javascript"> 
+  
+  var _qevents = _qevents || [];
+
+  (function() {
+   var elem = document.createElement('script');
+
+   elem.src = (document.location.protocol == "https:" ? "https://secure" : "http://edge") + ".quantserve.com/quant.js";
+   elem.async = true;
+   elem.type = "text/javascript";
+   var scpt = document.getElementsByTagName('script')[0];
+   scpt.parentNode.insertBefore(elem, scpt);  
+  })();
+</script> 
+  <!-- End Quantcast Tag, part 1 --> 
+  <!-- Begin comScore Tag --> 
+  <script>
+if(typeof UserController === "undefined" || !UserController.isUnder13()) {
+    var _comscore = _comscore || [];
+    _comscore.push({c1: "2", c2: "6034776", c3: "", c4: (new String(window.location)).replace(/\?.*$/, "")});
+    (function () {
+        var s = document.createElement("script"), el = document.getElementsByTagName("script")[0];
+        s.async = true;
+        s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+        el.parentNode.insertBefore(s, el);
+    })();
+}
+</script> 
+  <noscript> &lt;img src="http://b.scorecardresearch.com/p?c1=2&amp;amp;c2=6034776&amp;amp;cv=2.0&amp;amp;cj=1"&gt; 
+  </noscript> 
+  <!-- End comScore Tag --> 
+  <script type="application/ld+json">
+{
+    "@context": "http://schema.org",
+    "@type": "WebPage",
+    "@id": "http://www.dictionary.com/browse/difference",
+    "potentialAction":
+    { "@type": "ViewAction", "target": "android-app://com.dictionary/http/www.dictionary.com/browse/difference" }
+}
+</script> 
+ </head> 
+ <body> 
+  <script>
+    document.body.className += ' js-on';
+</script>
+  <!-- Google Tag Manager --> 
+  <noscript> 
+   <iframe src="//www.googletagmanager.com/ns.html?id=GTM-TXC5GP" height="0" width="0" style="display:none;visibility:hidden"> </iframe> 
+  </noscript> 
+  <script>
+    (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;
+        j.src= '//www.googletagmanager.com/gtm.js?id='+i+dl;
+        f.parentNode.insertBefore(j, f);
+    })(window,document,'script','dataLayer','GTM-TXC5GP');
+</script> 
+  <!-- End Google Tag Manager --> 
+  <div id="fb-root"></div> 
+  <script type="text/javascript">
+    UserController.initBody();
+</script> 
+  <script type="text/javascript">
+        /**
+     * Redirects user to address from parameter
+     *
+     * @param url
+     * @returns {boolean}
+     */
+    function submitForm(url) {
+        var queryText = document.getElementById('q').value || 'search';
+
+        queryText = encodeURIComponent(queryText);
+
+        url = url.replace('%40%40queryText%40%40', queryText);
+
+                location.href = url;
+        return false;
+    }
+
+    function prepareSearchBox(el) {
+        var dataTerm = el.getAttribute('data-term');
+        var value = el.value;
+        if (!(/(iPad|iPhone|iPod)/g.test(navigator.userAgent))) {
+            el.focus();
+            if (dataTerm == value) {
+                el.select();
+            }
+        }
+    }
+</script> 
+  <nav class="ham-nav dictionary-nav"> 
+   <ul> 
+    <li class="ham-main-menu"><a href="http://www.dictionary.com/" data-linkid="lxabec">Dictionary.com</a></li> 
+    <li> 
+     <ul class="ham-submenu"> 
+      <li><a href="http://www.dictionary.com/wordoftheday/" data-linkid="1498ik">Word <i class="wotd-italic">of the</i> Day</a></li> 
+      <li><a href="http://translate.reference.com/" data-linkid="au3zd1">Translate</a></li> 
+      <li><a href="http://www.dictionary.com/fun" data-linkid="yp2k17">Games</a></li> 
+      <li><a href="http://blog.dictionary.com/" data-linkid="t6ehki">Blog</a></li> 
+     </ul> </li> 
+    <li class="ham-main-menu"><a href="http://www.thesaurus.com/" data-linkid="c1drjk">Thesaurus.com</a></li> 
+    <li class="ham-main-menu"> <a href="http://app.dictionary.com/favorites">Favorites <span class="dicticon-header-favourites-star"></span> <span class="ham-favourites-number"></span> </a> </li> 
+   </ul> 
+  </nav> 
+  <button class="dicticon-hamburger-menu slide-element"></button> 
+  <header class="js-header dictionary-header"> 
+   <div class="header-nav-row"> 
+    <ul class="header-main-nav"> 
+     <li class="nav-active"> <a href="http://www.dictionary.com/" data-linkid="tqks0v">Dictionary.com</a> </li> 
+     <li> <a href="http://www.thesaurus.com/" data-linkid="qxnxzj">Thesaurus.com</a> </li> 
+    </ul> 
+    <ul class="header-login-nav"> 
+     <li class="user-logged-in account"><a href="http://app.dictionary.com/users/settings">My Account</a></li> 
+     <li class="user-logged-in"><a href="http://app.dictionary.com/logout?logindest=http%3A%2F%2Fwww.dictionary.com%2Fbrowse%2Fdifference">Log Out</a></li> 
+     <li class="user-logged-out"><a rel="nofollow" href="http://app.dictionary.com/login?source=header_core&amp;logindest=http%3A%2F%2Fwww.dictionary.com%2Fbrowse%2Fdifference">Log In</a></li> 
+    </ul> 
+    <div class="header-social-links"> 
+     <span class="dicticon-header-social-facebook"></span> 
+     <span class="dicticon-header-social-twitter"></span> 
+     <span class="dicticon-header-social-instagram"></span> 
+     <span class="dicticon-header-social-googleplus"></span> 
+    </div> 
+    <a href="http://www.dictionary.com/apps" class="header-apps-links" data-linkid="dbvvdc"> <span class="dicticon-header-app-android"></span> <span class="dicticon-header-app-ios"></span> Try Our Apps </a> 
+   </div> 
+   <div class="header-search-row"> 
+    <div class="header-wrapper-row"> 
+     <a href="http://www.dictionary.com/" data-linkid="yg487x"> <img src="http://www.dictionary.com/drc/img/responsive/dcom-logo-8f31c.png" alt="Dictionary.com"> </a> 
+     <form id="main_search" class="header-search-form" action="http://www.dictionary.com/dic"> 
+      <div class="header-search-wrapper"> 
+       <div class="search-filter-nav"> 
+        <span class="dicticon-filter"></span> 
+        <span class="filter-item-active" data-filter-action="http://www.dictionary.com/browse/%40%40queryText%40%40">definitions</span> 
+       </div> 
+       <input type="text" value="difference" autoComplete="off" autocapitalize="off" autocorrect="off" name="q" class="search-input transparent-text" id="q" data-term="difference"> 
+       <script>
+    (function() {
+        var searchInput = document.getElementById('q');
+        if (searchInput !== null) {
+            if (DARCI.OQR.getValue() !== null) {
+                searchInput.value = DARCI.OQR.getValue();
+                searchInput.select();
+            }
+            searchInput.className = searchInput.className.replace('transparent-text', '');
+        }
+    })();
+</script> 
+       <input type="hidden" name="s" value="t"> 
+       <button type="submit" id="search-submit" class="dicticon-search-submit" value=""></button> 
+       <ul class="filter-list filter-hidden"> 
+        <li class="filter-hidden" data-filter="http://www.dictionary.com/browse/%40%40queryText%40%40">definitions</li> 
+        <li class="" data-filter="http://www.thesaurus.com/browse/%40%40queryText%40%40">synonyms</li> 
+        <li class="" data-filter="http://translate.reference.com/?query=%40%40queryText%40%40">translations</li> 
+       </ul> 
+      </div> 
+     </form> 
+    </div> 
+   </div> 
+   <div class="social-follow-module"> 
+    <ul class="social-follow-btns"> 
+     <li> 
+      <div class="fb-like-wrapper"> 
+       <div class="fb-like" data-href="https://www.facebook.com/dictionarycom" data-layout="button_count" data-action="like" data-show-faces="true" data-share="false"></div> 
+      </div> </li> 
+     <li> <a class="twitter-follow-button" href="https://twitter.com/dictionarycom" data-show-screen-name="false">Follow @dictionarycom</a> </li> 
+     <li> <span class="ig-follow" data-id="17031a6e93" data-handle="igfbdotcom" data-count="true" data-size="medium" data-username="false"></span> </li> 
+     <li> 
+      <div class="g-follow" data-annotation="bubble" data-height="20" data-href="https://plus.google.com/117428481782081853923" data-rel="publisher"></div> </li> 
+    </ul> 
+    <p>follow Dictionary.com</p> 
+   </div>
+  </header> 
+  <script type="text/javascript">
+    var DARCI = DARCI || {};
+    DARCI.searchedTerm = typeof DARCI.OQR !== 'undefined' ? DARCI.OQR.getValue() : null;
+    DARCI.searchedTerm = DARCI.searchedTerm !== null ? DARCI.searchedTerm : 'difference';
+
+    document.getElementById('main_search').onsubmit = function(e, url) {
+        // if url parameter wasn't passed submitFrom() is called with default parameter, which is searchURL
+        // searchURL is defined and added as a global js option in controller
+        return submitForm(url || searchURL);
+    }
+
+    prepareSearchBox(document.getElementById('q'));
+
+    cookiesManager.setCookie('ReferrerQuery', DARCI.searchedTerm);
+</script> 
+  <div id="header-lb-container"> 
+   <div class="lb-container"> 
+    <div id="dcom-serp-lb-728x90"> 
+     <script type="text/javascript">
+        if (typeof UserController !== "undefined" && !UserController.shouldDisplayAds()) {
+            document.getElementById("dcom-serp-lb-728x90").parentNode.removeChild(document.getElementById(""));
+        } else {
+            adStatus.displayedSpots.push("dcom-serp-lb-728x90");
+            googletag.cmd.push(function () {
+                googletag.display("dcom-serp-lb-728x90");
+            });
+        }
+    </script> 
+    </div> 
+   </div> 
+  </div> 
+  <div id="fly-out" class="fly-out fly-out-desktop" style=""> 
+   <a href="http://www.dictionary.com/slideshows/slang-watch-2017?param=dcomserp" style="display:block;" data-linkid="dbakms"> 
+    <div class="text">
+      The Best Internet Slang 
+    </div> </a> 
+   <button type="button" class="fly-out-close-icon"></button> 
+  </div> 
+  <div class="content-container main-area"> 
+   <div class="row"> 
+    <div class="left-rail-container"> 
+     <div class="left-nav-sticky"> 
+      <div class="left-nav-wrapper"> 
+       <ul> 
+        <li class="left-nav-fav"> <button class="favorite-button">Favorite Button</button> </li> 
+        <li class="left-nav-cite"> <a href="#" id="cite-source-link" rel="nofollow">CITE</a> </li> 
+        <li class="left-nav-trans"> <a href="http://translate.reference.com/translate?query=difference" data-linkid="qnmgro">Translate</a> </li> 
+        <li class="social-share-facebook"> <a id="left-nav-button-fb">Facebook</a> 
+         <div class="share">
+          Share
+         </div> </li> 
+        <li class="social-share-twitter"> <a id="left-nav-button-twitter" href="https://twitter.com/share?url=http%3A%2F%2Fwww.dictionary.com%2Fbrowse%2Fdifference&amp;text=Difference definition, the state or relation of being different; dissimilarity: There is a...&amp;via=dictionarycom" target="_blank">Twitter</a> 
+         <div class="share">
+          Tweet
+         </div> </li> 
+        <li class="social-share-google"> <a id="left-nav-button-gp" href="https://plus.google.com/share?url=http%3A%2F%2Fwww.dictionary.com%2Fbrowse%2Fdifference" onclick="javascript:window.open(this.href, '', 'menubar=no,toolbar=no,resizable=no,scrollbars=no,height=400,width=600');return false">Google+</a> 
+         <div class="share">
+          Share
+         </div> </li> 
+       </ul> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="center-well-container" data-linkid="nn1ov4" data-cts="{&quot;linkId&quot;:&quot;nn1ov4&quot;,&quot;infix&quot;:&quot;&quot;,&quot;domain&quot;:&quot;dictionary.com&quot;,&quot;clkpage&quot;:&quot;dic&quot;,&quot;clkmod&quot;:&quot;1clk&quot;,&quot;clksite&quot;:&quot;dict&quot;,&quot;clkld&quot;:0}" data-href="http://www.dictionary.com/browse/"> 
+     <section id="source-luna" data-pm-btn-target=".source-box, .source-meta" class="source-wrapper source-luna is-pm-btn-show pm-btn-spot"> 
+      <div class="source-box oneClick-area"> 
+       <section class="luna-box"> 
+        <header class="main-header oneClick-disabled cts-disabled head-big"> 
+         <div class="waypoint-wrapper header-row header-first-row" data-href="source-luna"> 
+          <h1 class="head-entry"><span class="me" data-syllable="dif·fer·ence">difference</span></h1> 
+          <div class="audio-wrapper cts-disabled"> 
+           <audio> 
+            <source src="http://static.sfdict.com/audio/lunawav/D02/D0294500.ogg" type="audio/ogg"> 
+            <source src="http://static.sfdict.com/audio/D02/D0294500.mp3" type="audio/mpeg"> 
+           </audio> 
+           <div class="speaker"></div>
+          </div> 
+          <h3 class="head-entry-variants"></h3> 
+         </div> 
+         <div class="header-row header-extras pronounce pronset"> 
+          <div> 
+           <span class="pron spellpron">[<span class="dbox-bold">dif</span>-er-<span class="dbox-italic">uh</span> ns, <span class="dbox-bold">dif</span>-r<span class="dbox-italic">uh</span> ns] </span> 
+           <span class="pron ipapron">/?d?f ?r ?ns, ?d?f r?ns/ </span> 
+           <span class="pre-def-data"> </span> 
+          </div> 
+          <div> 
+           <button class="prontoggle pronounce-button pronounce-Spell-button">Spell</button> 
+           <button class="syllable-button syllable-button-off" data-header="1">Syllables</button> 
+          </div> 
+         </div> 
+         <div class="header-row"> 
+          <ul class="headword-bar-list"> 
+           <li> <a data-navigation-href="source-synonyms"> Synonyms </a> </li> 
+           <li> <a data-navigation-href="source-example-sentences"> Examples </a> </li> 
+           <li> <a data-navigation-href="source-word-origin"> Word Origin </a> </li> 
+          </ul> 
+         </div> 
+        </header> 
+        <div class="deep-link-synonyms"> 
+         <a href="http://www.thesaurus.com/browse/difference" data-linkid="oowy0r">See more synonyms on Thesaurus.com</a> 
+        </div> 
+        <div class="source-data"> 
+         <div class="def-list"> 
+          <section class="def-pbk ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.def-set&quot;, &quot;type&quot;: &quot;def&quot;}"> 
+           <header class="luna-data-header"> 
+            <span class="dbox-pg">noun</span> 
+           </header> 
+           <div class="def-set"> 
+            <span class="def-number">1.</span> 
+            <div class="def-content">
+              the state or relation of being different; dissimilarity: 
+             <div class="def-block def-inline-example">
+              <span class="dbox-example">There is a great difference between the two.</span>
+             </div> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">2.</span> 
+            <div class="def-content">
+              an instance or point of unlikeness or dissimilarity: 
+             <div class="def-block def-inline-example">
+              <span class="dbox-example">What accounts for the differences in their behavior?</span>
+             </div> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">3.</span> 
+            <div class="def-content">
+              a significant change in or effect on a situation: 
+             <div class="def-block def-inline-example">
+              <span class="dbox-example">His tact makes a difference in the way people accept his suggestions.</span>
+             </div> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">4.</span> 
+            <div class="def-content">
+              a distinguishing characteristic; distinctive quality, feature, etc.: 
+             <div class="def-block def-inline-example">
+              <span class="dbox-example">The difference in the two products is quality.</span>
+             </div> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">5.</span> 
+            <div class="def-content">
+              the degree to which one person or thing differs from another. 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">6.</span> 
+            <div class="def-content">
+              the act of distinguishing; discrimination; distinction. 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">7.</span> 
+            <div class="def-content">
+              a disagreement in opinion. 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">8.</span> 
+            <div class="def-content">
+              a dispute or quarrel. 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">9.</span> 
+            <div class="def-content">
+              Also called 
+             <span class="dbox-bold">finite distance</span>. 
+             <span class="dbox-italic">Mathematics.</span> 
+             <ol class="def-sub-list"> 
+              <li> the amount by which one quantity is greater or less than another. </li> 
+              <li> <a class="dbox-xref dbox-roman" href="http://www.dictionary.com/browse/relative-complement">relative complement</a>. </li> 
+              <li> (of a function <span class="dbox-italic">f</span>) an expression of the form <span class="dbox-italic">f</span> (<span class="dbox-italic">x</span> + <span class="dbox-italic">h</span>) ? <span class="dbox-italic">f</span> (<span class="dbox-italic">x</span>). </li> 
+             </ol> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">10.</span> 
+            <div class="def-content">
+              a differentia. 
+            </div> 
+           </div> 
+          </section> 
+          <section class="def-pbk ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.def-set&quot;, &quot;type&quot;: &quot;def&quot;}"> 
+           <header class="luna-data-header"> 
+            <span class="dbox-pg">verb (used with object)</span>, 
+            <span class="dbox-bold" data-syllable="dif·fer·enced, ">differenced, </span>
+            <span class="dbox-bold" data-syllable="dif·fer·enc·ing.">differencing.</span> 
+           </header> 
+           <div class="def-set"> 
+            <span class="def-number">11.</span> 
+            <div class="def-content">
+              to cause or constitute a difference in or between; make 
+             <a class="dbox-xref dbox-roman" href="http://www.dictionary.com/browse/different">different</a>. 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">12.</span> 
+            <div class="def-content">
+              to perceive the difference in or between; discriminate. 
+            </div> 
+           </div> 
+          </section> 
+          <section class="def-pbk ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.def-set&quot;, &quot;type&quot;: &quot;def&quot;}"> 
+           <header class="luna-data-header"> 
+            <span class="dbox-pg">Idioms</span> 
+           </header> 
+           <div class="def-set"> 
+            <span class="def-number">13.</span> 
+            <div class="def-content"> 
+             <span class="dbox-bold">split the difference, </span> 
+             <ol class="def-sub-list"> 
+              <li> to compromise, especially to make equal concessions. </li> 
+              <li> to divide the remainder equally: 
+               <div class="def-block def-inline-example">
+                <span class="dbox-example">Let's take half of the cake and let the three of them split the difference.</span>
+               </div> </li> 
+             </ol> 
+            </div> 
+           </div> 
+          </section> 
+         </div> 
+         <div class="tail-wrapper"> 
+          <div class="tail-box tail-type-origin pm-btn-spot" data-pm-btn-target=".tail-content"> 
+           <div class="tail-header waypoint-wrapper oneClick-disabled" id="source-word-origin">
+             Origin of 
+            <span class="me" data-syllable="dif·fer·ence">difference</span> 
+            <button class="button-source" type="button">Expand</button> 
+           </div> 
+           <div class="tail-content "> 
+            <div class="tail-elements"> 
+             <div class="map-origin"> 
+              <div class="map-area"> 
+               <div class="map-origin-language" style="left: 45.522222222222%;bottom: 68.088888888889%;"> 
+                <div class="dot dot-left dot-bottom "></div> 
+                <div class="language-name oneClick-disabled"> 
+                 <a class="language-name" href="http://www.dictionary.com/browse/middle-english">Middle English</a> 
+                </div> 
+               </div> 
+               <div class="map-origin-language" style="right: 54.2%;top: 32.466666666667%;"> 
+                <div class="dot dot-right dot-top "></div> 
+                <div class="language-name oneClick-disabled"> 
+                 <a class="language-name" href="http://www.dictionary.com/browse/anglo-french">Anglo-French</a> 
+                </div> 
+               </div> 
+               <div class="map-origin-language" style="left: 49.294444444444%;top: 37.561111111111%;"> 
+                <div class="dot dot-left dot-top "></div> 
+                <div class="language-name oneClick-disabled"> 
+                 <a class="language-name" href="http://www.dictionary.com/browse/latin">Latin</a> 
+                </div> 
+               </div> 
+              </div> 
+             </div> 
+             <div class="timeline oneClick-disabled"> 
+              <div class="span" style="left:49.50495049505% ; width:3.5360678925035% ;"> 
+               <span class="date start-date">1300-1350</span> 
+              </div> 
+             </div> 
+             <span class="dbox-roman">1300-50;</span> 
+             <span class="dbox-roman">Middle English</span> (&lt; 
+             <span class="dbox-roman">Anglo-French</span>) &lt; 
+             <span class="dbox-roman">Latin</span> 
+             <span class="dbox-italic">differentia,</span> equivalent to 
+             <span class="dbox-italic">different-</span> carrying different ways (see 
+             <a class="dbox-xref dbox-roman" href="http://www.dictionary.com/browse/different">different</a>) + 
+             <span class="dbox-italic">-ia</span> 
+             <a class="dbox-xref dbox-roman" href="http://www.dictionary.com/browse/-ia">-ia</a>; see 
+             <a class="dbox-xref dbox-roman" href="http://www.dictionary.com/browse/-ence">-ence</a> 
+            </div> 
+           </div> 
+          </div> 
+          <div class="tail-box tail-type-synonyms pm-btn-spot" data-pm-btn-target=".tail-content"> 
+           <div class="tail-header waypoint-wrapper" id="source-synonyms">
+             Synonyms 
+            <button class="button-source" type="button">Expand</button> 
+           </div> 
+           <div class="deep-link-synonyms"> 
+            <a href="http://www.thesaurus.com/browse/difference" data-linkid="oowy0r">See more synonyms on Thesaurus.com</a> 
+           </div> 
+           <div class="tail-content ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.tail-elements&quot;, &quot;type&quot;: &quot;supText&quot;}"> 
+            <div class="tail-elements"> 
+             <span class="dbox-bold">1. </span>inconsistency, variation, diversity, imbalance, inequality, divergence, contrast, contrariety. 
+            </div> 
+           </div> 
+          </div> 
+          <div class="tail-box tail-type-antonyms pm-btn-spot" data-pm-btn-target=".tail-content"> 
+           <div class="tail-header ">
+             Antonyms 
+            <button class="button-source" type="button">Expand</button> 
+           </div> 
+           <div class="tail-content ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.tail-elements&quot;, &quot;type&quot;: &quot;supText&quot;}"> 
+            <div class="tail-elements"> 
+             <span class="dbox-bold">1. </span>similarity, agreement. 
+            </div> 
+           </div> 
+          </div> 
+          <div class="tail-box tail-type-synstudy pm-btn-spot" data-pm-btn-target=".tail-content"> 
+           <div class="tail-header ">
+             Synonym Study 
+            <button class="button-source" type="button">Expand</button> 
+           </div> 
+           <div class="tail-content ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.tail-elements&quot;, &quot;type&quot;: &quot;supText&quot;}"> 
+            <div class="tail-elements"> 
+             <span class="dbus_ford">1.</span>
+             <span class="dbox-sc">Difference,</span> 
+             <span class="dbox-sc">discrepancy,</span> 
+             <span class="dbox-sc">disparity,</span> 
+             <span class="dbox-sc">dissimilarity</span> imply perceivable unlikeness, variation, or diversity. 
+             <span class="dbox-sc">Difference</span> refers to a lack of identity or a degree of unlikeness: 
+             <span class="dbox-example">a difference of opinion; a difference of six inches.</span> 
+             <span class="dbox-sc">Discrepancy</span> usually refers to an inconsistency between things that should agree, balance, or harmonize: 
+             <span class="dbox-example">a discrepancy between the statements of two witnesses.</span> 
+             <span class="dbox-sc">Disparity</span> implies inequality, often where a greater equality might reasonably be expected: 
+             <span class="dbox-example">a great disparity between the ages of husband and wife.</span> 
+             <span class="dbox-sc">Dissimilarity</span> indicates an essential lack of resemblance between things in some respect comparable: 
+             <span class="dbox-example">a dissimilarity between social customs in Asia and America.</span> 
+             <span class="dbus_ford">6.</span> See 
+             <a class="dbox-xref dbox-roman" href="http://www.dictionary.com/browse/distinction">distinction</a>. 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+       </section> 
+      </div> 
+      <div class="source-meta">
+        Dictionary.com Unabridged
+       <br>Based on the Random House Dictionary, © Random House, Inc. 2017.
+       <br> 
+       <a href="#" class="source-cite" rel="nofollow" data-term="difference" data-source="luna">Cite This Source</a> 
+      </div> 
+     </section> 
+     <section id="source-example-sentences" class="source-wrapper source-example-sentences is-pm-btn-show pm-btn-spot" data-pm-btn-target=".source-box"> 
+      <div class="source-title">
+        Examples from the Web for 
+       <span class="u-headword">difference</span> 
+       <button class="js-button-source button-source" type="button">Expand</button> 
+      </div> 
+      <div class="sent-wrap ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.source-box&quot;, &quot;type&quot;: &quot;sentences_list&quot;}"> 
+       <div class="source-box oneClick-area" data-cts="{&quot;linkId&quot;:&quot;k4otco&quot;,&quot;infix&quot;:&quot;&quot;,&quot;domain&quot;:&quot;dictionary.com&quot;,&quot;clkpage&quot;:&quot;dic&quot;,&quot;clkmod&quot;:&quot;1clkesp&quot;,&quot;clksite&quot;:&quot;dict&quot;,&quot;clkld&quot;:0}" data-href="http://www.dictionary.com/browse/" data-imp="k4otco"> 
+        <div class="source-subtitle oneClick-disabled">
+         Contemporary Examples
+        </div> 
+        <ul> 
+         <li> <p class="partner-example-text"> Again, the <em>difference</em> can seem subtle and sound more like splitting hairs, but the <em>difference</em> is important. </p> 
+          <div class="partner-example-credentials" data-linkid="fboxke"> 
+           <a class="partner-example-logo" href="http://www.thedailybeast.com?source=dictionary" target="_blank" rel="nofollow"></a> 
+           <span> <a href="http://www.thedailybeast.com/articles/2015/01/08/how-skinny-is-too-skinny-israel-bans-underweight-models.html?source=dictionary" target="_blank" rel="nofollow">How Skinny Is Too Skinny? Israel Bans ‘Underweight’ Models</a> </span> 
+           <span> <a href="http://www.thedailybeast.com/contributors/carrie-arnold.html?source=dictionary" target="_blank" rel="nofollow">Carrie Arnold</a> </span> 
+           <span class="oneClick-disabled"> January 7, 2015 </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> One <em>difference</em> was that Chen was herself wearing white gloves. </p> 
+          <div class="partner-example-credentials" data-linkid="fboxke"> 
+           <a class="partner-example-logo" href="http://www.thedailybeast.com?source=dictionary" target="_blank" rel="nofollow"></a> 
+           <span> <a href="http://www.thedailybeast.com/articles/2015/01/05/an-nypd-family-s-grief-beats-back-grievances-for-most.html?source=dictionary" target="_blank" rel="nofollow">Funeral Protest Is Too Much for NYPD Union Boss</a> </span> 
+           <span> <a href="http://www.thedailybeast.com/contributors/michael-daly.html?source=dictionary" target="_blank" rel="nofollow">Michael Daly</a> </span> 
+           <span class="oneClick-disabled"> January 4, 2015 </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> That is the <em>difference</em> between the protections embedded in our Bill of Rights and the lived lives of our citizenry. </p> 
+          <div class="partner-example-credentials" data-linkid="fboxke"> 
+           <a class="partner-example-logo" href="http://www.thedailybeast.com?source=dictionary" target="_blank" rel="nofollow"></a> 
+           <span> <a href="http://www.thedailybeast.com/articles/2014/12/30/what-would-happen-if-i-got-in-white-cop-s-face.html?source=dictionary" target="_blank" rel="nofollow">What Would Happen if I Got in White Cop’s Face?</a> </span> 
+           <span> <a href="http://www.thedailybeast.com/contributors/goldie-taylor.html?source=dictionary" target="_blank" rel="nofollow">Goldie Taylor</a> </span> 
+           <span class="oneClick-disabled"> December 29, 2014 </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> But this may be a distinction without much of a <em>difference</em>—especially since Scalise admitted speaking before EURO. </p> 
+          <div class="partner-example-credentials" data-linkid="fboxke"> 
+           <a class="partner-example-logo" href="http://www.thedailybeast.com?source=dictionary" target="_blank" rel="nofollow"></a> 
+           <span> <a href="http://www.thedailybeast.com/articles/2014/12/30/white-pride-leader-sticks-up-for-scalise.html?source=dictionary" target="_blank" rel="nofollow">GOP Boss Gets Help From ‘White Hate’ Pal</a> </span> 
+           <span> <a href="http://www.thedailybeast.com/contributors/tim-mak.html?source=dictionary" target="_blank" rel="nofollow">Tim Mak</a> </span> 
+           <span class="oneClick-disabled"> December 29, 2014 </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> The <em>difference</em> was emphasized immediately after QZ8501 went missing. </p> 
+          <div class="partner-example-credentials" data-linkid="fboxke"> 
+           <a class="partner-example-logo" href="http://www.thedailybeast.com?source=dictionary" target="_blank" rel="nofollow"></a> 
+           <span> <a href="http://www.thedailybeast.com/articles/2014/12/29/the-presumed-crash-of-airasia-flight-qz8501-is-nothing-like-mh370.html?source=dictionary" target="_blank" rel="nofollow">The Presumed Crash of AirAsia Flight QZ8501 Is Nothing Like MH370</a> </span> 
+           <span> <a href="http://www.thedailybeast.com/contributors/lennox-samuels.html?source=dictionary" target="_blank" rel="nofollow">Lennox Samuels</a> </span> 
+           <span class="oneClick-disabled"> December 28, 2014 </span> 
+          </div> </li> 
+        </ul> 
+       </div> 
+       <div class="source-box oneClick-area" data-cts="{&quot;linkId&quot;:&quot;ixxth0&quot;,&quot;infix&quot;:&quot;&quot;,&quot;domain&quot;:&quot;dictionary.com&quot;,&quot;clkpage&quot;:&quot;dic&quot;,&quot;clkmod&quot;:&quot;1clkesp&quot;,&quot;clksite&quot;:&quot;dict&quot;,&quot;clkld&quot;:0}" data-href="http://www.dictionary.com/browse/" data-imp="ixxth0"> 
+        <div class="source-subtitle oneClick-disabled">
+         Historical Examples
+        </div> 
+        <ul> 
+         <li> <p class="partner-example-text"> "It makes no <em>difference</em> to you where I got it," said our hero, returning the money to his pocket. </p> 
+          <div class="partner-example-credentials" data-linkid="sl8bq9"> 
+           <span> <a href="http://www.gutenberg.org/files/9990/9990-h/9990-h.htm" target="_blank" rel="nofollow">Brave and Bold</a> </span> 
+           <span class="oneClick-disabled"> Horatio Alger </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> There was one <em>difference</em>, however, between the surprise felt by the two. </p> 
+          <div class="partner-example-credentials" data-linkid="sl8bq9"> 
+           <span> <a href="http://www.gutenberg.org/files/9990/9990-h/9990-h.htm" target="_blank" rel="nofollow">Brave and Bold</a> </span> 
+           <span class="oneClick-disabled"> Horatio Alger </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> The <em>difference</em> too is radical; it goes to the heart of the mystery. </p> 
+          <div class="partner-example-credentials" data-linkid="sl8bq9"> 
+           <span> <a href="http://www.gutenberg.org/files/9996/9996-h/9996-h.htm" target="_blank" rel="nofollow">'Tis Sixty Years Since</a> </span> 
+           <span class="oneClick-disabled"> Charles Francis Adams </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> But every <em>difference</em> of opinion is not a <em>difference</em> of principle. </p> 
+          <div class="partner-example-credentials" data-linkid="sl8bq9"> 
+           <span> <a href="http://www.gutenberg.org/files/925/925-h/925-h.htm" target="_blank" rel="nofollow">United States Presidents' Inaugural Speeches</a> </span> 
+           <span class="oneClick-disabled"> Various </span> 
+          </div> </li> 
+         <li> <p class="partner-example-text"> Ascribes to the <em>difference</em> in each of their tempers their mutual love. </p> 
+          <div class="partner-example-credentials" data-linkid="sl8bq9"> 
+           <span> <a href="http://www.gutenberg.org/files/9296/9296-h/9296-h.htm" target="_blank" rel="nofollow">Clarissa, Volume 1 (of 9)</a> </span> 
+           <span class="oneClick-disabled"> Samuel Richardson </span> 
+          </div> </li> 
+        </ul> 
+       </div> 
+      </div>
+     </section>
+     <section id="source-ced2" data-pm-btn-target=".source-box, .source-meta" class="source-wrapper source-ced2 is-pm-btn-show pm-btn-spot"> 
+      <div class="source-title">
+        British Dictionary definitions for 
+       <span class="u-headword">difference</span> 
+       <button class="button-source" type="button">Expand</button> 
+      </div> 
+      <div class="source-box oneClick-area"> 
+       <header class="main-header oneClick-disabled cts-disabled head-big"> 
+        <div class="header-row header-first-row"> 
+         <h2 class="head-entry"><span class="me">difference</span></h2> 
+        </div> 
+        <div class="header-row header-middle-row"> 
+         <div class="pronounce"> 
+          <span class="pronset"> <span class="pron ipapron">/<span class="dbox-pron">?d?f?r?ns; </span><span class="dbox-pron">?d?fr?ns</span>/ </span> </span> 
+         </div> 
+        </div> 
+       </header> 
+       <div class="source-data ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.def-coll&quot;, &quot;type&quot;: &quot;collins&quot;}"> 
+        <div class="def-coll"> 
+         <div class="def-list"> 
+          <div class="def-pbk"> 
+           <span class="dbox-pg">noun</span> 
+           <div class="def-set"> 
+            <span class="def-number">1.</span> 
+            <div class="def-content">
+              the state or quality of being unlike 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">2.</span> 
+            <div class="def-content">
+              a specific instance of being unlike 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">3.</span> 
+            <div class="def-content">
+              a distinguishing mark or feature 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">4.</span> 
+            <div class="def-content">
+              a significant change in a situation: 
+             <span class="dbox-ex">the difference in her is amazing</span> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">5.</span> 
+            <div class="def-content">
+              a disagreement or argument: 
+             <span class="dbox-ex">he had a difference with his wife</span> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">6.</span> 
+            <div class="def-content">
+              a degree of distinctness, as between two people or things 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">7.</span> 
+            <div class="def-content"> 
+             <ol class="def-sub-list"> 
+              <li>the result of the subtraction of one number, quantity, etc, from another</li> 
+              <li>the single number that when added to the subtrahend gives the minuend; remainder</li> 
+             </ol> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">8.</span> 
+            <div class="def-content">
+              (
+             <span class="dbox-bold">logic</span>) 
+             <span class="dbox-italic">another name for </span>
+             <a href="/browse/differentia">differentia</a> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">9.</span> 
+            <div class="def-content">
+              (
+             <span class="dbox-bold">maths</span>, 
+             <span class="dbox-bold">of two sets</span>) 
+             <ol class="def-sub-list"> 
+              <li>the set of members of the first that are not members of the second <span class="dbox-bold">A – B</span></li> 
+              <li><span class="dbox-bold">symmetric difference, </span>the set of members of one but not both of the given sets <span class="dbox-italic">Often symbolized </span><span class="dbox-bold">A + B</span></li> 
+             </ol> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">10.</span> 
+            <div class="def-content">
+              (
+             <span class="dbox-bold">heraldry</span>) an addition to the arms of a family to represent a younger branch 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">11.</span> 
+            <div class="def-content"> 
+             <span class="dbox-bold">make a difference</span> 
+             <ol class="def-sub-list"> 
+              <li>to have an effect</li> 
+              <li>to treat differently</li> 
+             </ol> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">12.</span> 
+            <div class="def-content"> 
+             <span class="dbox-bold">split the difference</span> 
+             <ol class="def-sub-list"> 
+              <li>to settle a dispute by a compromise</li> 
+              <li>to divide a remainder equally</li> 
+             </ol> 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">13.</span> 
+            <div class="def-content"> 
+             <span class="dbox-bold">with a difference, </span>with some peculiarly distinguishing quality, good or bad 
+            </div> 
+           </div> 
+          </div> 
+          <div class="def-pbk"> 
+           <span class="dbox-pg">verb </span>(
+           <span class="dbox-bold">transitive</span>) 
+           <div class="def-set"> 
+            <span class="def-number">14.</span> 
+            <div class="def-content">
+              (
+             <span class="dbox-bold">rare</span>) to distinguish 
+            </div> 
+           </div> 
+           <div class="def-set"> 
+            <span class="def-number">15.</span> 
+            <div class="def-content">
+              (
+             <span class="dbox-bold">heraldry</span>) to add a charge to (arms) to differentiate a branch of a family 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="tail-wrapper"> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="source-meta">
+        Collins English Dictionary - Complete &amp; Unabridged 2012 Digital Edition
+       <br> © William Collins Sons &amp; Co. Ltd. 1979, 1986 © HarperCollins
+       <br>Publishers 1998, 2000, 2003, 2005, 2006, 2007, 2009, 2012
+       <br> 
+       <a href="#" class="source-cite" rel="nofollow" data-term="difference" data-source="ced2">Cite This Source</a> 
+      </div> 
+     </section> 
+     <section id="source-etymon2" data-pm-btn-target=".source-box, .source-meta" class="source-wrapper source-etymon2 is-pm-btn-show pm-btn-spot"> 
+      <div class="source-title">
+        Word Origin and History for 
+       <span class="u-headword">difference</span> 
+       <button class="button-source" type="button">Expand</button> 
+      </div> 
+      <div class="source-box oneClick-area"> 
+       <div class="source-data"> 
+        <div class="def-list"> 
+         <span class="dbox-italic">n.</span> 
+         <section class="def-pbk"> 
+          <div class="def-set"> 
+           <p>mid-14c., from Old French <span class="dbox-italic">difference</span> (12c.) "difference, distinction; argument, dispute," from Latin <span class="dbox-italic">differentia</span> "diversity, difference," from <span class="dbox-italic">differentem</span> (nominative <span class="dbox-italic">differens</span>), present participle of <span class="dbox-italic">differre</span> "to set apart" (see <a class="dbox-xref" href="/browse/differ">differ</a>). Sense of "a quarrel" first attested late 14c. Colloquial phrase <span class="dbox-italic">what's the diff?</span> first recorded 1896.</p> 
+          </div> 
+         </section> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="source-meta">
+        Online Etymology Dictionary, © 2010 Douglas Harper
+       <br> 
+       <a href="#" class="source-cite" rel="nofollow" data-term="difference" data-source="etymon2">Cite This Source</a> 
+      </div> 
+     </section> 
+     <section id="source-ahsmd" data-pm-btn-target=".source-box, .source-meta" class="source-wrapper source-ahsmd is-pm-btn-show pm-btn-spot"> 
+      <div class="source-title"> 
+       <span class="u-headword">difference</span> in Medicine 
+       <button class="button-source" type="button">Expand</button> 
+      </div> 
+      <div class="source-box oneClick-area"> 
+       <p><b>difference</b> dif·fer·ence (d?f'?r-?ns, d?f'r?ns)<br><i>n.</i> <br> The magnitude or degree by which one quantity differs from another of the same kind.</p> 
+      </div> 
+      <div class="source-meta">
+        The American Heritage® Stedman's Medical Dictionary
+       <br>Copyright © 2002, 2001, 1995 by Houghton Mifflin Company. Published by Houghton Mifflin Company.
+       <br> 
+       <a href="#" class="source-cite" rel="nofollow" data-term="difference" data-source="ahsmd">Cite This Source</a> 
+      </div> 
+     </section> 
+     <section id="source-das" data-pm-btn-target=".source-box, .source-meta" class="source-wrapper source-das is-pm-btn-show pm-btn-spot"> 
+      <div class="source-title">
+        Slang definitions &amp; phrases for 
+       <span class="u-headword">difference</span> 
+       <button class="button-source" type="button">Expand</button> 
+      </div> 
+      <div class="source-box oneClick-area"> 
+       <div class="ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.def-con&quot;, &quot;type&quot;: &quot;def&quot;}"> 
+        <h3>difference</h3> 
+        <div class="def-con"> 
+         <p class="def-class">Related Terms</p> 
+         <p class="def-text"> <a href="/browse/same-difference--the">the same difference</a> </p> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="source-meta">
+        The Dictionary of American Slang, Fourth Edition by Barbara Ann Kipfer, PhD. and Robert L. Chapman, Ph.D.
+       <br>Copyright (C) 2007 by HarperCollins Publishers.
+       <br> 
+       <a href="#" class="source-cite" rel="nofollow" data-term="difference" data-source="das">Cite This Source</a> 
+      </div> 
+     </section> 
+     <section id="source-ahdi2" data-pm-btn-target=".source-box, .source-meta" class="source-wrapper source-ahdi2 is-pm-btn-show pm-btn-spot"> 
+      <div class="source-title">
+        Idioms and Phrases with 
+       <span class="u-headword">difference</span> 
+       <button class="button-source" type="button">Expand</button> 
+      </div> 
+      <div class="source-box oneClick-area"> 
+       <header class="main-header oneClick-disabled cts-disabled head-big"> 
+        <div class="header-row header-first-row"> 
+         <h2 class="head-entry"><span class="me">difference</span></h2> 
+        </div> 
+       </header> 
+       <div class="source-data ce-spot" data-collapse-expand="{&quot;target&quot;: &quot;.def-list&quot;, &quot;type&quot;: &quot;cols&quot;}"> 
+        <div class="def-list def-list-single"> 
+         <div class="def-set"> 
+          <div class="def-content"> 
+           <div class="def-ref-list"> 
+            <span>see: </span> 
+            <ul> 
+             <li><a class="dbox-xref" href="/browse/make-a-difference">make a difference</a></li> 
+             <li><a class="dbox-xref" href="/browse/split--the--difference">split the difference</a></li> 
+            </ul> 
+            <div class="u-clear"></div> 
+           </div> 
+           <div class="def-ref-list"> 
+            <span>also see under: </span> 
+           </div> 
+           <div class="def-ref-list"> 
+            <span><a class="dbox-xref" href="/browse/different">different</a></span> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+        <div class="u-clear"></div> 
+       </div> 
+      </div> 
+      <div class="source-meta">
+        The American Heritage® Idioms Dictionary
+       <br>Copyright © 2002, 2001, 1995 by Houghton Mifflin Company. Published by Houghton Mifflin Company.
+       <br> 
+       <a href="#" class="source-cite" rel="nofollow" data-term="difference" data-source="ahdi2">Cite This Source</a> 
+      </div> 
+     </section> 
+    </div> 
+    <div class="right-rail-container"> 
+     <div class="constant-content"> 
+      <section id="wotd-text" class="wotd-module"> 
+       <header> 
+        <h3 class="title icon-wotd">Word of the Day</h3> 
+       </header> 
+       <div class="content"> 
+       </div> 
+      </section>
+      <div id="dcom-serp-a-top-300x250"> 
+       <script type="text/javascript">
+        if (typeof UserController !== "undefined" && !UserController.shouldDisplayAds()) {
+            document.getElementById("dcom-serp-a-top-300x250").parentNode.removeChild(document.getElementById(""));
+        } else {
+            adStatus.displayedSpots.push("dcom-serp-a-top-300x250");
+            googletag.cmd.push(function () {
+                googletag.display("dcom-serp-a-top-300x250");
+            });
+        }
+    </script> 
+      </div> 
+      <section id="difficulty-box" data-difficulty="18" data-imp="6ta766"> 
+       <header> 
+        <h3 class="title icon-glasses">Difficulty index for <span class="u-headword">difference</span></h3> 
+       </header> 
+       <div class="content"> 
+        <div class="difficulty-bar"> 
+         <div class="difficulty-indicator"></div> 
+        </div> 
+       </div> 
+       <span class="subtext">Most English speakers likely know this word</span> 
+      </section>
+      <section id="tile-value-box"> 
+       <header> 
+        <h3 class="title icon-cup">Word Value for <span class="u-headword">difference</span></h3> 
+       </header> 
+       <div class="content"> 
+        <div class="row"> 
+         <div class="game-scrabble">
+          <span>19</span>
+         </div> 
+         <div class="game-wwf">
+          <span>21</span>
+         </div> 
+        </div> 
+        <div class="row"> 
+         <span class="descr_scrabble">Scrabble</span> 
+         <span class="descr_wwf">Words With Friends</span> 
+        </div> 
+       </div> 
+      </section>
+      <section class="related-words-box" data-imp="2ksc1p|6"> 
+       <header> 
+        <h3 class="title">Related Words</h3> 
+       </header> 
+       <div class="content" data-linkid="2ksc1p" data-ordinal="1" data-item="1"> 
+        <ul class="list-vertical"> 
+         <li class="size-1"> <a href="http://www.dictionary.com/browse/differential">differential</a> </li> 
+         <li class="size-2"> <a href="http://www.dictionary.com/browse/distinction">distinction</a> </li> 
+         <li class="size-3"> <a href="http://www.dictionary.com/browse/slip">slip</a> </li> 
+         <li class="size-3"> <a href="http://www.dictionary.com/browse/spread">spread</a> </li> 
+         <li class="size-4"> <a href="http://www.dictionary.com/browse/balance">balance</a> </li> 
+         <li class="size-4"> <a href="http://www.dictionary.com/browse/phoneme">phoneme</a> </li> 
+        </ul> 
+       </div> 
+      </section> 
+     </div> 
+     <div class="right-rail-middle-box">
+      <div id="dcom-serp-a-mid-300x250"> 
+       <script type="text/javascript">
+        if (typeof UserController !== "undefined" && !UserController.shouldDisplayAds()) {
+            document.getElementById("dcom-serp-a-mid-300x250").parentNode.removeChild(document.getElementById(""));
+        } else {
+            adStatus.displayedSpots.push("dcom-serp-a-mid-300x250");
+            googletag.cmd.push(function () {
+                googletag.display("dcom-serp-a-mid-300x250");
+            });
+        }
+    </script> 
+      </div>
+     </div> 
+     <section class="right-rail-nearby-words"> 
+      <h3 class="title">Nearby words for difference</h3> 
+      <div class="nearby-words-outer-box"> 
+       <div class="nearby-words-inner-box" data-linkid="lno2pu" data-ordinal="1" data-item="1"> 
+        <ul class="list-vertical"> 
+         <li> <a href="http://www.dictionary.com/browse/diff">diff</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/diff-">diff.</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/diffeomorphism">diffeomorphism</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/differ">differ</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/differed">differed</a> </li> 
+         <li class="query-word"> <a href="http://www.dictionary.com/browse/difference">difference</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/quotient-ring">difference ring</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/difference-threshold">difference threshold</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/difference--the">difference, the</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/differencing">differencing</a> </li> 
+         <li> <a href="http://www.dictionary.com/browse/different">different</a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </section> 
+     <div class="right-rail-sticky-box"> 
+      <div class="rightRailBottomAd"></div> 
+     </div> 
+    </div> 
+    <div class="survey" data-imp="4b238x"> 
+     <a href="http://www.dictionary.com/e/?src=dcom-serp-tab" class="link" target="_blank" data-linkid="4b238x">EVERYTHING AFTER Z</a> 
+    </div> 
+   </div> 
+   <div class="row"> 
+    <div id="dcom-serp-bottom-lb-728x90"> 
+     <script type="text/javascript">
+        if (typeof UserController !== "undefined" && !UserController.shouldDisplayAds()) {
+            document.getElementById("dcom-serp-bottom-lb-728x90").parentNode.removeChild(document.getElementById(""));
+        } else {
+            adStatus.displayedSpots.push("dcom-serp-bottom-lb-728x90");
+            googletag.cmd.push(function () {
+                googletag.display("dcom-serp-bottom-lb-728x90");
+            });
+        }
+    </script> 
+    </div> 
+   </div> 
+  </div> 
+  <footer class="footer-thin"> 
+   <div class="footer-container" data-linkid="gy27eg"> 
+    <div> 
+     <ul class="footer-navbar"> 
+      <li class="footer-navbar-list"> <a href="http://content.dictionary.com/">About</a> </li> 
+      <li class="footer-navbar-list"> <a href="http://www.dictionary.com/terms">Terms &amp; Privacy</a> </li> 
+     </ul> 
+     <div class="footer-copyright">
+       ©&nbsp;2017 Dictionary.com, LLC. 
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <script type="text/javascript" src="http://app.dictionary.com/js/advertisement.js"></script> 
+  <script>
+    if (typeof window.canRunAds === 'undefined') {
+        var img = new Image(),
+        url = 'http://track.dictionary.com/main.gif?ev=a&ms=%40%40MSEG%40%40&rf=%40%40REFERRER%40%40&cb=%40%40CACHEBUSTER%40%40&pn=dic&st=dict&ab=&dc=desktop';
+
+        url = url.replace('%40%40REFERRER%40%40', encodeURIComponent(document.referrer))
+            .replace('%40%40CACHEBUSTER%40%40', Math.floor((Math.random() * 899999999) + 100000000))
+            .replace('%40%40MSEG%40%40', (cookiesManager.getCookieValue('mseg') || ''));
+        img.src = url;
+    }
+</script> 
+  <script>
+    /*
+     Below immediately function provide support for browsers, which do not support modern standards (https://dom.spec.whatwg.org/)
+     partially taken from: plainjs.com
+    */
+    (function (e) {
+        'use strict';
+        e.matches = e.matches ||
+            e.matchesSelector ||
+            e.webkitMatchesSelector ||
+            e.msMatchesSelector ||
+            function (selector) {
+                var node = this, nodes = (node.parentNode || node.document).querySelectorAll(selector), i = -1;
+                while (nodes[++i] && nodes[i] != node);
+                return !!nodes[i];
+            };
+        e.closest = e.closest || function (css) {
+                var node = this;
+                while (node) {
+                    if (node.matches(css)) return node;
+                    else node = node.parentElement;
+                }
+                return null;
+            };
+        e.hasClass = e.hasClass || function (className) {
+                var node = this;
+                return node.classList ? node.classList.contains(className) : new RegExp('\\b' + className + '\\b').test(node.className);
+            };
+        e.addClass = e.addClass || function (className) {
+                var node = this;
+                if (node.classList) node.classList.add(className);
+                else if (!node.hasClass(node, className)) node.className += ' ' + className;
+            };
+        e.removeClass = e.removeClass || function(className) {
+                var node = this;
+                if (node.classList) node.classList.remove(className);
+                else node.className = node.className.replace(new RegExp('\\b' + className + '\\b', 'g'), '');
+            };
+        e.on = e.on || function (event, selector, callback, context) {
+                var el = context || document;
+                el.addEventListener(event, function (e) {
+                    var found, el = e.target || e.srcElement;
+                    while (el && el.matches && el !== context && !(found = el.matches(selector))) el = el.parentElement;
+                    if (found) callback.call(this, el, e);
+                });
+            };
+    }(Element.prototype));
+</script>
+  <!-- Begin Quantcast Tag, part 2 --> 
+  <script type="text/javascript">
+if (typeof UserController === "undefined" || !UserController.isUnder13()) {
+    _qevents.push({qacct: "p-51zXP5Cc9sxvQ"});
+}
+</script> 
+  <noscript> 
+   <div style="display: none;">
+    <img src="//pixel.quantserve.com/pixel/p-51zXP5Cc9sxvQ.gif" height="1" width="1" alt="Quantcast">
+   </div> 
+  </noscript> 
+  <!-- End Quantcast Tag, part 2 -->
+  <script>
+    /*global $, pageName, window */
+
+    var BCT = (function () {
+        'use strict';
+
+        var webTrackURL = 'http://track.dictionary.com/main.gif?ev=c&cl=%40%40LINKIDS%40%40&ci=%40%40ITEM%40%40&co=%40%40ORDINAL%40%40&ms=%40%40MSEG%40%40&ds=%40%40DESTINATION%40%40&qr=%25%25QUERY%25%25&rf=%40%40REFERRER%40%40&cb=%40%40CACHEBUSTER%40%40&pn=%40%40PAGENAME%40%40&st=dict&ab=&dc=desktop',
+            query, originalQuery;
+
+                    originalQuery = typeof DARCI.OQR !== 'undefined' ? DARCI.OQR.getValue() : null;
+            query =  originalQuery !== null ? originalQuery : "difference";
+
+            webTrackURL = webTrackURL.replace('%25%25QUERY%25%25', query);
+        
+        /**
+         * Returns data, which will be logged.
+         *
+         * NOTE:
+         * Possible, that empty array will be returned.
+         */
+        function getData(target) {
+            var ctsData,
+                closestLinkIDElement,
+                data = {};
+
+            ctsData = JSON.parse(target.getAttribute('data-cts'));
+            if (ctsData !== null) {
+                data.linkId = ctsData.linkId;
+                data.item = "";
+                data.ordinal = ctsData.ordinal;
+            } else {
+                closestLinkIDElement = target.closest('[data-linkid]');
+                if (null !== closestLinkIDElement && null === target.closest('[data-type]')) {
+                    data.linkId = closestLinkIDElement.getAttribute('data-linkid');
+                    data.item = getItem(target);
+                    data.ordinal = getOrdinal(target, closestLinkIDElement);
+                }
+            }
+            return data;
+        }
+
+        function getItem(target) {
+            var closestWithItem = target.closest('[data-item]'),
+                item = '';
+
+            if (null !== closestWithItem) {
+                item = target.textContent.trim();
+            }
+
+            return item;
+        }
+
+        function getOrdinal(target, dataItem) {
+            var closestWithOrdinal,
+                value = '';
+
+            if (dataItem !== target) { // if element with linkid is not the anchor itself we are going deeper
+                closestWithOrdinal = target.closest('[data-ordinal]');
+                if (null !== closestWithOrdinal) {
+                    var links = closestWithOrdinal.querySelectorAll("a"),
+                        len = links.length;
+
+                    for (var i = 0; i < len; i++) {
+                        if (target === links[i]) {
+                            value = i + 1;
+                        }
+                    }
+                }
+            }
+            return value;
+        }
+
+        /**
+         * Returns data, which are generated always in the same way
+         */
+        function getCommonData(destination) {
+            var data = {};
+            data.cacheBuster = Math.floor((Math.random() * 899999999) + 100000000);
+            data.pageName = pageName;
+            data.mseg = getMsegValue();
+            data.destination = encodeURIComponent(destination);
+            return data;
+        }
+
+        /**
+         * Redirects user to destination
+         */
+        function redirectToDest(location) {
+            window.location = location;
+        }
+
+        /**
+         * Returns value of cookie based on name
+         */
+        function getCookieByName(name) {
+            var value = null,
+                cookies = document.cookie,
+                searchedCookie = cookies.indexOf(" " + name + "=");
+
+            // it's worth to check, if cookie is not first cookie
+            if (searchedCookie === -1) {
+                var checkFirstCookie = cookies.indexOf(name + "=");
+                searchedCookie = checkFirstCookie === 0 ? 0 : -1;
+            }
+
+            if (searchedCookie > -1) {
+                var startPositionOfValue = cookies.indexOf("=", searchedCookie) + 1,
+                    endPositionOfValue = cookies.indexOf(";", searchedCookie);
+
+                if (endPositionOfValue === -1) {
+                    endPositionOfValue = searchedCookie.length;
+                }
+
+                value = cookies.substring(startPositionOfValue,endPositionOfValue);
+            }
+
+            return value;
+        }
+
+        /**
+         * Returns value of mseg cookie
+         */
+        function getMsegValue() {
+            var msegVal;
+            if (typeof cookiesManager !== "undefined") {
+                msegVal = cookiesManager.getCookieValue("mseg");
+            } else {
+                msegVal = getCookieByName("mseg");
+            }
+
+            return msegVal || "";
+        }
+
+        /**
+         * Renders WebTrack URL
+         */
+        function renderWebTrackURL(data, destination) {
+            var commonData = getCommonData(destination);
+            return webTrackURL.replace('%40%40REFERRER%40%40', encodeURIComponent(document.referrer))
+                .replace('%40%40LINKIDS%40%40', data.linkId || "")
+                .replace('%40%40ITEM%40%40', encodeURIComponent(data.item) || "")
+                .replace('%40%40ORDINAL%40%40', data.ordinal || "")
+                .replace('%40%40CACHEBUSTER%40%40', commonData.cacheBuster || "")
+                .replace('%40%40PAGENAME%40%40', commonData.pageName || "")
+                .replace('%40%40MSEG%40%40', commonData.mseg || "")
+                .replace('%40%40DESTINATION%40%40', commonData.destination || "");
+        }
+
+        function logAndRedirect(data, destination) {
+            var logURL = renderWebTrackURL(data, destination),
+                image = new Image(),
+                timeout;
+
+            timeout = setTimeout(
+                function(){
+                    redirectToDest(destination);
+                },
+                2000
+            );
+
+            image.onload = image.onerror = function () {
+                clearTimeout(timeout);
+                redirectToDest(destination);
+            };
+
+            image.src = logURL;
+
+            return false;
+        }
+
+        /**
+         * Registers click event handler to body so it receives every click on anchor.
+         */
+        function attachHandler() {
+            var bodyTag = document.getElementsByTagName('body')[0];
+
+            bodyTag.on("click", 'a', function (elem, event) {
+                var target = event.target,
+                    enabled = target.closest('.cts-enabled'),
+                    disabled = target.closest('.cts-disabled'),
+                    destination = elem.getAttribute('href'),
+                    dataToLog;
+
+                if (typeof destination === "undefined") {
+                    return true;
+                }
+
+                if (target.hasClass('cts-clicked')) {
+                    return false;
+                }
+
+                //ACE-1060
+                if (disabled !== null && (enabled === null || disabled.childNodes.length < enabled.childNodes.length)) { return true }
+
+                dataToLog = getData(target);
+
+                // if object has no id it means that link shouldn't be tracked - follow the link
+                if (typeof dataToLog.linkId === "undefined") {
+                    return true;
+                }
+                event.preventDefault();
+
+                // mark this link as already clicked
+                target.addClass('cts-clicked');
+
+                return logAndRedirect(dataToLog, destination);
+            });
+        }
+
+        return {
+            attachHandler: attachHandler,
+            /**
+             * ::redirect() method is method used by oneClick module
+             */
+            redirect: function (ctsData, destinationHref, item) {
+                var data = {};
+                data.linkId = ctsData.linkId || ctsData.linkid;
+                data.item = item;
+                data.ordinal = '';
+                return logAndRedirect(data, destinationHref);
+            }
+        };
+    }());
+
+    /** Do the initial attachment to <body> links */
+    BCT.attachHandler();
+
+</script>
+  <script type="text/javascript" src="http://static.sfdict.com/app/js/require-37278.js"></script> 
+  <script type="text/javascript">
+    requirejs.config({
+            waitSeconds: 60,
+            baseUrl: "http://static.sfdict.com/dcom/js",
+            paths: {"appcore":"http:\/\/static.sfdict.com\/app\/js","options":"http:\/\/static.sfdict.com\/app\/js\/options-b826f","facebook":"http:\/\/connect.facebook.net\/en_US\/all","twitter":"https:\/\/platform.twitter.com\/widgets","instagram":"https:\/\/x.instagramfollowbutton.com\/follow","google-plus":"https:\/\/apis.google.com\/js\/platform","jquery":"http:\/\/static.sfdict.com\/app\/js\/jquery-1.11.3.min-4069b","page\/serp\/main":"page\/serp\/main-abe43"},
+            shim: {"facebook":{"exports":"FB"},"twitter":{"exports":"twttr"},"instagram":[],"google-plus":{"exports":"googleplus"}}        });
+        define("runtime-options", function() {
+        return {"definitionsLimit":5,"definitionsDisplayed":3,"wotdLink":"<a href=\"http:\/\/www.dictionary.com\/wordoftheday\/\"  class=\"word\"  id=\"wotd\" data-linkid=\"rpilnc\" >$$word$$<\/a>","flashAudioPlayerPath":"http:\/\/static.sfdict.com\/app\/flash\/player-d6fab.swf","isFavoriteURL":"http:\/\/app.dictionary.com\/favorites\/api\/getfavorites","addFavoriteURL":"http:\/\/app.dictionary.com\/favorites\/api\/addword","searchTerm":"difference","loginPageURL":"http:\/\/app.dictionary.com\/login\/core","clientPlatform":"Desktop","interstitialDashRenderApi":"http:\/\/app.dictionary.com\/api\/dash\/render\/ipadInterstitial\/dict_serp_ipadInterstitial","canonicalURL":"http:\/\/www.dictionary.com\/browse\/difference","pageName":"","wotdApiUrl":"http:\/\/restapi.dictionary.com\/api\/wordoftheday","pageType":"serp","variant":false,"citeThisSourceAPIURL":"http:\/\/app.dictionary.com\/api\/citethissource.json?app=dictionary","collapseExpandSettings":{"luna":{"container":"#source-luna","types":{"def":{"name":"luna definitions","type":0,"desktop":{"visibleEntries":7,"condition":7},"mobile":{"visibleEntries":2,"condition":2}},"supEntry":{"name":"supplementary notes - entry-based elements","type":0,"desktop":{"visibleEntries":5,"condition":5},"mobile":{"visibleEntries":2,"condition":2}},"supText":{"name":"supplementary notes - textual elements","type":1,"desktop":{"visibleLines":5,"condition":5},"mobile":{"visibleLines":5,"condition":5}},"usgAlert":{"name":"usage alert - textual elements","type":1,"desktop":{"visibleLines":3,"condition":3},"mobile":{"visibleLines":3,"condition":3}}},"specCase":{"name":"special collapse expand for Luna Mobile","type":0,"mobile":{"visibleEntries":4,"condition":5}}},"idioms":{"container":"#source-ahdi2","types":{"cols":{"name":"idioms dictionary 2 cols list and text","type":3,"desktop":{"visibleLines":5,"condition":7}},"list":{"name":"idioms dictionary ordered list","type":4,"desktop":{"visibleLines":5,"condition":7}}}},"slang":{"container":"#source-das","types":{"def":{"name":"slang dictionary text based","type":5,"desktop":{"visibleLines":5,"condition":7}}}},"21century":{"container":"#source-dict21db","types":{"cent21_entry":{"name":"21st Century entry text","type":6,"desktop":{"visibleLines":5,"condition":7}}}},"collins":{"container":"#source-ced2","types":{"collins":{"name":"collins definitions","type":2,"desktop":{"entries":{"visibleEntries":3,"condition":5},"lines":{"visibleLines":10,"condition":12}}}}},"sentences":{"container":"#source-example-sentences","types":{"sentences_list":{"name":"example sentences list","type":8,"desktop":{"visibleList":3,"condition":4},"mobile":{"visibleList":10,"condition":11}}}}},"collapseExpandToggles":{"luna_entry":0,"luna_text":1,"idioms_cols":3,"idioms_list":4,"slang_text":5,"cent21_entry":6,"col_number":2,"sentences_list":8},"CTSParams":{"infix":"","clkpage":"dic","clksite":"dict","clkld":0},"webTrack":{"clickInner":"http:\/\/track.dictionary.com\/main.gif?ev=n&tg=%40%40TARGET%40%40&ar=%40%40ADREFRESH%40%40&ms=%40%40MSEG%40%40&rf=%40%40REFERRER%40%40&cb=%40%40CACHEBUSTER%40%40&pn=%40%40PAGENAME%40%40&st=dict&ab=&dc=desktop","impressions":"http:\/\/track.dictionary.com\/main.gif?ev=i&lk=%40%40IMPRESSIONLINKIDS%40%40&ms=%40%40MSEG%40%40&rf=%40%40REFERRER%40%40&cb=%40%40CACHEBUSTER%40%40&pn=%40%40PAGENAME%40%40&st=dict&ab=&dc=desktop","pageview":"http:\/\/track.dictionary.com\/main.gif?ev=p&ct=%40%40CONTENTTITLE%40%40&ms=%40%40MSEG%40%40&rf=%40%40REFERRER%40%40&cb=%40%40CACHEBUSTER%40%40&pn=%40%40PAGENAME%40%40&st=dict&ab=&dc=desktop","click":"http:\/\/track.dictionary.com\/main.gif?ev=c&cl=%40%40LINKIDS%40%40&ci=%40%40ITEM%40%40&co=%40%40ORDINAL%40%40&ms=%40%40MSEG%40%40&ds=%40%40DESTINATION%40%40&qr=%25%25QUERY%25%25&rf=%40%40REFERRER%40%40&cb=%40%40CACHEBUSTER%40%40&pn=%40%40PAGENAME%40%40&st=dict&ab=&dc=desktop"},"socialEvent":"{\"basePath\":\"http:\\\/\\\/track.dictionary.com\\\/track\\\/social\",\"attributes\":{\"site\":\"dict\",\"pageName\":\"dic\",\"ldid\":0}}"};
+    });
+    require(["page\/serp\/main"])
+</script> 
+  <script>
+    (function (factory) {
+        if (typeof require === 'function') {
+            require(['jquery'], factory);
+        } else {
+            factory($);
+        }
+    }(function($) {
+        var impressionLinkIds = {};
+        $('[data-imp]').each(function () {
+            if ($(this).is(':visible')) {
+                var imp = $(this).data('imp').toString().split('|', 2);
+                if (impressionLinkIds[imp[0]] === undefined) {
+                    impressionLinkIds[imp[0]] = 0;
+                }
+                if (imp[1] !== undefined) {
+                    impressionLinkIds[imp[0]] += parseInt(imp[1]);
+                } else {
+                    impressionLinkIds[imp[0]] += 1;
+                }
+            }
+        });
+
+        var lkValue = '';
+        for (var linkId in impressionLinkIds) {
+            lkValue += linkId + (impressionLinkIds[linkId] > 1 ? '|' + impressionLinkIds[linkId] : '') + ','
+        }
+        if (lkValue.slice(-1) === ',') {
+            lkValue = lkValue.slice(0, -1);
+        }
+        if (lkValue != '') {
+            var ms = (typeof ms === 'undefined') ? cookiesManager.getCookieValue('mseg') || "" : ms;
+            new Image().src = "http://track.dictionary.com/main.gif?ev=i&pn=dic&st=dict&ab=&dc=desktop&lk=" + lkValue + "&ms=" + ms + "&rf=" + encodeURIComponent(document.referrer) + "&cb=" + Math.floor((Math.random()*899999999)+100000000);
+        }
+    }));
+</script>   
+ </body>
+</html>

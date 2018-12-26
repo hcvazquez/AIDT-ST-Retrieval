@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-IE">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> 
+  <title>Using the Web Speech API to control a HTML5 video - Ian Devlin :: Web Developer</title> 
+  <link rel="canonical" href="https://iandevlin.com/blog/2014/01/javascript/using-the-web-speech-api-to-control-a-html5-video/"> 
+  <link rel="stylesheet" href="https://iandevlin.com/css/iandevlin.css?1507030469" media="screen"> 
+  <link rel="stylesheet" href="https://iandevlin.com/css/print.css?1507030469" media="print"> 
+  <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create', 'UA-2046650-1', 'auto');ga('send', 'pageview');</script> 
+ </head> 
+ <body> 
+  <header class="header" role="banner"> 
+   <a href="#main" class="skip-link">Skip to main</a>
+   <nav class="sitenav" role="navigation"> 
+    <ul class="sitenav__list"> 
+     <li class="sitenav__listitem sitenav__listitem--logo"><a href="/" class="sitenav__link sitenav__link--logo">ID</a></li>
+     <li class="sitenav__listitem"><a href="/about/" class="sitenav__link">About</a></li>
+     <li class="sitenav__listitem"><a href="/blog/" class="sitenav__link sitenav__link--active">Blog</a></li>
+     <li class="sitenav__listitem"><a href="/books/" class="sitenav__link">Books</a></li>
+     <li class="sitenav__listitem"><a href="/contact/" class="sitenav__link">Contact</a></li>
+    </ul> 
+   </nav>
+  </header> 
+  <main id="main" class="centre" role="main"> 
+   <h1 class="header__title">Using the Web Speech API to control a HTML5 video</h1> 
+   <section class="bloginfo"> 
+    <button class="bloginfo__link bloginfo__link--reset" onclick="history.go(-1)"><span aria-hidden="true">«</span> Back</button> 
+    <time class="bloginfo__published" datetime="2014-01-03" itemprop="datePublished">3 January 2014</time> 
+   </section> 
+   <p>The JavaScript <a href="https://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html">Web Speech API</a> has been around since <time datetime="2012-10">October 2012</time> but has not really been implemented in any browser other than in Chrome, and even then only partially. I decided to take a quick look at this API and put together a <a href="#demo">demo</a> on how it could be used to control a HTML5 video.</p> 
+   <p>My first ever job was working as a software engineer for a voice recognition company, where we built voice recognition telephone systems for customers such as utility companies and banks (sorry) so voice recognition has always been of interest to me. Even though the Web Speech API has been around since the end of <time datetime="2012">2012</time>, I have only recently had the chance of looking at it and at Chrome’s implementation of it, which is quite simple since they have left the most complicated bits of it out (for now).</p> 
+   <p>I’m not usually a fan of talking about WebKit or Chrome only implementations of things, but in this case I will make an exception.</p> 
+   <h2 id="simple-speech-recognition">Simple Speech Recognition</h2> 
+   <p>The first major questions to answer are who actually performs the speech recognition, and where are the recognisers located? Google and I’m not sure. The actual recognition is performed server-side, and is something you don’t have to worry about as Chrome will deal with it. This does appear to mean that the voice is either recorded or streamed from your browser to the server in question, which performs the recognition and returns the results. This can be done as follows:</p> 
+   <div class="highlight">
+    <pre><code class="language-javascript" data-lang="javascript"><span></span><span class="c1">// Create the webkitSpeechRecognition object which provides the speech interface</span>
+<span class="kd">var</span> <span class="nx">rec</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">webkitSpeechRecognition</span><span class="p">();</span>
+<span class="c1">// Ensure that the recogniser is listening continously, even if the user pauses (default value is false)</span>
+<span class="nx">rec</span><span class="p">.</span><span class="nx">continuous</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+<span class="c1">// Start recognising</span>
+<span class="nx">rec</span><span class="p">.</span><span class="nx">start</span><span class="p">();</span>
+</code></pre>
+   </div> 
+   <p>This simple code snippet will cause the Chrome browser to start listening continously for speech and to attempt to recognise what was said. When the recogniser has some results, it returns data via an event which can be accessed via the <code>onresult</code> handler:</p> 
+   <div class="highlight">
+    <pre><code class="language-javascript" data-lang="javascript"><span></span><span class="nx">rec</span><span class="p">.</span><span class="nx">onresult</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+   <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">resultIndex</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">e</span><span class="p">.</span><span class="nx">results</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">e</span><span class="p">.</span><span class="nx">results</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">isFinal</span><span class="p">)</span> <span class="p">{</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+   </div> 
+   <p>The event object returned contains the following data:</p> 
+   <ul> 
+    <li>results[i] – an array containing recognition result objects. Each array element corresponds to a recognised word</li> 
+    <li>resultIndex – this is the current recognition result index</li> 
+    <li>results[i].isFinal – a Boolean that indicates if the the result is final or interim (interim results can be asked for via the <code>interimResults</code> attribute)</li> 
+    <li>results[i][j] – a 2D array containing alternative recognised words. The first element is the most probable recognised word</li> 
+    <li>results[i][j].transcript – the text representation of the recognised word(s)</li> 
+    <li>results[i][j].confidence – the probability of the result given as being correct (float value from 0 to 1)</li> 
+   </ul> 
+   <p>The Web Speech API specifies that <a href="https://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html#speechreco-speechgrammar">grammar objects</a> can be defined and used with the speech recognition, but Chrome doesn’t appear to have implemented this yet, even though the <code>webkitSpeechRecognition</code> object does contain the attributes and methods for this, there is no documentation on how this might be used nor what formats are required. Because of this, at the moment the recogniser used by Chrome just performs general recognition on anything you say and you have to deal with the results yourself.</p> 
+   <h2 id="demo">HTML5 Video Voice Control</h2> 
+   <p>I have put together a simple demo that allows <a href="https://iandevlin.com/examples/speechapi-video/">HTML5 Video Voice Control with the Web Speech API</a> that works in the latest Chrome. This simple demo listens for key words in the recognition string that then uses the HTML5 Media API to interact with the video.</p> 
+   <p>Note: In the demo, you need to click on the “Start Recognition” button to start the recogniser. This will also cause Chrome to ask for user permisson to access the microphone which you should confirm.</p> 
+   <p>The code for the demo is also available on <a href="https://github.com/iandevlin/speechapi-examples/tree/master/speechapi-video">GitHub</a>.</p> 
+   <p>Once the recogniser returns a set of results, the code looks for a keyword, in this case “video”, which then causes it to parse the recognised string some more looking for relevant commands. The commands that are available are:</p> 
+   <ul> 
+    <li>“video play” – plays the video</li> 
+    <li>“video stop” – stops the video</li> 
+    <li>“video replay” – returns to the start of the video and plays it</li> 
+    <li>“video volume off” – mutes the video</li> 
+    <li>“video volume on” – unmutes the video</li> 
+    <li>“video volume decrease” – decrease the video’s volume by one</li> 
+    <li>“video volume increase” – increases the video’s volume by one</li> 
+   </ul> 
+   <p>As a command is correctly recognised and acted upon, it will be briefly highlighted in the command list.</p> 
+   <p>The recogniser won’t always correctly recognise what was said, so be patient. If you want to see what the recogniser understood, the recognised result is written to the JavaScript console. Often you will see similar words being recognised, and since we are doing a simple <code>indexOf()</code> to check if a word was said, it doesn’t always work effectively. This is where being able to define a grammar would be very useful as it would try and match what was said to what the grammar defines, giving more accurate results.</p> 
+   <p>Chrome’s implementation is useful as a proof of concept and I would like to see other browsers follow suit soon, and I look forward to the implementation of grammars.</p> 
+   <nav class="pagination pagination--articles" role="navigation"> 
+    <section class="pagination__section"> 
+     <h4 class="pagination__heading">« Newer article</h4> 
+     <a class="pagination__next" href="https://iandevlin.com/blog/2014/01/whimsical/observations-on-the-use-or-lack-thereof-of-long-titles-in-writing-on-the-web/">Observations on the Use or Lack Thereof, of Long Titles in Writing on the Web</a> 
+    </section> 
+    <section class="pagination__section"> 
+     <h4 class="pagination__heading">Older article »</h4> 
+     <a class="pagination__prev" href="https://iandevlin.com/blog/2013/10/responsive-web-design/resimagecrop-a-responsive-image-solution/">resimagecrop – a responsive image solution</a> 
+    </section> 
+   </nav>  
+  </main> 
+  <footer class="sitefooter centre" role="contentinfo"> 
+   <small>Copyright © <a href="https://twitter.com/iandevlin">Ian Devlin</a> <time datetime="2004">MMIV</time> – <time datetime="2017">MMXVII</time></small> 
+  </footer>  
+ </body>
+</html>

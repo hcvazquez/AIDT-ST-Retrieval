@@ -1,0 +1,458 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title>Playing Sound in Java</title> 
+  <link href="../css/programming_notes.css" rel="stylesheet" type="text/css"> 
+  <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+ </head> 
+ <body> 
+  <!-- Begin the outermost container division --> 
+  <div id="container"> 
+   <!-- print header --> 
+   <script type="text/javascript" src="../scripts/header.js"></script> 
+   <!-- begin main content division --> 
+   <div id="content"> 
+    <h1>Java Game Programming</h1> 
+    <h2>Playing Sound</h2> 
+    <p>JavaSE, via Java Sound API (in packages <code>javax.sound</code>), supports two types of audio:</p> 
+    <ul> 
+     <li>Sampled Audio: Sampled audio is represented as a sequence of time-sampled data of the amplitude of sound wave. It is supported in package <code>javax.sound.sampled</code>. The supported file formats are: "wav", "au" and "aiff". The samples can be either 8-bit or 16-bit, with sampling rate from 8 kHz to 48 kHz.</li> 
+     <li>Musical Instrument Digital Interface (MIDI): MIDI music is <em>synthesized</em> from musical notes and special sound effects, instead of time-sampled, like a <em>recipe</em> for creating musical sound. MIDI is supported in package <code>javax.sound.midi</code>.</li> 
+    </ul> 
+    <p>Java Sound API also include a software sound mixer that supports up to 64 channels for sound effect and background music.</p> 
+    <p>Java Media Framework (JMF), which is not part of JavaSE, is needed to support MP3 and advanced features. JOAL (Java Bindings on OpenAL) supports 3D sound effect.</p> 
+    <h3>Sampled Audio</h3> 
+    <p>To play sampled audio, you create an instance of a <code>SourceDataLine</code> or a <code>Clip</code>, which acts as a <em>source</em> to the software audio <em>mixer</em>. Audio samples are then loaded into it, and delivered to the mixer. The mixer may mix the samples with those from other sources and then deliver the mix to a target (usually an audio output device on a sound card).</p> 
+    <h4><code>javax.sound.Clip</code></h4> 
+    <p><strong>Code Example</strong>:</p> 
+    <pre class="code-listing">
+import java.io.*;
+import java.net.URL;
+import javax.sound.sampled.*;
+import javax.swing.*;
+   
+<span class="code-comment">// To play sound using Clip, the process need to be alive.
+// Hence, we use a Swing application.</span>
+public class SoundClipTest extends JFrame {
+   
+   <span class="code-comment">// Constructor</span>
+   public SoundClipTest() {
+      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      this.setTitle("Test Sound Clip");
+      this.setSize(300, 200);
+      this.setVisible(true);
+   
+      try {
+         <span class="code-comment">// Open an audio input stream.</span>
+         URL url = this.getClass().getClassLoader().getResource("gameover.wav");
+         AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+         <span class="code-comment">// Get a sound clip resource.</span>
+         Clip clip = AudioSystem.getClip();
+         <span class="code-comment">// Open audio clip and load samples from the audio input stream.</span>
+         clip.open(audioIn);
+         clip.start();
+      } catch (UnsupportedAudioFileException e) {
+         e.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace();
+      } catch (LineUnavailableException e) {
+         e.printStackTrace();
+      }
+   }
+   
+   public static void main(String[] args) {
+      new SoundClipTest();
+   }
+}
+</pre> 
+    <p>The steps of playing sounds via <code>Clip</code> are:</p> 
+    <ol> 
+     <li>Allocate a <code>AudioInputStream</code> piped from a file or URL, e.g., <pre class="code-example">
+<span class="code-comment">// from a wave File</span>
+File soundFile = new File("eatfood.wav");
+AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
+<span class="code-comment">// from a URL</span>
+URL url = new URL("http://www.zzz.com/eatfood.wav");
+AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+<span class="code-comment">// can read from a disk file and also a file contained inside a JAR (used for distribution)</span><span class="code-comment">
+// recommended</span>
+URL url = this.getClass().getClassLoader().getResource("eatfood.wav");
+AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+</pre> </li> 
+     <li>Allocate a sound <code>Clip</code> resource via the static method <code>AudioSystem.getClip()</code>: <pre class="code-example">
+Clip clip = AudioSystem.getClip();
+</pre> </li> 
+     <li>Open the clip to load sound samples from the audio input stream opened earlier: <pre class="code-example">
+clip.open(audioIn);
+<span class="code-comment">// For small-size file only. Do not use this to open a large file over slow network, as it blocks.</span>
+</pre> </li> 
+     <li>You can now play the clip by invoking either the <code>start()</code> or <code>loop()</code> method <pre class="code-example">
+<span class="code-comment">// start()</span>
+clip.start();  <span class="code-comment">// play once</span>
+<span class="code-comment">// Loop()</span>
+clip.loop(0);  <span class="code-comment">// repeat none (play once), can be used in place of start().</span>
+clip.loop(5);  <span class="code-comment">// repeat 5 times (play 6 times)</span>
+clip.loop(Clip.LOOP_CONTINUOUSLY);  <span class="code-comment">// repeat forever</span>
+</pre> </li> 
+     <li>You can stop the player by invoking <code>stop()</code>, which may be useful to stop a continuous <code>loop()</code>. <pre class="code-example">
+if (clip.isRunning()) clip.stop();
+</pre> </li> 
+    </ol> 
+    <h4>Playing Sound Effects for Java Games</h4> 
+    <p>A typical game requires various sound effects, e.g., move, eat, shoot, kill, gameover, and etc. The following enumeration encapsulates all the sound effects in a single class, to simplify game programming.</p> 
+    <pre class="code-listing">
+import java.io.*;
+import java.net.URL;
+import javax.sound.sampled.*;
+   
+<span class="code-comment">/**
+ * This enum encapsulates all the sound effects of a game, so as to separate the sound playing
+ * codes from the game codes.
+ * 1. Define all your sound effect names and the associated wave file.
+ * 2. To play a specific sound, simply invoke SoundEffect.SOUND_NAME.play().
+ * 3. You might optionally invoke the static method SoundEffect.init() to pre-load all the
+ *    sound files, so that the play is not paused while loading the file for the first time.
+ * 4. You can use the static variable SoundEffect.volume to mute the sound.
+ */</span>
+public enum SoundEffect {
+   EXPLODE("explode.wav"),   <span class="code-comment">// explosion</span>
+   GONG("gong.wav"),         <span class="code-comment">// gong</span>
+   SHOOT("shoot.wav");       <span class="code-comment">// bullet</span>
+   
+   <span class="code-comment">// Nested class for specifying volume</span>
+   public static enum Volume {
+      MUTE, LOW, MEDIUM, HIGH
+   }
+   
+   public static Volume volume = Volume.LOW;
+   
+   <span class="code-comment">// Each sound effect has its own clip, loaded with its own sound file.</span>
+   private Clip clip;
+   
+   <span class="code-comment">// Constructor to construct each element of the enum with its own sound file.</span>
+   SoundEffect(String soundFileName) {
+      try {
+         <span class="code-comment">// Use URL (instead of File) to read from disk and JAR.</span>
+         URL url = this.getClass().getClassLoader().getResource(soundFileName);
+         <span class="code-comment">// Set up an audio input stream piped from the sound file.</span>
+         AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(url);
+         <span class="code-comment">// Get a clip resource.</span>
+         clip = AudioSystem.getClip();
+         <span class="code-comment">// Open audio clip and load samples from the audio input stream.</span>
+         clip.open(audioInputStream);
+      } catch (UnsupportedAudioFileException e) {
+         e.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace();
+      } catch (LineUnavailableException e) {
+         e.printStackTrace();
+      }
+   }
+   
+   <span class="code-comment">// Play or Re-play the sound effect from the beginning, by rewinding.</span>
+   public void play() {
+      if (volume != Volume.MUTE) {
+         if (clip.isRunning())
+            clip.stop();   <span class="code-comment">// Stop the player if it is still running</span>
+         clip.setFramePosition(0); <span class="code-comment">// rewind to the beginning</span>
+         clip.start();     <span class="code-comment">// Start playing</span>
+      }
+   }
+   
+   <span class="code-comment">// Optional static method to pre-load all the sound files.</span>
+   static void init() {
+      values(); <span class="code-comment">// calls the constructor for all the elements</span>
+   }
+}
+</pre> 
+    <p><strong>Dissecting the Program</strong></p> 
+    <p>[PENDING]</p> 
+    <img class="image-center" src="images/Game_SoundEffectDemo.png"> 
+    <pre class="code-listing">
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+   
+<span class="code-comment">// Testing the SoundEffect enum in a Swing application</span>
+public class SoundEffectDemo extends JFrame {
+   
+   <span class="code-comment">// Constructor</span>
+   public SoundEffectDemo() {
+      <span class="code-comment">// Pre-load all the sound files</span>
+      SoundEffect.init();
+      SoundEffect.volume = SoundEffect.Volume.LOW;  <span class="code-comment">// un-mute</span>
+   
+      <span class="code-comment">// Set up UI components</span>
+      Container cp = this.getContentPane();
+      cp.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
+      JButton btnSound1 = new JButton("Sound 1");
+      btnSound1.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            SoundEffect.EXPLODE.play();
+         }
+      });
+      cp.add(btnSound1);
+      JButton btnSound2 = new JButton("Sound 2");
+      btnSound2.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            SoundEffect.GONG.play();
+         }
+      });
+      cp.add(btnSound2);
+      JButton btnSound3 = new JButton("Sound 3");
+      btnSound3.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            SoundEffect.SHOOT.play();
+         }
+      });
+      cp.add(btnSound3);
+      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      this.setTitle("Test SoundEffct");
+      this.pack();
+      this.setVisible(true);
+   }
+   
+   public static void main(String[] args) {
+      new SoundEffectDemo();
+   }
+}
+</pre> 
+    <p><strong>Dissecting the Program</strong></p> 
+    <p>[PENDING]</p> 
+    <h4>(optional) <code>javax.sound.SourceDataLine</code></h4> 
+    <p>A source data line acts as a source to the audio mixer. Unlike Clip (which pre-load the audio samples), an application writes audio samples to a source data line, which handles the buffering of the bytes and delivers them to the mixer, in a <em>streaming</em> manner.</p> 
+    <pre class="code-listing">
+import java.io.*;
+import javax.sound.sampled.*;
+<span class="code-comment">/**
+ * Use SourceDataLine to read line-by-line from the external sound file.
+ * For computer game, use Clip to pre-load short-duration sound files.
+ */</span>
+public class SoundLineTest {
+   public static void main(String[] args) {
+      SourceDataLine soundLine = null;
+      int BUFFER_SIZE = 64*1024;  <span class="code-comment">// 64 KB</span>
+   
+      <span class="code-comment">// Set up an audio input stream piped from the sound file.</span>
+      try {
+         File soundFile = new File("gameover.wav");
+         AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundFile);
+         AudioFormat audioFormat = audioInputStream.getFormat();
+         DataLine.Info info = new DataLine.Info(SourceDataLine.class, audioFormat);
+         soundLine = (SourceDataLine) AudioSystem.getLine(info);
+         soundLine.open(audioFormat);
+         soundLine.start();
+         int nBytesRead = 0;
+         byte[] sampledData = new byte[BUFFER_SIZE];
+         while (nBytesRead != -1) {
+            nBytesRead = audioInputStream.read(sampledData, 0, sampledData.length);
+            if (nBytesRead &gt;= 0) {
+               <span class="code-comment">// Writes audio data to the mixer via this source data line.</span>
+               soundLine.write(sampledData, 0, nBytesRead);
+            }
+         }
+      } catch (UnsupportedAudioFileException ex) {
+         ex.printStackTrace();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      } catch (LineUnavailableException ex) {
+         ex.printStackTrace();
+      } finally {
+         soundLine.drain();
+         soundLine.close();
+      }
+   }
+}
+</pre> 
+    <h3>MIDI Synthesized Sound</h3> 
+    <p>In a computer game, MIDI can be used for providing the background music, as it save you quite a bit of bandwidth if you are downloading the file from a slow connection. Java Sound API supports three types of MIDI: MIDI Type 1, MIDI Type 2 and Rich Music Format (RMF).</p> 
+    <p>The steps are:</p> 
+    <ol> 
+     <li>Allocate a Sequence piped from a MIDI file: <pre class="code-example">
+Sequence song = MidiSystem.getSequence(new File("song.mid"));
+</pre> </li> 
+     <li>Allocate a Sequencer to play a MIDI sequence: <pre class="code-example">
+Sequencer player = MidiSystem.getSequencer();
+</pre> </li> 
+     <li>Set the current sequence for the sequencer to play: <pre class="code-example">
+player.setSequence(song);
+</pre> </li> 
+     <li>Open the sequencer to load the sequence: <pre class="code-example">
+player.open();
+</pre> </li> 
+     <li>You could set the loop count via <code>setLoopCount()</code> and start playing the music by invoking <code>start()</code>: <pre class="code-example">
+player.setLoopCount(0);  <span class="code-comment">// repeat 0 times (play once)</span>
+player.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);  <span class="code-comment">// repeat forever</span>
+player.start();
+</pre> </li> 
+     <li>You can set the tempo (rate of play) via <code>setTempoFactor()</code>, which is useful in a computer game when the difficulty level is increased. <pre class="code-example">
+player.setTempoFactor(1.0F);  <span class="code-comment">// takes a factor (in float) - normal tempo</span>
+player.setTempoFactor(1.5F);  <span class="code-comment">// faster by 50%</span>
+</pre> </li> 
+     <li>You can stop the play via <code>stop()</code>: <pre class="code-example">
+if (player.isRunning()) player.stop();
+</pre> </li> 
+    </ol> 
+    <p><strong>Code Example</strong></p> 
+    <p>The method is declared <code>static</code>, as we only need one global copy, and no instance variable involved in the operation.</p> 
+    <table class="table-program"> 
+     <tbody>
+      <tr> 
+       <td class="code-line-number-width"> <pre class="code-line-number">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+</pre> </td> 
+       <td> <pre class="code-listing">
+import java.io.*;
+import javax.sound.midi.*;
+   
+public class MidiSoundTest {
+   private static Sequencer midiPlayer;
+   
+   <span class="code-comment">// testing main method</span>
+   public static void main(String[] args) {
+      startMidi("song1.mid");     <span class="code-comment">// start the midi player</span>
+      try {
+         Thread.sleep(10000);   <span class="code-comment">// delay</span>
+      } catch (InterruptedException e) { }
+      System.out.println("faster");
+      midiPlayer.setTempoFactor(2.0F);   <span class="code-comment">// &gt;1 to speed up the tempo
+</span>      try {
+         Thread.sleep(10000);   <span class="code-comment">// delay</span>
+      } catch (InterruptedException e) { }
+   
+      <span class="code-comment">// Do this on every move step, you could change to another song</span>
+      if (!midiPlayer.isRunning()) {  <span class="code-comment">// previous song finished</span>
+         <span class="code-comment">// reset midi player and start a new song</span>
+         midiPlayer.stop();
+         midiPlayer.close();
+         startMidi("song2.mid");
+      }
+   }
+   
+   public static void startMidi(String midFilename) {
+      try {
+         File midiFile = new File(midFilename);
+         Sequence song = MidiSystem.getSequence(midiFile);
+         midiPlayer = MidiSystem.getSequencer();
+         midiPlayer.open();
+         midiPlayer.setSequence(song);
+         midiPlayer.setLoopCount(0); <span class="code-comment">// repeat 0 times (play once)</span>
+         midiPlayer.start();
+      } catch (MidiUnavailableException e) {
+         e.printStackTrace();
+      } catch (InvalidMidiDataException e) {
+         e.printStackTrace();
+      } catch (IOException e) {
+         e.printStackTrace();
+      }
+   }
+}
+</pre></td> 
+      </tr> 
+     </tbody>
+    </table> 
+    <p><strong>Notes</strong>: Windows Vista seems to have lot of problems with Midi.</p> 
+    <h3>MP3 &amp; Java Media Framework (JMF)</h3> 
+    <p>Java Media Framework (JMF) is not part of JavaSE, but can be downloaded from <a href="http://java.sun.com/javase/technologies/desktop/media/jmf/">http://java.sun.com/javase/technologies/desktop/media/jmf</a>. JMF, among other things, provides support for playing MP3, AAC music. Download JMF and run the installation. Check to ensure that "<code>jmf.jar</code>" is installed into "<code>$JAVA_HOME\jre\lib\ext</code>".</p> 
+    <p><strong>Example</strong>: Playing MP3 Music</p> 
+    <pre class="code-listing">
+import javax.media.*;
+import java.net.URL;
+   
+public class Mp3PlayerDemo extends Thread {
+   
+   private String filename;
+   Player player;
+   
+   public Mp3PlayerDemo(String mp3Filename) {
+      this.filename = mp3Filename;
+   }
+   
+   public void run() {
+      try {
+         URL url = this.getClass().getClassLoader().getResource(filename);
+         MediaLocator locator = new MediaLocator(url);
+         player = Manager.createPlayer(locator);
+         player.addControllerListener(new ControllerListener() {
+            public void controllerUpdate(ControllerEvent event) {
+               if (event instanceof EndOfMediaEvent) {
+                  player.stop();
+                  player.close();
+               }
+            }
+         });
+         player.realize();
+         player.start();
+      } catch (Exception e) {
+         e.printStackTrace();
+      }
+   }
+   
+   public static void main(String[] args) {
+      new Mp3PlayerDemo("song.mp3").start();
+   }
+}
+</pre> 
+    <p>[TODO] To be continued...</p> 
+    <p>&nbsp;</p> 
+    <h4>REFERENCES &amp; RESOURCES</h4> 
+    <ul> 
+     <li>TODO</li> 
+    </ul> 
+    <p class="p-last-modified">Latest version tested: JDK 1.6<br> Last modified: September 4, 2008</p> 
+   </div> 
+   <!-- End the content division --> 
+   <!-- print footer --> 
+   <script type="text/javascript" src="../scripts/footer.js"></script> 
+  </div> 
+  <!-- End the container division -->   
+ </body>
+</html>

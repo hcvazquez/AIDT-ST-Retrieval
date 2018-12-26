@@ -1,0 +1,759 @@
+<!doctype html>
+<!--[if IE 7]>
+<html class="ie ie7" lang="en-US">
+<![endif]-->
+<!--[if IE 8]>
+<html class="ie ie8" lang="en-US">
+<![endif]-->
+<!--[if !(IE 7) & !(IE 8)]><!-->
+<html lang="en-US">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width"> 
+  <title>Proving that Android’s, Java’s and Python’s sorting algorithm is broken (and showing how to fix it) | Envisage: Engineering Virtualized Services</title> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://www.envisage-project.eu/xmlrpc.php"> 
+  <!--[if lt IE 9]>
+	<script src="http://envisage-project.eu/wp-content/themes/twentythirteen/js/html5.js"></script>
+	<![endif]--> 
+  <link rel="dns-prefetch" href="//envisage-project.eu"> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Envisage: Engineering Virtualized Services » Feed" href="http://www.envisage-project.eu/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Envisage: Engineering Virtualized Services » Comments Feed" href="http://www.envisage-project.eu/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Envisage: Engineering Virtualized Services » Proving that Android’s, Java’s and Python’s sorting algorithm is broken (and showing how to fix it) Comments Feed" href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2\/svg\/","svgExt":".svg","source":{"concatemoji":"http:\/\/www.envisage-project.eu\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.6.1"}};
+			!function(a,b,c){function d(a){var c,d,e,f,g,h=b.createElement("canvas"),i=h.getContext&&h.getContext("2d"),j=String.fromCharCode;if(!i||!i.fillText)return!1;switch(i.textBaseline="top",i.font="600 32px Arial",a){case"flag":return i.fillText(j(55356,56806,55356,56826),0,0),!(h.toDataURL().length<3e3)&&(i.clearRect(0,0,h.width,h.height),i.fillText(j(55356,57331,65039,8205,55356,57096),0,0),c=h.toDataURL(),i.clearRect(0,0,h.width,h.height),i.fillText(j(55356,57331,55356,57096),0,0),d=h.toDataURL(),c!==d);case"diversity":return i.fillText(j(55356,57221),0,0),e=i.getImageData(16,16,1,1).data,f=e[0]+","+e[1]+","+e[2]+","+e[3],i.fillText(j(55356,57221,55356,57343),0,0),e=i.getImageData(16,16,1,1).data,g=e[0]+","+e[1]+","+e[2]+","+e[3],f!==g;case"simple":return i.fillText(j(55357,56835),0,0),0!==i.getImageData(16,16,1,1).data[0];case"unicode8":return i.fillText(j(55356,57135),0,0),0!==i.getImageData(16,16,1,1).data[0];case"unicode9":return i.fillText(j(55358,56631),0,0),0!==i.getImageData(16,16,1,1).data[0]}return!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i;for(i=Array("simple","flag","unicode8","diversity","unicode9"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="twttr_stylesheet-css" href="http://envisage-project.eu/wp-content/plugins/twitter-plugin/css/style.css?ver=4.6.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentythirteen-fonts-css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro%3A300%2C400%2C700%2C300italic%2C400italic%2C700italic%7CBitter%3A400%2C700&amp;subset=latin%2Clatin-ext" type="text/css" media="all"> 
+  <link rel="stylesheet" id="genericons-css" href="http://envisage-project.eu/wp-content/themes/twentythirteen/genericons/genericons.css?ver=3.03" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentythirteen-style-css" href="http://envisage-project.eu/wp-content/themes/twentythirteen-child/style.css?ver=2013-07-18" type="text/css" media="all"> 
+  <!--[if lt IE 9]>
+<link rel='stylesheet' id='twentythirteen-ie-css'  href='http://envisage-project.eu/wp-content/themes/twentythirteen/css/ie.css?ver=2013-07-18' type='text/css' media='all' />
+<![endif]--> 
+  <link rel="stylesheet" id="tablepress-default-css" href="http://envisage-project.eu/wp-content/plugins/tablepress/css/default.min.css?ver=1.7" type="text/css" media="all"> 
+  <link rel="stylesheet" id="counterize_stylesheet-css" href="http://envisage-project.eu/wp-content/plugins/counterize/counterize.css.php?ver=4.6.1" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <script type="text/javascript" src="http://envisage-project.eu/wp-content/plugins/counterize/counterize.js.php?ver=4.6.1"></script> 
+  <link rel="https://api.w.org/" href="http://www.envisage-project.eu/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.envisage-project.eu/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://www.envisage-project.eu/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Envisage @ ISoLA 2014" href="http://www.envisage-project.eu/engineering-virtualized-services-isola-2014/"> 
+  <link rel="next" title="KeY:  Deductive Verification of Software" href="http://www.envisage-project.eu/key-deductive-verification-of-software/"> 
+  <meta name="generator" content="WordPress 4.6.1"> 
+  <link rel="canonical" href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/"> 
+  <link rel="shortlink" href="http://www.envisage-project.eu/?p=1586"> 
+  <link rel="alternate" type="application/json+oembed" href="http://www.envisage-project.eu/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="http://www.envisage-project.eu/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F&amp;format=xml"> 
+  <!-- Dynamic Widgets by QURL - http://www.qurl.nl //--> 
+  <style type="text/css" id="twentythirteen-header-css">
+			.site-header {
+			background: url(http://envisage-project.eu/wp-content/uploads/2013/06/cropped-photo2.jpg) no-repeat scroll top;
+			background-size: 1600px auto;
+		}
+		@media (max-width: 767px) {
+			.site-header {
+				background-size: 768px auto;
+			}
+		}
+		@media (max-width: 359px) {
+			.site-header {
+				background-size: 360px auto;
+			}
+		}
+			.site-title,
+		.site-description {
+			color: #dd1818;
+		}
+		</style> 
+  <!-- BEGIN GADWP v4.9.5 Universal Tracking - https://deconf.com/google-analytics-dashboard-wordpress/ --> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-40581762-2', 'auto');
+  ga('send', 'pageview');
+</script> 
+  <!-- END GADWP Universal Tracking --> 
+ </head> 
+ <body class="single single-post postid-1586 single-format-standard sidebar"> 
+  <div id="page" class="hfeed site"> 
+   <header id="masthead" class="site-header" role="banner"> 
+    <a class="home-link" href="http://www.envisage-project.eu/" title="Envisage: Engineering Virtualized Services" rel="home"> <h1 class="site-title">Envisage: Engineering Virtualized Services</h1> <h2 class="site-description"></h2> </a> 
+    <div id="navbar" class="navbar"> 
+     <nav id="site-navigation" class="navigation main-navigation" role="navigation"> 
+      <button class="menu-toggle">Menu</button> 
+      <a class="screen-reader-text skip-link" href="#content" title="Skip to content">Skip to content</a> 
+      <div class="menu-header-menu-container">
+       <ul id="primary-menu" class="nav-menu">
+        <li id="menu-item-2161" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-2161"><a href="http://www.envisage-project.eu">Envisage</a></li> 
+        <li id="menu-item-362" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-362"><a>About Envisage</a> 
+         <ul class="sub-menu"> 
+          <li id="menu-item-268" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-268"><a href="http://www.envisage-project.eu/abstract/">Project Abstract</a></li> 
+          <li id="menu-item-528" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-528"><a href="http://www.envisage-project.eu/press-releases/">Project Information, Press, Media</a></li> 
+          <li id="menu-item-743" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-743"><a href="http://www.envisage-project.eu/contact-information/">Contact Information</a></li> 
+          <li id="menu-item-178" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-178"><a href="http://www.envisage-project.eu/consortium/">Consortium</a></li> 
+          <li id="menu-item-943" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-943"><a href="http://www.envisage-project.eu/einarj/">Advisory Boards</a></li> 
+         </ul> </li> 
+        <li id="menu-item-757" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-757"><a>Dissemination</a> 
+         <ul class="sub-menu"> 
+          <li id="menu-item-2663" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-2663"><a href="http://www.envisage-project.eu/white-papers/">Envisage White Papers</a></li> 
+          <li id="menu-item-756" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-756"><a href="http://www.envisage-project.eu/envisage-publications/">Envisage Publications</a></li> 
+          <li id="menu-item-755" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-755"><a href="http://www.envisage-project.eu/envisage-deliverables/">Envisage Deliverables</a></li> 
+          <li id="menu-item-1030" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1030"><a href="http://www.envisage-project.eu/sfm-summer-school-2014/">SFM Summer School 2014</a></li> 
+          <li id="menu-item-1232" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1232"><a href="http://www.envisage-project.eu/engineering-virtualized-services-isola-2014/">Engineering Virtualized Services @ ISoLA 2014</a></li> 
+          <li id="menu-item-1296" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1296"><a href="http://www.envisage-project.eu/1182-2/">Workshop on Contracts for Efficient and Reliable Services @ iFM/FACS2014</a></li> 
+          <li id="menu-item-1713" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1713"><a href="http://www.envisage-project.eu/static-analysis-meets-runtime-verification/">Static Analysis meets Runtime Verification</a></li> 
+          <li id="menu-item-2046" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-2046"><a href="http://www.envisage-project.eu/trondheim-developer-conference-2015/">Trondheim Developer Conference 2015</a></li> 
+         </ul> </li> 
+        <li id="menu-item-384" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-384"><a href="http://www.envisage-project.eu/wp-login.php">Log in</a></li> 
+       </ul>
+      </div> 
+      <form role="search" method="get" class="search-form" action="http://www.envisage-project.eu/"> 
+       <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s"> </label> 
+       <input type="submit" class="search-submit" value="Search"> 
+      </form> 
+     </nav>
+     <!-- #site-navigation --> 
+    </div>
+    <!-- #navbar --> 
+   </header>
+   <!-- #masthead --> 
+   <div id="main" class="site-main"> 
+    <div id="primary" class="content-area"> 
+     <div id="content" class="site-content" role="main"> 
+      <article id="post-1586" class="post-1586 post type-post status-publish format-standard hentry category-envisage"> 
+       <header class="entry-header"> 
+        <h2 class="entry-title">Proving that Android’s, Java’s and Python’s sorting algorithm is broken (and showing how to fix it)</h2> 
+        <div class="entry-meta"> 
+         <span class="date"><a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/" title="Permalink to Proving that Android’s, Java’s and Python’s sorting algorithm is broken (and showing how to fix it)" rel="bookmark"><time class="entry-date" datetime="2015-02-24T11:00:40+00:00">February 24, 2015</time></a></span>
+         <span class="categories-links"><a href="http://www.envisage-project.eu/category/envisage/" rel="category tag">Envisage</a></span>Written by 
+         <a href="http://www.envisage-project.eu/author/stijn-de-gouw/">Stijn de Gouw</a>.
+         <span class="author vcard"><a class="url fn n" href="http://www.envisage-project.eu/author/stijn-de-gouw/" title="View all posts by Stijn de Gouw" rel="author"> $s</a></span> 
+        </div>
+        <!-- .entry-meta --> 
+       </header>
+       <!-- .entry-header --> 
+       <div class="entry-content"> 
+        <p>Tim Peters developed the <a href="http://en.wikipedia.org/wiki/Timsort">Timsort hybrid sorting algorithm</a> in 2002. It is a clever combination of ideas from merge sort and insertion sort, and designed to perform well on real world data. TimSort was first developed for Python, but later ported to Java (where it appears as java.util.Collections.sort and java.util.Arrays.sort) by <a href="http://en.wikipedia.org/wiki/Joshua_Bloch">Joshua Bloch</a> (the designer of Java Collections who also pointed out that <a href="http://googleresearch.blogspot.no/2006/06/extra-extra-read-all-about-it-nearly.html">most binary search algorithms were broken</a>). TimSort &nbsp;is today used as the default sorting algorithm for Android SDK, Sun’s JDK and OpenJDK. Given the popularity of these platforms this means that the number of computers, cloud services and mobile phones that use TimSort for sorting is well into the billions.</p> 
+        <p>Fast forward to 2015. After we had successfully verified Counting and Radix sort implementations in Java (<a href="http://link.springer.com/article/10.1007%2Fs10817-013-9300-y">J. Autom. Reasoning 53(2), 129-139</a>) with a formal verification tool called <a href="http://www.key-project.org/">KeY</a>, we were looking for a new challenge. &nbsp;TimSort seemed to fit the bill, as it is rather complex and widely used. Unfortunately, we weren’t able to prove its correctness. A closer analysis showed that this was, quite simply, because TimSort was broken and our theoretical considerations finally led us to a path towards finding the bug (interestingly, that bug appears already in the Python implementation). This blog post shows how we did it.</p> 
+        <p>The paper with the complete analysis, and several test programs are available on our <a href="http://www.envisage-project.eu/timsort-specification-and-verification/">website</a>.</p> 
+        <p><b>Update</b> (August 2017): The KIT group used KeY to verify the <a href="https://www.key-project.org/2017/08/17/dual-pivot/">JDK’s dual pivot quicksort implementation</a> used as default sorting algorithm for integer or long arrays. TimSort is the default for arrays of reference type.<span id="more-1586"></span></p> 
+        <p><b>Structure of this blog post</b></p> 
+        <ol> 
+         <li><a href="#sec1">The TimSort bug in Android, Java and Python</a><br> <a href="#sec1.1">1.1 Reproduce TimSort bug in Java</a><br> <a href="#sec1.2">1.2 How does TimSort work (in principle)?</a><br> <a href="#sec1.3">1.3 Walkthrough of TimSort bug</a></li> 
+         <li><a href="#sec2">Proving the (in)correctness of TimSort</a><br> <a href="#sec2.1">2.1 The verification system KeY</a><br> <a href="#sec2.2">2.2 The fix and its formal specification</a><br> <a href="#sec2.3">2.3 Analysing the output of KeY</a></li> 
+         <li><a href="#sec3">Suggested fixes to the Python and Android/Java Timsort bugs</a><br> <a href="#sec3.1">3.1 Incorrect Python merge_collapse function</a><br> <a href="#sec3.2">3.2 Corrected Python merge_collapse function</a><br> <a href="#sec3.3">3.3 Incorrect Java/Android merge_collapse function</a><br> <a href="#sec3.4">3.4 Corrected Java/Android merge_collapse function</a></li> 
+         <li><a href="#sec4">Conclusion – What can we learn?</a></li> 
+        </ol> 
+        <h1><a id="sec1"></a>1. The TimSort bug in Android, Java and Python</h1> 
+        <p>So what’s the bug? Why don’t you try to reproduce it yourself first?</p> 
+        <h2><b><a id="sec1.1"></a>1.1 Reproduce TimSort bug in Java</b></h2> 
+        <pre>git clone <a href="https://github.com/abstools/java-timsort-bug.git">https://github.com/abstools/java-timsort-bug.git</a>
+cd java-timsort-bug
+javac *.java
+java TestTimSort 67108864</pre> 
+        <p><b>Expected output</b></p> 
+        <pre>Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 40
+at java.util.TimSort.pushRun(TimSort.java:413)
+at java.util.TimSort.sort(TimSort.java:240)
+at java.util.Arrays.sort(Arrays.java:1438)
+at TestTimSort.main(TestTimSort.java:18)
+</pre> 
+        <p><strong>Video of walkthrough</strong></p> 
+        <p><iframe width="604" height="340" src="https://www.youtube.com/embed/HSyJ8f7h0jI?feature=oembed" frameborder="0" allowfullscreen></iframe></p> 
+        <h2><b><a id="sec1.2"></a>1.2 How does TimSort work (in principle)?</b></h2> 
+        <p>TimSort is a hybrid sorting algorithm that uses insertion sort and merge sort.</p> 
+        <p>The algorithm reorders the input array from left to right by finding consecutive (disjoint) sorted segments (called “runs” from hereon). If the run is too short, it is extended using insertion sort. &nbsp;The lengths of the generated runs are added to an array named <b>runLen</b>. Whenever a new run is added to <b>runLen</b>, a method named mergeCollapse merges runs until the last 3 elements in <b>runLen</b> satisfy the following two conditions (the “<b>invariant</b>”):</p> 
+        <ol> 
+         <li><b>runLen </b>[n-2] &gt; <b>runLen </b>[n-1] + <b>runLen </b>[n]</li> 
+         <li><b>runLen </b>[n-1] &gt; <b>runLen</b> [n]<strong><strong>&nbsp;</strong></strong></li> 
+        </ol> 
+        <p>Here n is the index of the last run in runLen. &nbsp;The intention is that checking this invariant on the top 3 runs in <b>runLen </b>in fact guarantees that <i>all</i> runs satisfy it. At the very end, all runs are merged, yielding a sorted version of the input array.</p> 
+        <p>For performance reasons, it is crucial to allocate as little memory as possible for <b>runLen, </b>but still enough to store all the runs. &nbsp;If the invariant is satisfied by all runs, the length of each run grows exponentially (even faster than fibonacci: the length of the current run must be strictly bigger than the sum of the next two runs lengths). &nbsp;Since runs do not overlap, only a small number of runs would then be needed to cover even very big input arrays completely.</p> 
+        <h2><b><a id="sec1.3"></a>1.3 Walkthrough of TimSort bug</b></h2> 
+        <p>The code snippet below shows that the implementation of mergeCollapse checks the invariant for the last 3 runs in <b>runLen</b>.</p> 
+        <pre><strong>private</strong> <strong>void</strong> mergeCollapse() {
+&nbsp;&nbsp;<strong>while</strong> (stackSize &gt; 1) {
+&nbsp;&nbsp;&nbsp;&nbsp;int n = stackSize - 2;
+  &nbsp;&nbsp;<strong>if</strong> (n &gt; 0 &amp;&amp; runLen[n-1] &lt;= runLen[n] + runLen[n+1]) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>if</strong> (runLen[n - 1] &lt; runLen[n + 1])
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n--;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mergeAt(n);
+&nbsp;&nbsp;&nbsp;&nbsp;} <strong>else</strong> <strong>if</strong> (runLen[n] &lt;= runLen[n + 1]) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mergeAt(n);
+&nbsp;&nbsp;&nbsp;&nbsp;} <strong>else</strong> {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break; // Invariant is established
+&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;}
+}
+</pre> 
+        <p>Unfortunately, this is not sufficient to ensure that all runs satisfy the invariant. Suppose that <b>runLen </b>has the following content on entry to mergeCollapse:</p> 
+        <pre>120, 80, 25, 20, 30
+</pre> 
+        <p>In the first loop iteration, 25 and 20 are merged (since 25 &lt; 20 + 30 and 25 &lt; 30):</p> 
+        <pre>120, 80, 45, 30
+</pre> 
+        <p>In the second iteration (now n=3), it is determined that the invariant is satisfied by the last 3 runs, since 80 &gt; 45 + 30 and 45 &gt; 30, thus mergeCollapse terminates. <b>But mergeCollapse has </b><b>not</b><b> fully restored the invariant:</b><b> it is broken by </b><b>120</b><b>, since </b><b>120</b> <b>&lt;</b><b> 80 + 45.</b></p> 
+        <p>The testgenerator on our <a title="website" href="http://www.envisage-project.eu/timsort-specification-and-verification/">website </a>exploits this problem. It generates an input array with many short runs – too short, in the sense that they do not satisfy the invariant – which eventually causes TimSort to crash. In particular, since by breaking the invariant, the length of the runs can grow slower than expected, more than <b>runLen.length </b>runs are needed to cover the entire input array, resulting in an ArrayOutOfBoundsException on <b>runLen</b>.</p> 
+        <h1><a id="sec2"></a>2. Proving the (in)correctness of TimSort</h1> 
+        <p>We found out that the supposed invariant of mergeCollapse is broken during an attempt to formally verify TimSort. Luckily, we did not only find out that it is broken, but also how it can be fixed. In the end we even succeeded to verify a corrected invariant that actually holds. But let’s take it step by step. First of all: what do we mean with formal verification and how is it done?</p> 
+        <h2><b><a id="sec2.1"></a>2.1 The verification system KeY</b></h2> 
+        <p><span style="text-decoration: underline;"><strong><a title="KeY: Deductive Verification of Software" href="http://www.envisage-project.eu/key-deductive-verification-of-software/">Due to many requests we have published a brief blog post about KeY.</a></strong></span></p> 
+        <p><a href="http://www.key-project.org">KeY</a> is a deductive verification platform for sequential Java and JavaCard applications. It allows to <b><i>prove</i></b> the correctness of programs with respect to a given specification. Roughly speaking, a specification consists of a <b>precondition</b>, also called <b>requires</b> clause and a <b>postcondition</b>, also called <b>ensures</b> clause. Specifications are attached to method implementations, such as mergeCollapse() above. The specification of a method is also called its <b>contract</b>.</p> 
+        <p>In the case of a sorting program, the precondition might simply state that the input is a non-empty array and the postcondition that the returned array is a sorted permutation of the input. What KeY then typically proves is this: whenever the method under verification is called with an input that satisfies the precondition, then the method terminates normally and in the final state the postcondition is true. This is also known as <b>total correctness</b>, because termination is ensured. Obviously, OpenJDK’s java.utils.Array.sort() does not adhere to this contract, because it terminates exceptionally for certain inputs.</p> 
+        <p>In addition, instance and class invariants are used to specify general constraints on the values of fields. Typical properties are concerned with data consistency or with boundary values:</p> 
+        <pre>/*@ <b>private invariant</b>
+  @ &nbsp;&nbsp;&nbsp;runBase.length == runLen.length &amp;&amp; runBase != runLen;
+  @*/
+</pre> 
+        <p>This invariant says that the length of the arrays runBase and runLen must be equal and that both arrays must not point to the same array instance, i.e., they are not aliased. The semantics of invariants implies that each method must establish upon completion not only the postcondition of its contract, but also the invariant of its (“this”) object.</p> 
+        <p>As specification language in KeY the <a href="http://www.jmlspecs.org/">Java Modeling Language</a> (JML) is used. It contains pure Java expressions as a sublanguage and is therefore easy to learn for Java programmers. Its main extension beyond Java are quantified expressions (<b>\forall</b> T x, <b>\exists</b> T x) and, of course, suitable keywords for contracts. JML specifications are attached to the Java declarations they belong to in .java files. Here is a simple example of a Java method, specified with JML:</p> 
+        <pre>/*@ <b>private normal_behavior</b>
+  @ <b>requires</b>
+  @ &nbsp;&nbsp;n &gt;= MIN_MERGE;
+  @ <b>ensures</b>
+  @ &nbsp;&nbsp;\result &gt;= MIN_MERGE/2;
+  @*/
+
+<b>private</b> <b>static</b> int /*@ <b>pure</b> @*/ minRunLength(int n) {
+<b>  assert</b> n &gt;= 0;
+  int r = 0; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Becomes 1 if any 1 bits are shifted off
+  /*@ <b>loop_invariant</b> n &gt;= MIN_MERGE/2 &amp;&amp; r &gt;=0 &amp;&amp; r&lt;=1;
+    @ <b>decreases</b> n;
+    @ <b>assignable</b> <b>\nothing</b>;
+    @*/
+<b>  while</b> (n &gt;= MIN_MERGE) {
+    r |= (n &amp; 1);
+    n &gt;&gt;= 1;
+  }
+<b>  return</b> n + r;
+}
+</pre> 
+        <p>The contract of minRunLength() requires the caller to ensure that the method is only invoked with a value greater-or-equal to MIN_MERGE. In this case (and only in this) the method ensures that it will terminate normally (i.e., neither diverge nor throw an exception) and that the returned value is at least as big as MIN_MERGE/2. In addition, the method is marked as <b>pure</b> which implies that the method does not modify the heap.</p> 
+        <p>The crucial point is that KeY can <b>statically</b> prove such method contracts for <b>any</b> given input. How is this possible? KeY performs symbolic execution of the method under verification, that is, it executes it with symbolic values so that all possible execution paths are taken into account. But this is not enough, because symbolic execution of loops without a fixed bound (such as the one in mergeCollapse() where we don’t know the value of stackSize) will not terminate. To render symbolic execution of loops finite, invariant reasoning is used. For instance, method minRunLength() from above contains a loop which is specified using a loop invariant. The invariant ensures that after each loop iteration the condition n &gt;= MIN_MERGE/2 &amp;&amp; r &gt;=0 &amp;&amp; r&lt;=1 holds and hence the method’s postcondition can be proven. The <b>decreases</b> annotation is used to prove termination of the loop by providing an expression whose value is non-negative and strictly decreasing. The <b>assignable</b> clause lists the heap locations that might possibly be modified by the loop. The keyword <b>\nothing</b> means that no heap locations are modified. Indeed: only the local variable r and the value argument n are changed.</p> 
+        <p>In summary, for the purpose of formal verification, method contracts are not enough. It is necessary to supply a suitable loop invariant. It can be a tricky business to come up with an invariant that is strong enough to ensure the desired postcondition and that still holds. Without tool support and automated theorem proving technology it is hardly possible to come up with correct loop invariants for non-trivial programs. And in fact, it is exactly here that the designers of TimSort went wrong. The loop of mergeCollapse causes under certain circumstances the following part of TimSort’s class invariant to be violated (see section 1.3 Walkthrough of TimSort bug):</p> 
+        <pre>/*@ <b>private invariant </b>
+  @ &nbsp;&nbsp;(<b>\forall</b> int i; 0&lt;=i &amp;&amp; i&lt;stackSize-4; 
+  @                      runLen[i] &gt; runLen[i+1] + runLen[i+2]))
+  @*/
+</pre> 
+        <p>which states that runLen[i] must be greater than the size of the two successor entries (for index i within 0 (including) and stackSize-4 (excluding). &nbsp;As the invariant is also not restored later on method mergeCollapse does not preserve the class invariant either. Hence, the loop invariant was not as strong as assumed by the developers. We found this out during our formal verification attempt, with the help of KeY. It is nearly impossible to do so without tool support.</p> 
+        <p>Despite being very close to Java, JML is a full-fledged design-by-contract language, suitable for full functional verification of Java programs.</p> 
+        <h2><b><a id="sec2.2"></a>2.2 &nbsp;The fix and its formal specification</b></h2> 
+        <p>A <i>simplified</i> version of the contract that mergeCollapse is expected to satisfy is shown below.</p> 
+        <pre>/*@ <b>requires</b>
+  @ &nbsp; stackSize &gt; 0 &amp;&amp;
+  @ &nbsp; runLen[stackSize-4] &gt; runLen[stackSize-3]+runLen[stackSize-2]
+  @   &amp;&amp; runLen[stackSize-3] &gt; runLen[stackSize-2];
+  @ <b>ensures</b>
+  @ &nbsp;&nbsp;(<b>\forall</b> int i; 0&lt;=i &amp;&amp; i&lt;stackSize-2; 
+  @                     runLen[i] &gt; runLen[i+1] + runLen[i+2])
+  @ &nbsp;&nbsp;&amp;&amp; runLen[stackSize-2] &gt; runLen[stackSize-1]
+  @*/
+<b>private</b> <b>void</b> mergeCollapse()</pre> 
+        <p>The two formulas in <b>ensures</b> imply that when mergeCollapse completes, then <b><i>all</i></b> runs satisfy the invariant given in section 1.2. We saw already that the above contract is not satisfied by the current implementation of mergeCollapse (in section 1.3), so we provide the following fixed version that respects the contract:</p> 
+        <pre><strong>private</strong> <strong>void</strong> newMergeCollapse() {
+  <strong>while </strong>(stackSize &gt; 1) {
+    int n = stackSize - 2;
+    <strong>if</strong> (n &gt; 0   &amp;&amp; runLen[n-1] &lt;= runLen[n] + runLen[n+1] || 
+        n-1 &gt; 0 &amp;&amp; runLen[n-2] &lt;= runLen[n] + runLen[n-1]) {
+      <strong>if</strong> (runLen[n - 1] &lt; runLen[n + 1])
+        n--;
+    } <strong>else</strong> <b>if</b> (n&lt;0 || runLen[n] &gt; runLen[n + 1]) {
+      <strong>break</strong>; // Invariant is established
+    }
+    mergeAt(n);
+  }
+}
+</pre> 
+        <p>The main idea of this new version is to check that the invariant holds for <i>the last 4 runs</i> in runLen, instead of only <i>the last 3</i>. &nbsp;We will see that this suffices to ensure that <b>all </b>runs satisfy the invariant upon completion of mergeCollapse.</p> 
+        <p>The first step in proving the contract for our fixed version of mergeCollapse is to find a suitable loop invariant. The code snippet below shows a simplified version of the loop invariant.</p> 
+        <pre>/*@ <b>loop_invariant</b>
+  @ &nbsp;(<b>\forall</b> int i; 0&lt;=i &amp;&amp; i&lt;stackSize-4; 
+  @             runLen[i] &gt; runLen[i+1] + runLen[i+2])
+  @ &nbsp;&amp;&amp; runLen[stackSize-4] &gt; runLen[stackSize-3])
+  @*/
+</pre> 
+        <p>Intuitively this loop invariant states that all runs, except possibly the last 4, satisfy the invariant. &nbsp;Combining this with the observation that the new loop of mergeCollapse terminates (with the break statement) only if the last 4 runs also satisfy it, this guarantees that all runs satisfy the invariant.</p> 
+        <h2><b><a id="sec2.3"></a>2.3 Analysing the output of KeY</b></h2> 
+        <p>When the fixed version of mergeCollapse, its contract and the loop invariant are given as input to KeY, the system symbolically executes the loop and generates verification conditions: formulas whose truth imply that the mergeCollapse contract is satisfied. The following formula (simplified) shows the main proof obligation generated by KeY:<br> <img src="http://envisage-project.eu/wp-content/uploads/2015/02/Screen-Shot-2015-02-23-at-13.42.07.png" alt=""></p> 
+        <p>This verification condition is generated to make sure that the postcondition of mergeCollapse &nbsp;is satisfied when the loop terminates. &nbsp;This explains the three formulas between the brackets: the break statement that terminates the loop is only executed if these are true. We proved this formula (and all other verification conditions) formally with KeY in a semi-automated manner. Here we sketch this proof:</p> 
+        <p><i>Proof</i>. The formula<i> runLen[stackSize-2] &gt; runLen[stackSize-1] &nbsp;</i>from the mergeCollapse postcondition follows directly from &nbsp;<i>n &gt;= 0 ==&gt; runLen[n] &gt; runLen[n+1]</i>.</p> 
+        <p>We prove the other formula,</p> 
+        <p><i>\forall int i; 0&lt;=i &amp;&amp; i&lt;stackSize-2; runLen[i] &gt; runLen[i+1] + runLen[i+2]</i>,</p> 
+        <p>by case distinction on the value of i:</p> 
+        <ul> 
+         <li>i &lt; stackSize-4: follows from the loop invariant</li> 
+         <li>i = stackSize-4: follows from n&gt;1 ==&gt; runLen[n-2] &gt; runLen[n-1] + runLen[n]</li> 
+         <li>i = stackSize-3: from n&gt;0 ==&gt; runLen[n-1] &gt; runLen[n] + runLen[n+1]</li> 
+         <li>i = stackSize-2: from n&gt;=0 ==&gt; runLen[n] &gt; runLen[n+1]</li> 
+        </ul> 
+        <p>The above proof shows that the new version of <i>mergeCollapse </i>terminates only when <b>all</b> runs satisfy the invariant.</p> 
+        <h1><a id="sec3"></a>3. Suggested fixes to the Python and Android/Java Timsort bugs</h1> 
+        <p>Our analysis of the bug (which included the fix for <i>mergeCollapse</i>) was submitted, reviewed and accepted in the Java bug tracker &nbsp;<a href="https://bugs.openjdk.java.net/browse/JDK-8072909">https://bugs.openjdk.java.net/browse/JDK-8072909</a>.</p> 
+        <p>The bug is present in at least the Android version of Java, OpenJDK and OracleJDK: all of these share the same source code for TimSort. &nbsp;Furthermore it is also present in Python. The next two sections show (side-by-side) the original and fixed versions.</p> 
+        <p>As explained in the previous section, the idea behind the fix is very simple: check that the invariant holds for the last 4 runs in runLen, instead of only the last 3.</p> 
+        <h2><b><a id="sec3.1"></a>3.1 Incorrect Python merge_collapse function</b></h2> 
+        <p>Timsort for Python (written in C with the Python API) is available in <a href="https://hg.python.org/cpython/file/5c1bacba828d/Objects/listobject.c">the subversion repository</a> – The algorithm is also described in <a href="http://svn.python.org/projects/python/trunk/Objects/listsort.txt">http://svn.python.org/projects/python/trunk/Objects/listsort.txt</a></p> 
+        <p>The Java version of TimSort was ported from the original CPython version. That version also contains the bug and was intended to work for arrays with up to 2^64 elements. However, on current machines it is not possible to trigger an out-of-bounds error in the Python version: it allocates 85 elements for runLen, which suffices (following our analysis in the full paper) for arrays with less than 2^49 elements. &nbsp;For comparison, the current most powerful supercomputer <a href="http://en.wikipedia.org/wiki/Tianhe-2">http://en.wikipedia.org/wiki/Tianhe-2</a> has about 2^50 bytes of memory in total.</p> 
+        <pre><b>/* The maximum number of entries in a MergeState's 
+ * pending-runs stack.</b><b>
+</b><b> * This is enough to sort arrays of size up to about</b><b>
+</b><b> * &nbsp;&nbsp;&nbsp;&nbsp;32 * phi ** MAX_MERGE_PENDING</b><b>
+</b><b> * where phi ~= 1.618. &nbsp;85 is ridiculously large enough, 
+ * good for an array </b><b>with 2**64 elements.</b><b>
+</b><b> */</b><b>
+</b><b>#define MAX_MERGE_PENDING 85</b>
+
+<b>merge_collapse</b><b>(MergeState </b><b>*</b><b>ms)</b><b>
+</b><b>{</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;</b><b>struct</b><b> s_slice </b><b>*</b><b>p </b><b>=</b><b> ms</b><b>-&gt;</b><b>pending;</b><b>
+</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;assert(ms);</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;</b><b>while</b><b> (ms</b><b>-&gt;</b><b>n </b><b>&gt;</b> <b>1</b><b>) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Py_ssize_t n </b><b>=</b><b> ms</b><b>-&gt;</b><b>n </b><b>-</b> <b>2</b><b>;</b><b>
+</b><b> &nbsp;</b><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (n </b><b>&gt;</b> <b>0</b> <b>&amp;&amp;</b><b> p[n</b><b>-1</b><b>].len </b><b>&lt;=</b><b> p[n].len </b><b>+</b><b> p[n</b><b>+1</b><b>].len) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (p[n</b><b>-1</b><b>].len </b><b>&lt;</b><b> p[n</b><b>+1</b><b>].len)</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>--</b><b>n;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (merge_at(ms, n) </b><b>&lt;</b> <b>0</b><b>)</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>return</b> <b>-1</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>else</b> <b>if</b><b> (p[n].len </b><b>&lt;=</b><b> p[n</b><b>+1</b><b>].len) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (merge_at(ms, n) </b><b>&lt;</b> <b>0</b><b>)</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>return</b> <b>-1</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>else</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>break</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;</b><b>return</b> <b>0</b><b>;</b><b>
+</b><b>}</b>
+</pre> 
+        <h2><b><a id="sec3.2"></a>3.2 Corrected Python merge_collapse function</b></h2> 
+        <pre><b>merge_collapse</b><b>(MergeState </b><b>*</b><b>ms)</b><b>
+</b><b>{</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;</b><b>struct</b><b> s_slice </b><b>*</b><b>p </b><b>=</b><b> ms</b><b>-&gt;</b><b>pending;</b><b>
+</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;assert(ms);</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;</b><b>while</b><b> (ms</b><b>-&gt;</b><b>n </b><b>&gt;</b> <b>1</b><b>) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Py_ssize_t n </b><b>=</b><b> ms</b><b>-&gt;</b><b>n </b><b>-</b> <b>2</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> ( &nbsp;&nbsp;&nbsp;&nbsp;n </b><b>&gt;</b> <b>0</b><b> &nbsp;&nbsp;</b><b>&amp;&amp;</b><b> p[n</b><b>-1</b><b>].len </b><b>&lt;=</b><b> p[n].len </b><b>+</b><b> p[n</b><b>+1</b><b>].len
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>    || (n-1 &gt; 0 &amp;&amp; &nbsp;p[n</b><b>-2</b><b>].len </b><b>&lt;=</b><b> p[n].len </b><b>+</b><b> p[n</b><b>-1</b><b>].len)) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (p[n</b><b>-1</b><b>].len </b><b>&lt;</b><b> p[n</b><b>+1</b><b>].len)</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>--</b><b>n;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (merge_at(ms, n) </b><b>&lt;</b> <b>0</b><b>)</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>return</b> <b>-1</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>else</b> <b>if</b><b> (p[n].len </b><b>&lt;=</b><b> p[n</b><b>+1</b><b>].len) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if</b><b> (merge_at(ms, n) </b><b>&lt;</b> <b>0</b><b>)</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>return</b> <b>-1</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>else</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>break</b><b>;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;</b><b>return</b> <b>0</b><b>;</b><b>
+</b><b>}</b>
+</pre> 
+        <h2><b><a id="sec3.3"></a>3.3 Incorrect Java/Android merge_collapse function</b></h2> 
+        <p>Same bug as for Python in section 3.1</p> 
+        <pre><b> &nbsp;&nbsp;private void mergeCollapse() {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;while (stackSize &gt; 1) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int n = stackSize - 2;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>&nbsp;&nbsp;if (n &gt; 0 &amp;&amp; runLen[n-1] &lt;= runLen[n] + runLen[n+1])</b><b> {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (runLen[n - 1] &lt; runLen[n + 1])</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n--;</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mergeAt(n);</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else if (runLen[n] &lt;= runLen[n + 1]) {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mergeAt(n);</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else {</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break; // Invariant is established</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b><b>
+</b><b> &nbsp;&nbsp;&nbsp;}</b>
+</pre> 
+        <h2><b><a id="sec3.4"></a>3.4 Corrected Java/Android merge_collapse function</b></h2> 
+        <p>Equivalent fix as for Python in section 3.2<br> [UPDATE 26/2: we updated the code below as it was from an earlier version of the paper. The old code was equivalent but contained a redundant test and different coding style. Several people noticed – thanks for the feedback!]</p> 
+        <pre><b> &nbsp;&nbsp;private void newMergeCollapse() {</b>
+<b> &nbsp;&nbsp;&nbsp; while (stackSize &gt; 1) {</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;int n = stackSize - 2;</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><b>if (   (n &gt;= 1 &amp;&amp; runLen[n-1] &lt;= runLen[n] + runLen[n+1])</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; || (n &gt;= 2 &amp;&amp; runLen[n-2] &lt;= runLen[n] + runLen[n-1]))</b><b> {</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (runLen[n - 1] &lt; runLen[n + 1])</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n--;</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} else if (runLen[n] &gt; runLen[n + 1]) {</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break; // Invariant is established</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mergeAt(n);</b>
+<b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</b>
+<b> &nbsp;&nbsp;&nbsp;}</b>
+</pre> 
+        <h1><a id="sec4"></a>4. Conclusion – What we can learn</h1> 
+        <p>While attempting to verify TimSort, we failed to establish its instance invariant. Analysing the reason, we discovered a bug in TimSort’s implementation leading to an ArrayOutOfBoundsException for certain inputs. We suggested a proper fix for the culprit method (without losing measurable performance) and we have formally proven that the fix actually is correct and that this bug no longer persists.</p> 
+        <p>There are a few observations that can be drawn from this exercise beyond the immediate issue of the bug.</p> 
+        <ol> 
+         <li>Formal methods are often classified as irrelevant and/or impracticable by practitioners. This is not true: we found and fixed a bug in a piece of software that is used by billions of users every single day. Finding and fixing this bug without a formal analysis and the help of a verification tool is next to impossible, as our analysis showed. It has been around for years in a core library routine of Java and Python. Earlier occurrences of the underlying bug were supposedly fixed, but actually only made its occurrence less likely.</li> 
+         <li>Even though the bug itself is unlikely to occur, it is easy to see how it could be used in an attack. It is likely that more undetected bugs are in other parts of core libraries of mainstream programming languages. Shouldn’t we try to find them before they can do harm or they can be exploited?</li> 
+         <li>The reaction of the Java developer community to our report is somewhat disappointing: instead of using our fixed (and verified!) version of mergeCollapse(), they opted to increase the allocated runLen “sufficiently”. As we showed, this is not necessary. In consequence, whoever uses java.utils.Collection.sort() is forced to over allocate space. Given the astronomical number of program runs that such a central routine is used in, this leads to a considerable waste of energy. As to the reasons, why our solution has not been adopted, we can only speculate: perhaps the JDK maintainers did not bother to read our report in detail, and therefore don’t trust and understand our fix. After all, Open Java is a community effort, largely driven by volunteers with limited time.</li> 
+        </ol> 
+        <p>What can we learn from this? We would be happy if our work could be the starting point of a closer collaboration between the formal methods and the developers of open language frameworks. Formal methods have already been adopted successfully by Amazon [<a href="http://research.microsoft.com/en-us/um/people/lamport/tla/formal-methods-amazon.pdf">link</a>] and Facebook [<a href="https://research.facebook.com/publications/422671501231772/moving-fast-with-software-verification/">link</a>]. Modern formal specification languages and formal verification tools are <b>not</b> cryptic and super-hard to learn. Usability and automation are improving constantly. But we need more people to try, test and use our formal tools. Yes, it costs a little effort to start formally specifying and verifying stuff, but not more than, say, learning how to use a compiler framework or a build tool. We are talking days/weeks, not months/years. Will <b>you</b> take up the challenge?</p> 
+        <h3><span style="color: #0000ff;"><br> Best regards,<br> <a href="https://www.cwi.nl/people/2306">Stijn de Gouw</a>, <a href="http://jurriaan.me/">Jurriaan Rot</a>, <a href="http://homepages.cwi.nl/~frb/">Frank S. de Boer</a>, <a href="https://www.se.tu-darmstadt.de/se/group-members/richard-bubel/">Richard Bubel</a> and <a href="https://www.se.tu-darmstadt.de/se/group-members/reiner-haehnle/">Reiner Hähnle</a><br> </span></h3> 
+        <p><strong>Acknowledgements:</strong></p> 
+        <p>Partly funded by the EU project FP7-610582 ENVISAGE: Engineering Virtualized&nbsp;Services (http://www.envisage-project.eu).</p> 
+        <p><span style="line-height: 1.5;">This blog would never have gotten written without the enthusiastic support and gentle pushing of </span><a style="line-height: 1.5;" href="http://memkite.com/team/">Amund Tveit</a><span style="line-height: 1.5;">!</span> We would further like to thank Behrooz Nobakht for providing the video showcasing the bug.</p> 
+        <p><img src="https://envisage.ifi.uio.no:8080/t/timsortbug.gif" alt="Envisage logo" width="240" height="80"></p> 
+       </div>
+       <!-- .entry-content --> 
+       <footer class="entry-meta"> 
+       </footer>
+       <!-- .entry-meta --> 
+      </article>
+      <!-- #post --> 
+      <nav class="navigation post-navigation" role="navigation"> 
+       <h1 class="screen-reader-text">Post navigation</h1> 
+       <div class="nav-links"> 
+        <a href="http://www.envisage-project.eu/engineering-virtualized-services-isola-2014/" rel="prev"><span class="meta-nav">?</span> Envisage @ ISoLA 2014</a> 
+        <a href="http://www.envisage-project.eu/key-deductive-verification-of-software/" rel="next">KeY: Deductive Verification of Software <span class="meta-nav">?</span></a> 
+       </div>
+       <!-- .nav-links --> 
+      </nav>
+      <!-- .navigation --> 
+      <div id="comments" class="comments-area"> 
+       <h2 class="comments-title"> 23 thoughts on “<span>Proving that Android’s, Java’s and Python’s sorting algorithm is broken (and showing how to fix it)</span>” </h2> 
+       <ol class="comment-list"> 
+        <li id="comment-1392" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="https://klmlinks.wordpress.com/2015/02/24/dort-broken/" rel="external nofollow" class="url">Dort broken | Collected Links</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1393" class="trackback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://www.quora.com/Is-Java-and-Pythons-sorting-algorithm-broken#ans10077648" rel="external nofollow" class="url">Quora</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1394" class="comment byuser comment-author-volker even thread-even depth-1"> 
+         <article id="div-comment-1394" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="Volker Stolz" src="http://envisage-project.eu/wp-content/uploads/2015/02/Volker-Stolz_avatar_1424869193-74x74.jpeg" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Volker Stolz</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#comment-1394"> <time datetime="2015-02-25T12:54:44+00:00"> February 25, 2015 at 12:54 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>This issue on the Python bug tracker: <a href="http://bugs.python.org/issue23515" rel="nofollow">http://bugs.python.org/issue23515</a></p> 
+          </div>
+          <!-- .comment-content --> 
+          <div class="reply">
+           <a rel="nofollow" class="comment-reply-login" href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">Log in to Reply</a>
+          </div> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1395" class="comment byuser comment-author-volker odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-1395" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="Volker Stolz" src="http://envisage-project.eu/wp-content/uploads/2015/02/Volker-Stolz_avatar_1424869193-74x74.jpeg" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Volker Stolz</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#comment-1395"> <time datetime="2015-02-25T12:57:25+00:00"> February 25, 2015 at 12:57 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>High praise on Twitter:</p> 
+           <blockquote class="twitter-tweet" lang="en">
+            <p>Congratulations to Stijn de Gouw et al. for finding and fixing a bug in TimSort using formal methods! <a href="http://t.co/7P1PqCWLOW" rel="nofollow">http://t.co/7P1PqCWLOW</a></p> 
+            <p>— Joshua Bloch (@joshbloch) <a href="https://twitter.com/joshbloch/status/570365825137315841" rel="nofollow">February 24, 2015</a></p>
+           </blockquote> 
+           <p><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p> 
+          </div>
+          <!-- .comment-content --> 
+          <div class="reply">
+           <a rel="nofollow" class="comment-reply-login" href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">Log in to Reply</a>
+          </div> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1396" class="comment byuser comment-author-volker even thread-even depth-1"> 
+         <article id="div-comment-1396" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="Volker Stolz" src="http://envisage-project.eu/wp-content/uploads/2015/02/Volker-Stolz_avatar_1424869193-74x74.jpeg" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Volker Stolz</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#comment-1396"> <time datetime="2015-02-25T13:12:57+00:00"> February 25, 2015 at 1:12 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>You are not alone:</p> 
+           <blockquote class="twitter-tweet" lang="en">
+            <p>These <a href="https://twitter.com/hashtag/golang?src=hash" rel="nofollow">#golang</a> timsorts <a href="http://t.co/KiqYAkEye7" rel="nofollow">http://t.co/KiqYAkEye7</a> probably need to be fixed <a href="http://t.co/MowEqgGED1" rel="nofollow">http://t.co/MowEqgGED1</a> .</p> 
+            <p>— Damian Gryski (@dgryski) <a href="https://twitter.com/dgryski/status/570256114803212290" rel="nofollow">February 24, 2015</a></p>
+           </blockquote> 
+           <p><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p> 
+          </div>
+          <!-- .comment-content --> 
+          <div class="reply">
+           <a rel="nofollow" class="comment-reply-login" href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">Log in to Reply</a>
+          </div> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1397" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://irrlab.com/2015/02/25/proving-that-androids-javas-and-pythons-sorting-algorithm-is-broken-and-showing-how-to-fix-it/" rel="external nofollow" class="url">Proving that Android’s, Java’s and Python’s sorting algorithm is broken (and showing how to fix it) | thoughts...</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1401" class="comment byuser comment-author-volker even thread-even depth-1"> 
+         <article id="div-comment-1401" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="Volker Stolz" src="http://envisage-project.eu/wp-content/uploads/2015/02/Volker-Stolz_avatar_1424869193-74x74.jpeg" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Volker Stolz</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#comment-1401"> <time datetime="2015-02-26T17:23:27+00:00"> February 26, 2015 at 5:23 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <blockquote class="twitter-tweet" lang="en">
+            <p>I wonder if the invariant could have been encoded in the type system, or if LiquidHaskell, Iris, Agda impls would have exposed this.</p> 
+            <p>— Pascal Hartig (@passy) <a href="https://twitter.com/passy/status/570967513468706816" rel="nofollow">February 26, 2015</a></p>
+           </blockquote> 
+           <p><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script></p> 
+          </div>
+          <!-- .comment-content --> 
+          <div class="reply">
+           <a rel="nofollow" class="comment-reply-login" href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">Log in to Reply</a>
+          </div> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1402" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://blog.marina.samokhins.com/2015/02/27/proving-that-androids-javas-and-pythons-sorting-algorithm-is-broken/" rel="external nofollow" class="url">Proving that Android’s, Java’s and Python’s sorting algorithm is broken | Fairy Tales</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1403" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://matthewkwilliams.com/index.php/2015/02/27/nifty-things-for-week-ending-27-february-2015/" rel="external nofollow" class="url">Nifty Things for week ending 27 February 2015 » Ramblings</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1404" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://devzen.ru/episode-0030/" rel="external nofollow" class="url">Timsort ? OpenStack — Episode 0030 « DevZen Podcast</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1408" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://envisage-project.eu/key-deductive-verification-of-software/" rel="external nofollow" class="url">KeY: Deductive Verification of Software | Envisage: Engineering Virtualized Services</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1412" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://prog.hu/hirek/3850/Hibas+a+Java+a+Python+es+az+Android+standard+rendezometodusa.html" rel="external nofollow" class="url">Hibás a Java, a Python és az Android standard rendez?metódusa</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1414" class="comment byuser comment-author-einarj even thread-even depth-1"> 
+         <article id="div-comment-1414" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="Einar Broch Johnsen" src="http://envisage-project.eu/wp-content/uploads/2013/05/einarj_avatar-74x74.jpg" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Einar Broch Johnsen</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#comment-1414"> <time datetime="2015-03-10T14:07:16+00:00"> March 10, 2015 at 2:07 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Heise online feature (10.03.2015): <a href="http://www.heise.de/newsticker/meldung/Fehler-in-Standardsortieralgorithmus-mit-formalen-Methoden-aufgedeckt-2570944.html" rel="nofollow">Fehler in Standardsortieralgorithmus mit formalen Methoden aufgedeckt</a></p> 
+          </div>
+          <!-- .comment-content --> 
+          <div class="reply">
+           <a rel="nofollow" class="comment-reply-login" href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">Log in to Reply</a>
+          </div> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1415" class="comment byuser comment-author-einarj odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-1415" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="Einar Broch Johnsen" src="http://envisage-project.eu/wp-content/uploads/2013/05/einarj_avatar-74x74.jpg" class="avatar avatar-74 photo" height="74" width="74"> 
+            <b class="fn">Einar Broch Johnsen</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://www.envisage-project.eu/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#comment-1415"> <time datetime="2015-03-10T14:15:13+00:00"> March 10, 2015 at 2:15 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p><a href="http://blog.jetbrains.com/idea/2015/03/java-annotated-monthly-march-2015/#sthash.sGDuJ6CA.dpuf" rel="nofollow">JetBrains IntelliJ IDEA Blog</a> (March 10, 2015):<br> “The first of its kind, this result is both an important development for the Java community and a proof of concept for the feasibility of formal verification and automated theorem proving. Perhaps more importantly, the tool used to detect and identify this bug is completely open source and <a href="http://www.key-project.org/download/" rel="nofollow">available to try yourself</a>.”</p> 
+          </div>
+          <!-- .comment-content --> 
+          <div class="reply">
+           <a rel="nofollow" class="comment-reply-login" href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">Log in to Reply</a>
+          </div> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1419" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://lalg.fri.uni-lj.si/jurij/blog/timsort-je-vseboval-hrosca/" rel="external nofollow" class="url">Timsort je vseboval hroš?a | blogla</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1421" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://sweetdum.com/blog/?p=110" rel="external nofollow" class="url">???????????????? | Sweetdumplings's Blog</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1422" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://qandasys.info/timsort-python-exploit-closed/" rel="external nofollow" class="url">Timsort python exploit [closed] | Question and Answer</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1423" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://look-up.cn/xb%e5%a6%82%e4%bd%95%e6%89%be%e5%87%batimsort%e7%ae%97%e6%b3%95%e5%92%8c%e7%8e%89%e5%85%94%e6%9c%88%e7%90%83%e8%bd%a6%e4%b8%ad%e7%9a%84bug%ef%bc%9f.html" rel="external nofollow" class="url">????Timsort??????????Bug? | ?????</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1450" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://www.itsprite.com/pythonwhat-algorithm-does-pythons-sorted-use-duplicate/" rel="external nofollow" class="url">Python:What algorithm does python's sorted() use? [duplicate] – IT Sprite</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1462" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://envisage-project.eu/video-finding-the-bug-in-timsort/" rel="external nofollow" class="url">Video: Finding the bug in TimSort | Envisage: Engineering Virtualized Services</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1603" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://g-crew.org/?p=11190" rel="external nofollow" class="url">????Timsort??????????Bug? - G-Crew</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1631" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="https://blog.inf.ed.ac.uk/apl16/archives/483" rel="external nofollow" class="url">Lecture 13: Practical Tools for Java Correctness | Advances in Programming Languages</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1691" class="pingback even thread-even depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="https://www.key-project.org/2017/08/30/dual-pivot/" rel="external nofollow" class="url">Proving JDK’s Dual Pivot Quicksort Correct – The KeY Project</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+       </ol>
+       <!-- .comment-list --> 
+       <div id="respond" class="comment-respond"> 
+        <h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/proving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it/#respond" style="display:none;">Cancel reply</a></small></h3>
+        <p class="must-log-in">You must be <a href="http://www.envisage-project.eu/wp-login.php?redirect_to=http%3A%2F%2Fwww.envisage-project.eu%2Fproving-android-java-and-python-sorting-algorithm-is-broken-and-how-to-fix-it%2F">logged in</a> to post a comment.</p> 
+       </div>
+       <!-- #respond --> 
+      </div>
+      <!-- #comments --> 
+     </div>
+     <!-- #content --> 
+    </div>
+    <!-- #primary --> 
+    <div id="tertiary" class="sidebar-container" role="complementary"> 
+     <div class="sidebar-inner"> 
+      <div class="widget-area"> 
+       <aside id="execphp-6" class="widget widget_execphp"> 
+        <div class="execphpwidget"> 
+         <a class="twitter-timeline" href="https://twitter.com/EnvisageProject" data-widget-id="678977665848750081">Tweets by @EnvisageProject</a> 
+         <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script> 
+        </div> 
+       </aside> 
+      </div>
+      <!-- .widget-area --> 
+     </div>
+     <!-- .sidebar-inner --> 
+    </div>
+    <!-- #tertiary --> 
+   </div>
+   <!-- #main --> 
+   <footer id="colophon" class="site-footer" role="contentinfo"> 
+    <div class="site-info"> 
+     <center>
+       This page has been viewed 4510623 times. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+      <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform"> Powered by WordPress</a>
+     </center>
+     <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform"> </a>
+    </div>
+    <!-- .site-info -->
+    <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform"> </a>
+   </footer>
+   <!-- #colophon -->
+   <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform"> </a>
+  </div>
+  <!-- #page -->
+  <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform"> <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/comment-reply.min.js?ver=4.6.1"></script> <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/imagesloaded.min.js?ver=3.2.0"></script> <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/masonry.min.js?ver=3.3.2"></script> <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/jquery/jquery.masonry.min.js?ver=3.1.2b"></script> <script type="text/javascript" src="http://envisage-project.eu/wp-content/themes/twentythirteen/js/functions.js?ver=20160717"></script> <script type="text/javascript">
+/* <![CDATA[ */
+var SlimStatParams = {"ajaxurl":"http:\/\/www.envisage-project.eu\/wp-admin\/admin-ajax.php","extensions_to_track":"pdf,doc,xls,zip","outbound_classes_rel_href_to_ignore":"noslimstat,ab-item","outbound_classes_rel_href_to_not_track":"noslimstat,ab-item","id":"13193507.42bbd0ed773be5548a2fc824c0c84e85"};
+/* ]]> */
+</script> <script type="text/javascript" src="http://envisage-project.eu/wp-content/plugins/wp-slimstat/wp-slimstat.min.js"></script> <script type="text/javascript" src="http://envisage-project.eu/wp-includes/js/wp-embed.min.js?ver=4.6.1"></script>  </a>
+ </body>
+</html>

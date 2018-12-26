@@ -1,0 +1,786 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <title>Building and Deploying Microservices with AWS Lambda and Semaphore - Semaphore</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="stylesheet" media="all" href="https://d1dkupr86d302v.cloudfront.net/community/assets/application-e5360516a9a50cb8251548a973429c144c595856dee46fc900e856c56b969aae.css"> 
+  <meta name="csrf-param" content="authenticity_token"> 
+  <meta name="csrf-token" content="+ht6A2RdWNsEGu6VKS4yxP8Rz51dG1KC6GPmY6gUa+1tmFyHmB7kUFrx7zkyzxCMLlByNk6al4gejDFY+mLp+g=="> 
+  <link rel="shortcut icon" href="/assets/favicons/favicon.ico" type="image/x-ico"> 
+  <link rel="apple-touch-icon" href="/assets/favicons/apple-touch-icon.png"> 
+  <link rel="apple-touch-icon" sizes="57x57" href="/assets/favicons/apple-touch-icon-57x57.png"> 
+  <link rel="apple-touch-icon" sizes="72x72" href="/assets/favicons/apple-touch-icon-72x72.png"> 
+  <link rel="apple-touch-icon" sizes="76x76" href="/assets/favicons/apple-touch-icon-76x76.png"> 
+  <link rel="apple-touch-icon" sizes="114x114" href="/assets/favicons/apple-touch-icon-114x114.png"> 
+  <link rel="apple-touch-icon" sizes="120x120" href="/assets/favicons/apple-touch-icon-120x120.png"> 
+  <link rel="apple-touch-icon" sizes="144x144" href="/assets/favicons/apple-touch-icon-144x144.png"> 
+  <link rel="apple-touch-icon" sizes="152x152" href="/assets/favicons/apple-touch-icon-152x152.png"> 
+  <script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+    (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+    e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+      _st('install','RbFV7fCCJRFrhxKo7XGr','2.0.0');
+</script> 
+  <script type="text/javascript">
+  (function(d,s,i,r) {
+    if (d.getElementById(i)){return;}
+      var n=d.createElement(s),e=d.getElementsByTagName(s)[0];
+      n.id=i;n.src='//js.hs-analytics.net/analytics/'+(Math.ceil(new Date()/r)*r)+'/2358052.js';
+      e.parentNode.insertBefore(n, e);
+  })(document,"script","hs-analytics",300000);
+</script> 
+  <!-- Google Analytics --> 
+  <script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-28072419-1', 'auto', {'cookieDomain': 'semaphoreci.com', 'legacyCookieDomain': 'semaphoreci.com'});
+ga('send', 'pageview');
+
+// Trigger an event 5 seconds after a scroll.
+// When it goes out, closing the page will not count as a bounce.
+setTimeout(function() {
+  window.onscroll = function() {
+    window.onscroll = null; // Only track the event once
+    ga('send', 'event', 'scroll', 'read', {'page': window.location.pathname });
+  }
+}, 5000);
+
+</script> 
+  <!-- End Google Analytics --> 
+  <meta property="og:url" content="https://semaphoreci.com/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore"> 
+  <meta property="og:title" content="Building and Deploying Microservices with AWS Lambda and Semaphore"> 
+  <meta property="og:description" content="AWS Lambda is an AWS service that runs your code in response to events or HTTP requests. Here's how to easily build and deploy a Node.js Lambda microservice."> 
+  <meta property="og:image" content="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/488/Building_and_Deploying_Microservices_with_AWS_Lambda_and_Semaphore.png"> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:image" content="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/488/Building_and_Deploying_Microservices_with_AWS_Lambda_and_Semaphore.png"> 
+  <meta name="twitter:site" content="@semaphoreci"> 
+  <meta name="twitter:title" content="Building and Deploying Microservices with AWS Lambda and Semaphore"> 
+  <meta name="twitter:description" content="AWS Lambda is an AWS service that runs your code in response to events or HTTP requests. Here's how to easily build and deploy a Node.js Lambda microservice."> 
+  <meta name="twitter:url" content="https://semaphoreci.com/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore"> 
+  <link rel="alternate" type="application/atom+xml" title="Semaphore CI Community Tutorials" href="https://semaphoreci.com/community/tutorials.atom"> 
+  <link rel="alternate" type="application/atom+xml" title="Semaphore CI Community Tutorials on AWS" href="https://semaphoreci.com/community/tags/aws.atom"> 
+  <link rel="canonical" href="https://semaphoreci.com/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore"> 
+ </head> 
+ <body data-prefix="tutorial" data-signed-in="false" data-current-user-id="" data-root="https://semaphoreci.com/community"> 
+  <header> 
+   <nav class="navbar navbar-default"> 
+    <div class="container"> 
+     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse-1"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+     <div class="navbar-header"> 
+      <a class="navbar-brand" href="/"><img width="140" height="35" alt="Semaphore - Continuous Integration, Deployment, TDD, DevOps tutorials" src="https://d1dkupr86d302v.cloudfront.net/community/assets/logo-semaphore-a6d954e176b6975b511f314a0cc808dc94a8030210077e3a6e904fbe69dc5354.svg"></a> 
+     </div> 
+     <div class="collapse navbar-collapse" id="navbar-collapse-1"> 
+      <ul class="nav navbar-nav navbar-right"> 
+       <li><a class="" href="/product">Product</a></li> 
+       <li><a class="" href="/product/docker">Docker</a></li> 
+       <li><a href="/pricing">Pricing</a></li> 
+       <li><a href="/docs">Documentation</a></li> 
+       <li><a href="/community/tutorials">Tutorials</a></li> 
+       <li><a href="/blog">Blog</a></li> 
+       <li><a href="/users/sign_in?redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Sign In</a></li> 
+       <li><span><a class="btn btn-primary navbar-button" href="/users/sign_up?from=community&amp;referer=community-tutorials-building-and-deploying-microservices-with-aws-lambda-and-semaphore" role="button">Sign Up</a></span></li> 
+      </ul> 
+      <div class="subscription-header new-subscription-popup" style="display: none;"> 
+       <div class="container"> 
+        <div class="row"> 
+         <div class="col-sm-12 u-mb-0"> 
+          <button type="button" class="close" id="subscribe-close"><span aria-hidden="true">×</span></button> 
+         </div> 
+         <span id="new-subscription-dialog"> 
+          <div class="col-sm-6 u-mb-20"> 
+           <p>? Get our next AWS tutorial right in your inbox.</p> 
+          </div> 
+          <div class="col-sm-6 subscription-header-form new-subscription-tag"> 
+           <form class="form-inline" id="new-email-subscription-form" data-tag-name="AWS"> 
+            <div class="form-group"> 
+             <input type="text" class="form-control input-sm" id="email" placeholder="Enter your email"> 
+            </div> 
+            <button type="submit" class="btn btn-primary btn-sm" id="new-email-subscribe">Subscribe</button> 
+           </form> 
+          </div> </span> 
+        </div> 
+       </div> 
+      </div> 
+     </div>
+     <!-- navbar --> 
+    </div> 
+    <!-- container --> 
+   </nav> 
+  </header> 
+  <script>
+
+  var _newCommentPath = "/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore/comments";
+  var _comments = [];
+
+    var _tag = {"id":18,"name":"AWS","type":"ActsAsTaggableOn::Tag","subscribed":null,"path":"/community/subscription"};
+  var _tutorial = {"id":65,"name":"Building and Deploying Microservices with AWS Lambda and Semaphore","type":"Tutorial","subscribed":null,"path":"/community/subscription"};
+
+  var _like = {"path":"/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore/likes","count":2,"liked":null};
+</script> 
+  <div class="page-illustration page-illustration-none"> 
+   <div class="container"> 
+    <nav class="navigation navigation-top"> 
+     <div class="navigation-group navigation-group--search"> 
+      <form class="search-form" role="search"> 
+       <input type="text" class="form-control search-input" placeholder="Search tutorials"> 
+      </form> 
+     </div> 
+     <div class="navigation-group">
+      <a class="explore tags" href="/community/tags">Explore tags</a>
+     </div> 
+     <div class="navigation-group"> 
+      <a href="https://semaphoreci.com/community/tutorials.atom"><span class="icons-share icon-rss">RSS</span>RSS</a> 
+     </div> 
+     <div class="navigation-group navigation-group-floated-oposite"> 
+      <a class="nav-link-back" href="/community/tutorials">All tutorials</a> 
+     </div> 
+     <div class="navigation-group navigation-group-fluid"> 
+      <span class="earn">Earn up to $200</span> 
+      <a class="btn btn-primary pull-right" href="/community/write-for-us">Write a tutorial</a> 
+     </div> 
+    </nav> 
+   </div> 
+   <div class="post-photo text-center"> 
+    <img class="img-responsive" width="1525" height="394" src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/488/Building_and_Deploying_Microservices_with_AWS_Lambda_and_Semaphore.png" alt="Building and deploying microservices with aws lambda and semaphore"> 
+   </div> 
+   <!-- post-photo --> 
+   <div ng-app="commentsApp" ng-controller="CommentListController as commentListController" class="container"> 
+    <div class="row"> 
+     <div class="col-md-offset-2 col-md-8"> 
+      <article class="single-item block-longform" itemscope itemtype="http://schema.org/Article"> 
+       <header class="post-header"> 
+        <div class="media"> 
+         <a class="media-left" itemprop="author" itescope="" itemtype="http://schema.org/Person" href="/community/authors/nikolalsvk"> <img class="avatar" itemprop="image" itescope="" itemtype="http://schema.org/ImageObject" src="https://gravatar.com/avatar/09a5dded09407e304239b501c45c0be4.png?s=88&amp;d=mm" alt="09a5dded09407e304239b501c45c0be4" width="88" height="88"> </a> 
+         <div class="media-body"> 
+          <ul class="list-inline post-info"> 
+           <li itemprop="author" itemscope itemtype="http://schema.org/Person"><a itemprop="name" href="/community/authors/nikolalsvk">Nikola ?uza</a></li> 
+           <li itemprop="datePublished">Dec 22, 2015</li> 
+           <li itemprop="dateModified">Updated on Mar 25, 2016</li> 
+           <li> <a href="/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore#comments"> <span itemprop="commentCount"> 
+              <ng-pluralize count="commentListController.comments.length" when="{'one': '1 comment', 'other': '{} comments'}"> 
+              </ng-pluralize> </span> </a> </li> 
+           <li itemprop="keywords"> Tagged as <a href="/community/tags/aws">AWS</a> <a href="/community/tags/deployment">Deployment</a> <a href="/community/tags/node-js">Node.js</a> <a href="/community/tags/devops">DevOps</a> </li> 
+          </ul> 
+         </div> 
+         <div class="media-right media-twitter"> 
+          <a class="twitter-share-button" href="https://twitter.com/share?text=Building and Deploying Microservices with AWS Lambda and Semaphore via @semaphoreci">Tweet</a> 
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> 
+         </div> 
+        </div> 
+       </header> 
+       <h1 class="page-title" itemprop="name">Building and Deploying Microservices with AWS Lambda and Semaphore</h1> 
+       <p class="page-subtitle page-intro" itemprop="about">AWS Lambda is an AWS service that runs your code in response to events or HTTP requests. Here's how to easily build and deploy a Node.js Lambda microservice.</p> 
+       <!--<div class="jumbotron post-meta block-subscribe-to-tag">
+  <img class="jumbotron_img" width="40" height="40" itemprop="image" title="aws" alt="aws" src="https://d1dkupr86d302v.cloudfront.net/community/assets/tag-icons/icon-tag-aws-b5be501db8ee5cdf9772ed1cdc8fe9f5c996a3ae46b2151afc8e83a696d74170.svg" />
+  <span class="subscription-tag subscription-tag-top">
+  </span>
+  <div class="tutorial-like pull-right">
+  </div>
+</div>
+--> 
+       <div class="promo-banner-container devops-banner text-center"> 
+        <img class="banner-cover" src="https://d1dkupr86d302v.cloudfront.net/community/assets/banners/devops-banner-22ea7a2f5b83603a3444f6c2b507a984230034d7b572bcdc84726145785fcb1b.png" alt="Devops banner"> 
+        <p class="promo-banner-text">Make the testing and deployment of your projects fast, painless, and inexpensive.</p> 
+        <a id="semaphore-learn-more" href="https://semaphoreci.com/users/sign_up" class="btn btn-banner-devops">Try Semaphore for free</a> 
+       </div> 
+       <section id="tutorial-content" class="block-center-img" itemprop="text" ng-non-bindable> 
+        <h3>Introduction</h3> 
+        <p><a href="https://us-west-2.console.aws.amazon.com/lambda/">AWS Lambda</a> is a service from the <a href="https://aws.amazon.com/">Amazon Web Services</a> family which runs your code based on various events. When you create a <em>Lambda function</em> and deploy your code to it, AWS Lambda takes care of provisioning and managing servers that run your code.</p> 
+        <p>This tutorial will show you how to develop a Node.js Lambda function from scratch and deploy it to AWS Lambda. To achieve a continuous delivery workflow for our function, we will automate the deployment process through Semaphore's integration with Lambda.</p> 
+        <p>Once the function is complete, it will text message anyone who breaks the build on your project on Semaphore.</p> 
+        <p>The function we are developing will use:</p> 
+        <ul> 
+         <li> <a href="http://gruntjs.com/">Grunt</a> (a task runner for Javascript, which we will use to invoke our function locally)</li> 
+         <li> <a href="https://www.npmjs.com/">NPM</a> (the primary package manager for Node.js),</li> 
+         <li> <a href="https://www.twilio.com/docs/api/rest">Twilio API</a> (we will use Twilio's API to send text messages)</li> 
+         <li> <a href="https://aws.amazon.com/sdk-for-node-js/">AWS SDK for Node.js</a> (a simple and easy-to-use API for AWS services)</li> 
+        </ul> 
+        <h3>Prerequisites</h3> 
+        <p>To develop this function, you will need:</p> 
+        <ul> 
+         <li>An <a href="http://aws.amazon.com/">AWS account</a> </li> 
+         <li>A <a href="https://help.github.com/articles/create-a-repo/">GitHub repository</a> to which we will push our code</li> 
+         <li>A <a href="https://semaphoreci.com/docs/adding-github-bitbucket-project-to-semaphore.html">Semaphore project</a> where we will build and deploy the code,</li> 
+         <li>A <a href="https://www.twilio.com/">Twillio account</a> for texting users who break the build (we'll use the free account).</li> 
+        </ul> 
+        <h2>Initializing a Lambda Function</h2> 
+        <p>A Lambda function is basically the code that is run when a function is invoked. Typically, it is invoked by the events that you define.</p> 
+        <p>Let's create a new Lambda function. To do so, we need to go to the <a href="https://us-west-2.console.aws.amazon.com/lambda/">Lambda console</a> and click on <em>Get Started Now</em>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/231/Screen_Shot_2015-12-15_at_12.20.12_PM.png" alt="AWS Lambda Get Started"></p> 
+        <p>To start with, we will select the <em>Hello World</em> Node.js blueprint for our function.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/233/Screen_Shot_2015-12-15_at_12.21.11_PM.png" alt="AWS Lambda blueprint function"></p> 
+        <p>After you have selected a blueprint, you should get the following screen:</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/234/blank-configure-function-ss.png" alt="AWS Lambda blank configure function"></p> 
+        <p>Now we need to name our function, give it a description, and choose the runtime language, as shown below.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/235/Screen_Shot_2015-12-15_at_12.29.20_PM.png" alt="AWS Lambda configure function"></p> 
+        <p>We will leave the <em>Lambda function code</em> section as is, and we will replace that code with our own once we are ready.</p> 
+        <p>Under <em>Lambda function handler and role</em> we will keep the default <code>index.handler</code> handler, but we will need to create a new execution role. You can learn more about execution roles in the <a href="https://docs.aws.amazon.com/lambda/latest/dg/intro-permission-model.html#lambda-intro-execution-role">AWS Lambda documentation on granting permissions using the execution role</a>.</p> 
+        <p>We will use the S3 API in our code, so we will need an S3 execution role for the function. More on that later on.</p> 
+        <p>Select the <em>S3 execution role</em> in the dropdown menu to create a role.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/236/Screen_Shot_2015-12-15_at_12.30.07_PM.png" alt="AWS Lambda function handler and role"></p> 
+        <p>This will take you to a dialog where you can create a new IAM Role. We will name it <code>semaphore-deploy-role</code>. This role has a set of permissions that will both let us use AWS SDK in our code and let Semaphore do the deployment for us. After you have created a new IAM Role, you can click on <em>Allow</em>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/237/Screen_Shot_2015-12-15_at_12.31.54_PM.png" alt="AWS Lambda create new IAM role"></p> 
+        <p>Now that you've created an IAM role for your function, you can go ahead and select it.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/239/Screen_Shot_2015-12-15_at_12.32.17_PM.png" alt="AWS Lambda choose IAM role"></p> 
+        <p>Next, we will increase timeout to 6 seconds, and leave the required memory at 128 MB under <em>Advanced settings</em>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/254/Screen_Shot_2015-12-16_at_4.10.40_PM.png" alt="AWS Lambda advanced settings"></p> 
+        <p>After we've done all of this, our settings should look like this:</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/255/filled-configure-function-ss.png" alt="AWS Lambda filled configure function"></p> 
+        <p>Click on <em>Next</em>, review the function details and click on <em>Create function</em>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/242/Screen_Shot_2015-12-15_at_12.32.42_PM.png" alt="AWS Lambda everything's OK"></p> 
+        <h2>Writing the Code</h2> 
+        <h3>Storing Phone Numbers</h3> 
+        <p>Now that we have created a Lambda function, it's time to write some code. We will create a function that retrieves the JSON file from AWS S3. We will add the emails and phone numbers of the users who are working on our project on Semaphore to this file. This file will also contain the Twilio credentials (the Account SID, the Authentication Token and the Twilio Number). This data is stored on S3 so that no one can see it in our code.</p> 
+        <h4>Retrieving Twilio Credentials</h4> 
+        <p>You can retrieve your Twilio credentials from <a href="https://www.twilio.com/">their website</a>, given you have previously created a (free) Twilio account. You will also need to enable sending SMS messages to your country in the <a href="https://www.twilio.com/user/account/settings/international/sms">international settings</a> for your account and verify your number and every other number to which you will need to send text messages. You can do that on the <a href="https://www.twilio.com/user/account/phone-numbers/verified">Twilio verified numbers</a> page.</p> 
+        <p>Next, open an editor of your choice and make a file named <code>numbers.json</code>. Add your email, the phone numbers and Twilio credentials to this file. Here's an example of what this file should look like:</p> 
+        <div class="highlight highlight-JSON">
+         <pre><span class="p">{</span>
+  <span class="nt">"twilio"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">"twilio_account_sid"</span><span class="p">:</span> <span class="s2">"12345678"</span><span class="p">,</span>
+    <span class="nt">"twilio_auth_token"</span><span class="p">:</span> <span class="s2">"12345678"</span><span class="p">,</span>
+    <span class="nt">"twilio_number"</span><span class="p">:</span> <span class="s2">"+420123456"</span>
+  <span class="p">},</span>
+  <span class="nt">"hard_working_user@gmail.com"</span><span class="p">:</span> <span class="s2">"+3333333"</span><span class="p">,</span>
+  <span class="nt">"lazy_user@gmail.com"</span><span class="p">:</span> <span class="s2">"+2222222"</span><span class="p">,</span>
+  <span class="nt">"user_who_breaks_the_build@renderedtext.com"</span><span class="p">:</span> <span class="s2">"+1111111"</span><span class="p">,</span>
+<span class="p">}</span>
+</pre>
+        </div> 
+        <p>Go to the <a href="https://console.aws.amazon.com/s3/">AWS S3 console</a> and upload the <code>numbers.json</code> to a bucket of your choice.</p> 
+        <h3>Defining Dependencies</h3> 
+        <p>Next, we will define the dependencies that we are using in our Node.js application in <code>package.json</code>. This file should look similar to the following:</p> 
+        <div class="highlight highlight-JSON">
+         <pre><span class="p">{</span>
+  <span class="nt">"name"</span><span class="p">:</span> <span class="s2">"congrats-you-broke-the-build"</span><span class="p">,</span>
+  <span class="nt">"version"</span><span class="p">:</span> <span class="s2">"0.0.1"</span><span class="p">,</span>
+  <span class="nt">"main"</span><span class="p">:</span> <span class="s2">"index.js"</span><span class="p">,</span>
+  <span class="nt">"devDependencies"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">"aws-sdk"</span><span class="p">:</span> <span class="s2">"2.0.23"</span>
+  <span class="p">},</span>
+  <span class="nt">"dependencies"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">"twilio"</span><span class="p">:</span> <span class="s2">"2.1.0"</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+        </div> 
+        <h3>Installing Grunt CLI</h3> 
+        <p>We will also need to install Grunt in order to test our function. Grunt is a task runner for JavaScript, which is used for easy automation of project tasks such as building and packaging. Install it with the following code:</p> 
+        <pre lang="shell"><code>$ sudo npm install -g grunt-cli
+</code></pre> 
+        <p>If you're having trouble with installing Grunt, you can find more information on the <a href="https://www.npmjs.com/package/grunt-cli">NPM Grunt page</a>.</p> 
+        <h3>Defining the Lambda Function Logic</h3> 
+        <p>Now that we have uploaded <code>numbers.json</code> to S3 and installed Grunt CLI, we can implement some code. When we invoke our Lambda function, <code>exports.handler</code> will handle the request that invoked it. The event parameter is the JSON file that was included in the request sent to our Lambda function.</p> 
+        <p>We need to create a file named <code>index.js</code> to hold our Lambda function logic. First, let's fetch <code>numbers.json</code> from S3 using the following code segment:</p> 
+        <div class="highlight highlight-javascript">
+         <pre><span class="kd">var</span> <span class="nx">AWS</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'aws-sdk'</span><span class="p">);</span>
+
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"JSON API from Semaphore: %j"</span><span class="p">,</span> <span class="nx">event</span><span class="p">);</span>
+
+  <span class="nx">AWS</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">apiVersions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">s3</span><span class="o">:</span> <span class="s1">'2006-03-01'</span>
+  <span class="p">}</span>
+
+  <span class="c1">// My bucket with numbers.json is located in 'us-west-2' region</span>
+  <span class="kd">var</span> <span class="nx">s3</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AWS</span><span class="p">.</span><span class="nx">S3</span><span class="p">({</span><span class="nx">region</span><span class="o">:</span> <span class="s1">'us-west-2'</span><span class="p">});</span>
+  <span class="c1">// This is where you define bucket and a file for S3 to get</span>
+  <span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{</span><span class="nx">Bucket</span><span class="o">:</span> <span class="s1">'congrats-you-broke-the-build'</span><span class="p">,</span> <span class="nx">Key</span><span class="o">:</span> <span class="s1">'numbers.json'</span><span class="p">};</span>
+
+  <span class="nx">s3</span><span class="p">.</span><span class="nx">getObject</span><span class="p">(</span><span class="nx">params</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span> <span class="c1">// an error has happened on AWS</span>
+
+    <span class="c1">// Parse JSON file and put it in numbers variable</span>
+    <span class="kd">var</span> <span class="nx">numbers</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">Body</span><span class="p">);</span>
+  <span class="p">});</span>
+<span class="p">}</span>
+</pre>
+        </div> 
+        <p>Now that we have parsed our JSON file, it's time do something with those numbers. We will add a new function called <code>manipulateNumbers</code> to our code. This function will receive numbers from our <code>numbers.json</code> file.</p> 
+        <div class="highlight highlight-javascript">
+         <pre><span class="kd">var</span> <span class="nx">AWS</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'aws-sdk'</span><span class="p">);</span>
+
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"JSON API from Semaphore: %j"</span><span class="p">,</span> <span class="nx">event</span><span class="p">);</span>
+
+  <span class="nx">AWS</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">apiVersions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">s3</span><span class="o">:</span> <span class="s1">'2006-03-01'</span>
+  <span class="p">}</span>
+
+  <span class="c1">// My bucket with numbers.json is located in 'us-west-2' region</span>
+  <span class="kd">var</span> <span class="nx">s3</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AWS</span><span class="p">.</span><span class="nx">S3</span><span class="p">({</span><span class="nx">region</span><span class="o">:</span> <span class="s1">'us-west-2'</span><span class="p">});</span>
+  <span class="c1">// This is where you define the location of the bucket and the file S3 needs to retrieve</span>
+  <span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{</span><span class="nx">Bucket</span><span class="o">:</span> <span class="s1">'congrats-you-broke-the-build'</span><span class="p">,</span> <span class="nx">Key</span><span class="o">:</span> <span class="s1">'numbers.json'</span><span class="p">};</span>
+
+  <span class="nx">s3</span><span class="p">.</span><span class="nx">getObject</span><span class="p">(</span><span class="nx">params</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span> <span class="c1">// an error has happened on AWS</span>
+
+    <span class="c1">// Parse JSON file and put it in numbers variable</span>
+    <span class="kd">var</span> <span class="nx">numbers</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">Body</span><span class="p">);</span>
+
+    <span class="nx">manipulateNumbers</span><span class="p">(</span><span class="nx">numbers</span><span class="p">);</span>
+  <span class="p">});</span>
+
+  <span class="kd">function</span> <span class="nx">manipulateNumbers</span><span class="p">(</span><span class="nx">numbers</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// If someone breaks the master build on Semaphore, get inside the if statement</span>
+   <span class="k">if</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">branch_name</span> <span class="o">==</span> <span class="s2">"master"</span> <span class="o">&amp;&amp;</span> <span class="nx">event</span><span class="p">.</span><span class="nx">result</span> <span class="o">==</span> <span class="s2">"failed"</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// We get the name of a user who broke the build</span>
+      <span class="kd">var</span> <span class="nx">blame</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">commit</span><span class="p">.</span><span class="nx">author_name</span><span class="p">;</span>
+
+      <span class="c1">// message that is sent to the developer who broke the master branch</span>
+      <span class="kd">var</span> <span class="nx">message</span> <span class="o">=</span> <span class="s2">"Congrats "</span> <span class="o">+</span> <span class="nx">blame</span> <span class="o">+</span> <span class="s2">", you managed to break the master branch on SemaphoreCI!."</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre>
+        </div> 
+        <p>This function checks if the <code>branch_name</code> is <code>master</code> and if the build has failed. It includes the message that will be sent to the user who broke the build.</p> 
+        <p>We now have the message we will send to the user, but we still need to write the code that will send it:</p> 
+        <div class="highlight highlight-javascript">
+         <pre><span class="kd">var</span> <span class="nx">AWS</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'aws-sdk'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">twilio</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'twilio'</span><span class="p">);</span>
+
+<span class="nx">exports</span><span class="p">.</span><span class="nx">handler</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">context</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"JSON API from Semaphore: %j"</span><span class="p">,</span> <span class="nx">event</span><span class="p">);</span>
+
+  <span class="nx">AWS</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">apiVersions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">s3</span><span class="o">:</span> <span class="s1">'2006-03-01'</span>
+  <span class="p">}</span>
+
+  <span class="c1">// My bucket with numbers.json is located in the 'us-west-2' region</span>
+  <span class="kd">var</span> <span class="nx">s3</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">AWS</span><span class="p">.</span><span class="nx">S3</span><span class="p">({</span><span class="nx">region</span><span class="o">:</span> <span class="s1">'us-west-2'</span><span class="p">});</span>
+  <span class="c1">// This is where you define the location of the bucket and the file S3 needs to retrieve</span>
+  <span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{</span><span class="nx">Bucket</span><span class="o">:</span> <span class="s1">'congrats-you-broke-the-build'</span><span class="p">,</span> <span class="nx">Key</span><span class="o">:</span> <span class="s1">'numbers.json'</span><span class="p">};</span>
+
+  <span class="nx">s3</span><span class="p">.</span><span class="nx">getObject</span><span class="p">(</span><span class="nx">params</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nx">stack</span><span class="p">);</span> <span class="c1">// an error has happened on AWS</span>
+
+    <span class="c1">// Parse JSON file and put it in numbers variable</span>
+    <span class="kd">var</span> <span class="nx">numbers</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">Body</span><span class="p">);</span>
+
+    <span class="nx">manipulateNumbers</span><span class="p">(</span><span class="nx">numbers</span><span class="p">);</span>
+  <span class="p">});</span>
+
+  <span class="kd">function</span> <span class="nx">manipulateNumbers</span><span class="p">(</span><span class="nx">numbers</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// If someone breaks the master build on Semaphore, enter the if statement</span>
+   <span class="k">if</span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">branch_name</span> <span class="o">==</span> <span class="s2">"master"</span> <span class="o">&amp;&amp;</span> <span class="nx">event</span><span class="p">.</span><span class="nx">result</span> <span class="o">==</span> <span class="s2">"failed"</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// We get the name of the user who broke a build</span>
+      <span class="kd">var</span> <span class="nx">blame</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">commit</span><span class="p">.</span><span class="nx">author_name</span><span class="p">;</span>
+
+      <span class="c1">// The message that is sent to the developer who broke the master branch</span>
+      <span class="kd">var</span> <span class="nx">message</span> <span class="o">=</span> <span class="s2">"Congrats "</span> <span class="o">+</span> <span class="nx">blame</span> <span class="o">+</span> <span class="s2">", you managed to brake master branch on SemaphoreCI!."</span>
+
+      <span class="nx">twilioHandler</span><span class="p">(</span><span class="nx">numbers</span><span class="p">,</span> <span class="nx">message</span><span class="p">);</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+
+  <span class="kd">function</span> <span class="nx">twilioHandler</span><span class="p">(</span><span class="nx">numbers</span><span class="p">,</span> <span class="nx">message</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">blame_mail</span> <span class="o">=</span> <span class="nx">event</span><span class="p">.</span><span class="nx">commit</span><span class="p">.</span><span class="nx">author_email</span><span class="p">;</span>
+    <span class="c1">// twilio credentials</span>
+    <span class="kd">var</span> <span class="nx">twilio_account_sid</span> <span class="o">=</span> <span class="nx">numbers</span><span class="p">.</span><span class="nx">twilio</span><span class="p">.</span><span class="nx">twilio_account_sid</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">twilio_auth_token</span> <span class="o">=</span> <span class="nx">numbers</span><span class="p">.</span><span class="nx">twilio</span><span class="p">.</span><span class="nx">twilio_auth_token</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">twilio_number</span> <span class="o">=</span> <span class="nx">numbers</span><span class="p">.</span><span class="nx">twilio</span><span class="p">.</span><span class="nx">twilio_number</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">client</span> <span class="o">=</span> <span class="nx">twilio</span><span class="p">(</span><span class="nx">twilio_account_sid</span><span class="p">,</span> <span class="nx">twilio_auth_token</span><span class="p">);</span>
+
+    <span class="c1">// Send SMS</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">sendSms</span><span class="p">({</span>
+      <span class="nx">to</span><span class="o">:</span> <span class="nx">numbers</span><span class="p">[</span><span class="nx">blame_mail</span><span class="p">],</span>
+      <span class="nx">from</span><span class="o">:</span> <span class="nx">twilio_number</span><span class="p">,</span>
+      <span class="nx">body</span><span class="o">:</span> <span class="nx">message</span>
+    <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">responseData</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// this function is executed when a response is received from Twilio</span>
+      <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">responseData</span><span class="p">);</span>
+        <span class="nx">context</span><span class="p">.</span><span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s2">"Message sent to "</span> <span class="o">+</span> <span class="nx">numbers</span><span class="p">[</span><span class="nx">blame_mail</span><span class="p">]</span> <span class="o">+</span> <span class="s2">"!"</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+        <span class="nx">context</span><span class="p">.</span><span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="s2">"There was an error, message not sent!"</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">});</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+</pre>
+        </div> 
+        <p>We requested a Twilio package, which we will use to send the message. We also added the <code>twilioHandler</code> function. This function creates a Twilio client and extracts the phone number from the <code>numbers</code> variable based on <code>author_email</code> from <code>event</code>. After it's done retrieving the data needed for sending the text message, it calls <code>client.sendSms()</code>, which sends the text message to the user who broke the build.</p> 
+        <p>Now we're ready to test the function.</p> 
+        <h3>Testing the Function Locally</h3> 
+        <p>Let's create a <code>event.json</code> file, so we can test our function locally. We will try to mimic the JSON that Semaphore API will send us. In that file, we will set <code>branch_name</code> to <code>master</code> and the <code>result</code> of the build to <code>failed</code>. This is the scenario that will trigger sending an SMS to the user who breaks the master branch.</p> 
+        <div class="highlight highlight-JSON">
+         <pre><span class="p">{</span>
+  <span class="nt">"branch_name"</span><span class="p">:</span> <span class="s2">"master"</span><span class="p">,</span>
+  <span class="nt">"result"</span><span class="p">:</span> <span class="s2">"failed"</span><span class="p">,</span>
+  <span class="nt">"commit"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">"id"</span><span class="p">:</span> <span class="s2">"ce03782d581ed985caf9c479173a14962b0fe941"</span><span class="p">,</span>
+    <span class="nt">"url"</span><span class="p">:</span> <span class="s2">"https://github.com/lazy_user//commit/ce03782d581ed985caf9c479173a14962b0fe941"</span><span class="p">,</span>
+    <span class="nt">"author_name"</span><span class="p">:</span> <span class="s2">"Lazy user"</span><span class="p">,</span>
+    <span class="nt">"author_email"</span><span class="p">:</span> <span class="s2">"lazy_user@gmail.com"</span><span class="p">,</span>
+    <span class="nt">"message"</span><span class="p">:</span> <span class="s2">"Add index.js"</span><span class="p">,</span>
+    <span class="nt">"timestamp"</span><span class="p">:</span> <span class="s2">"2015-12-07T11:31:38+01:00"</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+        </div> 
+        <p>Next, we will create <code>Gruntfile.js</code> so we can invoke our Lambda function locally.</p> 
+        <div class="highlight highlight-javascript">
+         <pre><span class="kd">var</span> <span class="nx">grunt</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'grunt'</span><span class="p">);</span>
+<span class="nx">grunt</span><span class="p">.</span><span class="nx">loadNpmTasks</span><span class="p">(</span><span class="s1">'grunt-aws-lambda'</span><span class="p">);</span>
+
+<span class="nx">grunt</span><span class="p">.</span><span class="nx">initConfig</span><span class="p">({</span>
+  <span class="nx">lambda_invoke</span><span class="o">:</span> <span class="p">{</span>
+    <span class="k">default</span><span class="o">:</span> <span class="p">{</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</pre>
+        </div> 
+        <p>We're now ready to test our function. Run:</p> 
+        <pre lang="shell"><code>$ npm install
+</code></pre> 
+        <p>When the NPM package installation finishes, we can invoke our Lambda function by executing the following line:</p> 
+        <pre lang="shell"><code>$ grunt lambda_invoke
+</code></pre> 
+        <p>The output should look similar to this:</p> 
+        <pre lang="shell"><code>Success!  Message:
+------------------
+Message sent to +2222222!
+</code></pre> 
+        <h2>Deploying a Lambda Function</h2> 
+        <p>Now that we've developed the Lambda function and tested it locally, it's time to deploy it to the internet.</p> 
+        <h3>Pushing the Code to GitHub</h3> 
+        <p>To integrate the code with Semaphore, we need to first push it to GitHub. You can find detailed instructions on how to do that in <a href="https://help.github.com/articles/adding-a-file-to-a-repository-from-the-command-line/">GitHub's documentation</a></p> 
+        <h3>Building the Project on Semaphore</h3> 
+        <p>Now that we've pushed our code to GitHub, we can add the project from GitHub to <a href="https://semaphoreci.com/">Semaphore</a>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/245/Screen_Shot_2015-12-16_at_2.54.38_PM.png" alt="Adding the project to Semaphore"></p> 
+        <p>Once the analysis is done and you have the build commands in front of you, you can click on <em>Build With These Settings</em>. The build should pass, and you should a page that looks like this:</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/246/Screen_Shot_2015-12-16_at_3.00.13_PM.png" alt="AWS Lambda build passed"></p> 
+        <h3>Setting Up Deployment to AWS Lambda</h3> 
+        <p>To set up deployment, you need to go to your project page on <a href="https://semaphoreci.com/">Semaphore</a> and click on <em>Set Up Deployment</em>. You will get a screen with different deployment options. We will choose AWS Lambda.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/256/Screen_Shot_2015-12-16_at_4.20.48_PM.png" alt="Setting Up Deployment to AWS Lambda"></p> 
+        <h4>Selecting the Deployment Method</h4> 
+        <p>There are two deployment methods available on Semaphore: <em>automatic</em> and <em>manual</em> deployment.</p> 
+        <p><strong>Automatic</strong> deployment means that a deploy will be triggered after every passed build on the selected branch. In addition, you can also manually deploy any build from any branch at any time.</p> 
+        <p>For automatic deployment, you will be asked to select which branch will be automatically deployed after each passed build.</p> 
+        <p><strong>Manual</strong> deployment requires the manual selection of the builds to deploy.</p> 
+        <p>We will choose Automatic deployment.</p> 
+        <p><strong>Note</strong>: You can change the deployment strategy at any time in server settings once the setup is complete.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/221/Screen_Shot_2015-12-11_at_9.24.17_AM.png" alt="Lambda Deployment"></p> 
+        <h4>Selecting the Branch</h4> 
+        <p>In this step, we will choose from which branch we wish to deploy the application. We'll select the master branch.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/223/Screen_Shot_2015-12-11_at_9.24.29_AM.png" alt="Selecting the Branch"></p> 
+        <h4>Entering the AWS Credentials</h4> 
+        <p>Next, enter your AWS credentials on the following screen. If you need help getting these credentials, consult the <em>Retrieving Security Credentials</em> section of our <a href="https://semaphoreci.com/community/tutorials/how-to-deploy-a-ruby-on-rails-application-to-elastic-beanstalk-with-semaphore%22">tutorial</a> on deploying a web application to Elastic Beanstalk. The process for retrieving credentials is the same when deploying to Lambda.</p> 
+        <p>After entering the credentials, select the region your application resides in on the same screen. This will enable Semaphore to list the functions you have in the region you have specified.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/224/Screen_Shot_2015-12-11_at_9.24.55_AM.png" alt="Entering AWS Credentials"></p> 
+        <h4>Selecting the Function</h4> 
+        <p>The next step is to select the function to which we will deploy our code. We'll select <code>congrats-you-broke-the-build</code>. Next, type <code>npm install</code> in the dependencies installation commands section. This will install the packages we are using in our application, so that they are deployed to Lambda.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/225/Screen_Shot_2015-12-11_at_9.25.29_AM.png" alt="Selecting the Lambda function"></p> 
+        <h4>Naming the Server on Semaphore</h4> 
+        <p>In this step, you need to provide a name for your server. This name will be used on your Semaphore dashboard and deployment timeline.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/226/Screen_Shot_2015-12-11_at_9.26.02_AM.png" alt="Naming the server"></p> 
+        <p>The setup is now complete — you are ready to automatically deploy to Lambda. All you need to do is click on <em>Deploy</em>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/227/Screen_Shot_2015-12-11_at_9.26.14_AM.png" alt="Ready to deploy"></p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/247/Screen_Shot_2015-12-16_at_3.25.23_PM.png" alt="AWS Lambda deploy passed"></p> 
+        <h3>Testing the Function on AWS Lambda</h3> 
+        <p>You can now go to your <a href="https://us-west-2.console.aws.amazon.com/lambda/">Lambda function</a> to test it. Click on <em>Actions</em> and select <em>Configure test event</em>.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/258/Screen_Shot_2015-12-17_at_2.28.38_PM.png" alt="AWS Lambda test function"></p> 
+        <p>Copy the contents of <code>event.json</code> to the <em>Input test event</em> editor. Enter the email address and phone number you defined in your <code>numbers.json</code> in order to be able to receive a message.</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/257/Screen_Shot_2015-12-16_at_4.29.06_PM.png" alt="AWS Lambda test event"></p> 
+        <p>Click on <em>Save and test</em>. Congrats, you managed to test your first AWS Lambda function.</p> 
+        <h3>Enabling Notifications</h3> 
+        <p>Next, we will tell Semaphore to send a POST request to our Lambda function every time a build is finished. Let's make an Amazon API Gateway for our Lambda functions. Go to the <em>API endpoints tab</em> of the <a href="https://us-west-2.console.aws.amazon.com/lambda/">Lambda function</a> and click on <em>Add API endpoint</em>. The configuration should look as follows:</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/250/Screen_Shot_2015-12-16_at_3.47.59_PM.png" alt="AWS Lambda API"></p> 
+        <p>Click on <em>Submit</em> and copy the <em>API endpoint URL</em>. We will need this URL to add a webhook to Semaphore.</p> 
+        <p>Now, go to your project settings on <a href="https://semaphoreci.com/">Semaphore</a>. Click on <em>Notifications</em>, and then on <em>Webhooks</em>. Click on <em>Add Webhook</em> and paste the link you copied from Lambda to the URL text field. Your screen should look similar to this:</p> 
+        <p><img src="https://d2l3jyjp24noqc.cloudfront.net/uploads/image/img/252/Screen_Shot_2015-12-16_at_3.53.59_PM.png" alt="AWS Lambda Semaphore webhook"></p> 
+        <p>Click on <em>Test</em>. This will send a test request to the API end point that you copied. Next, go to the <em>Monitoring</em> page on AWS Lambda and click on <em>View logs in CloudWatch</em>, where you can see that the function has been invoked.</p> 
+        <h3>Breaking the Build</h3> 
+        <p>Let's see if this works in a real test case scenario. For this purpose, we will break a build on Semaphore. Go to your project settings, click on <em>Build Settings</em> and add a new command line to any thread:</p> 
+        <pre lang="shell"><code>$ false
+</code></pre> 
+        <p>just to see how it breaks. Now click on <em>Start</em>. Your build should fail, and this will cause a request to be sent to your Lambda function. All that's left to do is to wait for the text message to arrive on your phone.</p> 
+        <p>Congrats, you've managed to successfully develop, test and deploy your first Lambda function through Semaphore!</p> 
+        <p><em>The code from this tutorial is available in this <a href="https://github.com/nikolalsvk/congrats-you-broke-the-build">GitHub repository</a>.</em></p> 
+       </section> 
+      </article> 
+      <section class="page-block text-center block-author"> 
+       <div class="row"> 
+        <div class="col-md-8 col-md-offset-2 author-bio"> 
+         <div class="title-image">
+          <img class="img-circle" src="https://gravatar.com/avatar/09a5dded09407e304239b501c45c0be4.png?s=88&amp;d=mm" alt="09a5dded09407e304239b501c45c0be4">
+         </div> 
+         <strong>Nikola ?uza</strong> 
+         <p></p>
+         <p>Web developer at Semaphore, computer science student at the Faculty of Technical Sciences in Novi Sad, and a generally curious guy. Check me out at <a href="http://nikoladjuza.me/">nikoladjuza.me</a>.</p>
+         <p></p> 
+        </div> 
+       </div> 
+      </section> 
+      <div class="jumbotron post-meta block-subscribe-to-tag"> 
+       <img class="jumbotron_img" width="40" height="40" itemprop="image" title="aws" alt="aws" src="https://d1dkupr86d302v.cloudfront.net/community/assets/tag-icons/icon-tag-aws-b5be501db8ee5cdf9772ed1cdc8fe9f5c996a3ae46b2151afc8e83a696d74170.svg"> 
+       <span class="subscription-tag subscription-tag-old"> </span> 
+       <div class="tutorial-like likes"> 
+       </div> 
+      </div> 
+      <div class="row"> 
+       <div class="col-xs-12 text-center"> 
+        <div class="banner-funnel block-longform"> 
+         <div class="row"> 
+          <div class="col-sm-8 col-sm-offset-2"> 
+           <h3>Set up continuous integration and delivery for your project in a minute.</h3> 
+           <p>Fast. Scalable. Easy to use.</p> 
+          </div> 
+          <!-- col-sm-8 col-sm-offset-2 --> 
+         </div> 
+         <!-- row --> 
+         <a id="semaphore-try-for-free" class="btn btn-success btn-lg" href="/users/sign_up?from=community&amp;referer=community-tutorials-building-and-deploying-microservices-with-aws-lambda-and-semaphore">Try Semaphore for Free</a> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="row c-related-articles"> 
+       <div class="col-xs-12"> 
+        <h3 class="h4 c-related-articles_headline"><strong>You May Also Like</strong></h3> 
+        <ul class="list-unstyled"> 
+         <li class="listing-item--related"><a class="c-related-articles_link community-related-article" href="/community/tutorials/continuous-deployment-of-an-elixir-phoenix-application-to-heroku-with-semaphore">Continuous Deployment of an Elixir Phoenix Application to Heroku with Semaphore</a></li> 
+         <li class="listing-item--related"><a class="c-related-articles_link community-related-article" href="/community/tutorials/consuming-services-in-a-docker-swarm-mode-cluster">Consuming Services in a Docker Swarm Mode Cluster</a></li> 
+         <li class="listing-item--related"><a class="c-related-articles_link community-related-article" href="/community/tutorials/writing-testing-and-deploying-a-django-api-to-heroku-with-semaphore">Writing, Testing, and Deploying a Django API to Heroku with Semaphore</a></li> 
+        </ul> 
+       </div> 
+      </div> 
+      <section class="comments"> 
+       <div class="comments-meta"> 
+        <div class="row"> 
+         <div class="col-xs-8 text-left"> 
+          <div class="comments-count"> 
+           <span itemprop="commentCount"> 
+            <ng-pluralize count="commentListController.comments.length" when="{'one': '1 comment', 'other': '{} comments'}"> 
+            </ng-pluralize> </span> on this tutorial so far. 
+           <span class="subscription-tutorial"><a href="#"></a></span> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+       <div class="media" id="comments"> 
+        <div ng-repeat="comment in commentListController.comments" ng-controller="CommentController as commentController" ng-init="commentController.init(comment)" class="comment" id="comment-{{comment.id}}" itemprop="comment" itemscope itemtype="http://schema.org/Comment"> 
+         <div ng-show="commentController.shouldShowMenu()" class="dropdown pull-right"> 
+          <a href="#" class="btn btn-dropdown" data-toggle="dropdown" id="comment-menu-{{comment.id}}"> <span class="caret"></span> </a> 
+          <ul class="dropdown-menu"> 
+           <li><a ng-click="commentController.editComment()" href>Edit</a></li> 
+           <li><a ng-click="commentController.destroyComment()" href>Delete</a></li> 
+          </ul> 
+         </div> 
+         <a class="media-left" ng-href="{{comment.user.profileUrl}}"> <img alt="" ng-src="{{comment.user.avatarUrl}}" class="avatar" height="44" width="44"> </a> 
+         <div class="media-body"> 
+          <div class="comment-meta"> 
+           <span ng-if="comment.user.deleted"><span class="bug">User deleted</span></span> 
+           <span ng-switch="comment.userHasPage()" class="comment-author"> <a ng-switch-when="true" ng-href="{{comment.user.profileUrl}}" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span itemprop="name">{{comment.user.username}}</span> </a> <span ng-switch-when="false" itemprop="author"> {{comment.user.username}} </span> <span class="bug bug-author" ng-show="{{comment.isByAuthor()}}">author</span> </span> 
+           <span class="comment-date" itemprop="dateCreated">{{comment.createdAt}}</span> 
+          </div> 
+          <div class="comment-view"> 
+           <div class="comment-content"> 
+            <div ng-bind-html="comment.bodyHtml() | emoji" itemprop="text"></div> 
+            <p class="comment-meta" ng-show="comment.isEdited()" itemprop="dateModified">Edited on {{comment.updatedAt}}</p> 
+           </div> 
+          </div> 
+          <div ng-show="commentController.editing" class="comment-edit"> 
+           <form id="comment-form" class="comment-form"> 
+            <textarea ng-model="commentController.newBody" class="form-control noscrollbars" id="comment_body" onkeyup="autoGrow(this);"></textarea> 
+            <a ng-click="commentController.cancelEditComment()" class="btn btn-link btn-sm pull-right" href>Cancel</a> 
+            <button ng-click="commentController.updateComment()" class="btn btn-primary">Save</button> 
+            <div ng-show="commentController.updating" class="spinner margin-left-sm fade in">
+             <div class="bounce1"></div>
+             <div class="bounce2"></div>
+             <div class="bounce3"></div>
+            </div> 
+           </form> 
+           <br> 
+          </div> 
+          <!-- .comment-edit --> 
+         </div> 
+        </div>
+        <!-- ng-repeat --> 
+       </div> 
+       <div class="well"> 
+        <a href="#modal-log-in-comment" class="btn btn-primary btn-xs pull-right" data-toggle="modal">Sign In</a> You must be logged in to comment. 
+       </div> 
+      </section> 
+      <div class="block-creative-commons text-center"> 
+       <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" rel="license" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png"></a> 
+       <p>This work is licensed under a <span itemprop="license"><a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a></span> </p>
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="modal fade" id="modal-log-in-comment"> 
+   <div class="modal-dialog modal-dialog-prompt modal-dialog-centered"> 
+    <div class="modal-content"> 
+     <div class="modal-body"> 
+      <div class="media"> 
+       <figure class="media-left"> 
+        <img alt="" width="44" height="44" src="https://d1dkupr86d302v.cloudfront.net/community/assets/icon-alert.svg"> 
+       </figure> 
+       <div class="media-body"> 
+        <h3 class="media-heading">To comment you need to have a Semaphore account.</h3> 
+        <p>With a Semaphore account you can also test and deploy your open source and private projects for free.</p> 
+       </div> 
+      </div> 
+      <div class="modal-dialog-prompt-actions"> 
+       <div class="row"> 
+        <div class="col-sm-6"> 
+         <a class="btn btn-primary btn-lg-alt btn-block community-create-account" href="/users/sign_up?from=community&amp;referer=community-tutorials-building-and-deploying-microservices-with-aws-lambda-and-semaphore&amp;redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Create Account</a> 
+        </div> 
+        <div class="col-sm-6"> 
+         <a class="btn btn-default btn-lg-alt btn-block community-sign-in" href="/users/sign_in?redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Sign In</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </div>
+    <!-- /.modal-content --> 
+   </div>
+   <!-- /.modal-dialog --> 
+  </div>
+  <!-- /.modal --> 
+  <div class="modal fade" id="modal-log-in-like"> 
+   <div class="modal-dialog modal-dialog-prompt modal-dialog-centered"> 
+    <div class="modal-content"> 
+     <div class="modal-body"> 
+      <div class="media"> 
+       <figure class="media-left"> 
+        <img alt="" width="44" height="44" src="https://d1dkupr86d302v.cloudfront.net/community/assets/icon-alert.svg"> 
+       </figure> 
+       <div class="media-body"> 
+        <h3 class="media-heading">To like a tutorial you need to have a Semaphore account.</h3> 
+        <p>With a Semaphore account you can also test and deploy your open source and private projects for free.</p> 
+       </div> 
+      </div> 
+      <div class="modal-dialog-prompt-actions"> 
+       <div class="row"> 
+        <div class="col-sm-6"> 
+         <a class="btn btn-primary btn-lg-alt btn-block community-create-account" href="/users/sign_up?from=community&amp;referer=community-tutorials-building-and-deploying-microservices-with-aws-lambda-and-semaphore&amp;redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Create Account</a> 
+        </div> 
+        <div class="col-sm-6"> 
+         <a class="btn btn-default btn-lg-alt btn-block community-sign-in" href="/users/sign_in?redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Sign In</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </div>
+    <!-- /.modal-content --> 
+   </div>
+   <!-- /.modal-dialog --> 
+  </div>
+  <!-- /.modal --> 
+  <div class="modal fade" id="modal-log-in-subscribe"> 
+   <div class="modal-dialog modal-dialog-prompt modal-dialog-centered"> 
+    <div class="modal-content"> 
+     <div class="modal-body"> 
+      <div class="media"> 
+       <figure class="media-left"> 
+        <img alt="" width="44" height="44" src="https://d1dkupr86d302v.cloudfront.net/community/assets/icon-alert.svg"> 
+       </figure> 
+       <div class="media-body"> 
+        <h3 class="media-heading">To subscribe you need to have a Semaphore account.</h3> 
+        <p>With a Semaphore account you can also test and deploy your open source and private projects for free.</p> 
+       </div> 
+      </div> 
+      <div class="modal-dialog-prompt-actions"> 
+       <div class="row"> 
+        <div class="col-sm-6"> 
+         <a class="btn btn-primary btn-lg-alt btn-block community-create-account" href="/users/sign_up?from=community&amp;referer=community-tutorials-building-and-deploying-microservices-with-aws-lambda-and-semaphore&amp;redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Create Account</a> 
+        </div> 
+        <div class="col-sm-6"> 
+         <a class="btn btn-default btn-lg-alt btn-block community-sign-in" href="/users/sign_in?redirect_path=/community/tutorials/building-and-deploying-microservices-with-aws-lambda-and-semaphore">Sign In</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </div>
+    <!-- /.modal-content --> 
+   </div>
+   <!-- /.modal-dialog --> 
+  </div>
+  <!-- /.modal --> 
+  <footer class="c-footer u-mb-xs-20 u-mb-60"> 
+   <div class="container"> 
+    <div class="row"> 
+     <div class="c-footer__border"></div> 
+     <div class="col-xs-12 col-sm-6 col-md-5 col-lg-4"> 
+      <h4 class="u-text-normal text-uppercase">Subscribe to our newsletter</h4> 
+      <form role="newsletter" class="" action="http://semaphoreapp.us5.list-manage.com/subscribe/post?u=72b30480e518914855ca55a85&amp;id=d442447559" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" target="_blank" novalidate> 
+       <div class="input-group u-mb-20 u-pt-5"> 
+        <input type="text" name="EMAIL" class="form-control" placeholder="Enter your email address"> 
+        <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups--> 
+        <div style="position: absolute; left: -5000px;">
+         <input type="text" name="b_72b30480e518914855ca55a85_d442447559" value="">
+        </div> 
+        <span class="input-group-btn"> <button type="submit" class="btn btn-semaphore-green" name="subscribe" id="mc-embedded-subscribe" onclick="
+                var _this = this;
+                ga.('send', ('event', 'Blog sidebar', 'Newsletter signup');
+                setTimeout(function() {$(_this).parents('form').submit()}, 150);
+                return false;">Subscribe</button> </span> 
+       </div> 
+      </form> 
+      <div class="btn-group u-mb-20" role="group" aria-label="..."> 
+       <a class="btn btn-muted" href="https://twitter.com/semaphoreci" role="button"> <img width="14" alt="Follow @semaphoreci on Twitter" src="https://d1dkupr86d302v.cloudfront.net/community/assets/social-twitter-0c64ec7805ca9a5862d8c8bd81bee01e80f456771f720e7ff6bbf6b215774936.svg"> </a> 
+       <a class="btn btn-muted" href="https://www.facebook.com/SemaphoreCI" role="button"> <img width="7" alt="Follow SemaphoreCI on Facebook" src="https://d1dkupr86d302v.cloudfront.net/community/assets/social-facebook-2a36f7c6cbdd15290491cd5ef703afe2e7b9fca6ec60a66514a9175dca8ab307.svg"> </a> 
+       <a class="btn btn-muted" href="/blog/feed.xml" role="button"> <img width="14" alt="Subscribe to blog RSS feed" src="https://d1dkupr86d302v.cloudfront.net/community/assets/social-rss-0703421fcbc17c514812d8e695b3e48e4aec67775882c48b914673765daad112.svg"> </a> 
+      </div> 
+      <p class="hidden-xs">© 2009-2016 Rendered Text. All rights reserved.</p> 
+     </div> 
+     <div class="col-xs-4 col-sm-2 col-md-2 col-md-offset-1 col-lg-offset-2"> 
+      <h4 class="u-text-normal text-uppercase">Semaphore</h4> 
+      <ul class="list-unstyled"> 
+       <li><a class="u-link-quiet" href="/product">Product</a></li> 
+       <li><a class="u-link-quiet" href="/product/docker">Docker</a></li> 
+       <li><a class="u-link-quiet" href="/renderedtext/semaphore/changelog">Changelog</a></li> 
+       <li><a class="u-link-quiet" href="/pricing">Pricing</a></li> 
+      </ul> 
+     </div> 
+     <div class="col-xs-4 col-sm-2"> 
+      <h4 class="u-text-normal text-uppercase">Resources</h4> 
+      <ul class="list-unstyled"> 
+       <li><a class="u-link-quiet" href="/contact">Contact us</a></li> 
+       <li><a class="u-link-quiet" href="/docs">Documentation</a></li> 
+       <li><a class="u-link-quiet" href="/community/tutorials">Tutorials</a></li> 
+       <li><a class="u-link-quiet" href="/blog">Blog</a></li> 
+       <li><a class="u-link-quiet" href="/docs/api.html">API</a></li> 
+      </ul> 
+     </div> 
+     <div class="col-xs-4 col-sm-2"> 
+      <h4 class="u-text-normal text-uppercase">About</h4> 
+      <ul class="list-unstyled"> 
+       <li><a class="u-link-quiet" href="/about">Our story</a></li> 
+       <li><a class="u-link-quiet" href="http://renderedtext.com">Company</a></li> 
+       <li><a class="u-link-quiet" href="https://renderedtext.workable.com">Jobs</a></li> 
+       <!--<li><a class="u-link-quiet" href="#">Media kit</a></li>--> 
+       <li><a class="u-link-quiet" href="/tos">Terms</a></li> 
+       <li><a class="u-link-quiet" href="/privacy">Privacy</a></li> 
+       <li><a class="u-link-quiet" href="/security">Security</a></li> 
+      </ul> 
+     </div> 
+     <div class="col-xs-12 visible-xs u-mt-20"> 
+      <p>© 2009-2016 <a href="http://renderedtext.com/">Rendered Text</a>. All rights reserved.</p> 
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.12/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.12/angular-sanitize.min.js"></script> 
+  <script src="//use.typekit.net/huv6nfe.js"></script> 
+  <script>try{Typekit.load();}catch(e){}</script> 
+  <script src="https://d1dkupr86d302v.cloudfront.net/community/assets/application-f3b6d842c8ce4c05f41489c40c1a57a42f71a5c2a27099477717500a4290ecfd.js"></script>   
+ </body>
+</html>

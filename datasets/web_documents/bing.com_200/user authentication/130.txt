@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head> 
+  <meta http-equiv="content-type" content="text/html;charset=UTF-8"> 
+  <title>Web Services Security - Authentication</title> 
+  <link REL="stylesheet" TYPE="text/css" HREF="stylesheet.css" TITLE="Style"> 
+ </head> 
+ <body> 
+  <div> 
+   <center>
+    <font color="#804040" size="+2"><b>Web Services Security - Part 1: Authentication</b> </font>
+    <br> 
+    <i>by <a href="http://www.javaranch.com/contact.jsp#UlfDittmer" target="_blank">Ulf Dittmer</a></i> 
+   </center> 
+   <p>Imagine you've just published your first web service (WS henceforth) on your company web server, and it works like a charm. You've emailed a few business partners that it's released, and they tell you that everything is looking good. You're a little worried because this opens up the firewall to the world, but not too much, because you didn't publicize the access point to the world, after all. 24 hours later, after a virus-infected email client forwarded the endpoint URL to a mailing list and your server got slashdotted, you're having second thoughts: It's great that the whole world <i>can</i> connect to your service, but you don't actually <i>want</i> the whole world to connect to it - you need to make sure only authorized clients can connect, and you want to know who they are. </p>
+   <p>Does this scenario sound unlikely? Well, it has happened to many people and many companies, and not just using WS. <i>Security by obscurity</i> (i.e., by hiding what you need protected) just doesn't cut it - real authentication is in order.</p> 
+   <p>Authenticating to a WS is a bit different than authenticating to a web site, because it's usually done by an automated system. That means there's no user who can read the instructions you provide, but instead the system has to use certain pre-arranged mechanisms.</p> 
+   <p>This article shows various ways of protecting different kinds of WS via authentication. It confines itself to username/password/role schemes, and does not delve into digital signatures and certificates. That will have to wait until some other time.</p> 
+   <p>We start out by examining how HTTP authentication can be used for both SAAj and JAX-RPC services. Then we move on to the authentication options provided by the WS-Security standard, and look at how it integrates with Axis. Finally, we beef up Tomcat a bit to integrate WS-Security with Tomcats realms.</p> 
+   <p></p> 
+   <h2>A Few Remarks Before We Start</h2> 
+   <p></p> 
+   <p><i>Web Services</i>: This is not an introduction to WS, or the software needed to run them. It is assumed that the reader is familiar with concepts like HTTP, web applications, XML, SOAP, SAAJ and JAX-RPC, Tomcat and Axis. To experiment with the example programs, Tomcat (or some other servlet container) must be running, and <a href="http://ws.apache.org/axis/">Axis</a> must be installed and happy.</p> 
+   <p></p> 
+   <p><i>Ant</i>: It is not required that Ant is installed, although the examples use it. It's perfectly possible to run them without Ant. If you are using it, you need to adjust the properties <i>tomcat.server</i> and <i>tomcat.dir</i> in the <i>build.properties</i> file so that they reflect your Tomcat URL and installation directory, respectively.</p> 
+   <p></p> 
+   <p><i>Examples</i>: All examples in this article (download them <a href="http://www.javaranch.com/journal/200603/fibonacci-auth.zip">here</a>) use a single WS, which calculates Fibonacci numbers. If you don't know what that is, don't worry, it's not important. The only thing you need to know is that the Fibonacci function takes a single integer parameter, and returns an integer result, because that will be reflected in the code. If you're really curious, look it up in Wikipedia:Fibonacci. As standard example we'll calculate Fibonacci(15), the result of which is 610. If you're interested in the basics of how to get such a WS up and running in the first place, you can read up on it in <a href="http://www.onjava.com/lpt/a/1578">this article</a>, on which my examples were originally based. For running the examples, download and unpack the zip file mentioned in the at the end of the article, and open a command line in the newly-created directory. Note that for brevity's sake none of the examples do much -or any- kind of meaningful error handling and exception catching - that doesn't mean you shouldn't do any of that, either!</p> 
+   <p></p> 
+   <p><i>TCPMon</i>: For studying and debugging WS it is very useful to observe the SOAP requests and responses your client sends and receives. Axis ships with a Swing application called TCPMon that allows you to do just that. It can actually be used to monitor any kind of SOAP traffic, irrespective of the type of client or server. TCPMon works by listening to SOAP traffic on a particular port, and then simply sending it on to the "real" target port. E.g., if your servlet engine runs on port 8080, your client would send its SOAP to port 8079 (which is the default port TCPMon listens to), and TCPMon would then display it, and forward it to port 8080. Now execute "ant tcpmon" on the command line. A new window should appear called "TCPMonitor". That's where we'll monitor all SOAP traffic our examples generate. Check the "XML Format" checkbox, and we're ready to go.</p> 
+   <p></p> 
+   <h2>Setting up Axis to require HTTP authentication</h2> 
+   <p></p> 
+   <p>First we're looking at HTTP authentication. For that, we need to set up Axis to require it for incoming WS. Add the following to the Axis web.xml file:</p> 
+   <p></p> 
+   <pre>
+	&lt;security-constraint&gt;
+		&lt;web-resource-collection&gt;
+			&lt;url-pattern&gt;/services&lt;/url-pattern&gt;
+		&lt;/web-resource-collection&gt;
+		&lt;auth-constraint&gt;
+			&lt;role-name&gt;wsuser&lt;/role-name&gt;
+		&lt;/auth-constraint&gt;
+	&lt;/security-constraint&gt;
+
+	&lt;login-config&gt;
+		&lt;auth-method&gt;BASIC&lt;/auth-method&gt;
+	&lt;/login-config&gt;
+
+	&lt;security-role&gt;
+		&lt;role-name&gt;webservice&lt;/role-name&gt;
+	&lt;/security-role&gt;
+   </pre> 
+   <p></p> 
+   <p>Add "wsuser" to your <i>$TOMCAT_HOME/conf/tomcat-users.xml</i> file this:</p> 
+   <p></p>
+   <pre>	&lt;user username="wsuser" password="wspwd"
+              fullName="WS User" roles="webservice"/&gt;</pre>
+   <p></p> 
+   <p></p> 
+   <p>You'll also need to run "ant deploy" once, so that all WS classes and deployment information is available to Axis.</p> 
+   <h2>HTTP Authentication with a SAAJ client</h2> 
+   <p>The first client is a basic SAAJ client that uses HTTP authentication; you'll find the source in the file <i>ClientSAAJ.java</i>. It creates the various elements of a SOAP message, sends the request, and prints the results it receives. For our purposes, the only interesting lines of code are the following:</p> 
+   <p></p> 
+   <pre>
+	String authorization = Base64Coder.encode("wsuser:wspwd");
+	MimeHeaders hd = message.getMimeHeaders();
+	hd.addHeader("Authorization", "Basic " + authorization);
+   </pre> 
+   <p></p> 
+   <p>Those lines add the username "wsuser" with its password "wspwd" as an HTTP header called "Authorization". That is the standard method of sending a username/password combination over HTTP. It's not sent in cleartext, but in Base-64 encoding, which is what the <i>Base64Coder.encode</i> method does. This is not an encryption: it is easily reversed, so it is not much better than cleartext. You may have used this kind of authentication for some web pages; in a web browser it pops up a little dialog asking for a username and a password. Let's see how that request looks like - execute "ant test-saaj -Dport=8079". A few lines will be printed, after which the result of</p> 
+   <pre>	Fibonacci(15) = 610</pre> 
+   <p>is shown. Now switch to TCPMon, where you'll see the request and the response on top of each other (or click the "Switch Layout" button to see them side by side. In the request you'll see the line</p> 
+   <p></p>
+   <pre>	Authorization: Basic d3N1c2VyOndzcHdk</pre>
+   <p></p> 
+   <p>That's the authentication header added by the code shown above. (You can also examine the remainder of messages, although they're not really important at this point. Somewhere in the request it says "15", and somewhere in the response it says "610"). If you comment out the lines shown above and rerun it, the HTTP header will be missing, and the call will be rejected.</p> 
+   <h2>HTTP Authentication with a JAX-RPC client</h2> 
+   <p>Using the JAX-RPC API instead of SAAJ makes things a little easier, because it takes care of the HTTP and encoding details for us. Depending on which invocation style is used, the implementation details differ a tiny bit. The following code sets authentication for use with the Call and Stub interfaces, respectively.</p> 
+   <p></p> 
+   <pre>
+	import javax.xml.rpc.Stub;
+	Stub stub = (Stub) ...;
+	stub._setProperty(Stub.USERNAME_PROPERTY, "wsuser");
+	stub._setProperty(Stub.PASSWORD_PROPERTY, "wspwd");
+
+	import javax.xml.rpc.Call;
+	Call call = (Call) ...;
+	call.setProperty(Call.USERNAME_PROPERTY, "wsuser");
+	call.setProperty(Call.PASSWORD_PROPERTY, "wspwd");
+   </pre> 
+   <p></p> 
+   <p>The Stub method is shown in action in the <i>ClientJAXRPC.java</i> example. If you run it through "ant test -Dport=8079" and look at the request in TCPMon, you'll see that the SOAP is a bit different, but the HTTP headers (and thus the HTTP authentication) is the same as in the SAAJ example.</p> 
+   <p></p> 
+   <p>(It would be possible to use a JAX-RPC handler that adds the username/password data after the client call has been generated, thus facilitating a separation between function and authentication. But since that doesn't add anything new in functionality, this is left as an exercise for the reader, which means: there's no example for that.)</p> 
+   <h2>Wrapping up HTTP Authentication</h2> 
+   <p>With the above web application security we have used a single security-constraint for <i>all</i>WS calls (because the associated url-pattern matches <i>/services</i>, which is the prefix for all WS URLs. There could be a special role just for the Fibonacci service (which is addressed as <i>/services/fibonacci</i>), and different roles for other WS. One could also designate several roles that all have access. In that case it might be important for the WS to know which role the incoming is in. Using Axis, it is possible to get at the HttpServletRequest object that carries the SOAP request, and use its <i>getRemoteUser</i>, <i>getUserPrincipal</i>, <i>getAuthType</i> and <i>isUserInRole</i> methods. This is done as follows:</p> 
+   <p></p> 
+   <pre>
+	import org.apache.axis.MessageContext;
+	MessageContext context = MessageContext.getCurrentContext(); 
+	HttpServletRequest req = (HttpServletRequest)
+            context.getProperty(HTTPConstants.MC_HTTP_SERVLETREQUEST);
+   </pre> The code is Axis-specific, but other servlet containers presumably have comparable facilities. 
+   <br>
+   <br>Now that we've seen HTTP authentication in action, what are its distinguishing features? For starters, since most or all SOAP engines are built on top of servlet technology, it reuses well-known concepts and mechanisms. Web application security is a mature, widely-deployed technology, that is even standardized to a degree by the servlet API. A variety of realms for Tomcat and other servlet containers are available to access user databases, LDAP directories and other sources of user information. So the learning curve is rather flat, and no new technologies or class libraries need to be mastered. 
+   <p>On the other hand, it is based on HTTP, and while the vast majority of WS does use that protocol, SOAP does not stipulate a particular transport mechanism - WS over messaging channels or email are possible and have been implemented. HTTP is also just a transport mechanism - it is ill-equipped to deal with security aspects of an application precisely because of its simplicity. (Network aficionados who know the ISO/OSI network stack will note that HTTP is of course an application protocol, not a transport protocol. But as far as WS are concerned, it is just the transport; so I call it the <i>transport mechanism</i>.)</p> 
+   <h2>WS-Security</h2> 
+   <p>To overcome many of the limitations of HTTP authentication and its other security features like SSL, a new security standard was created specifically for SOAP messages. It's called <i>WS-Security</i>, and has its home at the <a href="http://www.oasis.org/">OASIS</a>. Its major functionalities are authentication, digital signatures and encryption. To achieve this, it makes use of the <i>XML-Signature</i> and <i>XML-Encryption</i> standards, which are maintained by the <a href="http://www.w3.org/">W3C</a>, like the XML standard itself.</p> 
+   <p>In Java, WS-Security is implemented by the <a href="http://ws.apache.org/wss4j/">WSS4J</a> library. To use it with the following examples, download it, and copy all jar files from its lib directory into the WEB-INF/lib directory of your Axis installation.</p> 
+   <p>While it is possible to use WSS4J <i>programmatically</i>, i.e., allocate objects of its API and call their methods, we'll use it <i>declaratively</i>, by describing the desired security features in deployment descriptors. Thus we have a separation of functionality (in the Java code), and security (in external descriptor files).</p> 
+   <p></p> 
+   <p>The first example is the same JAC/RPC client as before, but with a client-side deployment descriptor. You can run it by executing "ant test-sec -Dport=8079". (There'll be a lengthy stack trace starting with "Unable to patch xalan function table.", but you can ignore that - it does no harm.) Looking at the SOAP in TCPMon you'll that the body of the message is just about the same as before, but there is now a lengthy <i>&lt;soapenv:Header&gt;</i> element: All security information is transported in SOAP headers, the body of the message is unchanged. Inside the <i>&lt;wsse:Security&gt;</i> element is the child elements of interest to us, <i>&lt;wsse:UsernameToken&gt;</i>. It carries both the username and the password. </p> 
+   <p>A number of pieces are needed to make this happen.</p> 
+   <ul> 
+    <li>the SOAP client in <i>ClientJAXRPC.java</i>, which we've already seen </li>
+    <li>a client deployment descriptor, which tells WSS4J how to handle security for the request on the client: <i>client_deploy_sec.wsdd</i> </li>
+    <li>a client-side handler that sets the password: <i>PWCallbackClient.java</i> </li>
+    <li>a server deployment descriptor, which tells WSS4J how to handle security for the request on the server: <i>deploy.wsdd</i> </li>
+    <li>a server-side handler that checks whether the security requirements declared in the deployment descriptor have been met: <i>PWCallbackServer.java</i> </li>
+   </ul> 
+   <p></p> 
+   <p>Let's go through these one by one and examine the details. We'll omit the client, as it hasn't changed. The important part of the client deployment descriptor is this:</p> 
+   <pre>
+	&lt;handler type="java:org.apache.ws.axis.security.WSDoAllSender"&gt;
+		&lt;parameter name="action" value="UsernameToken"/&gt;
+		&lt;parameter name="user" value="wsuser"/&gt;
+		&lt;parameter name="passwordCallbackClass"
+                              value="fibonacci.handler.PWCallbackClient"/&gt;
+		&lt;parameter name="passwordType" value="PasswordText"/&gt;
+		&lt;!--
+		&lt;parameter name="passwordType" value="PasswordDigest"/&gt;
+		--&gt;
+	&lt;/handler&gt;
+   </pre> 
+   <p>It specifies that the request should be intercepted on the client -before it is sent- by a JAX-RPC handler of class WSDoAllSender, which is the standard WSS4J handler. The only action to be taken is the adding of a UsernameToken, which is WS-Security lingo for a username and a password. It also specifies which username should be sent, and which class will supply the corresponding password. The separation between user and password is useful, because we really shouldn't hardcode passwords in deployment descriptors. Lastly, it specifies that the password is sent in clear text. (The more secure alternative to clear text would be digested text, which is also available, but commented out. You can observe in TCPMon what difference it makes.)</p> 
+   <p>The PWCallbackClient class is rather simple. It only knows the wsuser user and his wspwd password, so if the requested user is indeed wsuser, it sets his password. In a production setting one would most likely not hardcode the password, but instead retrieve it from database or an LDAP directory.</p> 
+   <p></p> 
+   <p>The server-side deployment descriptor is a bit simpler. The operative part is this (scroll down to the Fibonacci-sec service section) :</p> 
+   <pre>
+	&lt;handler type="java:org.apache.ws.axis.security.WSDoAllReceiver"&gt;
+		&lt;parameter name="passwordCallbackClass"
+                              value="fibonacci.handler.PWCallbackServer"/&gt;
+		&lt;parameter name="action" value="UsernameToken"/&gt;
+	&lt;/handler&gt;
+   </pre> 
+   <p>It says that the WSDoAllReceiver class -which is WSS4Js standard server-side handler- is a JAX-RPC handler that should be invoked on incoming requests. It also specifies that a UsernameToken is expected, and which class to use to check any passwords.</p> 
+   <p></p> 
+   <p>Finally, the PWCallbackServer class. Its purpose is to check whether the usernames and passwords supplied by the SOAP request match the expected ones. It is complicated a bit by the differentiation between cleartext passwords and digested passwords. A cleartext password can be compared directly to a known password, but a digested password can't be "undigested", like it is possible with the Base-64 encoding used for passwords in HTTP authentication. Instead, the known password must be passed to WSS4J, which digests it as well, and then compares the two results.</p> 
+   <p></p> 
+   <p>In the deployment descriptors and handler source codes you'll find a couple of additional features, which I'm just going to mention briefly.</p> 
+   <p>A <i>TimeStamp</i> token is sometimes attached to security information. It specifies that the credentials that are sent along with it (e.g. the username/password combination) only have a limited time until they expire, and that WS-Security should reject them if the expiration time has been reached.</p> 
+   <p>The <i>InfoHandler</i> demonstrates how to get at additional information when processing a WS-Security request. E.g. it is sometimes useful to know which service and which operation is invoked, in order to handle different users which may have different rights on the various services. It also shows how programmatic access to timestamps, principals and client certificate information works. If you look at the server logs, you'll see that InfoHandler writes a bunch of information about each incoming call to the log files.</p> 
+   <h2>Integration with Tomcat Realms</h2> 
+   <p>After having demonstrated PWCallbackServer class I can almost hear you scream: "What? Hardcoding passwords in a class? You have got to be kidding. That what I have my database/LDAP directory/... for!" And of course you're right. Unfortunately, for WS-Security and WSS4J there is no standard way of declaring how to access a particular repository of user information. So what follows is an adaptation of the Tomcat <i>UserDatabaseRealm</i> (which stores the user information in the <i>conf/tomcat-users.xml</i> file) so that it can be used in conjunction with a WSS4J WSPasswordCallback handler. UserDatabaseRealm is not recommended for a production setting, but once you've understood how it's done, you can implement something for your favorite realm type.</p> 
+   <p></p> 
+   <p>A few things need to be set up in preparation. In deploy.wsdd, change the callback class to PWCallbackServerRealm:</p> 
+   <p></p>
+   <pre>	&lt;parameter name="passwordCallbackClass"
+                              value="fibonacci.handler.PWCallbackServerRealm"/&gt;</pre>
+   <p></p> 
+   <p></p> 
+   <p>In Tomcats conf/server.xml file, comment out the</p> 
+   <p></p>
+   <pre>	&lt;Realm className="org.apache.catalina.realm.UserDatabaseRealm" ... &gt; </pre>element, and instead add
+   <p></p> 
+   <p></p>
+   <pre>	&lt;Realm className="fibonacci.UserDatabaseRealmWSS" /&gt;</pre>
+   <p></p> 
+   <p>That class extends UserDatabaseRealm with a single method, which allows access to password information (which otherwise is not available from it, but which we need.) </p> 
+   <p></p> 
+   <p>To install the realm so Tomcat can find it, copy the UserDatabaseRealmWSS.class file in its fibonacci directory to the server/classes directory.</p> 
+   <p></p> 
+   <p>Lastly, Axis needs to be made a "privileged" web app, because it needs access to Tomcats server classes, namely the realm implementation. That can be done by adding the following as file conf/Catalina/localhost/axis.xml:</p> 
+   <p></p> 
+   <p></p>
+   <pre>	&lt;Context path="/axis" docBase="axis" debug="5" privileged="true"&gt;
+        &lt;/Context&gt;</pre>
+   <p></p> 
+   <p></p> 
+   <p>After a Tomcat restart you can now run the example again, and it will look in the tomcat-users.xml file for username and password information (you should have added user <i>wsuser</i> back at the beginning during the discussion of HTTP authentication).</p> 
+   <p>The PWCallbackServerRealm class only knows about the role the user needs to have in order to access the WS, which is as it should be.</p> 
+   <h2>Wrapping up WS-Security Authentication</h2> 
+   <p>Having looked at both HTTP and WS-Security auth, which one should you choose? As mentioned before, HTTP authentication is widely deployed (every HTTP client and server supports it), and well understood. But WS-Security is relatively young, and will make headway in this regard (e.g., Axis 2 ships with WSS4J integrated). It also goes further, including digital certificates and encryption. Both of those are available for HTTP as well, but aren't integrated with it into a coherent whole. Considering that WS-Security is only marginally more involved to use, it is the recommended way to go forward. (It's also worth noting that HTTP security facilities operate on a lower level than WS-Security - once a SOAP request has found its way inside the SOAP engine, SSL no longer applies - everything is in cleartext. That's not the case with WS-Security.) An additional benefit is the independence from HTTP, although currently that will be of interest only to a very small number of users. </p>
+   <p></p> (Answers to some common WS and WS-Security questions can be found in the 
+   <a href="http://faq.javaranch.com/view?WebServicesFaq">Web Services FAQ</a> and some useful code snippets are in the 
+   <a href="http://faq.javaranch.com/view?WebServicesHowTo">Web Services HowTo</a>.) 
+   <p></p> 
+  </div>
+ </body>
+</html>

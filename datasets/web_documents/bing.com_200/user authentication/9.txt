@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+ <head>
+  <title>Nate Good: Software Engineering, Product Development</title>
+  <link href="http://fonts.googleapis.com/css?family=Petrona" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Titillium+Web:200" rel="stylesheet" type="text/css">
+  <link href="/assets/css/base.css" rel="stylesheet" type="text/css">
+ </head>
+ <body>
+  <header>
+   <h1>Nate Good</h1>
+  </header>
+  <nav>
+   ls /
+   <ul>
+    <li><a href="/">/home/nate</a></li>
+    <li><a href="/posts">/home/nate/posts</a></li>
+    <li><a href="/dev/random">/dev/random</a></li>
+   </ul>
+   <ul style="margin-top: 10px">
+    <li>ls /projects
+     <ul>
+      <li><a href="http://firstbytes.org">/first/bytes/society</a></li>
+      <li><a href="http://phphttpclient.com">/httpful</a></li>
+      <li><a href="https://github.com/nategood/commando">/commando</a></li>
+      <li><a href="#">/split</a></li>
+     </ul></li>
+   </ul>
+   <ul style="margin-top: 10px">
+    <li>whoami
+     <ul>
+      <li><a href="http://twitter.com/nategood">twitter</a></li>
+      <li><a href="https://github.com/nategood">github</a></li>
+      <li><a href="http://bl.ocks.org/nategood">bl.ocks.org</a></li>
+     </ul></li>
+   </ul>
+  </nav>
+  <div id="guts">
+   <article>
+    <h1>SSL Client Authentication in Node.js</h1> 
+    <p>A couple of years ago, I wrote a <a href="http://blog.nategood.com/client-side-certificate-authentication-in-ngi">blog post</a> about configuring nginx to use SSL client certificate authentication. It is to this day one of my most popular posts in terms of traffic. Since then, I've continued to advocate the use of client certificates as a form of authentication when your security requirements are a bit more stringent.</p> 
+    <p>Recently, Node.js has piqued my interest. Most other languages/frameworks targetted for web development sit on top of a separate HTTP server (like Apache or Nginx). Node.js is unique in that it provides an HTTP server as one of the core libraries (to the shagrin of some). This means there isn't (immediately) a need for a separate HTTP server. For fun, I decided to recreate the whole client SSL certificate authentication thing in Node.js.</p> 
+    <p>If you need a refresher on how to create and sign the certs, check out the <a href="http://blog.nategood.com/client-side-certificate-authentication-in-ngi">nginx post</a>.</p> 
+    <p>Turns out the more recent releases of Node.js have decent <a href="http://nodejs.org/docs/v0.4.8/api/tls.html">TLS/SSL support</a> making things relatively straight forward. Here is a quick example of an HTTPS server that will allow us to perform client certificate authentication and determine authorization.</p> 
+    <pre><code>var https = require('https'),      // module for https
+    fs =    require('fs');         // required to read certs and keys
+
+var options = {
+    key:    fs.readFileSync('ssl/server.key'),
+    cert:   fs.readFileSync('ssl/server.crt'),
+    ca:     fs.readFileSync('ssl/ca.crt'),
+    requestCert:        true,
+    rejectUnauthorized: false
+};
+
+https.createServer(options, function (req, res) {
+    if (req.client.authorized) {
+        res.writeHead(200, {&amp;quot;Content-Type&amp;quot;: &amp;quot;application/json&amp;quot;});
+        res.end('{&amp;quot;status&amp;quot;:&amp;quot;approved&amp;quot;}');
+    } else {
+        res.writeHead(401, {&amp;quot;Content-Type&amp;quot;: &amp;quot;application/json&amp;quot;});
+        res.end('{&amp;quot;status&amp;quot;:&amp;quot;denied&amp;quot;}');
+    }
+}).listen(443);</code></pre> 
+    <p>The first three options (<code>key</code>, <code>cert</code>, and <code>ca</code>) are pretty self explanitory (if they aren't, read the <a href="http://blog.nategood.com/client-side-certificate-authentication-in-ngi">previous post</a> for a refresher). The <code>requestCert</code> option tells Node that it should request the client cert from a client attempting to connect. Lastly, <code>rejectUnauthorized</code> tells Node if it should flat out reject the connection if the certificate provided is not valid (valid meaning it must be signed by our <code>ca</code>, not revoked, and not expired). We'll keep this set to <code>false</code> so we can make the decision in the app itself.</p> 
+    <p>The <a href="http://nodejs.org/docs/v0.4.8/api/http.html#http.ServerRequest"><code>https.ServerRequest</code></a> object is passed to our <code>https.createServer</code> callback function as the first argument (named <code>req</code> above). Along with other information about the request (like the uri, http method, etc.), it includes some information about the client's authorization state in the <code>req.client.authorized</code> attribute. This is pretty self explanitory, but this boolean attribute states whether or not the client presented a "valid" client certificate as part of its request.</p> 
+    <p>We can test this out with a simple <code>curl</code> call.</p> 
+    <pre><code># Denied (no cert)
+curl -v -s -k https://localhost:5678
+
+# Approved (using CA signed cert)
+curl -v -s -k --key ssl/client.key --cert ssl/client.crt https://localhost:5678</code></pre> 
+    <p>There you have it. It's a pretty trivial example, but you get the basic idea of how to get started with making client side cert authentication your authentication tier for you next Node API. All of the source code (including the example certs) is available on <a href="https://github.com/nategood/node-auth">GitHub</a>.</p>
+   </article>
+  </div>
+  <footer></footer>
+  <script type="text/javascript">var analyticsAccount = "UA-20300690-1";
+var domain = "nategood.com";
+
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', analyticsAccount]);
+_gaq.push(['_setDomainName', domain]);
+_gaq.push(['_trackPageview']);
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();</script>
+ </body>
+</html>

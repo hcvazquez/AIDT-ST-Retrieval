@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <!-- Page meta-information --> 
+  <meta charset="utf-8"> 
+  <title>Command-line utilities with Node.js</title> 
+  <meta name="description" content="An overview of command-line interfaces and using node.js to create command-line utilities."> 
+  <!-- Site links --> 
+  <link rel="alternate" type="application/atom+xml" href="/blog.xml" title="Cruft"> 
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" title="Sitemap"> 
+  <link rel="canonical" href="http://cruft.io/posts/node-command-line-utilities/"> 
+  <link rel="author" href="http://glynnphillips.co.uk/" title="Glynn Phillips"> 
+  <!-- Styles --> 
+  <meta name="viewport" content="width=device-width"> 
+  <!--[if gt IE 7]><!--> 
+  <link rel="stylesheet" href="/asset/style/site.css"> 
+  <!--<![endif]--> 
+  <link rel="icon" href="/favicon.png" type="image/png"> 
+  <link rel="shortcut icon" href="/favicon.ico"> 
+  <!-- Tracking --> 
+  <script>
+        if (/^(www\.)?cruft.io$/.test(document.location.host)) {
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            ga('create', 'UA-48179481-1', 'cruft.io');
+            ga('send', 'pageview');
+        }
+    </script> 
+ </head> 
+ <body class="paint-med"> 
+  <!--[if lte IE 8]>
+    <p style="background:#ffc;margin:0;padding:10px;">
+        <small>
+            You are using an outdated version of Internet Explorer. Parts of this site, and others,
+            may appear broken.<br/>
+            For a faster and safer browsing experience,
+            <a href="http://browsehappy.com/" target="_blank">Upgrade your browser</a>.
+        </small>
+    </p>
+<![endif]--> 
+  <div role="banner" class="layout-header brand-highlight-bottom paint-dark"> 
+   <div class="layout-inner double-line-height clearfix"> 
+    <a href="/" class="semi-secret-link block logo">Cruft</a> 
+    <ul role="navigation" class="cramp nav"> 
+     <li class="nav-item"> <a href="/about/" class="semi-secret-link block">About</a> </li> 
+     <li class="nav-item"> <a href="/jobs/" class="semi-secret-link block">Jobs</a> </li> 
+     <li class="nav-item"> <a href="/blog.xml" class="secret-link block icon icon-feed-25x25 hide-text">Feed</a> </li> 
+     <li class="nav-item nav-item-tighten"> <a href="https://twitter.com/cruftio" class="secret-link block icon icon-twitter-25x25 hide-text">Twitter</a> </li> 
+    </ul> 
+   </div> 
+  </div> 
+  <div role="main" class="layout-outer paint-light"> 
+   <div class="layout-inner space-below-inner space-above-inner cramp-last"> 
+    <div vocab="http://schema.org/" typeof="BlogPosting"> 
+     <meta property="url" content="http://cruft.io/posts/node-command-line-utilities/"> 
+     <h1 class="space-below-less" property="name">Command-line utilities with Node.js</h1> 
+     <div class="space-below smallprint"> 
+      <!-- Post date --> Posted 
+      <time property="dateCreated" datetime="2014-06-03T09:00:00Z"> 03 June 2014 </time> 
+      <!-- Post authors --> by 
+      <span property="author" vocab="http://schema.org/" typeof="Person"> <a href="http://glynnphillips.co.uk/" property="url"><span property="name">Glynn Phillips</span></a> </span> 
+     </div> 
+     <div class="content clearfix"> 
+      <p>One often overlooked feature of <a href="http://nodejs.org/">node.js</a> is the ability to create command-line utilities. Here I want to demonstrate how simple it can be to create useful command-line utilities with the help of node.js. I’m going to create a small utility which allows for quick searching of GitHub for reposities based on keywords, owners and languages. If you’d like to jump straight into the source code, it’s available <a href="https://gist.github.com/GlynnPhillips/7f3dcb2b990796f1856f">here</a>.</p> 
+      <h2 id="understanding-the-command-line">Understanding the command-line</h2> 
+      <p>Before writing anything for the Unix command-line, no matter what scripting language you are using, it’s important to understand common patterns used for input. The most basic pattern consists of three main components: the command, options and arguments.</p> 
+      <h3 id="command">Command</h3> 
+      <p>Commands are categorized into three types:</p> 
+      <ol> 
+       <li> <p>Internal - a command recognized and processed by the command-line which is not dependent upon any external executable file.</p> </li> 
+       <li> <p>Included - a command that requires a separate executable file that is always included with the OS and generally considered part of the OS.</p> </li> 
+       <li> <p>External - a command that requires an external executable file which is not part of the OS and instead added by a third party.</p> </li> 
+      </ol> 
+      <h3 id="options">Options</h3> 
+      <p>Command-line options can be used to modify the operation of a command. Options on Unix like systems are often indicated by a hyphen and separated by a space.</p> 
+      <h3 id="arguments">Arguments</h3> 
+      <p>A command-line argument is an item of information passed to the command when run. Arguments are often used to identify sources of information, or alter the operation of the command.</p> 
+      <h2 id="creating-a-command-line-utility">Creating a command-line utility</h2> 
+      <p>Before I dive too deep into any implementation it’s worth pointing out that this tutorial has been written and tested on a unix-like operating system (OSX). Everything should work on other unix-like operating systems but this may require some extra research.</p> 
+      <p>The only dependency to getting started is Node.js. You can run <code class="highlighter-rouge">which node</code> from the command-line to find out if it’s already installed. If you already have node installed you should receive a similar response to below, else if the response is blank then node is not installed and you can download the installer from <a href="http://nodejs.org/">nodejs.org</a>.</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh"><span class="gp">$ </span>which node
+/usr/local/bin/node</code></pre>
+      </figure> 
+      <p>To start, create a new JavaScript file named <code class="highlighter-rouge">gitsearch.js</code> and add a <a href="http://en.wikipedia.org/wiki/Shebang_(Unix)">shebang</a> to the first line of it. This informs the system which interpreter to use to run our file. In our case, we want to run the file with the <code class="highlighter-rouge">node</code> interpreter (see <a href="http://unix.stackexchange.com/questions/29608/why-is-it-better-to-use-usr-bin-env-name-instead-of-path-to-name-as-my">this discussion on StackOverflow</a> as to why we use <code class="highlighter-rouge">/usr/bin/env node</code> instead of something like <code class="highlighter-rouge">/usr/local/bin/node</code>).</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="err">#</span><span class="o">!</span><span class="sr">/usr/</span><span class="nx">bin</span><span class="o">/</span><span class="nx">env</span> <span class="nx">node</span></code></pre>
+      </figure> 
+      <p>Your script needs to be “<a href="https://en.wikipedia.org/wiki/Executable">executable</a>” (so it can be run by the <a href="http://en.wikipedia.org/wiki/Loader_(computing)">program loader</a>). In order to make it executable, run <code class="highlighter-rouge">chmod +x gitsearch.js</code>, which modifies your script’s access permissions so that the program loader can execute it.</p> 
+      <h2 id="creating-the-command">Creating the command</h2> 
+      <p>The simplest way to create the command would be to call it’s file path and file name which would execute your script.</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">./gitsearch.js</code></pre>
+      </figure> 
+      <p>It is good practice with command-line utilities to make sure there are no other commands already in use on your system with the same name. This can be checked by using the <code class="highlighter-rouge">which</code> command and the name of our command <code class="highlighter-rouge">which commandName</code>. In this example we will be using the command <code class="highlighter-rouge">gitsearch</code>, If <code class="highlighter-rouge">which gitsearch</code> returns blank then the command is not in use.</p> 
+      <p>Because this is a NodeJS script, we’re going to make this script installable using <a href="https://www.npmjs.org/">Node’s package manager</a>, because that’s a normal thing to do if writing NodeJS scripts. Doing this will mean you can just type your script’s name, without having to worry about where you are (and where it is). Don’t worry if you don’t really know what npm is. Discussing package managers is way beyond the scope of this post - if you want to learn more about npm, read this excellent article: <a href="http://tech.pro/tutorial/1190/package-managers-an-introductory-guide-for-the-uninitiated-front-end-developer">Package Managers: An Introductory Guide For The Uninitiated Front-End Developer</a></p> 
+      <p>In order to make a NodeJS script installable via npm we need to create an accompanying <code class="highlighter-rouge">package.json</code> file in the same directory as your <code class="highlighter-rouge">gitsearch.js</code> script.</p> 
+      <figure class="highlight">
+       <pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gitsearch"</span><span class="p">,</span><span class="w"> </span><span class="nt">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="nt">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A simple command-line tool for searching git repositories"</span><span class="p">,</span><span class="w"> </span><span class="nt">"author"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Glynn Phillips"</span><span class="p">,</span><span class="w"> </span><span class="nt">"engines"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"node"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&gt;=0.10"</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"dependencies"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">},</span><span class="w"> </span><span class="nt">"bin"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">"gitsearch"</span><span class="p">:</span><span class="w"> </span><span class="s2">"gitsearch.js"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span></code></pre>
+      </figure> 
+      <p>The important part here is <code class="highlighter-rouge">"bin": {"gitsearch": "gitsearch.js"}</code> as this maps the <code class="highlighter-rouge">gitsearch</code> command to your <code class="highlighter-rouge">gitsearch.js</code> script. On the command-line, navigate to the directory which contains your files and install your script globally via npm (this might require using sudo).</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh"><span class="nb">cd</span> ./path/to/directory/
+sudo npm install -g</code></pre>
+      </figure> 
+      <p>The only draw back to this is after every change to <code class="highlighter-rouge">gitsearch.js</code> you will need to re-run the <code class="highlighter-rouge">npm install -g</code> command to see your changes reflected globally.</p> 
+      <p>Now running the <code class="highlighter-rouge">gitsearch</code> command will execute your script. To test this add a <code class="highlighter-rouge">console.log("Hello World")</code> to your script, re-run <code class="highlighter-rouge">npm install -g</code> and then run the command.</p> 
+      <h2 id="options-and-arguments">Options and Arguments</h2> 
+      <p>Command-line utilities are particularly useful when it comes to input and output operations. Options and arguments passed into a command can be accessed via <code class="highlighter-rouge">process.argv</code>. Adding <code class="highlighter-rouge">console.log(process.argv);</code> to your script and running your command with an option should return something like this:</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">gitsearch -g
+<span class="o">[</span> <span class="s1">'node'</span>, <span class="s1">'/path/to/script/gitsearch.js'</span>, <span class="s1">'-g'</span> <span class="o">]</span></code></pre>
+      </figure> 
+      <p>One of Node’s most valuable features is its community of developers and the packages they have contributed. Often packages are lightweight and have been developed to perform a specific task. A great example of this is <a href="https://github.com/visionmedia/commander.js/">Commander</a>, which is designed to help build command-line interfaces and provides great functionality for handling options and arguments.</p> 
+      <p>On the command-line, install commander via npm <code class="highlighter-rouge">npm install commander --save</code> (by adding the <code class="highlighter-rouge">--save</code> option the <code class="highlighter-rouge">npm</code> command will automatically update the dependencies in your package.json).</p> 
+      <p>Now replace your script with the following:</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="cp">#!/usr/bin/env node </span>
+<span class="kd">var</span> <span class="nx">program</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'commander'</span><span class="p">);</span>
+
+<span class="nx">program</span>
+    <span class="p">.</span><span class="nx">version</span><span class="p">(</span><span class="s1">'0.0.1'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">usage</span><span class="p">(</span><span class="s1">'&lt;keywords&gt;'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">argv</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">program</span><span class="p">.</span><span class="nx">args</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">program</span><span class="p">.</span><span class="nx">help</span><span class="p">();</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Keywords: '</span> <span class="o">+</span> <span class="nx">program</span><span class="p">.</span><span class="nx">args</span><span class="p">);</span>   
+<span class="p">}</span></code></pre>
+      </figure> 
+      <p>Here we have used node’s <a href="http://docs.nodejitsu.com/articles/getting-started/what-is-require">require</a> function to load the commander module into the script, and then started a basic structure using commander.</p> 
+      <p>Commanders <code class="highlighter-rouge">.args</code> contains just the arguments passed to a command similar to <code class="highlighter-rouge">process.argv</code> so here we have used it to check arguments exist as this utility will require at least one argument to use as a keyword for the search.</p> 
+      <p>Now running <code class="highlighter-rouge">gitsearch</code> with an argument like <code class="highlighter-rouge">gitsearch jquery</code> will output <code class="highlighter-rouge">Keywords: jquery</code> (if you fail to pass an argument it will output the command’s help). Another benefit to using commander is auto generated help based on the information you provide for your options, which can also be run manually via <code class="highlighter-rouge">gitsearch -h</code>.</p> 
+      <p>Using the commands required argument we can build our <a href="https://developer.github.com/v3/search/">GitHub search api endpoint</a>.</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="nx">program</span>
+    <span class="p">.</span><span class="nx">version</span><span class="p">(</span><span class="s1">'0.0.1'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">usage</span><span class="p">(</span><span class="s1">'&lt;keywords&gt;'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">argv</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">program</span><span class="p">.</span><span class="nx">args</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">program</span><span class="p">.</span><span class="nx">help</span><span class="p">();</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">keywords</span> <span class="o">=</span> <span class="nx">program</span><span class="p">.</span><span class="nx">args</span><span class="p">;</span>
+    <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="s1">'https://api.github.com/search/repositories?sort=stars&amp;order=desc&amp;q='</span><span class="o">+</span><span class="nx">keywords</span><span class="p">;</span>
+<span class="p">}</span></code></pre>
+      </figure> 
+      <p>As the GitHub api uses HTTP endpoints we will need to make a HTTP request. To help simplify this request we will use the <a href="https://www.npmjs.org/package/request">Request</a> package.</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">npm install request --save</code></pre>
+      </figure> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="cp">#!/usr/bin/env node </span>
+<span class="kd">var</span> <span class="nx">program</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'commander'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'request'</span><span class="p">);</span></code></pre>
+      </figure> 
+      <p>Now we can use request to make a <code class="highlighter-rouge">GET</code> request to our base url created from the required arguments.</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="nx">request</span><span class="p">({</span>
+    <span class="na">method</span><span class="p">:</span> <span class="s1">'GET'</span><span class="p">,</span>
+    <span class="na">headers</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">'User-Agent'</span><span class="p">:</span> <span class="s1">'yourGithubUsername'</span>
+    <span class="p">},</span>
+    <span class="na">url</span><span class="p">:</span> <span class="nx">url</span>
+<span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">response</span><span class="p">,</span> <span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">error</span> <span class="o">&amp;&amp;</span> <span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Error: '</span> <span class="o">+</span> <span class="nx">error</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span></code></pre>
+      </figure> 
+      <p>Note that Github’s api requires all requests to have a valid <code class="highlighter-rouge">User-Agent</code> header which must be your username or your application name <a href="https://developer.github.com/v3/#user-agent-required">Github user-agent</a>.</p> 
+      <p>Now when you pass <code class="highlighter-rouge">jquery</code> to your <code class="highlighter-rouge">gitsearch</code> command it will return a json output of up to 100 repositories mentioning jquery and ordered by star count. This output contains a lot of data so to make it easier to scan we will use <a href="https://www.npmjs.org/package/chalk">chalk</a> to style our output.</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">npm install chalk --save</code></pre>
+      </figure> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="cp">#!/usr/bin/env node </span>
+<span class="kd">var</span> <span class="nx">program</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'commander'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">request</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'request'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">chalk</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'chalk'</span><span class="p">);</span></code></pre>
+      </figure> 
+      <p>For this example I have decided to loop over the response and pick out the repository name, owner, description and clone url, whilst using chalk to add the styling.</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">error</span> <span class="o">&amp;&amp;</span> <span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">cyan</span><span class="p">.</span><span class="nx">bold</span><span class="p">.</span><span class="nx">underline</span><span class="p">(</span><span class="s1">'Name: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">magenta</span><span class="p">.</span><span class="nx">bold</span><span class="p">(</span><span class="s1">'Owner: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">owner</span><span class="p">.</span><span class="nx">login</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">grey</span><span class="p">(</span><span class="s1">'Desc: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">description</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">grey</span><span class="p">(</span><span class="s1">'Clone url: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">clone_url</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">));</span>
+    <span class="p">}</span>
+<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">red</span><span class="p">(</span><span class="s1">'Error: '</span> <span class="o">+</span> <span class="nx">error</span><span class="p">));</span>
+<span class="p">}</span></code></pre>
+      </figure> 
+      <p>To help refine results we can also pass in more options and arguments. There are lots of options available via the Github api and I have chosen to limit by owner and language for now.</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="nx">program</span>
+    <span class="p">.</span><span class="nx">version</span><span class="p">(</span><span class="s1">'0.0.1'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">usage</span><span class="p">(</span><span class="s1">'[options] &lt;keywords&gt;'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">option</span><span class="p">(</span><span class="s1">'-o, --owner [name]'</span><span class="p">,</span> <span class="s1">'Filter by the repositories owner'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">option</span><span class="p">(</span><span class="s1">'-l, --language [language]'</span><span class="p">,</span> <span class="s1">'Filter by the repositories language'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">argv</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">program</span><span class="p">.</span><span class="nx">args</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">program</span><span class="p">.</span><span class="nx">help</span><span class="p">();</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">keywords</span> <span class="o">=</span> <span class="nx">program</span><span class="p">.</span><span class="nx">args</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="s1">'https://api.github.com/search/repositories?sort=stars&amp;order=desc&amp;q='</span><span class="o">+</span><span class="nx">keywords</span><span class="p">;</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">owner</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span> <span class="o">+</span> <span class="s1">'+user:'</span> <span class="o">+</span> <span class="nx">program</span><span class="p">.</span><span class="nx">owner</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">language</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span> <span class="o">+</span> <span class="s1">'+language:'</span> <span class="o">+</span> <span class="nx">program</span><span class="p">.</span><span class="nx">language</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="err">…</span><span class="p">]</span>
+<span class="p">}</span></code></pre>
+      </figure> 
+      <p>Now running the command <code class="highlighter-rouge">gitsearch jquery -o jquery -l JavaScript</code> will return repositories that mention jquery, are owned by jquery, and use JavaScript.</p> 
+      <h2 id="exit-codes">Exit codes</h2> 
+      <p>It is important to make sure you exit your scripts correctly, once again this uses the process object. In the case of an error, the value of <code class="highlighter-rouge">process.exit</code> must be greater than 0, whereas a successful exit should equal 0. Here I have added the exit code for the successful HTTP requests and errors. When using commanders <code class="highlighter-rouge">.help()</code> an exit code is not needed as commanders handles the exiting for us.</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">error</span> <span class="o">&amp;&amp;</span> <span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+    <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">cyan</span><span class="p">.</span><span class="nx">bold</span><span class="p">(</span><span class="s1">'Name: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">magenta</span><span class="p">.</span><span class="nx">bold</span><span class="p">(</span><span class="s1">'Owner: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">owner</span><span class="p">.</span><span class="nx">login</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">grey</span><span class="p">(</span><span class="s1">'Desc: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">description</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">grey</span><span class="p">(</span><span class="s1">'Clone url: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">clone_url</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">red</span><span class="p">(</span><span class="s1">'Error: '</span> <span class="o">+</span> <span class="nx">error</span><span class="p">));</span>
+    <span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span></code></pre>
+      </figure> 
+      <h2 id="combining-utilities">Combining utilities</h2> 
+      <p>Finally I have added the <code class="highlighter-rouge">--full</code> option which outputs the full response without any manipulation or styling.</p> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="nx">program</span>
+    <span class="p">.</span><span class="nx">version</span><span class="p">(</span><span class="s1">'0.0.1'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">usage</span><span class="p">(</span><span class="s1">'[options] &lt;keywords&gt;'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">option</span><span class="p">(</span><span class="s1">'-o, --owner [name]'</span><span class="p">,</span> <span class="s1">'Filter by the repositories owner'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">option</span><span class="p">(</span><span class="s1">'-l, --language [language]'</span><span class="p">,</span> <span class="s1">'Filter by the repositories language'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">option</span><span class="p">(</span><span class="s1">'-f, --full'</span><span class="p">,</span> <span class="s1">'Full output without any styling'</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">argv</span><span class="p">);</span></code></pre>
+      </figure> 
+      <figure class="highlight">
+       <pre><code class="language-javascript" data-lang="javascript"><span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">error</span> <span class="o">&amp;&amp;</span> <span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">==</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">program</span><span class="p">.</span><span class="nx">full</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">for</span><span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">cyan</span><span class="p">.</span><span class="nx">bold</span><span class="p">(</span><span class="s1">'Name: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">name</span><span class="p">));</span>
+            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">magenta</span><span class="p">.</span><span class="nx">bold</span><span class="p">(</span><span class="s1">'Owner: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">owner</span><span class="p">.</span><span class="nx">login</span><span class="p">));</span>
+            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">grey</span><span class="p">(</span><span class="s1">'Desc: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">description</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">));</span>
+            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">grey</span><span class="p">(</span><span class="s1">'Clone url: '</span> <span class="o">+</span> <span class="nx">body</span><span class="p">.</span><span class="nx">items</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">clone_url</span> <span class="o">+</span> <span class="s1">'\n'</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">chalk</span><span class="p">.</span><span class="nx">red</span><span class="p">(</span><span class="s1">'Error: '</span> <span class="o">+</span> <span class="nx">error</span><span class="p">));</span>
+    <span class="nx">process</span><span class="p">.</span><span class="nx">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span></code></pre>
+      </figure> 
+      <p>This can be useful to take advantage of the other utilities available on the command-line such as <a href="http://unixhelp.ed.ac.uk/CGI/man-cgi?grep">grep</a>, <a href="http://unixhelp.ed.ac.uk/CGI/man-cgi?less">less</a> and <a href="https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man1/pbcopy.1.html">pbcopy</a>. One easy way to combine utilties is to use the <code class="highlighter-rouge">pipeline</code> to chain operations where the output for one command becomes the input for the next.</p> 
+      <h3 id="pbcopy">pbcopy</h3> 
+      <p><code class="highlighter-rouge">pbcopy</code> is an easy way to copy the output from a command. Piping the output to <code class="highlighter-rouge">pbcopy</code> will then allow you to paste the output into other programs.</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">gitsearch jquery -f | pbcopy</code></pre>
+      </figure> 
+      <h3 id="less">less</h3> 
+      <p><code class="highlighter-rouge">less</code> is a pager command which breaks content down into more manageable chunks, showing only one screens worth of content at a time.</p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">gitsearch jquery -f | less</code></pre>
+      </figure> 
+      <h3 id="grep">grep</h3> 
+      <p><code class="highlighter-rouge">grep</code> is a utility for searching plain text data sets using <a href="http://en.wikipedia.org/wiki/Regular_expression">regular expressions</a></p> 
+      <figure class="highlight">
+       <pre><code class="language-sh" data-lang="sh">gitsearch jquery -f | grep watchers</code></pre>
+      </figure> 
+      <h2 id="conclusion">Conclusion</h2> 
+      <p>Command-line utilities are great for simplifying tasks or automating repetitive operations and NodeJS can be a great stepping stone for developers looking to build commands without learning a shell script.</p> 
+      <p>This was a basic example of how to get started with NodeJS on the command-line, if you want to view the full source could I have created a <a href="https://gist.github.com/GlynnPhillips/7f3dcb2b990796f1856f">gist here</a>. There are plenty of other resources available including lots of very useful tools already published on <a href="https://www.npmjs.org/">npm</a> and <a href="https://github.com/">GitHub</a>.</p> 
+      <h3 id="further-reading">Further reading</h3> 
+      <ul> 
+       <li><a href="http://shapeshed.com/command-line-utilities-with-nodejs/">Command Line Utilities with Node.js</a></li> 
+       <li><a href="http://blog.nodejitsu.com/six-nodejs-cli-apps/">More Than Web: Six Node.js CLI Apps</a></li> 
+       <li><a href="http://dailyjs.com/2012/03/01/unix-node-arguments/">Unix and Node: Command-line Arguments</a></li> 
+       <li><a href="http://javascriptplayground.com/blog/2012/08/writing-a-command-line-node-tool/">Writing a Command Line Node Tool</a></li> 
+       <li><a href="http://www.mitchchn.me/2014/os-x-terminal/">Eight Terminal Utilities Every OS X Command Line User Should Know</a></li> 
+      </ul> 
+     </div> 
+     <hr class="space-above-more"> 
+     <div role="complementary"> 
+      <p class="space-below-less"> Find this post useful, or want to discuss some of the topics? </p> 
+      <ul class="stack"> 
+       <li class="space-below-less"> <a href="https://twitter.com/share?url=http%3A%2F%2Fcruft.io%2Fposts%2Fnode-command-line-utilities%2F&amp;via=cruftio&amp;text=Command-line+utilities+with+Node.js" target="_blank" class="secret-link"> <span class="inline-block icon icon-twitter-25x25">&nbsp;</span> <span class="fake-link">Share this post on Twitter</span> </a> </li> 
+       <li class="space-below-less"> <a href="http://www.reddit.com/submit?url=http%3A%2F%2Fcruft.io%2Fposts%2Fnode-command-line-utilities%2F&amp;title=Command-line+utilities+with+Node.js" target="_blank" class="secret-link"> <span class="inline-block icon icon-reddit-25x25">&nbsp;</span> <span class="fake-link">Share this post on reddit</span> </a> </li> 
+       <li> <a href="https://news.ycombinator.com/submitlink?u=http%3A%2F%2Fcruft.io%2Fposts%2Fnode-command-line-utilities%2F&amp;t=Command-line+utilities+with+Node.js" target="_blank" class="secret-link"> <span class="inline-block icon icon-hacker-news-25x25">&nbsp;</span> <span class="fake-link">Discuss this post on Hacker News</span> </a> </li> 
+      </ul> 
+      <h2 class="visually-hidden">About The Authors</h2> 
+      <ul class="cramp cramp-last stack"> 
+       <li class="space-below-less"> 
+        <div class="space-inner-less cramp-children paint-med-light clearfix"> 
+         <img src="/image/author/glynn-phillips.jpg" alt="Glynn Phillips" class="author-image"> 
+         <h3 class="h6">Glynn Phillips</h3> 
+         <a href="http://glynnphillips.co.uk/">Visit Glynn's personal website</a> 
+        </div> </li> 
+      </ul> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <div role="contentinfo" class="layout-outer"> 
+   <div class="layout-inner"> 
+    <small> Copyright © 2017, Springer Nature Development Team. </small> 
+    <br> 
+    <small> This site contains content from a group of people developing digital systems at Springer Nature. The opinions expressed within do not necessarily represent the opinion of Springer Nature. </small> 
+   </div> 
+  </div>   
+ </body>
+</html>

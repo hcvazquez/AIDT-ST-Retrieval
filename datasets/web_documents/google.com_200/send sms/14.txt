@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en-US" prefix="og: http://ogp.me/ns#" ng-app="AP" ng-strict-di>
+ <head> 
+  <title>Build a real-time SMS call center with Data McFly and Twilio</title> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="robots" content="index, follow">
+  <meta name="description" content="Learn how to leverage the powers of Twilio and Data McFly to build a real-time SMS call center in node.js">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Build a real-time SMS call center with Data McFly and Twilio">
+  <meta property="og:description" content="Learn how to leverage the powers of Twilio and Data McFly to build a real-time SMS call center in node.js">
+  <meta property="og:image" content="https://imgur.com/pZ8WqGS.png">
+  <meta property="og:url" content="https://www.airpair.com/javascript/posts/build-a-realtime-sms-call-center-with-data-mcfly-and-twilio">
+  <link rel="canonical" href="https://www.airpair.com/javascript/posts/build-a-realtime-sms-call-center-with-data-mcfly-and-twilio"> 
+  <link rel="stylesheet" href="https://static.airpair.com/2015/css/fonts.css" type="text/css"> 
+  <link rel="stylesheet" href="https://static.airpair.com/apcom/css/libs-914db4fa9b.css" type="text/css"> 
+  <link rel="stylesheet" href="https://static.airpair.com/apcom/css/index-08a77604b7.css" type="text/css"> 
+  <link rel="shortcut icon" type="image/png" href="https://static.airpair.com/ico/favicon-16x16.png"> 
+  <meta name="theme-color" content="#ffffff"> 
+  <link rel="alternate" type="application/rss+xml" href="https://www.airpair.com/rss" title="AirPair Rss"> 
+  <base href="/"> 
+ </head> 
+ <body> 
+  <header> 
+   <a href="/" tile="airpair.com pair programming" target="_self"></a> 
+   <ul> 
+    <li class="ps"><a href="/software-experts" target="_self">Software Experts</a></li> 
+    <li class="bk">|</li> 
+    <li class="lg"><a href="/login" target="_self" rel="nofollow"><b>Login</b></a></li> 
+   </ul> 
+  </header> 
+  <div class="main-wrap"> 
+   <div notifications></div> 
+   <main ng-view> 
+    <div id="serverTemplate"> 
+     <article class="blogpost"> 
+      <h1 class="entry-title" itemprop="headline">Build a real-time SMS call center with Data McFly and Twilio</h1> 
+      <div class="railMarker"></div> 
+      <h4 id="table-of-contents">Table of Contents</h4> 
+      <ul> 
+       <li><a href="#the-setup">The setup</a></li> 
+       <li><a href="#getting-started">Getting Started</a></li> 
+       <li><a href="#sending-and-receiving-texts">Sending and Receiving Texts</a></li> 
+       <li><a href="#the-client">The Client</a>
+        <ul> 
+         <li><a href="#and-cut-">And Cut!</a></li> 
+         <li><a href="#your-mission-should-you-choose-to-accept">Your Mission Should You Choose To Accept</a></li> 
+        </ul> </li> 
+      </ul> 
+      <figure class="author"> 
+       <img alt="Roger Stringer" src="https://avatars.githubusercontent.com/u/21484?v=3?s=100"> 
+       <hr> 
+       <div> 
+        <label>Roger Stringer</label> 
+        <figcaption>
+          Roger Stringer is an author, speaker, code monkey and founder of Data McFly. He spends most of his time solving problems for people, and otherwise occupying himself with APIs, dad-stuff, cooking and the overall pursuit of life. 
+        </figcaption> 
+       </div> 
+       <hr> 
+      </figure> 
+      <p class="asset"><img src="https://imgur.com/pZ8WqGS.png"></p> 
+      <hr> 
+      <post no-compile>
+       <p>Do you want to know one of the beautiful things about Twilio? It integrates really easily with other services such as Data McFly.</p> 
+       <p><a href="http://datamcfly.com">Data McFly</a> is a real-time database that you can communicate with directly from the client. When you save your JSON data to Data McFly, changes are sent instantly to all clients, web and mobile, that requested them. Data McFly helps you build modern applications faster than ever.</p> 
+       <p>In this article, we are going to walk through using Data McFly and Twilio together to build a real-time SMS call center.</p> 
+       <p>This could be used as a customer help desk where customers send a text message for help and an agent sends a reply back from their web browser.</p> 
+       <p>The actual phone work will be handled by Twilio, and Data McFly will store the data and display the chats in real-time. We'll use node.js to send and receive the text messages and an HTML frontend to handle the actual chatting.</p> 
+       <h2 id="the-setup">The setup</h2> 
+       <p>We’ll be using a few tools to build this app. You’ll want to have these set up before you continue on:</p> 
+       <ul> 
+        <li><a href="http://twilio.com">Twilio</a>: To send and receive SMS messages. Don’t have a Twilio account? <a href="https://www.twilio.com/try-twilio">Sign up for Free</a>.</li> 
+        <li><a href="https://www.datamcfly.com/">Data McFly</a>: A real-time database API. We’ll be using it to store our incoming and outgoing messages.</li> 
+        <li><a href="http://nodejs.org/">Node.js</a>: A platform built on Chrome’s JavaScript runtime for easily building fast, scalable network applications.</li> 
+       </ul> 
+       <p>If you haven't already, <a href="https://app.datamcfly.com/signup">Sign up</a> for a free Data McFly account now, then create a new app. You'll use your app for your call center.</p> 
+       <h2 id="getting-started">Getting Started</h2> 
+       <p>We first need to set up our Node.js app.</p> 
+       <p>Besides the Twilio and Data McFly modules, we’ll be using the <a href="http://expressjs.com/">Express framework</a> to set up our node web server to receive the POST request from Twilio so we’ll need to install the express package. We’ll also be using the body-parser module so we are going to install that as well.</p> 
+       <p>Let's create our <code>package.json</code> file:</p> 
+       <pre><code class="lang-javascript">{
+    "name": "sms-contact-center",
+    "version": "0.0.1",
+    "description": "SMS Contact Center powered by Data McFly, Twilio and Node.js",
+    "main": "app.js",
+    "repository": "https://github.com/DataMcFly/sms-contact",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" &amp;&amp; exit 1"
+    },
+    "keywords": [
+        "twilio",
+        "data mcfly",
+        "sms"
+    ],
+    "author": "Roger Stringer",
+    "license": "MIT",
+    "dependencies": {
+        "twilio": "~1.6.0",
+        "ejs": "~0.8.5",
+        "express": "~3.4.8",
+        "datamcfly": "~1.4.4",
+        "node-buzz": "~1.1.0",
+        "moment": "~2.5.1",
+        "less-middleware": "~0.2.1-beta",
+        "body-parser" : "~1.4.2",
+        "method-override" : "~2.0.2"    
+    },
+    "engines": {
+        "node": "0.10.26"
+    }
+}
+</code></pre> 
+       <p>Save this file, and from the terminal run the following command:</p> 
+       <pre><code class="lang-javascript">npm install
+</code></pre> 
+       <p>This will create a <code>node_modules</code> folder containing all of the modules we want to use.</p> 
+       <p>Let's set up our folder structure, create a folder called <code>views</code>, this is where we will keep our frontend.</p> 
+       <p>Now, create a folder called <code>public</code>, this will host our static files, inside that folder, create a <code>css</code> folder and a <code>js</code> folder, we'll come back to these later.</p> 
+       <p>At the beginning of our app.js file we’ll need to require express and initialize it into a variable called app. We’re also going to use the <a href="https://github.com/expressjs/body-parser">bodyParser middleware</a> to make it easy to use the data we’ll be getting in our POST request.</p> 
+       <p>Create a new file called <code>app.js</code> and require the twilio, express and datamcfly packages:</p> 
+       <pre><code class="lang-javascript">var express = require('express');
+var bodyParser = require('body-parser');
+var methodOverride = require('method-override');
+var twilio = require('twilio');
+var  path = require('path');
+
+var app = express();
+app.set('views', path.join(process.cwd(), 'views'));
+app.set('view engine', 'ejs');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({    extended: true    }));
+app.use(express.static(__dirname + '/public'));
+
+var port = process.env.PORT || 8080; // set our port
+
+var client = twilio('ACCOUNTSID', 'AUTHTOKEN');
+var twilio_number = 'YOUR-NUMBER';
+
+var api_key = "YOUR-API-KEY";
+var appname = "YOUR-DATAMCFLY-APP";
+var collection = "smscontact";
+var messagesRef = require('datamcfly').init(appname, collection, api_key);
+
+// backend routes =========================
+</code></pre> 
+       <p>Replace <code>ACCOUNTSID</code>, <code>AUTHTOKEN</code> and <code>YOUR-NUMBER</code> with your Twilio credentials, and a phone number in your Twilio account that you'll be using.</p> 
+       <p>Then, replace <code>YOUR-API-KEY</code>, <code>YOUR-DATAMCFLY-APP</code> and <code>smscontact</code> with your Data McFly API Key, and create a collection to use. If you haven't already created a collection, one will be automatically created for you when you first save data, so you can leave the collection name set to <code>smscontact</code> if you want.</p> 
+       <p>Data McFly uses collections to organize data inside apps, so one app could have several collections. If you're familiar with relational databases, this is the equivalent of a table.</p> 
+       <p>This is the start of our app, next we'll tell it what to do when new texts come in and when an agent replies to a text.</p> 
+       <h2 id="sending-and-receiving-texts">Sending and Receiving Texts</h2> 
+       <p>Twilio uses <a href="https://en.wikipedia.org/wiki/Webhook">webhooks</a> to let your server know when an incoming message or phone call comes into our app. We need to set up an endpoint that we can tell Twilio to use for the messaging webhook.</p> 
+       <p>We’re going to add a route for <code>/message</code> that responds with some <a href="https://www.twilio.com/docs/api/twiml">TwiML</a>. TwiML is a basic set of instructions you can use to tell Twilio what to do when you receive an incoming call or SMS message. Our code will look like this:</p> 
+       <pre><code class="lang-javascript">app.post('/message', function (request, response) {
+    var d = new Date();
+    var date = d.toLocaleString();
+
+    messagesRef.push({
+        sid: request.param('MessageSid'),
+        type:'text',
+        direction: "inbound",
+        tstamp: date,
+        fromNumber:request.param('From'),
+        textMessage:request.param('Body'),
+        fromCity:request.param('FromCity'),
+        fromState:request.param('FromState'),
+        fromCountry:request.param('FromCountry')
+    });
+
+    var resp = new twilio.TwimlResponse();
+    resp.message('Thanks for the message, an agent will get back to you shortly.');
+    response.writeHead(200, {
+        'Content-Type':'text/xml'
+    });
+    response.end(resp.toString());
+});
+</code></pre> 
+       <p>This will listen for any incoming sms messages and store them inside your Data McFly app. </p> 
+       <p>Once a message has been received, we use the Twilio node library to initialize a new <code>TwimlResponse</code>. We then use the <a href="https://www.twilio.com/docs/api/twiml/sms/message">Message verb</a> to set what we want to respond to the message with. In this case we’ll just say “Thanks for the message, an agent will get back to you shortly.”. Then we’ll set the content-type of our response to <code>text/xml</code> and send the string representation of the TwimlResponse we built.</p> 
+       <p>Whenever a customer sends a message to the phone number we've set up, it will send them the response and store the message inside Data McFly. If an agent is watching the client, then they will see the message appear instantly, and can send a reply back.</p> 
+       <p>Now, let's add a route called <code>/reply</code> this is what we will call via AJAX when our agents want to reply to a message:</p> 
+       <pre><code class="lang-javascript">app.post('/reply', function (request, response) {
+    var d = new Date();
+    var date = d.toLocaleString();
+
+    messagesRef.push({
+        type:'text',
+        direction: "outbound",
+        tstamp: date,
+        fromNumber:request.param('From'),
+        textMessage:request.param('Body'),
+        fromCity:'',
+        fromState:'',
+        fromCountry:''
+    });
+
+    client.sendMessage( {
+        to:request.param('To'), 
+        from:twilio_number,
+        body:request.param('Body')
+    }, function( err, data ) {
+        console.log( data.body );
+    });
+});
+</code></pre> 
+       <p>This will store the reply in our Data McFly app as an outbound reply, then send the message to the customer.</p> 
+       <p>Finally, let’s set our server to listen on port <code>8080</code>, and tell it what to do when we view it from a brower:</p> 
+       <pre><code class="lang-javascript">// frontend routes =========================
+
+// route to handle all angular requests
+app.get('*', function(req, res) {
+    res.render('home', {
+        apikey:api_key,
+        appname:appname,
+        collection:collection
+    });
+});
+
+
+var server = app.listen(port, function() {
+    console.log('Listening on port %d', server.address().port);
+});
+</code></pre> 
+       <p>Now that we've built our server, we need to tell twilio to use this messaging url as a our Message Request URL:</p> 
+       <p><img src="http://blog.datamcfly.com/images/posts/dashboard.png" alt=""></p> 
+       <p>Send an SMS message to your Twilio number and you should get a response back. If you don’t, take a look at the <a href="https://www.twilio.com/user/account/developer-tools/app-monitor">Twilio App Monitor</a> to help determine what went wrong.</p> 
+       <p>This is the backend portion of our call center, it listens for incoming text messages, stores them in our Data McFly app, and then sends replies when an agent replies.</p> 
+       <p>Now, we need to build our agent system, where an agent can watch incoming messages and reply to them.</p> 
+       <p>We'll build that now.</p> 
+       <h2 id="the-client">The Client</h2> 
+       <p>We've got our Node.js app listening for messages to send and receive, now let's set up our client which is what agents will see from their web browser. </p> 
+       <p>When a message comes in, we'll display a chat box showing the message, then send a reply.</p> 
+       <p>First, let's create our view, in the <code>/views</code> folder, create a file called <code>home.ejs</code>:</p> 
+       <pre><code class="lang-javascript">&lt;!doctype html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;link href='http://fonts.googleapis.com/css?family=Lato:400,300italic,400italic&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'&gt;
+    &lt;link rel="stylesheet" type="text/css" href="http://angular-ui.github.com/ng-grid/css/ng-grid.css" /&gt;
+    &lt;link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"&gt;
+    &lt;link rel="stylesheet" type="text/css" href="/css/style.css"&gt;
+
+    &lt;script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"&gt;&lt;/script&gt;
+    &lt;script src="https://cdn.datamcfly.com/DataMcFly.js?latest=1"&gt;&lt;/script&gt;
+    &lt;script src="/js/chat.js"&gt;&lt;/script&gt;
+
+    &lt;title&gt;SMS Contact Center, powered by Data McFly and Twilio&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class='container'&gt;
+        &lt;br /&gt;
+        &lt;div class="well"&gt;
+            &lt;p class='homefont'&gt;Welcome to your SMS Contact Center&lt;/p&gt;
+
+            &lt;p class='homefont'&gt;This call center is the start of a modern day call center.&lt;/p&gt;
+
+            &lt;p class='homefont'&gt;Take a look around and give us a try.&lt;/p&gt;
+        &lt;/div&gt;
+        &lt;hr /&gt;
+        &lt;h3&gt;Incoming messages&lt;/h3&gt;
+        &lt;div id="templateContainer"&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;script&gt;
+        $(function(){
+//    inititialize our Data McFly object
+            var datamcflyRef = new DataMcFly("&lt;%= apikey %&gt;", "&lt;%= appname %&gt;", "&lt;%= collection %&gt;");
+//    start our chatManager.
+            var myChatManager = new chatManager( datamcflyRef );
+            myChatManager.updateChats();
+        });
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</code></pre> 
+       <p>This file will act as our HTML file, and we are using EJS so we can pass our Data McFly settings and not have to configure it in multiple places. EJS is handy for adding template functionality to your Node.js apps.</p> 
+       <p>Now, let's create our style sheet. In the <code>/public/css</code> folder we created earlier, create new file called <code>style.css</code>:</p> 
+       <pre><code class="lang-css">body{font-size:12pt;font-family:helvetica}
+.chatWindow{float:left;margin:20px;border:1px solid #000;width:300px;background:#e5e5e5;border-radius:5px}
+.chatName{margin-bottom:10px;background:#666;color:#fff;padding:4px}
+.messages{padding:4px}
+.message_outbound{color:blue;text-align:right}
+.tstamp{font-size:9px;padding:2px;margin-bottom:10px;border-bottom:1px dotted #666;color:#666}
+.error{color:red;text-align:center}
+.messageForm textarea{float:left;width:220px;margin:5px}
+</code></pre> 
+       <p>Lastly, we want to set up the brains of our app. We've saved the biggest file for last. </p> 
+       <p>In the <code>/public/js/</code> folder, create a new file called <code>chat.js</code>:</p> 
+       <pre><code class="lang-javascript">var chatManager = function(datamcflyRef) {
+    this.datamcflyRef = datamcflyRef;
+};
+
+chatManager.prototype = {
+    chats: [], 
+    getChat: function(fromNumber) {
+        var foundChat = null;
+        for (c = 0; c &lt; this.chats.length; c++) {
+            if (this.chats[c].from == fromNumber) {
+                foundChat = this.chats[c];
+            }
+        }
+
+        if (foundChat == null) {
+            foundChat = new chat( this.datamcflyRef );
+            foundChat.init(fromNumber);
+            foundChat.displayTemplate();
+            this.chats.push(foundChat);
+        }
+        return foundChat;
+    },
+    updateChats: function() {
+        var _this = this;
+        this.datamcflyRef.once('value', function (data) {
+            data.forEach( function(message){                    
+                var row = message.value();
+                _this.getChat( row.fromNumber ).addMessage(
+                    row.textMessage,
+                    row.tstamp,
+                    row.direction
+                );
+            });
+        });
+        this.datamcflyRef.on('added', function (data) {
+            var row = data.value();
+            _this.getChat( row.fromNumber ).addMessage(
+                row.textMessage,
+                row.tstamp,
+                row.direction
+            );
+        });
+    }
+};
+
+var chat = function(datamcflyRef) {
+    this.datamcflyRef = datamcflyRef;
+};
+chat.prototype = {
+    init: function(name) {
+        this.from = name;
+        this.chatName = 'chat-' + this.from;
+        this.buttonName = 'submit-' + this.from;
+        this.textName = 'reply-' + this.from;
+    },
+    replyMessage: function(message) {
+        var _this = this;
+        $.ajax({
+            type: "POST",
+            url: "/reply",
+            data: {
+                'To': this.from,
+                'Body': message,
+                'From': this.from
+            },
+            dataType: "json",
+            success: function(data) {
+                // your message was sent
+            }
+        });
+    },
+    displayTemplate: function() {
+        var content = '&lt;div class="chatName"&gt;Chat with ' + this.from + '&lt;/div&gt; \
+        &lt;div class="messages" id="' + this.chatName + '"&gt;&lt;/div&gt; \
+        &lt;div class="messageForm"&gt;&lt;textarea id="' + this.textName + '"&gt;&lt;/textarea&gt;&lt;button id="' + this.buttonName + '"&gt;Reply&lt;/button&gt;&lt;/div&gt; \
+      &lt;/div&gt;';
+
+        content = '&lt;div class="chatWindow" id="' + this.tmplName + '"&gt;' + content + '&lt;/div&gt;';
+
+        $('#templateContainer').append(content);
+        var _this = this;
+
+        $('#' + this.buttonName).click(function() {
+            _this.replyMessage($('#' + _this.textName).val());
+            $('#' + _this.textName).val('');
+        });
+    },
+    addMessage: function(message, tstamp, direction) {
+        $('#' + this.chatName).append("&lt;div class='message_" + direction + "'&gt;" + message + "&lt;div class='tstamp'&gt;" + tstamp + "&lt;/div&gt;&lt;/div&gt;");
+    }
+};
+</code></pre> 
+       <p>Our <code>chatManager</code> class is set up so that when it loads, it first grabs a list of saved text messages using the <code>value</code> event trigger, and displays them by the phone number they were sent from. </p> 
+       <p>We treat all messages to and from the same number as one session, so for each chat session, we would see a box displaying the messages between the agent and the customer, and a textbox to use to send new messages.</p> 
+       <p>We then listen for any new new messages to come in using the <code>added</code> even trigger, and we then display them inside the proper chat box.</p> 
+       <p>The <code>chat</code> class tells our app how display the chat boxes, and how to handle sending new replies.</p> 
+       <p>In this case, when a message is sent by an agent, we post it to our backend <code>/reply</code> route, where it is saved to our Data McFly app and then sent to the customer as a text message.</p> 
+       <p>We're also storing the direction a message came from, either <code>inbound</code> or <code>outbound</code>, this way we can style each message to appear similar to when you view a chat log on your phone. The customer's texts will appear on the left side, and the agent's replies will appear on the right side.</p> 
+       <p>Now let’s fire up our app:</p> 
+       <pre><code class="lang-javascript">node app.js
+</code></pre> 
+       <p>We've told our app to run on port 8080, so if you go to your web browser and type in <code>http://localhost:8080/</code> you should see your call center.</p> 
+       <p>Just an aside, if you’re running this locally, you’ll want to make sure you’ve got ngrok running before you go to the next step. If you haven’t used <a href="https://ngrok.com/">ngrok</a> before, Kevin Whinnery over at Twilio has put together a <a href="https://www.twilio.com/blog/2013/10/test-your-webhooks-locally-with-ngrok.html">great tutorial</a> to help you get started.</p> 
+       <h3 id="and-cut-">And Cut!</h3> 
+       <p>We did it! Now that you’ve <a href="https://github.com/DataMcFly/sms-contact">built a simple SMS call center app</a> it’s your chance to create something with it.</p> 
+       <h3 id="your-mission-should-you-choose-to-accept">Your Mission Should You Choose To Accept</h3> 
+       <p>Take this project and roll with it. </p> 
+       <p>Some ideas are you could actually completely remove the <code>/reply</code> ajax call, and instead create an <code>outbound</code> text queue that would store the message, then add an <code>added</code> listener to the outbound collection that would both send the reply to the customer, and add it into the <code>message</code> collection so it would appear in the chat window.</p> 
+       <p>This would eliminate the need for that <code>/reply</code> AJAX call, and also add some queue support in cases of sending out multiple replies to several customers at once.</p> 
+      </post> 
+      <div class="share"> 
+       <div class="pw-widget pw-size-large pw-counter-show" pw:twitter-via="airpair"> 
+        <a class="pw-button-twitter"></a>
+        <a class="pw-button-facebook"></a>
+        <a class="pw-button-linkedin"></a>
+        <a class="pw-button-googleplus"></a> 
+        <a class="pw-button-post"></a> 
+       </div> 
+      </div> 
+      <div class="rail1CTA"> 
+      </div> 
+     </article> 
+     <div id="reviews" post-reviews reviews="[{&quot;_id&quot;:&quot;550669c7c1af410c006cb4b8&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;mappmechanic&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/4088925?v=3&quot;,&quot;gh&quot;:&quot;mappmechanic&quot;},&quot;val&quot;:4,&quot;said&quot;:&quot;It is a nice overview of using Twilio. May be it should contain some more information about Data McFly.&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;55073d42c7b6470c00271a74&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;thorsson&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/15366?v=3&quot;,&quot;gh&quot;:&quot;Thorsson&quot;},&quot;val&quot;:4,&quot;said&quot;:&quot;Great overview of basic features of Twilio, though with the Data McFly it would be interesting to know more about it and why it is a better solution than Meteor framework that has the same functionality so as a reader I would like to know why you decided to use it instead of.&quot;,&quot;votes&quot;:[],&quot;replies&quot;:[]},{&quot;_id&quot;:&quot;550858d76912810c007d5f81&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;mickstevens&quot;,&quot;pic&quot;:&quot;//0.gravatar.com/avatar/5db33ee38cf0e04caab4b7f96673925b&quot;,&quot;gh&quot;:&quot;mickstevens&quot;},&quot;val&quot;:5,&quot;said&quot;:&quot;Very powerful tutorial (now that I've noted that the Data McFly App names are case sensitive - sorry Roger!).\n\nSeriously, Companies pay/SP's charge big bucks for Contact Center/SMS intergration &amp; this post shows you how to do it for free! Truly Awesome!&quot;,&quot;votes&quot;:[{&quot;_id&quot;:&quot;55a3507a3f96a1110001ee74&quot;,&quot;by&quot;:{&quot;name&quot;:&quot;hackerpreneur&quot;,&quot;pic&quot;:&quot;https://avatars.githubusercontent.com/u/979542?v=3&quot;,&quot;gh&quot;:&quot;jkresner&quot;},&quot;val&quot;:1}],&quot;replies&quot;:[]}]" byid="52dadca01c67d1a4859d1cce"></div> 
+     <footer class="postfooter "> 
+      <h5>Tagged under</h5> 
+      <ul class="posttags">
+       <li><a href="/javascript" target="_self" title="JavaScript tutorials &amp; JS guides">javascript</a></li>
+       <li><a href="/twilio" target="_self" title="Twilio tutorials &amp; twilio guides">twilio</a></li>
+       <li><a href="/node.js" target="_self" title="Node.JS tutorials &amp; Node guides">node.js</a></li>
+       <li><a href="/real-time" target="_self" title="real-time tutorials &amp; real-time guides">real-time</a></li>
+      </ul> 
+      <div class="share-horizontal"> 
+       <div class="pw-widget pw-counter-vertical" pw:twitter-via="airpair"> 
+        <a class="pw-button-twitter pw-look-native"></a> 
+        <a class="pw-button-googleplus pw-look-native"></a> 
+        <a class="pw-button-facebook pw-look-native"></a> 
+        <a class="pw-button-linkedin pw-look-native"></a> 
+        <a class="pw-button-tumblr pw-look-native"></a> 
+        <a class="pw-button-reddit pw-look-native"></a> 
+        <a class="pw-button-email pw-look-native"></a> 
+       </div> 
+      </div> 
+     </footer> 
+     <div id="posts"> 
+      <section id="allposts" class="similar"> 
+       <h3 class="underline">Similar posts <a href="/software-experts" class="btn btn-sm btn-inverse" target="_self">All posts</a></h3> 
+       <div class="similar nostars"> 
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="https://www.airpair.com/angularjs/posts/animating-elements-moving-between-angularjs-lists" title="Animating elements moving between AngularJS lists" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://cloud.githubusercontent.com/assets/979542/8780943/21f25a88-2ec1-11e5-84ca-9311360381b5.png" align="left"> 
+           <div class="glass"></div> 
+           <p> <span class="entry-categories"><em>angularjs</em><em>javascript</em><em>css</em><em>css-transitions</em></span> Guide on using anchored CSS transitions to move elements between ng-repeat generated lists </p> 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6><b>4</b> x</h6> 
+           <div class="stars" stars val="4"></div> 
+           <h2 class="entry-title" itemprop="headline">Animating elements moving between AngularJS lists</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Michal Charemza</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" ng-src="https://avatars.githubusercontent.com/u/13877?v=3?s=50"> 
+         </footer> 
+        </article> 
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="https://www.airpair.com/javascript/posts/tips-for-dealing-with-developer-stress" title="Tips for Dealing with Developer Stress" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://i.imgur.com/hyPI51H.png" align="left"> 
+           <div class="glass"></div> 
+           <p> <span class="entry-categories"><em>javascript</em></span> This article identifies several types of stress that developers face on a daily basis and explains how they may impact effectiveness. We’ll cover tips for identifying the root cause of the stress and offer suggestions on how to manage them. </p> 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6><b>5</b> x</h6> 
+           <div class="stars" stars val="4.8"></div> 
+           <h2 class="entry-title" itemprop="headline">Tips for Dealing with Developer Stress</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Rich McLaughlin</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" ng-src="https://avatars.githubusercontent.com/u/667290?v=3?s=50"> 
+         </footer> 
+        </article> 
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="https://www.airpair.com/javascript/posts/how-does-javascript-prototype-work" title="How does JavaScript .prototype work?" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://i.stack.imgur.com/JnpBV.png" align="left"> 
+           <div class="glass"></div> 
+           <p> <span class="entry-categories"><em>javascript</em><em>prototype</em></span> The whole point revolves around the way that `prototype` keyword allows having class like syntax in JavaScript(that's when function concept comes in) and its relationship with the actual prototypal inheritance which is mostly related to the way that `Object.create()` and the secret `[[prototype]]` property scaffold out a hierarchical object inheritance. </p> 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6><b>5</b> x</h6> 
+           <div class="stars" stars val="4"></div> 
+           <h2 class="entry-title" itemprop="headline">How does JavaScript .prototype work?</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Mehran Hatami</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" ng-src="https://avatars.githubusercontent.com/u/6114456?v=3?s=50"> 
+         </footer> 
+        </article> 
+       </div> 
+      </section> 
+      <section id="allposts" class="byauthor"> 
+       <h3 class="underline">Other posts Roger Stringer</h3> 
+       <div class="similar nostars"> 
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="http://www.airpair.com/twilio/posts/twilio-mms-messaging" title="Twilio Tutorial - Building an app using Twilio's MMS messaging" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="https://i.imgur.com/ctLMuP1.png" align="left"> 
+           <div class="glass"></div> 
+           <p></p>--}} 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6></h6> 
+           <div class="stars"></div> 
+           <h2 class="entry-title" itemprop="headline">Twilio Tutorial - Building an app using Twilio's MMS messaging</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Roger Stringer</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" ng-src="https://avatars.githubusercontent.com/u/21484?v=3?s=50"> 
+         </footer> 
+        </article> 
+        <article class="posttile" itemscope itemtype="http://schema.org/BlogPosting" itemprop="blogPost"> 
+         <a href="http://www.airpair.com/twilio/twilio-expert-roger-stringer" title="Twilio Support Expert and Book Author - Roger Stringer" target="_self" rel="bookmark"> 
+          <header class="entry-header"> 
+           <img class="entry-header-image" itemprop="image" src="" align="left"> 
+           <div class="glass"></div> 
+           <p></p>--}} 
+          </header> 
+          <div class="entry-content" itemprop="text"> 
+           <h6></h6> 
+           <div class="stars"></div> 
+           <h2 class="entry-title" itemprop="headline">Twilio Support Expert and Book Author - Roger Stringer</h2> 
+           <span class="entry-author" itemprop="author" itemscope itemtype="http://schema.org/Person"> <span class="entry-author-name" itemprop="name">Roger Stringer</span> </span> 
+          </div> </a> 
+         <footer class="entry-footer"> 
+          <img class="entry-author-img" itemprop="image" ng-src="https://avatars.githubusercontent.com/u/21484?v=3?s=50"> 
+         </footer> 
+        </article> 
+       </div> 
+      </section> 
+     </div> 
+    </div> 
+   </main> 
+  </div> 
+  <script type="text/javascript" src="https://static.airpair.com/apcom/js/index-712b3af218.js"></script> 
+  <script type="text/javascript">
+
+  function bindTracking() {
+    ga('send', 'pageview')
+  }
+
+  window.viewData = {
+    session: {"authenticated":false,"id":"6d_v7JPnqGR4WLTFtK0X_prVR9IDL1BX"}, 
+    canonical: 'https://www.airpair.com/javascript/posts/build-a-realtime-sms-call-center-with-data-mcfly-and-twilio', 
+    post: {"_id":"55064e8a4ffec50c00ce15b6"}, 
+  }
+
+  </script> 
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-40569487-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script> 
+  <script type="text/javascript">
+    window.analytics = {};
+    window.analytics.track = function(event, props) { console.log('off.track', event, props); }
+  </script>   
+ </body>
+</html>

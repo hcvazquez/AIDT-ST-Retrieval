@@ -1,0 +1,641 @@
+<!doctype html>
+<!--[if IE 7]>
+<html class="ie ie7" lang="en-US">
+<![endif]-->
+<!--[if IE 8]>
+<html class="ie ie8" lang="en-US">
+<![endif]-->
+<!--[if !(IE 7) | !(IE 8) ]><!-->
+<html lang="en-US">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width"> 
+  <title>Server Side Language Detection with Google Language API | Routing Life</title> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://blog.lodeblomme.be/xmlrpc.php"> 
+  <!--[if lt IE 9]>
+	<script src="http://blog.lodeblomme.be/wp-content/themes/twentyfourteen/js/html5.js"></script>
+	<![endif]--> 
+  <!-- All in One SEO Pack 2.2.7.2 by Michael Torbert of Semper Fi Web Design[298,375] --> 
+  <meta name="description" content="Yesterday Google announced a new AJAX API for translation and language detection. It's a Javascript API to translate and detect the language of blocks of text"> 
+  <!-- /all in one seo pack --> 
+  <link rel="alternate" type="application/rss+xml" title="Routing Life » Feed" href="http://blog.lodeblomme.be/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Routing Life » Comments Feed" href="http://blog.lodeblomme.be/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Routing Life » Server Side Language Detection with Google Language API Comments Feed" href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/feed/"> 
+  <!-- This site is powered by Shareaholic - https://shareaholic.com --> 
+  <script type="text/javascript" data-cfasync="false">
+  //<![CDATA[
+    _SHR_SETTINGS = {"endpoints":{"local_recs_url":"http:\/\/blog.lodeblomme.be\/wp-admin\/admin-ajax.php?action=shareaholic_permalink_related","share_counts_url":"http:\/\/blog.lodeblomme.be\/wp-admin\/admin-ajax.php?action=shareaholic_share_counts_api"}};
+  //]]>
+</script> 
+  <script type="text/javascript" src="//dsms0mj1bbhn4.cloudfront.net/assets/pub/shareaholic.js" data-shr-siteid="03a4ca5817122ad24b9958a6a792987e" data-cfasync="false" async>
+</script> 
+  <!-- Shareaholic Content Tags --> 
+  <meta name="shareaholic:site_name" content="Routing Life"> 
+  <meta name="shareaholic:language" content="en-US"> 
+  <meta name="shareaholic:url" content="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/"> 
+  <meta name="shareaholic:keywords" content="ajax, firebug, google, languages, php, web services, zend framework, software development"> 
+  <meta name="shareaholic:article_published_time" content="2008-03-21T16:35:06+00:00"> 
+  <meta name="shareaholic:article_modified_time" content="2015-10-27T08:13:57+00:00"> 
+  <meta name="shareaholic:shareable_page" content="true"> 
+  <meta name="shareaholic:article_author_name" content="Lode"> 
+  <meta name="shareaholic:site_id" content="03a4ca5817122ad24b9958a6a792987e"> 
+  <meta name="shareaholic:wp_version" content="7.6.0.1"> 
+  <!-- Shareaholic Content Tags End --> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"http:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/blog.lodeblomme.be\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.3.12"}};
+			!function(a,b,c){function d(a){var c=b.createElement("canvas"),d=c.getContext&&c.getContext("2d");return d&&d.fillText?(d.textBaseline="top",d.font="600 32px Arial","flag"===a?(d.fillText(String.fromCharCode(55356,56812,55356,56807),0,0),c.toDataURL().length>3e3):(d.fillText(String.fromCharCode(55357,56835),0,0),0!==d.getImageData(16,16,1,1).data[0])):!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g;c.supports={simple:d("simple"),flag:d("flag")},c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.simple&&c.supports.flag||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="twentyfourteen-lato-css" href="//fonts.googleapis.com/css?family=Lato%3A300%2C400%2C700%2C900%2C300italic%2C400italic%2C700italic" type="text/css" media="all"> 
+  <link rel="stylesheet" id="genericons-css" href="http://blog.lodeblomme.be/wp-content/themes/twentyfourteen/genericons/genericons.css?ver=3.0.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="twentyfourteen-style-css" href="http://blog.lodeblomme.be/wp-content/themes/twentyfourteen/style.css?ver=4.3.12" type="text/css" media="all"> 
+  <!--[if lt IE 9]>
+<link rel='stylesheet' id='twentyfourteen-ie-css'  href='http://blog.lodeblomme.be/wp-content/themes/twentyfourteen/css/ie.css?ver=20131205' type='text/css' media='all' />
+<![endif]--> 
+  <link rel="stylesheet" id="codebox-css" href="http://blog.lodeblomme.be/wp-content/plugins/wp-codebox/css/codebox.css?ver=0.1" type="text/css" media="screen"> 
+  <script type="text/javascript" src="http://blog.lodeblomme.be/wp-includes/js/jquery/jquery.js?ver=1.11.3"></script> 
+  <script type="text/javascript" src="http://blog.lodeblomme.be/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1"></script> 
+  <script type="text/javascript" src="http://blog.lodeblomme.be/wp-content/plugins/wp-codebox/js/codebox.js?ver=0.1"></script> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://blog.lodeblomme.be/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://blog.lodeblomme.be/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Move a PostgreSQL database to a different tablespace" href="http://blog.lodeblomme.be/2008/03/15/move-a-postgresql-database-to-a-different-tablespace/"> 
+  <link rel="next" title="Install VMware Server on Ubuntu 8.04 (Hardy Heron)" href="http://blog.lodeblomme.be/2008/07/31/install-vmware-server-on-ubuntu-804-hardy-heron/"> 
+  <meta name="generator" content="WordPress 4.3.12"> 
+  <link rel="canonical" href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/"> 
+  <link rel="shortlink" href="http://blog.lodeblomme.be/?p=6"> 
+  <script type="text/javascript">var zoomImagesBase = 'wp-content/plugins/wp-fancyzoom/';</script> 
+  <script src="wp-content/plugins/wp-fancyzoom/js-global/FancyZoom.js" type="text/javascript"></script> 
+  <script src="wp-content/plugins/wp-fancyzoom/js-global/FancyZoomHTML.js" type="text/javascript"></script> 
+  <script src="wp-content/plugins/wp-fancyzoom/adddomloadevent.js" type="text/javascript"></script> 
+  <script type="text/javascript">addDOMLoadEvent(setupZoom);</script> 
+  <style type="text/css" id="custom-background-css">
+body.custom-background { background-color: #f4da84; background-image: url('http://blog.lodeblomme.be/wp-content/uploads/2013/12/Gent_3torens.jpg'); background-repeat: no-repeat; background-position: top center; background-attachment: fixed; }
+</style> 
+ </head> 
+ <body class="single single-post postid-6 single-format-standard custom-background header-image singular"> 
+  <div id="page" class="hfeed site"> 
+   <div id="site-header"> 
+    <a href="http://blog.lodeblomme.be/" rel="home"> <img src="http://blog.lodeblomme.be/wp-content/uploads/2013/12/cropped-Gent_3torens1.jpg" width="1260" height="257" alt=""> </a> 
+   </div> 
+   <header id="masthead" class="site-header" role="banner"> 
+    <div class="header-main"> 
+     <h1 class="site-title"><a href="http://blog.lodeblomme.be/" rel="home">Routing Life</a></h1> 
+     <div class="search-toggle"> 
+      <a href="#search-container" class="screen-reader-text">Search</a> 
+     </div> 
+     <nav id="primary-navigation" class="site-navigation primary-navigation" role="navigation"> 
+      <h1 class="menu-toggle">Primary Menu</h1> 
+      <a class="screen-reader-text skip-link" href="#content">Skip to content</a> 
+      <div class="nav-menu">
+       <ul>
+        <li class="page_item page-item-2"><a href="http://blog.lodeblomme.be/about/">About</a></li>
+       </ul>
+      </div> 
+     </nav> 
+    </div> 
+    <div id="search-container" class="search-box-wrapper hide"> 
+     <div class="search-box"> 
+      <form role="search" method="get" class="search-form" action="http://blog.lodeblomme.be/"> 
+       <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s" title="Search for:"> </label> 
+       <input type="submit" class="search-submit" value="Search"> 
+      </form> 
+     </div> 
+    </div> 
+   </header>
+   <!-- #masthead --> 
+   <div id="main" class="site-main"> 
+    <div id="primary" class="content-area"> 
+     <div id="content" class="site-content" role="main"> 
+      <article id="post-6" class="post-6 post type-post status-publish format-standard hentry category-software-development tag-ajax tag-firebug tag-google tag-languages tag-php tag-web-services tag-zend-framework"> 
+       <header class="entry-header"> 
+        <div class="entry-meta"> 
+         <span class="cat-links"><a href="http://blog.lodeblomme.be/category/software-development/" rel="category tag">Software Development</a></span> 
+        </div> 
+        <h1 class="entry-title">Server Side Language Detection with Google Language API</h1> 
+        <div class="entry-meta"> 
+         <span class="entry-date"><a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/" rel="bookmark"><time class="entry-date" datetime="2008-03-21T18:35:06+00:00">March 21, 2008</time></a></span> 
+         <span class="byline"><span class="author vcard"><a class="url fn n" href="http://blog.lodeblomme.be/author/lode/" rel="author">Lode</a></span></span> 
+         <span class="comments-link"><a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/#comments">9 Comments</a></span> 
+        </div>
+        <!-- .entry-meta --> 
+       </header>
+       <!-- .entry-header --> 
+       <div class="entry-content"> 
+        <p>Yesterday Google <a href="http://googleblog.blogspot.com/2008/03/new-google-ajax-language-api-tools-for.html" title="New Google AJAX Language API - Tools for translation and language detection" target="_blank">announced</a> a new <a href="http://code.google.com/apis/ajaxlanguage/" target="_blank" title="Google AJAX Language API">AJAX API for translation and language detection</a>. It’s a Javascript API to translate and detect the language of blocks of text within a webpage. But I need server side language detection of a text using PHP and the Google AJAX Language API.<span id="more-6"></span></p> 
+        <h1>Step 1 : Find Out Internal Working</h1> 
+        <p>You can test the language detection in <a href="http://googleblog.blogspot.com/2008/03/new-google-ajax-language-api-tools-for.html" title="The Official Google Blog" target="_blank">the announcement post on The Official Google Blog</a>. So I did, and I took my friend <a href="http://www.getfirebug.com/" title="Monitor network activity with FireBug" target="_blank">FireBug</a> with me. This revealed the URL from which the Javascript code requests the magic :</p> 
+        <div class="wp_codebox">
+         <table>
+          <tbody>
+           <tr id="p61">
+            <td class="line_numbers"><pre>1
+</pre></td>
+            <td class="code" id="p6code1"><pre class="html" style="font-family:monospace;">http://www.google.com/uds/GlangDetect?callback=google.language.callbacks.id102&amp;amp;context=22&amp;amp;q=this%20is%20a%20test%20of%20a%20language&amp;amp;key=internal&amp;amp;v=1.0</pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div> 
+        <p></p>
+        <div class="googmonify" style="margin:3px;text-align:center">
+         <script type="text/javascript"><!--
+google_ad_client = "pub-8608116421068200";google_ad_slot = "4300567051";google_ad_width = 468;google_ad_height = 60;
+//--></script>
+         <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+        </div>
+        <p></p> 
+        <p>A quick surf to that URL shows the response :</p> 
+        <div class="wp_codebox">
+         <table>
+          <tbody>
+           <tr id="p62">
+            <td class="line_numbers"><pre>1
+</pre></td>
+            <td class="code" id="p6code2"><pre class="javascript" style="font-family:monospace;">google.<span style="color: #660066;">language</span>.<span style="color: #660066;">callbacks</span>.<span style="color: #660066;">id102</span><span style="color: #009900;">(</span><span style="color: #3366CC;">'22'</span><span style="color: #339933;">,</span><span style="color: #009900;">{</span><span style="color: #3366CC;">"language"</span><span style="color: #339933;">:</span><span style="color: #3366CC;">"en"</span><span style="color: #339933;">,</span><span style="color: #3366CC;">"isReliable"</span><span style="color: #339933;">:</span><span style="color: #003366; font-weight: bold;">true</span><span style="color: #339933;">,</span><span style="color: #3366CC;">"confidence"</span><span style="color: #339933;">:</span><span style="color: #CC0000;">0.33399844</span><span style="color: #009900;">}</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">200</span><span style="color: #339933;">,</span> <span style="color: #003366; font-weight: bold;">null</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">200</span><span style="color: #009900;">)</span></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div> 
+        <p>Which is without any doubt <a href="http://ajaxian.com/archives/jsonp-json-with-padding" title="JSONP: JSON With Padding" target="_blank">JSONP</a>. It invokes a Javascript method “google.language.callbacks.id102”, passing 5 parameters to it.</p> 
+        <h1>Step 2 : Analyze</h1> 
+        <h2>Request</h2> 
+        <p>Lets analyze all parameters in the request URL :</p> 
+        <ul> 
+         <li><em>callback</em> : This is the name of the function that is called when the response is ready. It can be left-off.</li> 
+         <li><em>context</em> : No idea. It can be left-off.</li> 
+         <li><em>q</em> : The text you want to detect the language for. Is required (DUH!).</li> 
+         <li><em>key</em> : An API key. It can be left-off as it seems.</li> 
+         <li><em>v</em> : The API version. Is required.</li> 
+        </ul> 
+        <h2> Response</h2> 
+        <p>Like I said, the reponse is a call to the Javascript method “google.language.callbacks.id102”. It takes 5 parameters :</p> 
+        <ul> 
+         <li><em>22</em> : Same value as the context parameter in the request URL.</li> 
+         <li>A Javascript object with 3 properties : 
+          <ul> 
+           <li><em>language</em> : The ISO2 language code of the language detected by Google.</li> 
+           <li><em>isReliable</em> : Is the quess by Google reliable?</li> 
+           <li><em>confidence</em> : How confident is Google about the guess? I think it takes values from 0 to 1, 0 being least reliable and 1 being most reliable.</li> 
+          </ul> </li> 
+         <li><em>200</em> : No idea.</li> 
+         <li><em>null</em> : No idea.</li> 
+         <li><em>200</em> : Again, no idea.</li> 
+        </ul> 
+        <h1>Step 3 : Bend and Break</h1> 
+        <p>Now lets see what we need to do to make this work in PHP.</p> 
+        <p></p>
+        <div class="googmonify" style="margin:3px;text-align:center">
+         <script type="text/javascript"><!--
+google_ad_client = "pub-8608116421068200";google_ad_slot = "4300567051";google_ad_width = 468;google_ad_height = 60;
+//--></script>
+         <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js"></script>
+        </div>
+        <p></p> 
+        <h2>Dump Unknown Request Parameters</h2> 
+        <p>Don’t use magic you don’t understand, so I dump the request parameters “context” and “key”. The result doesn’t seem to change when leaving these off.</p> 
+        <h2>No JSONP</h2> 
+        <p>Since I’m going to use PHP to request the language detection, I won’t be needing the callback parameter. So I dump that one too. The result is nice :</p> 
+        <div class="wp_codebox">
+         <table>
+          <tbody>
+           <tr id="p63">
+            <td class="line_numbers"><pre>1
+</pre></td>
+            <td class="code" id="p6code3"><pre class="javascript" style="font-family:monospace;"><span style="color: #009900;">{</span><span style="color: #3366CC;">"responseData"</span><span style="color: #339933;">:</span> <span style="color: #009900;">{</span><span style="color: #3366CC;">"language"</span><span style="color: #339933;">:</span><span style="color: #3366CC;">"en"</span><span style="color: #339933;">,</span><span style="color: #3366CC;">"isReliable"</span><span style="color: #339933;">:</span><span style="color: #003366; font-weight: bold;">true</span><span style="color: #339933;">,</span><span style="color: #3366CC;">"confidence"</span><span style="color: #339933;">:</span><span style="color: #CC0000;">0.33399844</span><span style="color: #009900;">}</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"responseDetails"</span><span style="color: #339933;">:</span> <span style="color: #003366; font-weight: bold;">null</span><span style="color: #339933;">,</span> <span style="color: #3366CC;">"responseStatus"</span><span style="color: #339933;">:</span> <span style="color: #CC0000;">200</span><span style="color: #009900;">}</span></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div> 
+        <p>The 5 response parameters passed to the callback function are replaced by one Javascript object. At once, another useful response parameter becomes available : responseStatus. I guess it indicates if the request was successful. Just like the <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html#sec10.2.1" title="HTTP Status Code Definitions" target="_blank">HTTP Code 200 OK</a>.</p> 
+        <h1>Step 4 : Mix it with PHP</h1> 
+        <p>The final step is to mix what I have learned into a simple PHP class :</p> 
+        <div class="wp_codebox">
+         <table>
+          <tbody>
+           <tr id="p64">
+            <td class="line_numbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td>
+            <td class="code" id="p6code4"><pre class="php" style="font-family:monospace;"><span style="color: #000000; font-weight: bold;">&lt;?php</span>
+&nbsp;
+<span style="color: #000000; font-weight: bold;">class</span> Google_Language_Detection <span style="color: #009900;">{</span>
+    <span style="color: #000000; font-weight: bold;">const</span> URL <span style="color: #339933;">=</span> <span style="color: #0000ff;">'http://www.google.com/uds/GlangDetect?v=1.0&amp;q='</span><span style="color: #339933;">;</span>
+&nbsp;
+    <span style="color: #000000; font-weight: bold;">public</span> static <span style="color: #000000; font-weight: bold;">function</span> detect<span style="color: #009900;">(</span><span style="color: #000088;">$text</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+        <span style="color: #000088;">$url</span> <span style="color: #339933;">=</span> <span style="color: #000000; font-weight: bold;">self</span><span style="color: #339933;">::</span><span style="color: #004000;">URL</span> <span style="color: #339933;">.</span> <span style="color: #990000;">urlencode</span><span style="color: #009900;">(</span><span style="color: #000088;">$text</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+        <span style="color: #000088;">$response</span> <span style="color: #339933;">=</span> Zend_Json<span style="color: #339933;">::</span><span style="color: #004000;">decode</span><span style="color: #009900;">(</span><span style="color: #990000;">file_get_contents</span><span style="color: #009900;">(</span><span style="color: #000088;">$url</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+&nbsp;
+        <span style="color: #b1b100;">if</span> <span style="color: #009900;">(</span><span style="color: #000088;">$response</span><span style="color: #009900;">[</span><span style="color: #0000ff;">'responseStatus'</span><span style="color: #009900;">]</span> <span style="color: #339933;">==</span> <span style="color: #cc66cc;">200</span><span style="color: #009900;">)</span>
+            <span style="color: #b1b100;">return</span> <span style="color: #000088;">$response</span><span style="color: #009900;">[</span><span style="color: #0000ff;">'responseData'</span><span style="color: #009900;">]</span><span style="color: #339933;">;</span>
+        <span style="color: #b1b100;">else</span>
+            <span style="color: #b1b100;">return</span> <span style="color: #009900; font-weight: bold;">false</span><span style="color: #339933;">;</span>
+    <span style="color: #009900;">}</span>
+<span style="color: #009900;">}</span>
+&nbsp;
+<span style="color: #000000; font-weight: bold;">?&gt;</span></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div> 
+        <p>Notice that I use <a href="http://framework.zend.com/" title="Zend Framework" target="_blank">Zend Framework</a> to decode the JSON from the response into a native PHP associative array.</p> 
+        <div class="shareaholic-canvas" data-app-id="7998729" data-app="share_buttons" data-title="Server Side Language Detection with Google Language API" data-link="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/" data-summary=""></div>
+        <div class="shareaholic-canvas" data-app-id="7998737" data-app="recommendations" data-title="Server Side Language Detection with Google Language API" data-link="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/" data-summary=""></div> 
+       </div>
+       <!-- .entry-content --> 
+       <footer class="entry-meta">
+        <span class="tag-links"><a href="http://blog.lodeblomme.be/tag/ajax/" rel="tag">AJAX</a><a href="http://blog.lodeblomme.be/tag/firebug/" rel="tag">FireBug</a><a href="http://blog.lodeblomme.be/tag/google/" rel="tag">Google</a><a href="http://blog.lodeblomme.be/tag/languages/" rel="tag">Languages</a><a href="http://blog.lodeblomme.be/tag/php/" rel="tag">PHP</a><a href="http://blog.lodeblomme.be/tag/web-services/" rel="tag">Web Services</a><a href="http://blog.lodeblomme.be/tag/zend-framework/" rel="tag">Zend Framework</a></span>
+       </footer>
+      </article>
+      <!-- #post-## --> 
+      <nav class="navigation post-navigation" role="navigation"> 
+       <h1 class="screen-reader-text">Post navigation</h1> 
+       <div class="nav-links"> 
+        <a href="http://blog.lodeblomme.be/2008/03/15/move-a-postgresql-database-to-a-different-tablespace/" rel="prev"><span class="meta-nav">Previous Post</span>Move a PostgreSQL database to a different tablespace</a>
+        <a href="http://blog.lodeblomme.be/2008/07/31/install-vmware-server-on-ubuntu-804-hardy-heron/" rel="next"><span class="meta-nav">Next Post</span>Install VMware Server on Ubuntu 8.04 (Hardy Heron)</a> 
+       </div>
+       <!-- .nav-links --> 
+      </nav>
+      <!-- .navigation --> 
+      <div id="comments" class="comments-area"> 
+       <h2 class="comments-title"> 9 thoughts on “Server Side Language Detection with Google Language API” </h2> 
+       <ol class="comment-list"> 
+        <li id="comment-10" class="comment even thread-even depth-1"> 
+         <article id="div-comment-10" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://2.gravatar.com/avatar/b169a0c596d4487367079ebe26590977?s=34&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/b169a0c596d4487367079ebe26590977?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn"><a href="http://kweiner.blogspot.com" rel="external nofollow" class="url">Ken Weiner</a></b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-10"> <time datetime="2008-04-20T09:01:05+00:00"> April 20, 2008 at 9:01 am </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Thank you so much for posting this! I have been looking all over for a server-side way of detecting the language of a piece of text. I am going to try porting your idea to Ruby or Java.</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-25" class="comment odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-25" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://2.gravatar.com/avatar/86305ae26b75fe4da52ca4d7fb14bb8e?s=34&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/86305ae26b75fe4da52ca4d7fb14bb8e?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn">Erik</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-25"> <time datetime="2008-11-13T01:48:48+00:00"> November 13, 2008 at 1:48 am </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Wow! Awesome stuff. I was wondering if you have any spare time to help guide me to get this working on my site?</p> 
+           <p>Erik<br> Chess.com<br> chessdev[4t}gmail,com</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-159" class="comment even thread-even depth-1"> 
+         <article id="div-comment-159" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://1.gravatar.com/avatar/4ac0e1ce3ad9cb2e6ce3363d40004b7c?s=34&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/4ac0e1ce3ad9cb2e6ce3363d40004b7c?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn"><a href="http://www.epispider.info" rel="external nofollow" class="url">Herman Tolentino</a></b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-159"> <time datetime="2009-10-06T03:02:40+00:00"> October 6, 2009 at 3:02 am </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Perfect! Thanks for posting this!</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-261" class="comment odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-261" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://0.gravatar.com/avatar/381d3fdddb50093d287617564c8fbb6b?s=34&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/381d3fdddb50093d287617564c8fbb6b?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn">Samuel</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-261"> <time datetime="2010-08-05T19:44:19+00:00"> August 5, 2010 at 7:44 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Thanks a lot, Lode. This still works like a charm.</p> 
+           <p>I changed the code, so there is no need for Zend Framework:<br> <code>function detect_language($text)<br> {<br> /* NOTE: Google is currently using version 1.0.<br> If this changes in the future, change the value of this<br> variable. Otherwise the URL will not work anymore. */<br> $version = '1.0';<br> $url = 'http://www.google.com/uds/GlangDetect?v='.$version.<br> '&amp;q='.urlencode($text);</code></p>
+           <code> <p> /* Get the (multidimensional) associative array from the JSON<br> NOTE: json_decode() requires PHP &gt;= 5.2.0 */<br> $response = json_decode(file_get_contents($url), true);</p> </code>
+           <p><code> if ($response['responseStatus'] == 200)<br> return $response['responseData']['language'];<br> else<br> return false;<br> }</code></p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-305" class="comment even thread-even depth-1"> 
+         <article id="div-comment-305" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://0.gravatar.com/avatar/fb8f14461d037d601087c32f9fa9fea5?s=34&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/fb8f14461d037d601087c32f9fa9fea5?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn"><a href="http://blog.tinisles.com" rel="external nofollow" class="url">Russ</a></b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-305"> <time datetime="2010-09-06T23:14:37+00:00"> September 6, 2010 at 11:14 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Have you tried this serverside recently? I just tried it and got a json message “Suspected Terms of Service Abuse”. If I really wanted to “abuse” this service I guess I could fake all the headers that the jsonp request would do… Would be nice if google provided a way to do this, they do it for their translation service: <a href="http://code.google.com/apis/ajaxlanguage/documentation/#fonje" rel="nofollow">http://code.google.com/apis/ajaxlanguage/documentation/#fonje</a></p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-409" class="pingback odd alt thread-odd thread-alt depth-1"> 
+         <div class="comment-body">
+           Pingback: 
+          <a href="http://www.quora.com/Which-open-libraries-exist-to-do-language-detection#ans179299" rel="external nofollow" class="url">Which open libraries exist to do language detection? - Quora</a> 
+         </div> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1182" class="comment even thread-even depth-1"> 
+         <article id="div-comment-1182" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://0.gravatar.com/avatar/0445bfc3e671c35b39d6036658c57a0e?s=34&amp;d=mm&amp;r=g" srcset="http://0.gravatar.com/avatar/0445bfc3e671c35b39d6036658c57a0e?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn">Ajith</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-1182"> <time datetime="2011-08-24T10:12:00+00:00"> August 24, 2011 at 10:12 am </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Wonderful stuff <img src="http://blog.lodeblomme.be/wp-includes/images/smilies/simple-smile.png" alt=":-)" class="wp-smiley" style="height: 1em; max-height: 1em;"></p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-1426" class="comment odd alt thread-odd thread-alt depth-1"> 
+         <article id="div-comment-1426" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://2.gravatar.com/avatar/28f4549742673d9be7cad597d77abfc1?s=34&amp;d=mm&amp;r=g" srcset="http://2.gravatar.com/avatar/28f4549742673d9be7cad597d77abfc1?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn">john</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-1426"> <time datetime="2011-10-17T12:16:09+00:00"> October 17, 2011 at 12:16 pm </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Hi Samuel,<br> Your function is working good except few languages that it doesn’t support(ar,ru and few more)<br> Do you have an idea why is that?<br> Thanks both of you for this feature, it will help me allot.</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+        <li id="comment-2051" class="comment even thread-even depth-1"> 
+         <article id="div-comment-2051" class="comment-body"> 
+          <footer class="comment-meta"> 
+           <div class="comment-author vcard"> 
+            <img alt="" src="http://1.gravatar.com/avatar/df1e8f0fac2e3dc450c84d0e9bb23d28?s=34&amp;d=mm&amp;r=g" srcset="http://1.gravatar.com/avatar/df1e8f0fac2e3dc450c84d0e9bb23d28?s=68&amp;d=mm&amp;r=g 2x" class="avatar avatar-34 photo" height="34" width="34"> 
+            <b class="fn">Laurynas</b> 
+            <span class="says">says:</span> 
+           </div>
+           <!-- .comment-author --> 
+           <div class="comment-metadata"> 
+            <a href="http://blog.lodeblomme.be/2008/03/21/server-side-language-detection-with-google-language-api/comment-page-1/#comment-2051"> <time datetime="2012-10-17T08:46:20+00:00"> October 17, 2012 at 8:46 am </time> </a> 
+           </div>
+           <!-- .comment-metadata --> 
+          </footer>
+          <!-- .comment-meta --> 
+          <div class="comment-content"> 
+           <p>Now when Google Translate API is paid service you can use altenative Detect Language API:<br> <a href="http://detectlanguage.com" rel="nofollow">http://detectlanguage.com</a></p> 
+           <p>It is compatible with Google Translate API</p> 
+          </div>
+          <!-- .comment-content --> 
+         </article>
+         <!-- .comment-body --> </li>
+        <!-- #comment-## --> 
+       </ol>
+       <!-- .comment-list --> 
+       <div id="respond" class="comment-respond"> 
+        <h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/2008/03/21/server-side-language-detection-with-google-language-api/#respond" style="display:none;">Cancel reply</a></small></h3> 
+        <form action="http://blog.lodeblomme.be/wp-comments-post.php" method="post" id="commentform" class="comment-form" novalidate> 
+         <p class="comment-notes"><span id="email-notes">Your email address will not be published.</span> Required fields are marked <span class="required">*</span></p> 
+         <p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" aria-required="true" required></p> 
+         <p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" type="email" value="" size="30" aria-describedby="email-notes" aria-required="true" required></p> 
+         <p class="comment-form-url"><label for="url">Website</label> <input id="url" name="url" type="url" value="" size="30"></p> 
+         <p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" aria-required="true" required></textarea></p> 
+         <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="6" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"> </p>
+         <p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="13808941f9"></p>
+         <p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="246"></p> 
+        </form> 
+       </div>
+       <!-- #respond --> 
+      </div>
+      <!-- #comments --> 
+     </div>
+     <!-- #content --> 
+    </div>
+    <!-- #primary --> 
+    <div id="content-sidebar" class="content-sidebar widget-area" role="complementary"> 
+     <aside id="tag_cloud-4" class="widget widget_tag_cloud">
+      <h1 class="widget-title">Tags</h1>
+      <div class="tagcloud">
+       <a href="http://blog.lodeblomme.be/tag/ajax/" class="tag-link-14" title="1 topic" style="font-size: 8pt;">AJAX</a> 
+       <a href="http://blog.lodeblomme.be/tag/algorithms/" class="tag-link-44" title="1 topic" style="font-size: 8pt;">Algorithms</a> 
+       <a href="http://blog.lodeblomme.be/tag/apache-cxf/" class="tag-link-46" title="1 topic" style="font-size: 8pt;">Apache CXF</a> 
+       <a href="http://blog.lodeblomme.be/tag/automation/" class="tag-link-6" title="1 topic" style="font-size: 8pt;">Automation</a> 
+       <a href="http://blog.lodeblomme.be/tag/business/" class="tag-link-57" title="1 topic" style="font-size: 8pt;">Business</a> 
+       <a href="http://blog.lodeblomme.be/tag/chrome/" class="tag-link-41" title="1 topic" style="font-size: 8pt;">Chrome</a> 
+       <a href="http://blog.lodeblomme.be/tag/cloud/" class="tag-link-62" title="1 topic" style="font-size: 8pt;">Cloud</a> 
+       <a href="http://blog.lodeblomme.be/tag/database/" class="tag-link-8" title="1 topic" style="font-size: 8pt;">Database</a> 
+       <a href="http://blog.lodeblomme.be/tag/disk/" class="tag-link-27" title="1 topic" style="font-size: 8pt;">Disk</a> 
+       <a href="http://blog.lodeblomme.be/tag/firebug/" class="tag-link-15" title="1 topic" style="font-size: 8pt;">FireBug</a> 
+       <a href="http://blog.lodeblomme.be/tag/force-com/" class="tag-link-54" title="1 topic" style="font-size: 8pt;">Force.com</a> 
+       <a href="http://blog.lodeblomme.be/tag/google/" class="tag-link-12" title="3 topics" style="font-size: 15.636363636364pt;">Google</a> 
+       <a href="http://blog.lodeblomme.be/tag/java/" class="tag-link-45" title="1 topic" style="font-size: 8pt;">Java</a> 
+       <a href="http://blog.lodeblomme.be/tag/javascript/" class="tag-link-42" title="1 topic" style="font-size: 8pt;">Javascript</a> 
+       <a href="http://blog.lodeblomme.be/tag/languages/" class="tag-link-16" title="1 topic" style="font-size: 8pt;">Languages</a> 
+       <a href="http://blog.lodeblomme.be/tag/licensing/" class="tag-link-40" title="1 topic" style="font-size: 8pt;">licensing</a> 
+       <a href="http://blog.lodeblomme.be/tag/linux/" class="tag-link-21" title="2 topics" style="font-size: 12.581818181818pt;">Linux</a> 
+       <a href="http://blog.lodeblomme.be/tag/memory-usage/" class="tag-link-37" title="2 topics" style="font-size: 12.581818181818pt;">memory usage</a> 
+       <a href="http://blog.lodeblomme.be/tag/openshift/" class="tag-link-59" title="1 topic" style="font-size: 8pt;">Openshift</a> 
+       <a href="http://blog.lodeblomme.be/tag/paas/" class="tag-link-56" title="1 topic" style="font-size: 8pt;">PaaS</a> 
+       <a href="http://blog.lodeblomme.be/tag/performance/" class="tag-link-26" title="2 topics" style="font-size: 12.581818181818pt;">Performance</a> 
+       <a href="http://blog.lodeblomme.be/tag/php/" class="tag-link-5" title="6 topics" style="font-size: 22pt;">PHP</a> 
+       <a href="http://blog.lodeblomme.be/tag/postgresql/" class="tag-link-4" title="1 topic" style="font-size: 8pt;">PostgreSQL</a> 
+       <a href="http://blog.lodeblomme.be/tag/process/" class="tag-link-58" title="1 topic" style="font-size: 8pt;">Process</a> 
+       <a href="http://blog.lodeblomme.be/tag/routing/" class="tag-link-43" title="1 topic" style="font-size: 8pt;">Routing</a> 
+       <a href="http://blog.lodeblomme.be/tag/saas/" class="tag-link-55" title="1 topic" style="font-size: 8pt;">SaaS</a> 
+       <a href="http://blog.lodeblomme.be/tag/salesforce/" class="tag-link-53" title="3 topics" style="font-size: 15.636363636364pt;">Salesforce</a> 
+       <a href="http://blog.lodeblomme.be/tag/salesforce-com/" class="tag-link-51" title="4 topics" style="font-size: 18.181818181818pt;">Salesforce.com</a> 
+       <a href="http://blog.lodeblomme.be/tag/sfdc/" class="tag-link-52" title="2 topics" style="font-size: 12.581818181818pt;">SFDC</a> 
+       <a href="http://blog.lodeblomme.be/tag/soap/" class="tag-link-33" title="1 topic" style="font-size: 8pt;">SOAP</a> 
+       <a href="http://blog.lodeblomme.be/tag/speed/" class="tag-link-36" title="1 topic" style="font-size: 8pt;">Speed</a> 
+       <a href="http://blog.lodeblomme.be/tag/storage-management/" class="tag-link-10" title="1 topic" style="font-size: 8pt;">Storage Management</a> 
+       <a href="http://blog.lodeblomme.be/tag/tablespaces/" class="tag-link-9" title="1 topic" style="font-size: 8pt;">Tablespaces</a> 
+       <a href="http://blog.lodeblomme.be/tag/ubuntu/" class="tag-link-22" title="3 topics" style="font-size: 15.636363636364pt;">Ubuntu</a> 
+       <a href="http://blog.lodeblomme.be/tag/ubuntu-hardy-heron/" class="tag-link-25" title="2 topics" style="font-size: 12.581818181818pt;">Ubuntu Hardy Heron</a> 
+       <a href="http://blog.lodeblomme.be/tag/virtualization/" class="tag-link-39" title="2 topics" style="font-size: 12.581818181818pt;">virtualization</a> 
+       <a href="http://blog.lodeblomme.be/tag/vmware/" class="tag-link-19" title="3 topics" style="font-size: 15.636363636364pt;">VMware</a> 
+       <a href="http://blog.lodeblomme.be/tag/vmware-server/" class="tag-link-20" title="2 topics" style="font-size: 12.581818181818pt;">VMware Server</a> 
+       <a href="http://blog.lodeblomme.be/tag/webmaster-tools/" class="tag-link-35" title="1 topic" style="font-size: 8pt;">Webmaster Tools</a> 
+       <a href="http://blog.lodeblomme.be/tag/web-services/" class="tag-link-13" title="3 topics" style="font-size: 15.636363636364pt;">Web Services</a> 
+       <a href="http://blog.lodeblomme.be/tag/windows/" class="tag-link-49" title="1 topic" style="font-size: 8pt;">Windows</a> 
+       <a href="http://blog.lodeblomme.be/tag/ws-security/" class="tag-link-47" title="1 topic" style="font-size: 8pt;">WS-Security</a> 
+       <a href="http://blog.lodeblomme.be/tag/wsdl/" class="tag-link-48" title="1 topic" style="font-size: 8pt;">WSDL</a> 
+       <a href="http://blog.lodeblomme.be/tag/xenserver/" class="tag-link-38" title="2 topics" style="font-size: 12.581818181818pt;">XenServer</a> 
+       <a href="http://blog.lodeblomme.be/tag/zend-framework/" class="tag-link-17" title="1 topic" style="font-size: 8pt;">Zend Framework</a>
+      </div> 
+     </aside> 
+     <aside id="recent-posts-6" class="widget widget_recent_entries"> 
+      <h1 class="widget-title">Recent Posts</h1> 
+      <ul> 
+       <li> <a href="http://blog.lodeblomme.be/2015/10/27/the-design-of-our-calendar/">The Design of our Calendar</a> </li> 
+       <li> <a href="http://blog.lodeblomme.be/2014/11/22/elasticsearch-on-openshift/">ElasticSearch on Openshift</a> </li> 
+       <li> <a href="http://blog.lodeblomme.be/2013/12/30/create-your-first-salesforce-app-for-the-salesforce-appexchange/">Create Your First Salesforce App for the Salesforce AppExchange</a> </li> 
+       <li> <a href="http://blog.lodeblomme.be/2013/12/30/php-foreach-loop/">PHP Foreach Loop</a> </li> 
+       <li> <a href="http://blog.lodeblomme.be/2013/02/19/salesforce-com-formula-to-count-weekdays-between-two-dates/">Salesforce.com Formula to Count Weekdays Between Two Dates</a> </li> 
+      </ul> 
+     </aside>
+    </div>
+    <!-- #content-sidebar --> 
+    <div id="secondary"> 
+     <h2 class="site-description">Making a career as a techie…</h2> 
+     <div id="primary-sidebar" class="primary-sidebar widget-area" role="complementary"> 
+      <aside id="search-4" class="widget widget_search">
+       <form role="search" method="get" class="search-form" action="http://blog.lodeblomme.be/"> 
+        <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s" title="Search for:"> </label> 
+        <input type="submit" class="search-submit" value="Search"> 
+       </form>
+      </aside>
+      <aside id="categories-4" class="widget widget_categories">
+       <h1 class="widget-title">Categories</h1> 
+       <ul> 
+        <li class="cat-item cat-item-50"><a href="http://blog.lodeblomme.be/category/cloud/">Cloud</a> (5) </li> 
+        <li class="cat-item cat-item-31"><a href="http://blog.lodeblomme.be/category/it-infrastructure/">IT Infrastructure</a> (5) </li> 
+        <li class="cat-item cat-item-30"><a href="http://blog.lodeblomme.be/category/software-development/">Software Development</a> (9) </li> 
+        <li class="cat-item cat-item-63"><a href="http://blog.lodeblomme.be/category/system-design/">System Design</a> (1) </li> 
+        <li class="cat-item cat-item-34"><a href="http://blog.lodeblomme.be/category/web/">Web</a> (3) </li> 
+       </ul> 
+      </aside> 
+     </div>
+     <!-- #primary-sidebar --> 
+    </div>
+    <!-- #secondary --> 
+   </div>
+   <!-- #main --> 
+   <footer id="colophon" class="site-footer" role="contentinfo"> 
+    <div class="site-info"> 
+     <a href="http://wordpress.org/">Proudly powered by WordPress</a> 
+    </div>
+    <!-- .site-info --> 
+   </footer>
+   <!-- #colophon --> 
+  </div>
+  <!-- #page --> 
+  <!-- Google Universal Analytics for WordPress v2.4.2 --> 
+  <script>
+
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+	ga('create', 'UA-3838659-1', 'auto');
+
+
+
+
+	ga('set', 'forceSSL', true);
+	ga('send', 'pageview');
+
+</script> 
+  <!-- Google Universal Analytics for WordPress v2.4.2 - https://wordpress.org/plugins/google-universal-analytics --> 
+  <script type="text/javascript">
+
+	jQuery(document).ready(function(e) {
+    jQuery('a').click(function(e) {
+		var $this = jQuery(this);
+      	var href = $this.prop('href').split('?')[0];
+		var ext = href.split('.').pop();
+		if ('xls,xlsx,doc,docx,ppt,pot,pptx,pdf,pub,txt,zip,rar,tar,7z,gz,exe,wma,mov,avi,wmv,wav,mp3,midi,csv,tsv,jar,psd,pdn,ai,pez,wwf,torrent,cbr'.split(',').indexOf(ext) !== -1) {		
+        ga('send', 'event', 'Download', ext, href);
+      }
+	  if (href.toLowerCase().indexOf('mailto:') === 0) {
+        ga('send', 'event', 'Mailto', href.substr(7));
+      }
+	  if (href.toLowerCase().indexOf('tel:') === 0) {
+        ga('send', 'event', 'Phone number', href.substr(4));
+      }
+      if ((this.protocol === 'http:' || this.protocol === 'https:') && this.hostname.indexOf(document.location.hostname) === -1) {
+        ga('send', 'event', 'Outbound', this.hostname, this.pathname);
+      }
+	});
+});
+
+</script> 
+  <script type="text/javascript" src="http://blog.lodeblomme.be/wp-content/plugins/akismet/_inc/form.js?ver=3.1.5"></script> 
+  <script type="text/javascript" src="http://blog.lodeblomme.be/wp-content/themes/twentyfourteen/js/functions.js?ver=20131209"></script>  
+ </body>
+</html>

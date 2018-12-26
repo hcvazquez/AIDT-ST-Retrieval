@@ -1,0 +1,2090 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title>Basic Input &amp; Output - Java Programming Tutorial</title> 
+  <link href="../css/programming_notes_v1.css" rel="stylesheet" type="text/css"> 
+  <script type="text/javascript" src="../scripts/programming_notes_v1.js"></script> 
+  <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+ </head> 
+ <body> 
+  <div id="wrap-outer"> 
+   <!-- header filled by JavaScript --> 
+   <div id="header" class="header-footer">
+    <p>&nbsp;</p>
+   </div> 
+   <div id="wrap-inner"> 
+    <div id="wrap-toc"> 
+     <h5>TABLE OF CONTENTS <a id="show-toc" href="#show-toc">(HIDE)</a></h5> 
+     <div id="toc"></div> 
+     <!-- for showing the "Table of Content" --> 
+    </div> 
+    <div id="content-header"> 
+     <h1>Java Programming Tutorial</h1> 
+     <h2>Basic Input &amp; Output (I/O)</h2> 
+    </div> 
+    <div id="content-main"> 
+     <p>Programming simple I/O operations is easy, which involves only a few classes and methods. You could do it by looking at a few samples. Programming efficient, portable I/O is <em>extremely</em> difficult, especially if you have to deal with different character sets. This explains why there are so many I/O packages (nine in JDK 1.7)!</p> 
+     <p>JDK has two sets of I/O packages:</p> 
+     <ol> 
+      <li>the Standard I/O (in package <code>java.io</code>), introduced since JDK 1.0 for stream-based I/O, and</li> 
+      <li>the New I/O (in packages <code>java.nio</code>), introduced in JDK 1.4, for more efficient buffer-based I/O.</li> 
+     </ol> 
+     <p>JDK 1.5 introduces the <em>formatted text-I/O</em> via new classes <code>java.util.Scanner</code> and <code>Formatter</code>, and C-like <code>printf()</code> and <code>format()</code> methods for formatted output using format specifiers.</p> 
+     <p> JDK 1.7 enhances supports for file I/O via the so-called NIO.2 (non-blocking I/O) in new package <code>java.nio.file</code> and its auxiliary packages. It also introduces a new <code>try</code>-with-resources syntax to simplify the coding of <code>close()</code> method.</p> 
+     <h3>File and Directory</h3> 
+     <h4>Class <code>java.io.File</code> (Pre-JDK 7)</h4> 
+     <p>The class <code>java.io.File</code> can represent either a <em>file</em> or a <em>directory</em>. [JDK 1.7 introduces a more versatile <code>java.nio.file.Path</code>, which overcomes many limitations of <code>java.io.File</code>.]</p> 
+     <p>A <em>path string</em> is used to locate a <em>file</em> or a <em>directory</em>. Unfortunately, path strings are system dependent, e.g., "<code>c:\myproject\java\Hello.java</code>" in Windows or "<code>/myproject/java/Hello.java</code>" in Unix/Mac.</p> 
+     <ul> 
+      <li>Windows use back-slash <code>'\'</code> as the <em>directory separator</em>; while Unixes/Mac use forward-slash <code>'/'</code>.</li> 
+      <li>Windows use semi-colon <code>';'</code> as <em>path separator</em> to separate a list of paths; while Unixes/Mac use colon <code>':'</code>.</li> 
+      <li>Windows use "<code>\r\n</code>" as <em>line delimiter</em> for text file; while Unixes use "<code>\n</code>" and Mac uses "<code>\r</code>".</li> 
+      <li>The "<code>c:\</code>" or "<code>\</code>" is called the <em>root</em>. Windows supports multiple roots, each maps to a drive (e.g., "<code>c:\</code>", "<code>d:\</code>"). Unixes/Mac has a single root ("<code>\</code>").</li> 
+     </ul> 
+     <p> A path could be <em>absolute</em> (beginning from the root) or <em>relative</em> (which is relative to a reference directory). Special notations "<code>.</code>" and "<code>..</code>" denote the current directory and the parent directory, respectively.</p> 
+     <p>The <code>java.io.File</code> class maintains these system-dependent properties, for you to write programs that are portable:</p> 
+     <ul> 
+      <li><em>Directory Separator</em>: in <code>static</code> fields <code>File.separator</code> (as <code>String</code>) and <code>File.separatorChar</code>. [They failed to follow the Java naming convention for constants adopted since JDK 1.2.] As mentioned, Windows use backslash <code>'\'</code>; while Unixes/Mac use forward slash <code>'/'</code>.</li> 
+      <li><em>Path Separator</em>: in <code>static</code> fields <code>File.pathSeparator</code> (as <code>String</code>) and <code>File.pathSeparatorChar</code>. As mentioned, Windows use semi-colon <code>';'</code> to separate a list of paths; while Unixes/Mac use colon <code>':'</code>.</li> 
+     </ul> 
+     <p>You can construct a <code>File</code> instance with a path string or URI, as follows. Take note that the physical file/directory may or may not exist. A file URL takes the form of <code>file://...</code>, e.g., <code>file:///d:/docs/programming/java/test.html</code>.</p> 
+     <pre class="color-syntax">
+public <strong>File</strong>(String <em>pathString</em>)
+public <strong>File</strong>(String <em>parent</em>, String <em>child</em>)
+public <strong>File</strong>(File <em>parent</em>, String <em>child</em>)
+<span class="color-comment">// Constructs a File instance based on the given path string.
+</span>  
+public <strong>File</strong>(URI <em>uri</em>)
+<span class="color-comment">// Constructs a File instance by converting from the given file-URI "file://...."</span></pre> 
+     <p>For examples,</p> 
+     <pre class="color-example">
+File file = new File("in.txt");     <span class="color-comment">// A file relative to the current working directory</span>
+File file = new File("d:\\myproject\\java\\Hello.java");  <span class="color-comment">// A file with absolute path</span>
+File dir  = new File("c:\\temp");   <span class="color-comment">// A directory</span></pre> 
+     <p>For applications that you intend to distribute as JAR files, you should use the <code>URL</code> class to reference the resources, as it can reference disk files as well as JAR'ed files , for example,</p> 
+     <pre class="color-example">
+java.net.URL url = this.getClass().getResource("icon.png");</pre> 
+     <h5>Verifying Properties of a File/Directory</h5> 
+     <pre class="color-syntax">
+public boolean <strong>exists</strong>()       <span class="color-comment">// Tests if this file/directory exists.</span>
+public long <strong>length</strong>()          <span class="color-comment">// Returns the length of this file.</span>
+public boolean <strong>isDirectory</strong>()  <span class="color-comment">// Tests if this instance is a directory.</span>
+public boolean <strong>isFile</strong>()       <span class="color-comment">// Tests if this instance is a file.</span>
+public boolean <strong>canRead</strong>()      <span class="color-comment">// Tests if this file is readable.</span>
+public boolean <strong>canWrite</strong>()     <span class="color-comment">// Tests if this file is writable.</span>
+public boolean <strong>delete</strong>()       <span class="color-comment">// Deletes this file/directory.</span>
+public void <strong>deleteOnExit</strong>()    <span class="color-comment">// Deletes this file/directory when the program terminates.</span>
+public boolean <strong>renameTo</strong>(File <em>dest</em>) <span class="color-comment">// Renames this file.</span>
+public boolean <strong>mkdir</strong>()        <span class="color-comment">// Makes (Creates) this directory.</span></pre> 
+     <h5>List Directory</h5> 
+     <p>For a directory, you can use the following methods to list its contents:</p> 
+     <pre class="color-syntax">
+public String[] <strong>list</strong>()     <span class="color-comment">// List the contents of this directory in a String-array</span>
+public File[] <strong>listFiles</strong>()  <span class="color-comment">// List the contents of this directory in a File-array</span></pre> 
+     <p><strong>Example:</strong> The following program recursively lists the contents of a given directory (similar to Unix's <code>"ls -r"</code> command).</p> 
+     <pre class="color-example">
+<span class="color-comment">// Recursively list the contents of a directory (Unix's "ls -r" command).</span>
+import java.io.File;
+public class <strong>ListDirectoryRecusive</strong> {
+   public static void main(String[] args) {
+      File dir = new File("d:\\myproject\\test");  <span class="color-comment">// Escape sequence needed for '\'</span>
+      listRecursive(dir);
+   }
+   
+   public static void listRecursive(File dir) {
+      if (dir.isDirectory()) {
+         File[] items = dir.listFiles();
+         for (File item : items) {
+            System.out.println(item.getAbsoluteFile());
+            if (item.isDirectory()) listRecursive(item);  <span class="color-comment">// Recursive call</span>
+         }
+      }
+   }
+}</pre> 
+     <h5>(Advanced) List Directory with Filter</h5> 
+     <p>You can apply a filter to <code>list()</code> and <code>listFiles()</code>, to list only files that meet a certain criteria.</p> 
+     <pre class="color-syntax">
+public String[] <strong>list</strong>(FilenameFilter <em>filter</em>)
+public File[] <strong>listFiles</strong>(FilenameFilter <em>filter</em>)
+public File[] <strong>listFiles</strong>(FileFilter <em>filter</em>)</pre> 
+     <p>The <code>interface</code> <code>java.io.FilenameFilter</code> declares one <code>abstract</code> method:</p> 
+     <pre class="color-syntax">
+public boolean <strong>accept</strong>(File <em>dirName</em>, String <em>fileName</em>)
+</pre> 
+     <p>The <code>list()</code> and <code>listFiles()</code> methods does a <em>call-back</em> to <code>accept()</code> for each of the file/sub-directory produced. You can program your filtering criteria in <code>accept()</code>. Those files/sub-directories that result in a <code>false</code> return will be excluded.</p> 
+     <p><strong>Example</strong>: The following program lists only files that meet a certain filtering criteria.</p> 
+     <pre class="color-example">
+<span class="color-comment">// List files that end with ".java"</span>
+import java.io.File;
+import java.io.FilenameFilter;
+public class <strong>ListDirectoryWithFilter</strong> {
+   public static void main(String[] args) {
+      File dir = new File(".");   <span class="color-comment">// current working directory</span>
+      if (dir.isDirectory()) {
+         <span class="color-comment">// List only files that meet the filtering criteria
+         //  programmed in accept() method of FilenameFilter.</span>
+         String[] files = dir.list(<strong>new FilenameFilter() {
+            public boolean accept(File dir, String file) {
+               return file.endsWith(".java");
+            }
+         }</strong>);  <span class="color-comment">// an anonymous inner class as FilenameFilter</span>
+         for (String file : files) {
+            System.out.println(file);
+         }
+      }
+   }
+}</pre> 
+     <h4>Class <code>java.nio.file.Path</code> (JDK 7)</h4> 
+     <p>Read "<a href="#jdk7io">File I/O in JDK 1.7</a>".</p> 
+     <h3>Stream I/O in Standard I/O (<span class="font-code">java.io</span> Package)</h3> 
+     <p>Programs read inputs from data sources (e.g., keyboard, file, network, memory buffer, or another program) and write outputs to data sinks (e.g., display console, file, network, memory buffer, or another program). In Java standard I/O, inputs and outputs are handled by the so-called <em>streams</em>. A <em>stream</em> is a sequential and contiguous one-way flow of data (just like water or oil flows through the pipe). It is important to mention that Java does not differentiate between the various types of data sources or sinks (e.g., file or network) in stream I/O. They are all treated as a sequential flow of data. Input and output streams can be established from/to any data source/sink, such as files, network, keyboard/console or another program. The Java program receives data from a source by opening an input stream, and sends data to a sink by opening an output stream. All Java I/O streams are one-way (except the <code>RandomAccessFile</code>, which will be discussed later). If your program needs to perform both input and output, you have to open two streams - an input stream and an output stream. </p> 
+     <p>Stream I/O operations involve three steps:</p> 
+     <ol> 
+      <li><em>Open</em> an input/output stream associated with a physical device (e.g., file, network, console/keyboard), by constructing an appropriate I/O stream instance.</li> 
+      <li><em>Read</em> from the opened input stream until "end-of-stream" encountered, or <em>write</em> to the opened output stream (and optionally flush the buffered output).</li> 
+      <li><em>Close</em> the input/output stream.</li> 
+     </ol> 
+     <p>Java's I/O operations is more complicated than C/C++ to support internationalization (i18n). Java internally stores characters (<code>char</code> type) in 16-bit UCS-2 character set. But the external data source/sink could store characters in other character set (e.g., US-ASCII, ISO-8859-x, UTF-8, UTF-16, and many others), in fixed length of 8-bit or 16-bit, or in variable length of 1 to 4 bytes. [Read "<a href="DataRepresentation.html#charencoding">Character Sets and Encoding Schemes</a>"]. As a consequence, Java needs to differentiate between byte-based I/O for processing <em>raw bytes</em> or <em>binary data</em>, and character-based I/O for processing <em>texts</em> made up of characters.</p> 
+     <img class="image-center" src="images/IO_StreamVsCharacter.png" alt="IO_StreamVsCharacter.png"> 
+     <h3>Byte-Based I/O &amp; Byte Streams</h3> 
+     <img class="image-center" src="images/IO_InputOutputStreams.png" alt="IO_InputOutputStreams.png"> 
+     <p>Byte streams are used to read/write <em>raw bytes</em> serially from/to an external device. All the byte streams are derived from the <code>abstract</code> superclasses <code>InputStream</code> and <code>OutputStream</code>, as illustrated in the class diagram.</p> 
+     <h4>Reading from an <span class="font-code">InputStream</span></h4> 
+     <p>The <code>abstract</code> superclass <code>InputStream</code> declares an <code>abstract</code> method <code>read()</code> to read one data-byte from the input source:</p> 
+     <pre class="color-syntax">
+public abstract int <strong>read</strong>() throws IOException</pre> 
+     <p> The <code>read()</code> method:</p> 
+     <ul> 
+      <li>returns the input byte read as an <code>int</code> in the range of 0 to 255, or</li> 
+      <li>returns -1 if "end of stream" condition is detected, or</li> 
+      <li>throws an <code>IOException</code> if it encounters an I/O error.</li> 
+     </ul> 
+     <p>The <code>read()</code> method returns an <code>int</code> instead of a <code>byte</code>, because it uses -1 to indicate end-of-stream.</p> 
+     <p>The <code>read()</code> method <em>blocks</em> until a byte is available, an I/O error occurs, or the "end-of-stream" is detected. The term "<em>block</em>" means that the method (and the program) will be suspended. The program will resume only when the method returns.</p> 
+     <p>Two variations of <code>read()</code> methods are implemented in the <code>InputStream</code> for reading a block of bytes into a byte-array. It returns the number of bytes read, or -1 if "end-of-stream" encounters.</p> 
+     <pre class="color-syntax">public int <strong>read</strong>(byte[] <em>bytes</em>, int <em>offset</em>, int <em>length</em>) throws IOException
+<span class="color-comment">// Read "<em>length</em>" number of bytes, store in <em>bytes</em> array starting from offset of <em>index</em>.
+</span>public int <strong>read</strong>(byte[] <em>bytes</em>) throws IOException
+<span class="color-comment">// Same as read(<em>bytes</em>, 0, <em>bytes</em>.length)</span></pre> 
+     <h4>Writing to an <span class="font-code">OutputStream</span></h4> 
+     <p>Similar to the input counterpart, the <code>abstract</code> superclass <code>OutputStream</code> declares an abstract method <code>write()</code> to write a data-byte to the output sink. <code>write()</code> takes an <code>int</code>. The least-significant byte of the <code>int</code> argument is written out; the upper 3 bytes are discarded. It throws an <code>IOException</code> if I/O error occurs (e.g., output stream has been closed).</p> 
+     <pre class="color-syntax">
+public void abstract void <strong>write</strong>(int <em>unsignedByte</em>) throws IOException</pre> 
+     <p>Similar to the <code>read()</code>, two variations of the <code>write()</code> method to write a block of bytes from a byte-array are implemented:</p> 
+     <pre class="color-syntax">
+public void <strong>write</strong>(byte[] <em>bytes</em>, int <em>offset</em>, int <em>length</em>) throws IOException
+<span class="color-comment">// Write "<em>length</em>" number of bytes, from the <em>bytes</em> array starting from offset of <em>index</em>.
+</span>public void <strong>write</strong>(byte[] <em>bytes</em>) throws IOException
+<span class="color-comment">// Same as write(<em>bytes</em>, 0, <em>bytes</em>.length)</span></pre> 
+     <h4>Opening &amp; Closing I/O Streams</h4> 
+     <p>You <em>open</em> an I/O stream by constructing an instance of the stream. Both the <code>InputStream</code> and the <code>OutputStream</code> provides a <code>close()</code> method to close the stream, which performs the necessary clean-up operations to free up the system resources.</p> 
+     <pre class="color-syntax">
+public void <strong>close</strong>() throws IOException  <span class="color-comment">// close this Stream</span></pre> 
+     <p> It is a good practice to explicitly close the I/O stream, by running <code>close()</code> in the <code>finally</code> clause of <code>try-catch-finally</code> to free up the system resources immediately when the stream is no longer needed. This could prevent serious resource leaks. Unfortunately, the <code>close()</code> method also throws a <code>IOException</code>, and needs to be enclosed in a nested <code>try-catch</code> statement, as follows. This makes the codes somehow ugly.</p> 
+     <pre class="color-example">
+FileInputStream in = null;
+......  
+try {
+   in = new FileInputStream(...);  <span class="color-comment">// Open stream</span>
+   ......
+   ......
+} catch (IOException ex) {
+   ex.printStackTrace();
+} finally {  <span class="color-comment">// always close the I/O streams</span>
+   try {
+      if (in != null) <strong>in.close()</strong>;
+   } catch (IOException ex) {
+      ex.printStackTrace();
+   }
+}</pre> 
+     <p> JDK 1.7 introduces a new <code>try</code>-with-resources syntax, which automatically closes all the opened resources after <code>try</code> or <code>catch</code>, as follows. This produces much neater codes.</p> 
+     <pre class="color-example">try (FileInputStream in = new FileInputStream(...)) {
+   ......
+   ......
+} catch (IOException ex) {
+   ex.printStackTrace();
+}  <span class="color-comment">// Automatically closes all opened resource in try (...).</span></pre> 
+     <h4>Flushing the <span class="font-code">OutputStream</span></h4> 
+     <p>In addition, the <code>OutputStream</code> provides a <code>flush()</code> method to flush the remaining bytes from the output buffer.</p> 
+     <pre class="color-syntax">
+public void <strong>flush</strong>() throws IOException  <span class="color-comment">// Flush the output</span></pre> 
+     <h4>Implementations of <span class="font-code">abstract</span> <span class="font-code">InputStream/OutputStream</span></h4> 
+     <p><code>InputStream</code> and <code>OutputStream</code> are <code>abstract</code> classes that cannot be instantiated. You need to choose an appropriate concrete subclass to establish a connection to a physical device. For example, you can instantiate a <code>FileInputStream</code> or <code>FileOutputStream</code> to establish a stream to a physical disk file.</p> 
+     <h4>Layered (or Chained) I/O Streams</h4> 
+     <p>The I/O streams are often layered or chained with other I/O streams, for purposes such as buffering, filtering, or data-format conversion (between raw bytes and primitive types). For example, we can layer a <code>BufferedInputStream</code> to a <code>FileInputStream</code> for buffered input, and stack a <code>DataInputStream</code> in front for formatted data input (using primitives such as <code>int</code>, <code>double</code>), as illustrated in the following diagrams.</p> 
+     <img class="image-center" src="images/IO_LayeredInput.png" alt="IO_LayeredInput.png"> 
+     <h4>File I/O Byte-Streams - <span class="font-code">FileInputStream</span> &amp; <span class="font-code">FileOutputStream</span></h4> 
+     <p><code>FileInputStream</code> and <code>FileOutputStream</code> are concrete implementations to the <code>abstract</code> classes <code>InputStream</code> and <code>OutputStream</code>, to support I/O from disk files.</p> 
+     <h4>Buffered I/O Byte-Streams - <span class="font-code">BufferedInputStream</span> &amp; <span class="font-code">BufferedOutputStream</span></h4> 
+     <p>The <code>read()</code>/<code>write()</code> method in <code>InputStream</code>/<code>OutputStream</code> are designed to read/write a single byte of data on each call. This is grossly inefficient, as each call is handled by the underlying operating system (which may trigger a disk access, or other expensive operations). <em>Buffering</em>, which reads/writes a block of bytes from the external device into/from a memory buffer in a single I/O operation, is commonly applied to speed up the I/O.</p> 
+     <p> <code>FileInputStream</code>/<code>FileOutputStream</code> is not buffered. It is often chained to a <code>BufferedInputStream</code> or <code>BufferedOutputStream</code>, which provides the buffering. To chain the streams together, simply pass an instance of one stream into the constructor of another stream. For example, the following codes chain a <code>FileInputStream</code> to a <code>BufferedInputStream</code>, and finally, a <code>DataInputStream</code>:</p> 
+     <pre class="color-example">
+FileInputStream fileIn = new FileInputStream("in.dat");
+BufferedInputStream bufferIn = new BufferedInputStream(fileIn);
+DataInputStream dataIn = new DataInputStream(bufferIn);
+<span class="color-comment">// or</span>
+DataInputStream in = new DataInputStream(
+                        new BufferedInputStream(
+                           new FileInputStream("in.dat")));
+</pre> 
+     <p><span class="line-heading">Example 1:</span> Copying a file byte-by-byte without Buffering.</p> 
+     <pre class="color-example">
+import java.io.*;
+public class <strong>FileCopyNoBuffer</strong> {  <span class="color-comment">// Pre-JDK 7</span>
+   public static void main(String[] args) {
+      String inFileStr = "test-in.jpg";
+      String outFileStr = "test-out.jpg";
+      FileInputStream in = null;
+      FileOutputStream out = null;
+      long startTime, elapsedTime;  <span class="color-comment">// for speed benchmarking</span>
+ 
+      <span class="color-comment">// Print file length</span>
+      <strong>File fileIn = new File(inFileStr);</strong>
+      System.out.println("File size is " + <strong>fileIn.length()</strong> + " bytes");
+ 
+      try {
+         <strong>in = new FileInputStream(inFileStr)</strong>;
+         <strong>out = new FileOutputStream(outFileStr);</strong>
+ 
+         startTime = System.nanoTime();
+         int byteRead;
+         <span class="color-comment">// Read a raw byte, returns an int of 0 to 255.</span>
+         while ((<strong>byteRead = in.read()</strong>) != -1) {
+            <span class="color-comment">// Write the least-significant byte of int, drop the upper 3 bytes</span>
+            <strong>out.write(byteRead);</strong>
+         }
+         elapsedTime = System.nanoTime() - startTime;
+         System.out.println("Elapsed Time is " + (elapsedTime / 1000000.0) + " msec");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      } finally {  <span class="color-comment">// always close the I/O streams</span>
+         try {
+            if (in != null) <strong>in.close()</strong>;
+            if (out != null) <strong>out.close()</strong>;
+         } catch (IOException ex) {
+            ex.printStackTrace();
+         }
+      }
+   }
+}</pre> 
+     <pre class="output">
+File size is 417455 bytes
+Elapsed Time is 3781.500581 msec</pre> 
+     <p>This example copies a file by reading a byte from the input file and writing it to the output file. It uses <code>FileInputStream</code> and <code>FileOutputStream</code> directly without buffering. Notice that most the I/O methods "throws" <code>IOException</code>, which must be caught or declared to be thrown. The method <code>close()</code> is programmed inside the <code>finally</code> clause. It is guaranteed to be run after <code>try</code> or <code>catch</code>. However, method <code>close()</code> also throws an <code>IOException</code>, and therefore must be enclosed inside a nested <code>try-catch</code> block, which makes the codes a little ugly.</p> 
+     <p>I used <code>System.nanoTime()</code>, which was introduced in JDK 1.5, for a more accurate measure of the elapsed time, instead of the legacy not-so-precise <code>System.currentTimeMillis()</code>. The output shows that it took about 4 seconds to copy a 400KB file.</p> 
+     <p>As mentioned, JDK 1.7 introduces a new <code>try</code>-with-resources syntax, which automatically closes all the resources opened, after <code>try</code> or <code>catch</code>. For example, the above example can be re-written in a much neater manner as follow:</p> 
+     <pre class="color-example">
+import java.io.*;
+public class <strong>FileCopyNoBufferJDK7</strong> {
+   public static void main(String[] args) {
+      String inFileStr = "test-in.jpg";
+      String outFileStr = "test-out.jpg";
+      long startTime, elapsedTime;  <span class="color-comment">// for speed benchmarking</span>
+ 
+      <span class="color-comment">// Check file length</span>
+      File fileIn = new File(inFileStr);
+      System.out.println("File size is " + fileIn.length() + " bytes");
+ 
+      <span class="color-comment">// "try-with-resources" automatically closes all opened resources.</span>
+      try (<strong>FileInputStream  in  = new FileInputStream(inFileStr);
+           FileOutputStream out = new FileOutputStream(outFileStr)</strong>) {
+ 
+         startTime = System.nanoTime();
+         int byteRead;
+         <span class="color-comment">// Read a raw byte, returns an int of 0 to 255.</span>
+         while ((<strong>byteRead = in.read()</strong>) != -1) {
+            <span class="color-comment">// Write the least-significant byte of int, drop the upper 3 bytes</span>
+            <strong>out.write(byteRead)</strong>;
+         }
+         elapsedTime = System.nanoTime() - startTime;
+         System.out.println("Elapsed Time is " + (elapsedTime / 1000000.0) + " msec");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <p><span class="line-heading">Example 2:</span> Copying a file with a Programmer-Managed Buffer.</p> 
+     <pre class="color-example">
+import java.io.*;
+public class <strong>FileCopyUserBuffer</strong> {  <span class="color-comment">// Pre-JDK 7</span>
+   public static void main(String[] args) {
+      String inFileStr = "test-in.jpg";
+      String outFileStr = "test-out.jpg";
+      FileInputStream in = null;
+      FileOutputStream out = null;
+      long startTime, elapsedTime;  <span class="color-comment">// for speed benchmarking</span>
+ 
+      <span class="color-comment">// Check file length</span>
+      File fileIn = new File(inFileStr);
+      System.out.println("File size is " + fileIn.length() + " bytes");
+ 
+      try {
+         in = new FileInputStream(inFileStr);
+         out = new FileOutputStream(outFileStr);
+         startTime = System.nanoTime();
+         <strong>byte[] byteBuf = new byte[4096];</strong>    <span class="color-comment">// 4K byte-buffer</span>
+         int numBytesRead;
+         while ((numBytesRead = <strong>in.read(byteBuf)</strong>) != -1) {
+            <strong>out.write(byteBuf, 0, numBytesRead)</strong>;
+         }
+         elapsedTime = System.nanoTime() - startTime;
+         System.out.println("Elapsed Time is " + (elapsedTime / 1000000.0) + " msec");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      } finally {  <span class="color-comment">// always close the streams</span>
+         try {
+            if (in != null) in.close();
+            if (out != null) out.close();
+         } catch (IOException ex) { ex.printStackTrace(); }
+      }
+   }
+}</pre> 
+     <pre class="output">
+File size is 417455 bytes
+Elapsed Time is 2.938921 msec</pre> 
+     <p>This example again uses <code>FileInputStream</code> and <code>FileOutputStream</code> directly. However, instead of reading/writing one byte at a time, it reads/writes a 4KB block. This program took only 3 millisecond - a more than 1000 times speed-up compared with the previous example.</p> 
+     <p>Larger buffer size, up to a certain limit, generally improves the I/O performance. However, there is a trade-off between speed-up the the memory usage. For file copying, a large buffer is certainly recommended. But for reading just a few bytes from a file, large buffer simply wastes the memory.</p> 
+     <p>I re-write the program using JDK 1.7, and try on various buffer size on a much bigger file of 26MB.</p> 
+     <pre class="color-example">
+import java.io.*;
+public class <strong>FileCopyUserBufferLoopJDK7</strong> {
+   public static void main(String[] args) {
+      String inFileStr = "test-in.jpg";
+      String outFileStr = "test-out.jpg";
+      long startTime, elapsedTime;  <span class="color-comment">// for speed benchmarking</span>
+ 
+      <span class="color-comment">// Check file length</span>
+      File fileIn = new File(inFileStr);
+      System.out.println("File size is " + fileIn.length() + " bytes");
+ 
+      int[] bufSizeKB = {1, 2, 4, 8, 16, 32, 64, 256, 1024};  <span class="color-comment">// in KB</span>
+      int bufSize;  <span class="color-comment">// in bytes</span>
+ 
+      for (int run = 0; run &lt; bufSizeKB.length; ++run) {
+         bufSize = bufSizeKB[run] * 1024;
+         try (FileInputStream in = new FileInputStream(inFileStr);
+              FileOutputStream out = new FileOutputStream(outFileStr)) {
+            startTime = System.nanoTime();
+            byte[] byteBuf = new byte[bufSize];
+            int numBytesRead;
+            while ((numBytesRead = in.read(byteBuf)) != -1) {
+               out.write(byteBuf, 0, numBytesRead);
+            }
+            elapsedTime = System.nanoTime() - startTime;
+            System.out.printf("%4dKB: %6.2fmsec%n", bufSizeKB[run], (elapsedTime / 1000000.0));
+            <span class="color-comment">//System.out.println("Elapsed Time is " + (elapsedTime / 1000000.0) + " msec");</span>
+         } catch (IOException ex) {
+            ex.printStackTrace();
+         }
+      }
+   }
+}</pre> 
+     <pre class="output">
+File size is 26246026 bytes <span class="color-comment">[26 MB]</span>
+   1KB: 573.54msec
+   2KB: 316.43msec
+   4KB: 178.47msec
+   8KB: 116.32msec
+  16KB:  85.61msec
+  32KB:  65.92msec
+  64KB:  <strong>57.81msec</strong>
+ 256KB:  63.38msec
+1024KB:  98.87msec</pre> 
+     <p>Increasing buffer size helps only up to a certain point?!</p> 
+     <p><span class="line-heading">Example 3:</span> Copying a file with Buffered Streams.</p> 
+     <pre class="color-example">
+import java.io.*;
+public class <strong>FileCopyBufferedStream</strong> {  <span class="color-comment">// Pre-JDK 7</span>
+   public static void main(String[] args) {
+      String inFileStr = "test-in.jpg";
+      String outFileStr = "test-out.jpg";
+      <strong>BufferedInputStream in</strong> = null;
+      <strong>BufferedOutputStream out</strong> = null;
+      long startTime, elapsedTime;  <span class="color-comment">// for speed benchmarking</span>
+ 
+      <span class="color-comment">// Check file length</span>
+      File fileIn = new File(inFileStr);
+      System.out.println("File size is " + fileIn.length() + " bytes");
+ 
+      try {
+         <strong>in  = new BufferedInputStream(new FileInputStream(inFileStr));
+         out = new BufferedOutputStream(new FileOutputStream(outFileStr));</strong>
+         startTime = System.nanoTime();
+         int byteRead;
+         while ((byteRead = <strong>in.read()</strong>) != -1) {  <span class="color-comment">// Read byte-by-byte from buffer</span>
+            <strong>out.write(byteRead)</strong>;
+         }
+         elapsedTime = System.nanoTime() - startTime;
+         System.out.println("Elapsed Time is " + (elapsedTime / 1000000.0) + " msec");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      } finally {            <span class="color-comment">// always close the streams</span>
+         try {
+            if (in != null) in.close();
+            if (out != null) out.close();
+         } catch (IOException ex) { ex.printStackTrace(); }
+      }
+   }
+}</pre> 
+     <pre class="output">
+File size is 417455 bytes
+Elapsed Time is 61.834954 msec</pre> 
+     <p>In this example, I chain the <code>FileInputStream</code> with <code>BufferedInputStream</code>, <code>FileOutputStream</code> with <code>BufferedOutputStream</code>, and read/write byte-by-byte. The JRE decides on the buffer size. The program took 62 milliseconds, about 60 times speed-up compared with example 1, but slower than the programmer-managed buffer.</p> 
+     <p>The JDK 1.7 version of the above example is as follows:</p> 
+     <pre class="color-example">
+import java.io.*;
+public class FileCopyBufferedStreamJDK7 {
+   public static void main(String[] args) {
+      String inFileStr = "test-in.jpg";
+      String outFileStr = "test-out.jpg";
+      long startTime, elapsedTime;  <span class="color-comment">// for speed benchmarking</span>
+ 
+      <span class="color-comment">// Check file length</span>
+      File fileIn = new File(inFileStr);
+      System.out.println("File size is " + fileIn.length() + " bytes");
+ 
+      <strong>try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(inFileStr));
+           BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFileStr)))</strong> {
+         startTime = System.nanoTime();
+         int byteRead;
+         while ((byteRead = in.read()) != -1) {
+            out.write(byteRead);
+         }
+         elapsedTime = System.nanoTime() - startTime;
+         System.out.println("Elapsed Time is " + (elapsedTime / 1000000.0) + " msec");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <h4>Formatted Data-Streams: <span class="font-code">DataInputStream</span> &amp; <span class="font-code">DataOutputStream</span></h4> 
+     <p>The <code>DataInputStream</code> and <code>DataOutputStream</code> can be stacked on top of any <code>InputStream</code> and <code>OutputStream</code> to parse the raw bytes so as to perform I/O operations in the desired data format, such as <code>int</code> and <code>double</code>.</p> 
+     <p>To use <code>DataInputStream</code> for formatted input, you can chain up the input streams <code></code> as follows:</p> 
+     <pre class="color-example">DataInputStream in = new DataInputStream(
+                        new BufferedInputStream(
+                           new FileInputStream("in.dat")));
+</pre> 
+     <p><code>DataInputStream</code> implements <code>DataInput</code> interface, which provides methods to read formatted primitive data and <code>String</code>, such as:</p> 
+     <pre class="color-syntax">
+<span class="color-comment">// 8 Primitives</span>
+public final int <strong>readInt</strong>() throws IOExcpetion;       <span class="color-comment">// Read 4 bytes and convert into int</span>
+public final double <strong>readDoube</strong>() throws IOExcpetion;  <span class="color-comment">// Read 8 bytes and convert into double</span> 
+public final byte <strong>readByte</strong>() throws IOExcpetion;
+public final char <strong>readChar</strong>() throws IOExcpetion;
+public final short <strong>readShort</strong>() throws IOExcpetion;
+public final long <strong>readLong</strong>() throws IOExcpetion;
+public final boolean <strong>readBoolean</strong>() throws IOExcpetion;    <span class="color-comment">// Read 1 byte. Convert to false if zero</span>
+public final float <strong>readFloat</strong>() throws IOExcpetion;
+ 
+public final int <strong>readUnsignedByte</strong>() throws IOExcpetion;   <span class="color-comment">// Read 1 byte in [0, 255] upcast to int</span>
+public final int <strong>readUnsignedShort</strong>() throws IOExcpetion;  <span class="color-comment">// Read 2 bytes in [0, 65535], same as char, upcast to int</span>
+public final void <strong>readFully</strong>(byte[] <em>b</em>, int <em>off</em>, int <em>len</em>) throws IOException;
+public final void <strong>readFully</strong>(byte[] <em>b</em>) throws IOException;
+ 
+<span class="color-comment">// Strings</span>
+public final String <strong>readLine</strong>() throws IOException;
+     <span class="color-comment">// Read a line (until newline), convert each byte into a char - no unicode support.</span>
+public final String <strong>readUTF</strong>() throws IOException;
+    <span class="color-comment">// read a UTF-encoded string with first two bytes indicating its UTF bytes length</span>
+ 
+public final int <strong>skipBytes</strong>(int n)  <span class="color-comment">// Skip a number of bytes</span></pre> 
+     <p>Similarly, you can stack the <code>DataOutputStream</code> as follows:</p> 
+     <pre class="color-example">
+DataOutputStream out = new DataOutputStream(
+                          new BufferedOutputStream(
+                             new FileOutputStream("out.dat")));
+</pre> 
+     <p><code>DataOutputStream</code> implements <code>DataOutput</code> interface, which provides methods to write formatted primitive data and <code>String</code>. For examples,</p> 
+     <pre class="color-syntax">
+<span class="color-comment">// 8 primitive types</span>
+public final void <strong>writeInt</strong>(int <em>i</em>) throws IOExcpetion;      <span class="color-comment">// Write the int as 4 bytes</span>
+public final void <strong>writeFloat</strong>(float <em>f</em>) throws IOExcpetion;
+public final void <strong>writeDoube</strong>(double <em>d</em>) throws IOExcpetion; <span class="color-comment">// Write the double as 8 bytes</span>
+public final void <strong>writeByte</strong>(int <em>b</em>) throws IOExcpetion;     <span class="color-comment">// least-significant byte</span>
+public final void <strong>writeShort</strong>(int <em>s</em>) throws IOExcpetion;    <span class="color-comment">// two lower bytes</span>
+public final void <strong>writeLong</strong>(long <em>l</em>) throws IOExcpetion;
+public final void <strong>writeBoolean</strong>(boolean <em>b</em>) throws IOExcpetion;
+public final void <strong>writeChar</strong>(int <em>i</em>) throws IOExcpetion;
+ 
+<span class="color-comment">// String</span>
+public final void <strong>writeByte</strong>s(String <em>str</em>) throws IOExcpetion;  
+     <span class="color-comment">// least-significant byte of each char</span>
+public final void <strong>writeChars</strong>(String <em>str</em>) throws IOExcpetion;
+     <span class="color-comment">// Write String as UCS-2 16-bit char, Big-endian (big byte first)</span>
+public final void <strong>writeUTF</strong>(String <em>str</em>) throws IOException;   
+     <span class="color-comment">// Write String as UTF, with first two bytes indicating UTF bytes length</span>
+
+public final void <strong>write</strong>(byte[] <em>b</em>, int <em>off</em>, int <em>len</em>) throws IOException
+public final void <strong>write</strong>(byte[] <em>b</em>) throws IOException
+public final void <strong>write</strong>(int <em>b</em>) throws IOException     <span class="color-comment">// Write the least-significant byte</span></pre> 
+     <p>Example: The following program writes some primitives to a disk file. It then reads the raw bytes to check how the primitives were stored. Finally, it reads the data as primitives.</p> 
+     <pre class="color-example">
+import java.io.*;
+public class TestDataIOStream {
+   public static void main(String[] args) {
+      String filename = "data-out.dat";
+      String message = "Hi,??!";
+ 
+      <span class="color-comment">// Write primitives to an output file</span>
+      try (DataOutputStream out =
+              new DataOutputStream(
+                 new BufferedOutputStream(
+                    new FileOutputStream(filename)))) {
+         out.writeByte(127);
+         out.writeShort(0xFFFF);  <span class="color-comment">// -1</span>
+         out.writeInt(0xABCD);
+         out.writeLong(0x1234_5678);  <span class="color-comment">// JDK 7 syntax</span>
+         out.writeFloat(11.22f);
+         out.writeDouble(55.66);
+         out.writeBoolean(true);
+         out.writeBoolean(false);
+         for (int i = 0; i &lt; message.length(); ++i) {
+            out.writeChar(message.charAt(i));
+         }
+         out.writeChars(message);
+         out.writeBytes(message);
+         out.flush();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read raw bytes and print in Hex</span>
+      try (BufferedInputStream in =
+              new BufferedInputStream(
+                 new FileInputStream(filename))) {
+         int inByte;
+         while ((inByte = in.read()) != -1) {
+            System.out.printf("%02X ", inByte);   <span class="color-comment">// Print Hex codes</span>
+         }
+         System.out.printf("%n%n");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read primitives</span>
+      try (DataInputStream in =
+              new DataInputStream(
+                 new BufferedInputStream(
+                    new FileInputStream(filename)))) {
+         System.out.println("byte:    " + in.readByte());
+         System.out.println("short:   " + in.readShort());
+         System.out.println("int:     " + in.readInt());
+         System.out.println("long:    " + in.readLong());
+         System.out.println("float:   " + in.readFloat());
+         System.out.println("double:  " + in.readDouble());
+         System.out.println("boolean: " + in.readBoolean());
+         System.out.println("boolean: " + in.readBoolean());
+ 
+         System.out.print("char:    ");
+         for (int i = 0; i &lt; message.length(); ++i) {
+            System.out.print(in.readChar());
+         }
+         System.out.println();
+ 
+         System.out.print("chars:   ");
+         for (int i = 0; i &lt; message.length(); ++i) {
+            System.out.print(in.readChar());
+         }
+         System.out.println();
+ 
+         System.out.print("bytes:   ");
+         for (int i = 0; i &lt; message.length(); ++i) {
+            System.out.print((char)in.readByte());
+         }
+         System.out.println();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <pre class="output">
+<span class="underline">7F</span>   <span class="underline">FF FF</span> <span class="underline">00 00 AB CD</span> <span class="underline">00 00 00 00 00 0F 42 3F</span>
+<span class="color-comment">byte short int         long</span>
+<span class="underline">41 33 85 1F</span> <span class="underline">40 4B D4 7A E1 47 AE 14</span>
+<span class="color-comment">float       double</span>
+<span class="underline">01</span>      <span class="underline">00</span>
+<span class="color-comment">boolean boolean</span>
+<span class="underline">00 48 00 69 00 2C 60 A8 59 7D 00 21</span>
+<span class="color-comment">H     i     ,     ?    ?    !</span>
+<span class="underline">00 48 00 69 00 2C 60 A8 59 7D 00 21</span>
+<span class="color-comment">H     i     ,     ?    ?    !</span>
+48 69 2C A8 7D 21
+<span class="color-comment">[low byte of the char only]</span>
+ 
+byte:    127
+short:   -1
+int:     43981
+long:    305419896
+float:   11.22
+double:  55.66
+boolean: true
+boolean: false
+char:    Hi,??!
+chars:   Hi,??!
+bytes:   Hi,?}!</pre> 
+     <p>The data stored in the disk are exactly in the same form as in the Java program internally (e.g., UCS-2 for characters). The byte-order is big-endian (big byte first, or most significant byte in lowest address).</p> 
+     <h4>Network I/O</h4> 
+     <p>[In Java Networking]</p> 
+     <h3>Character-Based I/O &amp; Character Streams</h3> 
+     <img class="image-center" src="images/IO_InputOutputReadersWriters.png" alt="IO_InputOutputReadersWriters.png"> 
+     <p>Java internally stores characters (<code>char</code> type) in 16-bit UCS-2 character set. But the external data source/sink could store characters in other character set (e.g., US-ASCII, ISO-8859-x, UTF-8, UTF-16, and many others), in fixed length of 8-bit or 16-bit, or in variable length of 1 to 4 bytes. [Read "<a href="DataRepresentation.html#charencoding">Character Sets and Encoding Schemes</a>"]. Hence, Java has to differentiate between byte-based I/O for processing 8-bit raw bytes, and character-based I/O for processing texts. The character streams needs to <em>translate</em> between the character set used by external I/O devices and Java internal UCS-2 format. For example, the character '?' is stored as "<code>60 A8</code>" in UCS-2 (Java internal), "<code>E6 82 A8</code>" in UTF8, "<code>C4 FA</code>" in GBK/GB2312, and "<code>B1 7A</code>" in BIG5. If this character is to be written to a file uses UTF-8, the character stream needs to translate "<code>60 A8</code>" to "<code>E6 82 A8</code>". The reserve takes place in a reading operation.</p> 
+     <p>The byte/character streams refer to the unit of operation within the Java programs, which does not necessary correspond to the amount of data transferred from/to the external I/O devices. This is because some charsets use fixed-length of 8-bit (e.g., US-ASCII, ISO-8859-1) or 16-bit (e.g., UCS-16), while some use variable-length of 1-4 bytes (e.g., UTF-8, UTF-16, UTF-16-BE, UTF-16-LE, GBK, BIG5). When a character stream is used to read an 8-bit ASCII file, an 8-bit data is read from the file and put into the 16-bit <code>char</code> location of the Java program.</p> 
+     <h4>Abstract superclass <span class="font-code">Reader</span> and <span class="font-code">Writer</span></h4> 
+     <p>Other than the unit of operation and charset conversion (which is extremely complex), character-based I/O is almost identical to byte-based I/O. Instead of <code>InputStream</code> and <code>OutputStream</code>, we use <code>Reader</code> and <code>Writer</code> for character-based I/O.</p> 
+     <p>The <code>abstract</code> superclass <code>Reader</code> operates on <code>char</code>. It declares an <code>abstract</code> method <code>read()</code> to read one character from the input source. <code>read()</code> returns the character as an <code>int</code> between 0 to 65535 (a <code>char</code> in Java can be treated as an unsigned 16-bit integer); or -1 if end-of-stream is detected; or throws an <code>IOException</code> if I/O error occurs. There are also two variations of <code>read()</code> to read a block of characters into <code>char</code>-array.</p> 
+     <pre class="color-syntax">
+public abstract int <strong>read</strong>() throws IOException
+public int <strong>read</strong>(char[] <em>chars</em>, int <em>offset</em>, int <em>length</em>) throws IOException
+public int <strong>read</strong>(char[] <em>chars</em>) throws IOException</pre> 
+     <p>The <code>abstract</code> superclass <code>Writer</code> declares an <code>abstract</code> method <code>write()</code>, which writes a character to the output sink. The lower 2 bytes of the <code>int</code> argument is written out; while the upper 2 bytes are discarded.</p> 
+     <pre class="color-syntax">
+public void abstract void <strong>write</strong>(int <em>aChar</em>) throws IOException
+public void <strong>write</strong>(char[] <em>chars</em>, int <em>offset</em>, int <em>length</em>) throws IOException
+public void <strong>write</strong>(char[] <em>chars</em>) throws IOException</pre> 
+     <h4>File I/O Character-Streams - <span class="font-code">FileReader</span> &amp; <span class="font-code">FileWriter</span></h4> 
+     <p><code>FileReader</code> and <code>FileWriter</code> are concrete implementations to the <code>abstract</code> superclasses <code>Reader</code> and <code>Writer</code>, to support I/O from disk files. <code>FileReader</code>/<code>FileWriter</code> assumes that the <em>default character encoding</em> (<em>charset</em>) is used for the disk file. The default charset is kept in the JVM's system property "<code>file.encoding</code>". You can get the default charset via <code>static</code> method <code>java.nio.charset.Charset.defaultCharset()</code> or <code>System.getProperty("file.encoding")</code>. It is probable safe to use <code>FileReader</code>/<code>FileWriter</code> for ASCII texts, provided that the default charset is compatible to ASCII (such as US-ASCII, ISO-8859-x, UTF-8, and many others, but NOT UTF-16, UTF-16BE, UTF-16LE and many others). Use of <code>FileReader/FileWriter</code> is NOT recommended as you have no control of the file encoding charset.</p> 
+     <h4>Buffered I/O Character-Streams - <span class="font-code">BufferedReader</span> &amp; <span class="font-code">BufferedWriter</span></h4> 
+     <p><code>BufferedReader</code> and <code>BufferedWriter</code> can be stacked on top of <code>FileReader/FileWriter</code> or other character streams to perform buffered I/O, instead of character-by-character. <code>BufferedReader</code> provides a new method <code>readLine()</code>, which reads a line and returns a <code>String</code> (without the line delimiter). Lines could be delimited by "<code>\n</code>" (Unix), "<code>\r\n</code>" (Windows), or "<code>\r</code>" (Mac).</p> 
+     <h5>Example</h5> 
+     <pre class="color-example">
+import java.io.*;
+<span class="color-comment">// Write a text message to an output file, then read it back.
+// FileReader/FileWriter uses the default charset for file encoding.</span>
+public class <strong>BufferedFileReaderWriterJDK7</strong> {
+   public static void main(String[] args) {
+      String strFilename = "out.txt";
+      String message = "Hello, world!\nHello, world again!\n";  <span class="color-comment">// 2 lines of texts</span>
+
+      <span class="color-comment">// Print the default charset</span>
+      System.out.println(<strong>java.nio.charset.Charset.defaultCharset()</strong>);
+ 
+      try (<strong>BufferedWriter out = new BufferedWriter(new FileWriter(strFilename))</strong>) {
+         <strong>out.write(message);
+         out.flush();</strong>
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      try (<strong>BufferedReader in = new BufferedReader(new FileReader(strFilename))</strong>) {
+         String inLine;
+         while ((inLine = <strong>in.readLine()</strong>) != null) {  <span class="color-comment">// exclude newline</span>
+            System.out.println(inLine);
+         }
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <h4>Character Set (or Charset) - Package <span class="font-code">java.nio.charset</span> (JDK 1.4)</h4> 
+     <p>JDK 1.4 provides a new package <code>java.nio.charset</code> as part of NIO (New IO) to support character translation between the Unicode (UCS-2) used internally in Java program and external devices which could be encoded in any other format (e.g., US-ASCII, ISO-8859-x, UTF-8, UTF-16, UTF-16BE, UTF-16LE, and etc.)</p> 
+     <p>The main class <code>java.nio.charset.Charset</code> provides <code>static</code> methods for testing whether a particular charset is supported, locating charset instances by name, and listing all the available charsets and the default charset.</p> 
+     <pre class="color-syntax">
+public static SortedMap&lt;String,Charset&gt; <strong>availableCharsets</strong>()  <span class="color-comment">// lists all the available charsets</span>
+public static Charset <strong>defaultCharset</strong>()                 <span class="color-comment">// Returns the default charset</span>
+public static Charset <strong>forName</strong>(String charsetName)      <span class="color-comment">// Returns a Charset instance for the given charset name (in String)</span>
+public static boolean <strong>isSupported</strong>(String charsetName)  <span class="color-comment">// Tests if this charset name is supported</span></pre> 
+     <h5>Example</h5> 
+     <pre class="color-example">
+import java.nio.charset.Charset;
+public class <strong>TestCharset</strong> {
+   public static void main(String[] args) {
+      <span class="color-comment">// Print the default Charset</span>
+      System.out.println("The default charset is " + <strong>Charset.defaultCharset()</strong>);
+      System.out.println("The default charset is " + <strong>System.getProperty("file.encoding")</strong>);
+ 
+      <span class="color-comment">// Print the list of available Charsets in name=Charset</span>
+      System.out.println("The available charsets are:");
+      System.out.println(<strong>Charset.availableCharsets()</strong>);
+ 
+      <span class="color-comment">// Check if the given charset name is supported</span>
+      System.out.println(<strong>Charset.isSupported("UTF-8")</strong>);  <span class="color-comment">// true</span>
+      System.out.println(<strong>Charset.isSupported("UTF8")</strong>);   <span class="color-comment">// true</span>
+      System.out.println(<strong>Charset.isSupported("UTF_8")</strong>);  <span class="color-comment">// false</span>
+ 
+      <span class="color-comment">// Get an instance of a Charset</span>
+      Charset charset = <strong>Charset.forName("UTF8")</strong>;
+      <span class="color-comment">// Print this Charset name</span>
+      System.out.println(<strong>charset.name()</strong>);     <span class="color-comment">// "UTF-8"</span>
+      <span class="color-comment">// Print all the other aliases</span>
+      System.out.println(<strong>charset.aliases()</strong>);  <span class="color-comment">// [UTF8, unicolor-1-1-utf-8]</span>
+   }
+}</pre> 
+     <p>The default charset for file encoding is kept in the system property "<code>file.encoding</code>". To change the JVM's default charset for file encoding, you can use command-line VM option "<code>-Dfile.encoding</code>". For example, the following command run the program with default charset of UTF-8.</p> 
+     <pre class="color-command">
+&gt; java -D<strong>file.encoding</strong>=UTF-8 TestCharset</pre> 
+     <p>Most importantly, the <code>Charset</code> class provides methods to encode/decode characters from UCS-2 used in Java program and the specific charset used in the external devices (such as UTF-8).</p> 
+     <pre class="color-syntax">public final ByteBuffer <strong>encode</strong>(String s)
+<span class="color-comment"></span>public final ByteBuffer <strong>encode</strong>(CharBuffer cb)
+<span class="color-comment">// Encodes Unicode UCS-2 characters in the CharBuffer/String 
+//  into a "byte sequence" using this charset, and returns a ByteBuffer.
+</span> 
+public final CharBuffer <strong>decode</strong>(ByteBuffer bb)
+<span class="color-comment">// Decode the byte sequence encoded using this charset in the ByteBuffer 
+//  to Unicode UCS-2, and return a charBuffer.</span></pre> 
+     <p>The <code>encode()</code>/<code>decode()</code> methods operate on <code>ByteBuffer</code> and <code>CharBuffer</code> introduced also in JDK 1.4, which will be explain in the New I/O section.</p> 
+     <p><span class="line-heading">Example:</span> The following example encodes some Unicode texts in various encoding scheme, and display the Hex codes of the encoded byte sequences.</p> 
+     <pre class="color-example">
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+ 
+public class <strong>TestCharsetEncodeDecode</strong> {
+   public static void main(String[] args) {
+      <span class="color-comment">// Try these charsets for encoding</span>
+      String[] charsetNames = {"US-ASCII", "ISO-8859-1", "UTF-8", "UTF-16",
+                               "UTF-16BE", "UTF-16LE", "GBK", "BIG5"};
+ 
+      String message = "Hi,??!";  <span class="color-comment">// Unicode message to be encoded</span>
+      <span class="color-comment">// Print UCS-2 in hex codes</span>
+      System.out.printf("%10s: ", "UCS-2");
+      for (int i = 0; i &lt; message.length(); ++i) {
+         System.out.printf("%04X ", (int)message.charAt(i));
+      }
+      System.out.println();
+ 
+      for (String charsetName: charsetNames) {
+         <span class="color-comment">// Get a Charset instance given the charset name string</span>
+         Charset charset = Charset.forName(charsetName);
+         System.out.printf("%10s: ", charset.name());
+ 
+         <span class="color-comment">// Encode the Unicode UCS-2 characters into a byte sequence in this charset.</span>
+         ByteBuffer bb = charset.encode(message);
+         while (bb.hasRemaining()) {
+            System.out.printf("%02X ", bb.get());  <span class="color-comment">// Print hex code</span>
+         }
+         System.out.println();
+         bb.rewind();
+      }
+   }
+}</pre> 
+     <pre class="output">
+     UCS-2: 0048 0069 002C 60A8 597D 0021 <span class="color-comment">[16-bit fixed-length]</span>
+            <span class="color-comment">H    i    ,    ?   ?   !</span>
+  US-ASCII: 48 69 2C 3F 3F 21 <span class="color-comment">[8-bit fixed-length]</span>
+            <span class="color-comment">H  i  ,  ?  ?  !</span>
+ISO-8859-1: 48 69 2C 3F 3F 21 <span class="color-comment">[8-bit fixed-length]</span>
+            <span class="color-comment">H  i  ,  ?  ?  !</span>
+     UTF-8: 48 69 2C <span class="underline">E6 82 A8</span> <span class="underline">E5 A5 BD</span> 21 <span class="color-comment">[1-4 bytes variable-length]</span>
+            <span class="color-comment">H  i  ,  ?       ?       !</span>
+    UTF-16: <span class="underline">FE FF</span> <span class="underline">00 48</span> <span class="underline">00 69</span> <span class="underline">00 2C</span> <span class="underline">60 A8</span> <span class="underline">59 7D</span> <span class="underline">00 21</span> <span class="color-comment">[2-4 bytes variable-length]</span>
+            <span class="color-comment">BOM   H     i     ,     ?    ?    !     [Byte-Order-Mark indicates Big-Endian]</span>
+  UTF-16BE: <span class="underline">00 48</span> <span class="underline">00 69</span> <span class="underline">00 2C</span> <span class="underline">60 A8</span> <span class="underline">59 7D</span> <span class="underline">00 21</span> <span class="color-comment">[2-4 bytes variable-length]</span>
+            <span class="color-comment">H     i     ,     ?    ?    !</span>
+  UTF-16LE: <span class="underline">48 00</span> <span class="underline">69 00</span> <span class="underline">2C 00</span> <span class="underline">A8 60</span> <span class="underline">7D 59</span> <span class="underline">21 00</span> <span class="color-comment">[2-4 bytes variable-length]</span>
+            <span class="color-comment">H     i     ,     ?    ?    !</span>
+       GBK: 48 69 2C <span class="underline">C4 FA</span> <span class="underline">BA C3</span> 21 <span class="color-comment">[1-2 bytes variable-length]</span>
+            <span class="color-comment">H  i  ,  ?    ?    !</span>
+      Big5: 48 69 2C <span class="underline">B1 7A</span> <span class="underline">A6 6E</span> 21 <span class="color-comment">[1-2 bytes variable-length]</span>
+            <span class="color-comment">H  i  ,  ?    ?    !</span>
+</pre> 
+     <p><span class="line-heading">Example:</span> The following example tries out the encoding/decoding on <code>CharBuffer</code> and <code>ByteBuffer</code>. Buffers will be discussed later under New I/O.</p> 
+     <pre class="color-example">
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+ 
+public class TestCharsetEncodeByteBuffer {
+   public static void main(String[] args) {
+      byte[] bytes = {0x00, 0x48, 0x00, 0x69, 0x00, 0x2C,
+                      0x60, (byte)0xA8, 0x59, 0x7D, 0x00, 0x21};  <span class="color-comment">// "Hi,??!"</span>
+      <span class="color-comment">// Print UCS-2 in hex codes</span>
+      System.out.printf("%10s: ", "UCS-2");
+      for (int i = 0; i &lt; bytes.length; ++i) {
+         System.out.printf("%02X ", bytes[i]);
+      }
+      System.out.println();
+ 
+      Charset charset = Charset.forName("UTF-8");
+      <span class="color-comment">// Encode from UCS-2 to UTF-8</span>
+      <span class="color-comment">// Create a ByteBuffer by wrapping a byte array</span>
+      ByteBuffer bb = ByteBuffer.wrap(bytes);
+      <span class="color-comment">// Create a CharBuffer from a view of this ByteBuffer</span>
+      CharBuffer cb = bb.asCharBuffer();
+      ByteBuffer bbOut = charset.encode(cb);
+      <span class="color-comment">// Print hex code</span>
+      System.out.printf("%10s: ", charset.name());
+      while (bbOut.hasRemaining()) {
+         System.out.printf("%02X ", bbOut.get());
+      }
+      System.out.println();
+ 
+      <span class="color-comment">// Decode from UTF-8 to UCS-2</span>
+      bbOut.rewind();
+      CharBuffer cbOut = charset.decode(bbOut);
+      System.out.printf("%10s: ", "UCS-2");
+      while (cbOut.hasRemaining()) {
+         char aChar = cbOut.get();
+         System.out.printf("'%c'[%04X] ", aChar, (int)aChar);  <span class="color-comment">// Print char &amp; hex code</span>
+      }
+      System.out.println();
+   }
+}</pre> 
+     <pre class="output">
+UCS-2: 00 48 00 69 00 2C 60 A8 59 7D 00 21
+UTF-8: 48 69 2C <span class="underline">E6 82 A8</span> <span class="underline">E5 A5 BD</span> 21
+UCS-2: 'H'[0048] 'i'[0069] ','[002C] '?'[60A8] '?'[597D] '!'[0021]</pre> 
+     <h4>Text File I/O - <span class="font-code">InputStreamReader</span> and <span class="font-code">OutputStreamWriter</span></h4> 
+     <p>As mentioned, Java internally stores characters (<code>char</code> type) in 16-bit UCS-2 character set. But the external data source/sink could store characters in other character set (e.g., US-ASCII, ISO-8859-x, UTF-8, UTF-16, and many others), in fixed length of 8-bit or 16-bit, or in variable length of 1 to 4 bytes. The <code>FileReader</code>/<code>FileWriter</code> introduced earlier uses the default charset for decoding/encoding, resulted in non-portable programs.</p> 
+     <p> To choose the charset, you need to use <code>InputStreamReader</code> and <code>OutputStreamWriter</code>. <code>InputStreamReader</code> and <code>OutputStreamWriter</code> are considered to be byte-to-character "bridge" streams.</p> 
+     <p>You can choose the character set in the <code>InputStreamReader</code>'s constructor:</p> 
+     <pre class="color-syntax">
+public <strong>InputStreamReader</strong>(InputStream <em>in</em>)   <span class="color-comment">// Use default charset</span>
+public <strong>InputStreamReader</strong>(InputStream <em>in</em>, String <em>charsetName</em>) throws UnsupportedEncodingException
+public <strong>InputStreamReader</strong>(InputStream <em>in</em>, Charset <em>cs</em>)</pre> 
+     <p>You can list the available charsets via <code>static</code> method <code>java.nio.charset.Charset.availableCharsets()</code>. The commonly-used <code>Charset</code> names supported by Java are:</p> 
+     <ul> 
+      <li>"<code>US-ASCII</code>": 7-bit ASCII (aka ISO646-US)</li> 
+      <li>"<code>ISO-8859-1</code>": Latin-1</li> 
+      <li>"<code>UTF-8</code>": Most commonly-used encoding scheme for Unicode</li> 
+      <li>"<code>UTF-16BE</code>": Big-endian (big byte first) (big-endian is usually the default)</li> 
+      <li> "<code>UTF-16LE</code>": Little-endian (little byte first)</li> 
+      <li>"<code>UTF-16</code>": with a 2-byte BOM (Byte-Order-Mark) to specify the byte order. FE FF indicates big-endian, FF FE indicates little-endian.</li> 
+     </ul> 
+     <p>As the <code>InputStreamReader</code>/<code>OutputStreamWriter</code> often needs to read/write in multiple bytes, it is best to wrap it with a <code>BufferedReader</code>/<code>BufferedWriter</code>.</p> 
+     <p><span class="line-heading">Example:</span> The following program writes Unicode texts to a disk file using various charsets for file encoding. It then reads the file byte-by-byte (via a byte-based input stream) to check the encoded characters in the various charsets. Finally, it reads the file using the character-based reader.</p> 
+     <pre class="color-example">
+import java.io.*;
+<span class="color-comment">// Write texts to file using OutputStreamWriter specifying its charset encoding.</span>
+<span class="color-comment">// Read byte-by-byte using FileInputStream.</span>
+<span class="color-comment">// Read char-by-char using InputStreamReader specifying its charset encoding.</span>
+public class <strong>TextFileEncodingJDK7</strong> {
+   public static void main(String[] args) {
+      String message = "Hi,??!";   <span class="color-comment">// with non-ASCII chars</span>
+      <span class="color-comment">// Java internally stores char in UCS-2/UTF-16</span>
+      <span class="color-comment">// Print the characters stored with Hex codes</span>
+      for (int i = 0; i &lt; message.length(); ++i) {
+         char aChar = message.charAt(i);
+         System.out.printf("[%d]'%c'(%04X) ", (i+1), aChar, (int)aChar);
+      }
+      System.out.println();
+ 
+      <span class="color-comment">// Try these charsets for encoding text file</span>
+      String[] csStrs = <strong>{"UTF-8", "UTF-16BE", "UTF-16LE", "UTF-16", "GB2312", "GBK", "BIG5"}</strong>;
+      String outFileExt = "-out.txt";   <span class="color-comment">// Output filenames are "charset-out.txt"</span>
+ 
+      <span class="color-comment">// Write text file in the specified file encoding charset</span>
+      for (int i = 0; i &lt; csStrs.length; ++i) {
+         try (<strong>OutputStreamWriter out =
+                 new OutputStreamWriter(
+                    new FileOutputStream(csStrs[i] + outFileExt), csStrs[i])</strong>;
+              BufferedWriter bufOut = new BufferedWriter(out)) {  <span class="color-comment">// Buffered for efficiency</span>
+            System.out.println(out.getEncoding());  <span class="color-comment">// Print file encoding charset</span>
+            bufOut.write(message);
+            bufOut.flush();
+         } catch (IOException ex) {
+            ex.printStackTrace();
+         }
+      }
+ 
+      <span class="color-comment">// Read raw bytes from various encoded files</span>
+      <span class="color-comment">//   to check how the characters were encoded.</span>
+      for (int i = 0; i &lt; csStrs.length; ++i) {
+         try (BufferedInputStream in = new BufferedInputStream(  <span class="color-comment">// Buffered for efficiency</span>
+                 <strong>new FileInputStream(csStrs[i] + outFileExt)</strong>)) {
+            System.out.printf("%10s", csStrs[i]);    <span class="color-comment">// Print file encoding charset</span>
+            int inByte;
+            while ((inByte = in.read()) != -1) {
+               System.out.printf("%02X ", inByte);   <span class="color-comment">// Print Hex codes</span>
+            }
+            System.out.println();
+         } catch (IOException ex) {
+            ex.printStackTrace();
+         }
+      }
+ 
+      <span class="color-comment">// Read text file with character-stream specifying its encoding.</span>
+      <span class="color-comment">// The char will be translated from its file encoding charset to</span>
+      <span class="color-comment">//   Java internal UCS-2.</span>
+      for (int i = 0; i &lt; csStrs.length; ++i) {
+         try (<strong>InputStreamReader in =
+                 new InputStreamReader(
+                    new FileInputStream(csStrs[i] + outFileExt), csStrs[i])</strong>;
+              BufferedReader bufIn = new BufferedReader(in)) {  <span class="color-comment">// Buffered for efficiency</span>
+            System.out.println(in.getEncoding());  <span class="color-comment">// print file encoding charset</span>
+            int inChar;
+            int count = 0;
+            while ((inChar = in.read()) != -1) {
+               ++count;
+               System.out.printf("[%d]'%c'(%04X) ", count, (char)inChar, inChar);
+            }
+         System.out.println();
+         } catch (IOException ex) {
+            ex.printStackTrace();
+         }
+      }
+   }
+}</pre> 
+     <pre class="output">
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+  
+UTF-8:    48 69 2C <span class="underline">E6 82 A8</span> <span class="underline">E5 A5 BD</span> 21
+          <span class="color-comment">H  i  ,  ?       ?       !</span>
+UTF-16BE: 00 48 00 69 00 2C <span class="underline">60 A8</span> <span class="underline">59 7D</span> 00 21
+          <span class="color-comment">H     i     ,     ?    ?    !</span>
+UTF-16LE: 48 00 69 00 2C 00 <span class="underline">A8 60</span> <span class="underline">7D 59</span> 21 00
+          <span class="color-comment">H     i     ,     ?    ?    !</span>
+UTF-16:   FE FF 00 48 00 69 00 2C <span class="underline">60 A8</span> <span class="underline">59 7D</span> 00 21
+          <span class="color-comment">BOM   H     i     ,     ?    ?    !</span>
+GB2312:   48 69 2C <span class="underline">C4 FA</span> <span class="underline">BA C3</span> 21
+          <span class="color-comment">H  i  ,  ?    ?    !</span>
+GBK:      48 69 2C <span class="underline">C4 FA</span> <span class="underline">BA C3</span> 21
+          <span class="color-comment">H  i  ,  ?    ?    !</span>
+BIG5:     48 69 2C <span class="underline">B1 7A</span> <span class="underline">A6 6E</span> 21
+          <span class="color-comment">H  i  ,  ?    ?    !</span>
+  
+UTF8
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+UnicodeBigUnmarked <span class="color-comment">[UTF-16BE without BOM]</span>
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+UnicodeLittleUnmarked <span class="color-comment">[UFT-16LE without BOM]</span>
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+UTF-16
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+EUC_CN <span class="color-comment">[GB2312]</span>
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+GBK
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+Big5
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)</pre> 
+     <p>As seen from the output, the characters ?? is encoded differently in different charsets. Nonetheless, the <code>InputStreamReader</code> is able to translate the characters into the same UCS-2 used in Java program.</p> 
+     <h3><span class="font-code">java.io.PrintStream</span> &amp; <span class="font-code">java.io.PrintWriter</span></h3> 
+     <img class="image-float-right" src="images/IO_PrintStreamWriter.png" alt="IO_PrintStreamWriter.png"> 
+     <p>The byte-based <code>java.io.printSteam</code> supports convenient printing methods such as <code>print()</code> and <code>println()</code> for printing primitives and text string. Primitives are converted to their string representation for printing. The <code>printf()</code> and <code>format()</code> were introduced in JDK 1.5 for formatting output with former specifiers. <code>printf()</code> and <code>format()</code> are identical.</p> 
+     <p>A <code>PrintStream</code> never throws an <code>IOException</code>. Instead, it sets an internal flag which can be checked via the <code>checkError()</code> method. A <code>PrintStream</code> can also be created to flush the output automatically. That is, the <code>flush()</code> method is automatically invoked after a byte array is written, one of the <code>println(</code>) methods is invoked, or after a newline (<code>'\n'</code>) is written.</p> 
+     <p>The standard output and error streams (<code>System.out</code> and <code>System.err</code>) belong to <code>PrintStream</code>.</p> 
+     <p>All characters printed by a <code>PrintStream</code> are converted into bytes using the default character encoding. The <code>PrintWriter</code> class should be used in situations that require writing characters rather than bytes.</p> 
+     <p>The character-stream <code>PrintWriter</code> is similar to <code>PrintStream</code>, except that it write in characters instead of bytes. The <code>PrintWriter</code> also supports all the convenient printing methods <code>print()</code>, <code>println()</code>, <code>printf()</code> and <code>format()</code>. It never throws an <code>IOException</code> and can optionally be created to support automatic flushing.</p> 
+     <p>[TODO] Example to show the difference between <code>PrintStream</code> and <code>PrintWriter</code>.</p> 
+     <h3>Object Serialization and Object Streams</h3> 
+     <p>Data streams (<code>DataInputStream</code> and <code>DataOutputStream</code>) allow you to read and write primitive data (such as <code>int</code>, <code>double</code>) and <code>String</code>, rather than individual bytes. Object streams (<code>ObjectInputStream</code> and <code>ObjectOutputStream</code>) go one step further to allow you to read and write entire objects (such as <code>Date</code>, <code>ArrayList</code> or any custom objects).</p> 
+     <p>Object serialization is the process of representing a "particular state of an object" in a serialized bit-stream, so that the bit stream can be written out to an external device (such as a disk file or network). The bit-stream can later be re-constructed to recover the state of that object. Object serialization is necessary to save a state of an object into a disk file for <em>persistence</em> or sent the object across the network for applications such as Web Services, Distributed-object applications, and Remote Method Invocation (RMI).</p> 
+     <p>In Java, object that requires to be serialized must implement <code>java.io.Serializable</code> or <code>java.io.Externalizable</code> interface. <code>Serializable</code> interface is an <em>empty</em> interface (or <em>tagged</em> interface) with nothing declared. Its purpose is simply to declare that particular object is serializable.</p> 
+     <h4><span class="font-code">ObjectInputStream</span> &amp; <span class="font-code">ObjectOutputStream</span></h4> 
+     <p>The <code>ObjectInputStream</code> and <code>ObjectOutputStream</code> can be used to serialize an object into a bit-stream and transfer it to/from an I/O streams, via these methods:</p> 
+     <pre class="color-syntax">
+public final Object <strong>readObject</strong>() throws IOException, ClassNotFoundException;
+public final void <strong>writeObject</strong>(Object <em>obj</em>) throws IOException;</pre> 
+     <p><code>ObjectInputStream</code> and <code>ObjectOutputStream</code> must be stacked on top of a concrete implementation of <code>InputStream</code> or <code>OutputStream</code>, such as <code>FileInputStream</code> or <code>FileOutputStream</code>.</p> 
+     <p>For example, the following code segment writes objects to a disk file. The "<code>.ser</code>" is the convention for serialized object file type.</p> 
+     <pre class="color-example">
+ObjectOutputStream out =
+   new ObjectOutputStream(
+      new BufferedOutputStream(
+         new FileOutputStream("object.ser")));
+out.writeObject("The current Date and Time is "); <span class="color-comment">// write a String object</span>
+out.writeObject(new Date());                      <span class="color-comment">// write a Date object</span>
+out.flush();
+out.close();</pre> 
+     <p>To read and re-construct the object back in a program, use the method <code>readObject()</code>, which returns an <code>java.lang.Object</code>. Downcast the <code>Object</code> back to its original type.</p> 
+     <pre class="color-example">
+ObjectInputStream in = 
+   new ObjectInputStream(
+      new BufferedInputStream(
+         new FileInputStream("object.ser")));
+String str = (String)in.readObject();
+Date d = (Date)in.readObject(new Date());  <span class="color-comment">// downcast</span>
+in.close();</pre> 
+     <p><span class="line-heading">Example:</span> Object serialization</p> 
+     <pre class="color-example">
+import java.io.*;
+ 
+public class ObjectSerializationTest {
+   public static void main(String[] args) {
+      String filename = "object.ser";
+      int numObjs = 5;
+ 
+      <span class="color-comment">// Write objects</span>
+      try (ObjectOutputStream out =
+              new ObjectOutputStream(
+                 new BufferedOutputStream(
+                    new FileOutputStream(filename)))) {
+ 
+         <span class="color-comment">// Create an array of 10 MySerializedObjects with ascending numbers</span>
+         MySerializedObject[] objs = new MySerializedObject[numObjs];
+         for (int i = 0; i &lt; numObjs; ++i) {
+            objs[i] = new MySerializedObject(0xAA + i); <span class="color-comment">// Starting at AA</span>
+         }
+         <span class="color-comment">// Write the objects to file, one by one.</span>
+         for (int i = 0; i &lt; numObjs; ++i) {
+            out.writeObject(objs[i]);
+         }
+         <span class="color-comment">// Write the entire array in one go.</span>
+         out.writeObject(objs);
+         out.flush();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read raws bytes and print in Hex</span>
+      try (BufferedInputStream in =
+              new BufferedInputStream(
+                 new FileInputStream(filename))) {
+         int inByte;
+         while ((inByte = in.read()) != -1) {
+            System.out.printf("%02X ", inByte);   <span class="color-comment">// Print Hex codes</span>
+         }
+         System.out.printf("%n%n");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read objects</span>
+      try (ObjectInputStream in =
+              new ObjectInputStream(
+                 new BufferedInputStream(
+                    new FileInputStream(filename)))) {
+         <span class="color-comment">// Read back the objects, cast back to its original type.</span>
+         MySerializedObject objIn;
+         for (int i = 0; i &lt; numObjs; ++i) {
+            objIn = (MySerializedObject)in.readObject();
+            System.out.println(objIn.getNumber());
+         }
+         MySerializedObject[] objArrayIn;
+         objArrayIn = (MySerializedObject[])in.readObject();
+         for (MySerializedObject o : objArrayIn) {
+            System.out.println(o.getNumber());
+         }
+      } catch (ClassNotFoundException|IOException ex) {  <span class="color-comment">// JDK 7</span>
+         ex.printStackTrace();
+      }
+   }
+}
+ 
+class MySerializedObject implements Serializable {
+   private int number;
+ 
+   public MySerializedObject(int number) {
+      this.number = number;
+   }
+ 
+   public int getNumber() {
+      return number;
+   }
+}</pre> 
+     <pre class="output">
+AC ED 00 05 73 72 00 12 4D 79 53 65 72 69 61 6C 69 7A 65 64 4F 62 6A 65 
+63 74 1F 7B 91 BD 02 1C DC 30 02 00 01 49 00 06 6E 75 6D 62 65 72 78 70 
+<span class="underline">00 00 00 AA</span> 73 71 00 7E 00 00 <span class="underline">00 00 00 AB</span> 73 71 00 7E 00 00 <span class="underline">
+00 00 00 AC</span> 73 71 00 7E 00 00 <span class="underline">00 00 00 AD</span> 73 71 00 7E 00 00 
+<span class="underline">00 00 00 AE</span> 75 72 00 15 5B 4C 4D 79 53 65 72 69 61 6C 69 7A 65 64 4F 62 
+6A 65 63 74 3B 13 95 A0 51 BC 86 75 38 02 00 00 78 70 00 00 00 05 71 00 
+7E 00 01 71 00 7E 00 02 71 00 7E 00 03 71 00 7E 00 04 71 00 7E 00 05</pre> 
+     <p>[Check out these bytes!]</p> 
+     <p>Primitive types and array are, by default, serializable.</p> 
+     <p>The <code>ObjectInputStream</code> and <code>ObjectOutputStream</code> implement <code>DataInput</code> and <code>DataOutput</code> interface respectively. You can used methods such as <code>readInt()</code>, <code>readDouble()</code>, <code>writeInt()</code>, <code>writeDouble()</code> for reading and writing primitive types.</p> 
+     <h5><span class="font-code">transient</span> &amp; <span class="font-code">static</span></h5> 
+     <ul> 
+      <li><code>static</code> fields are not serialized, as it belongs to the class instead of the particular instance to be serialized.</li> 
+      <li>To prevent certain fields from being serialized, mark them using the keyword <code>transient</code>. This could cut down the amount of data traffic.</li> 
+      <li>The <code>writeObject()</code> method writes out the class of the object, the class signature, and values of non-<code>static</code> and non-<code>transient</code> fields.</li> 
+     </ul> 
+     <h4><span class="font-code">java.io.Serializable</span> &amp; <span class="font-code">Externalizable</span> Interfaces</h4> 
+     <p>When you create a class that might be serialized, the class must implement <code>java.io.Serializable</code> interface. The <code>Serializable</code> interface doesn't declare any methods. Empty interfaces such as <code>Serializable</code> are known as <em>tagging interfaces</em>. They identify implementing classes as having certain properties, without requiring those classes to actually implement any methods.</p> 
+     <p>Most of the core Java classes implement <code>Serializable</code>, such as all the wrapper classes, collection classes, and GUI classes. In fact, the only core Java classes that do not implement <code>Serializable</code> are ones that should not be serialized. Arrays of primitives or serializable objects are themselves serializable.</p> 
+     <h5>Warning Message "The serialization class does not declare a static final serialVersionUID field of type long" (Advanced)</h5> 
+     <p>This warning message is triggered because your class (such as <code>java.swing.JFrame</code>) implements the <code>java.io.Serializable</code> interface. This interface enables the object to be written out to an output stream <em>serially</em> (via method <code>writeObject()</code>); and read back into the program (via method <code>readObject()</code>). The serialization runtime uses a number (called <code>serialVersionUID</code>) to ensure that the object read into the program (during deserialization) is compatible with the class definition, and not belonging to another version. It throws an <code>InvalidClassException</code> otherwise.</p> 
+     <p>You have these options:</p> 
+     <ol> 
+      <li>Simply ignore this warning message. If a <code>serializable</code> class does not explicitly declare a <code>serialVersionUID</code>, then the serialization runtime will calculate a default <code>serialVersionUID</code> value for that class based on various aspects of the class.</li> 
+      <li>Add a <code>serialVersionUID</code> (Recommended), e.g. <pre class="color-example">
+private static final long <strong>serialVersionUID</strong> = 1L;  <span class="color-comment">// verion 1</span></pre></li> 
+      <li>Suppress this particular warning via annotation <code>@SuppressWarmomgs</code> (in package <code>java.lang</code>) (JDK 1.5): <pre class="color-example">
+<strong>@SuppressWarnings("serial")</strong>
+public class MyFrame extends JFrame { ...... }</pre> </li> 
+     </ol> 
+     <h5><span class="font-code">java.io.Externalizable</span> Interface</h5> 
+     <p>The <code>Serializable</code> has a sub-interface called <code>Externalizable</code>, which you could used if you want to customize the way a class is serialized. Since <code>Externalizable</code> extends <code>Serializable</code>, it is also a <code>Serializable</code> and you could invoke <code>readObject()</code> and <code>writeObject()</code>.</p> 
+     <p><code>Externalizable</code> declares two <code>abstract</code> methods:</p> 
+     <pre class="color-syntax">
+void <strong>writeExternal</strong>(ObjectOutput <em>out</em>) throws IOException
+void <strong>readExternal</strong>(ObjectInput <em>in</em>) throws IOException, ClassNotFoundException</pre> 
+     <p><code>ObjectOutput</code> and <code>ObjectInput</code> are interfaces that are implemented by <code>ObjectOutputStream</code> and <code>ObjectInputStream</code>, which define the <code>writeObject()</code> and <code>readObject()</code> methods, respectively. When an instance of <code>Externalizable</code> is passed to an <code>ObjectOutputStream</code>, the default serialization procedure is bypassed; instead, the stream calls the instance's <code>writeExternal()</code> method. Similarly, when an <code>ObjectInputStream</code> reads a <code>Exteranlizabled</code> instance, it uses <code>readExternal()</code> to reconstruct the instance.</p> 
+     <p><code></code><code>Externalizable</code> is useful if you want complete control on how your objects shall be serialized/deserialized. For example, you could encrypt sensitive data before the object is serialized.</p> 
+     <h3>Random Access Files</h3> 
+     <p>All the I/O streams covered so far are one-way streams. That is, they are either read-only input stream or write-only output stream. Furthermore, they are all sequential-access (or serial) streams, meant for reading and writing data sequentially. Nonetheless, it is sometimes necessary to read a file record directly as well as modifying existing records or inserting new records. The class <code>RandomAccessFile</code> provides supports for non-sequential, direct (or random) access to a disk file. <code>RandomAccessFile</code> is a two-way stream, supporting both input and output operations in the same stream.</p> 
+     <p><code>RandomAccessFile</code> can be treated as a huge byte array. You can use a file pointer (of type <code>long</code>), similar to array index, to access individual byte or group of bytes in primitive types (such as int and double). The file pointer is located at 0 when the file is opened. It advances automatically for every read and write operation by the number of bytes processed.</p> 
+     <img class="image-center" src="images/IO_RandomAccessFile.png" alt="IO_RandomAccessFile.png"> 
+     <p>In constructing a <code>RandomAccessFile</code>, you can use flags <code>'r'</code> or <code>'rw'</code> to indicate whether the file is "read-only" or "read-write" access, e.g.,</p> 
+     <pre class="color-example">
+RandomAccessFile f1 = new <strong>RandomAccessFile</strong>("filename", "r");
+RandomAccessFile f2 = new <strong>RandomAccessFile</strong>("filename", "rw");</pre> 
+     <p>The following methods are available:</p> 
+     <pre class="color-syntax">public void <strong>seek</strong>(long <em>pos</em>) throws IOException;
+<span class="color-comment">// Positions the file pointer for subsequent read/write operation.
+</span>public int <strong>skipBytes</strong>(int <em>numBytes</em>) throws IOException;
+<span class="color-comment">// Moves the file pointer forward by the specified number of bytes.
+</span>public long <strong>getFilePointer</strong>() throws IOException;
+<span class="color-comment">// Gets the position of the current file pointer, in bytes, from the beginning of the file.
+</span>public long <strong>length</strong>() throws IOException;
+<span class="color-comment">// Returns the length of this file.</span></pre> 
+     <p><code>RandomAccessFile</code> does not inherit from <code>InputStream</code> or <code>OutputStream</code>. However, it implements <code>DataInput</code> and <code>DataOutput</code> interfaces (similar to <code>DataInputStream</code> and <code>DataOutputStream</code>). Therefore, you can use various methods to read/write primitive types to the file, e.g.,</p> 
+     <pre class="color-syntax">
+public int <strong>readInt</strong>() throws IOException;
+public double <strong>readDouble</strong>() throws IOException;
+public void <strong>writeInt</strong>(int i) throws IOException;
+public void <strong>writeDouble</strong>(double d) throws IOException;</pre> 
+     <p><span class="line-heading">Example:</span> Read and write records from a <code>RandomAccessFile</code>. (A student file consists of student record of name (<code>String</code>) and id (<code>int</code>)).</p> 
+     <p>[PENDING]</p> 
+     <h3>Compressed I/O Streams</h3> 
+     <p>The classes <code>ZipInputStream</code> and <code>ZipOutputStream</code> (in package <code>java.util</code>) support reading and writing of compressed data in ZIP format. The classes <code>GZIPInputStream</code> and <code>GZIPOutputStream</code> (in package <code>java.util</code>) support reading and writing of compressed data in GZIP format.</p> 
+     <p><span class="line-heading">Example:</span> Reading and writing ZIP files</p> 
+     <p>[@PENDING]</p> 
+     <p><span class="line-heading">Example:</span> Reading and writing JAR files</p> 
+     <p>[@PENDING]</p> 
+     <h3 id="formattedtextio">Formatted Text I/O - <span class="font-code">java.util.Scanner</span> &amp; <span class="font-code">java.util.Formatter</span> (JDK 1.5)</h3> 
+     <h4>Formatted-Text Input via <span class="font-code">java.util.Scanner</span></h4> 
+     <p>JDK 1.5 introduces <code>java.util.Scanner</code> class, which greatly simplifies formatted text input from input source (e.g., files, keyboard, network). <code>Scanner</code>, as the name implied, is a simple text scanner which can parse the input text into primitive types and strings using regular expressions. It first breaks the text input into <em>tokens</em> using a delimiter pattern, which is by default the white spaces (blank, tab and newline). The tokens may then be converted into primitive values of different types using the various <code>nextXxx()</code> methods (<code>nextInt()</code>, <code>nextByte()</code>, <code>nextShort()</code>, <code>nextLong()</code>, <code>nextFloat()</code>, <code>nextDouble()</code>, <code>nextBoolean()</code>, <code>next()</code> for <code>String</code>, and <code>nextLine()</code> for an input line). You can also use the <code>hasNextXxx()</code> methods to check for the availability of a desired input.</p> 
+     <p>The commonly-used constructors are as follows. You can construct a <code>Scanner</code> to parse a byte-based <code>InputStream</code> (e.g., <code>System.in</code>), a disk file, or a given <code>String</code>.</p> 
+     <pre class="color-syntax">
+<span class="color-comment">// Scanner piped from a disk File</span>
+public <strong>Scanner</strong>(File <em>source</em>) throws FileNotFoundException
+public <strong>Scanner</strong>(File <em>source</em>, String <em>charsetName</em>) throws FileNotFoundException
+<span class="color-comment">// Scanner piped from a byte-based InputStream, e.g., System.in</span>
+public <strong>Scanner</strong>(InputStream <em>source</em>)
+public <strong>Scanner</strong>(InputStream <em>source</em>, String <em>charsetName</em>)
+<span class="color-comment">// Scanner piped from the given source string (NOT filename string)</span>
+public <strong>Scanner</strong>(String <em>source</em>)</pre> 
+     <p>For examples,</p> 
+     <pre class="color-example">
+<span class="color-comment">// Construct a Scanner to parse an int from keyboard</span>
+Scanner in1 = new Scanner(System.in);
+int i = in1.nextInt();
+ 
+<span class="color-comment">// Construct a Scanner to parse all doubles from a disk file</span>
+Scanner in2 = new Scanner(new File("in.txt"));  <span class="color-comment">// need to handle FileNotFoundException</span>
+while (in2.hasNextDouble()) {
+   double d = in.nextDouble();
+}
+ 
+<span class="color-comment">// Construct a Scanner to parse a given text string</span>
+Scanner in3 = new Scanner("This is the input text String");
+while (in3.hasNext()) {
+   String s = in.next();
+}</pre> 
+     <p><span class="line-heading">Example 1:</span> The most common usage of <code>Scanner</code> is to read primitive types and <code>String</code> form the keyboard (<code>System.in</code>), as follows:</p> 
+     <pre class="color-example">
+import java.util.Scanner;
+public class <strong>TestScannerSystemIn</strong> {
+   public static void main(String[] args) {
+      <strong>Scanner in = new Scanner(System.in);</strong>
+ 
+      System.out.print("Enter an integer: ");
+      int anInt = <strong>in.nextInt()</strong>;
+      System.out.println("You entered " + anInt);
+ 
+      System.out.print("Enter a floating-point number: ");
+      double aDouble = <strong>in.nextDouble()</strong>;
+      System.out.println("You entered " + aDouble);
+ 
+      System.out.print("Enter 2 words: ");
+      String word1 = <strong>in.next()</strong>;  <span class="color-comment">// read a string delimited by white space</span>
+      String word2 = <strong>in.next()</strong>;  <span class="color-comment">// read a string delimited by white space</span>
+      System.out.println("You entered " + word1 + " " + word2);
+ 
+      <strong>in.nextLine()</strong>;   <span class="color-comment">// flush the "enter" before the next readLine()</span>
+ 
+      System.out.print("Enter a line: ");
+      String line = <strong>in.nextLine()</strong>;  <span class="color-comment">// read a string up to line delimiter</span>
+      System.out.println("You entered " + line);
+   }
+}</pre> 
+     <p>The <code>nextXxx()</code> methods throw <code>InputMismatchException</code> if the next token does not match the type to be parsed.</p> 
+     <p><span class="line-heading">Example 2:</span> You can easily modify the above program to read the inputs from a text file, instead of keyboard (<code>System.in</code>).</p> 
+     <pre class="color-example">
+import java.util.Scanner;
+import java.io.*;
+public class <strong>TestScannerFile</strong> {
+   public static void main(String[] args) throws FileNotFoundException {
+      Scanner in = new Scanner(<strong>new File("in.txt")</strong>);
+ 
+      System.out.print("Enter an integer: ");
+      int anInt = in.nextInt();
+      System.out.println("You entered " + anInt);
+ 
+      System.out.print("Enter a floating-point number: ");
+      double aDouble = in.nextDouble();
+      System.out.println("You entered " + aDouble);
+ 
+      System.out.print("Enter 2 words: ");
+      String word1 = in.next();  <span class="color-comment">// read a string delimited by white space</span>
+      String word2 = in.next();  <span class="color-comment">// read a string delimited by white space</span>
+      System.out.println("You entered " + word1 + " " + word2);
+ 
+      in.nextLine();   <span class="color-comment">// flush the "enter" before the next readLine()</span>
+ 
+      System.out.print("Enter a line: ");
+      String line = in.nextLine();  <span class="color-comment">// read a string up to line delimiter</span>
+      System.out.println("You entered " + line);
+   }
+}</pre> 
+     <p>Prepare the input file "<code>in.txt</code>" as follows:</p> 
+     <pre class="output">
+123
+44.55
+first second
+this is a test</pre> 
+     <h5><span class="font-code">nextXxx()</span> and <span class="font-code">hasNextXxx()</span></h5> 
+     <p>The <code>Scanner</code> class implements <code>iterator&lt;String&gt;</code> interface. You can use <code>hasNext()</code> coupled with <code>next()</code> to iterate through all the <code>String</code> tokens. You can also directly iterate through the primitive types via methods <code>hasNextXxx()</code> and <code>nextXxx()</code>. <code>Xxx</code> includes all primitive types (<code>byte</code>, <code>short</code>, <code>int</code>, <code>long</code>, <code>float</code>, <code>double</code> and <code>boolean</code>), <code>BigInteger,</code> and <code>BigNumber</code>. <code>char</code> is not included but can be retrieved from <code>String</code> via <code>charAt()</code>.</p> 
+     <h5>Delimiter</h5> 
+     <p>Instead of the default white spaces as the delimiter, you can set the delimiter to a chosen regular expression via these methods:</p> 
+     <pre class="color-syntax">
+public Pattern delimiter()    <span class="color-comment">// Returns the current delimiter Regexe Pattern</span>
+public Scanner useDelimiter(Pattern pattern)   <span class="color-comment">// Sets the delimiter Regexe Pattern</span>
+public Scanner useDelimiter(String pattern)</pre> 
+     <p><span class="line-heading">Example 3:</span> Customized token delimiter</p> 
+     <pre class="color-example">
+import java.util.Scanner;
+public class ScannerWithDelimiter {
+   public static void main(String[] args) {
+      Scanner in = new Scanner("one apple 2 apple red apple big apple 5.5 apple");
+      <span class="color-comment">// Zero or more whitespace, followed by 'apple', followed by zero or more whitespace.
+</span>      in.useDelimiter("\\s*apple\\s*");
+      <span class="color-comment">// The delimiter breaks the input into tokens {"one", "2", "red", "big", "5.5"}.</span>
+      System.out.println(in.next());
+      System.out.println(in.nextInt());      <span class="color-comment">// parses text into int</span>
+      System.out.println(in.next());
+      System.out.println(in.next());
+      System.out.println(in.nextDouble());   <span class="color-comment">// parses text into double</span>
+   }
+}</pre> 
+     <p>The regular expression <code>\s*apple\s*</code> matches zero or more white spaces (<code>\s*</code>) followed by "apple" followed by zero or more white spaces (<code>\s*</code>). An additional backslash (<code>\</code>) is needed to use a backslash (<code>\</code>) in Java <code>String</code>'s literal. Read "<a href="../howto/Regexe.html">Regular Expression</a>" for more details.</p> 
+     <h5>Regexe Pattern Matching</h5> 
+     <p>You can use the following methods to find the next occurrence of the specified pattern using regular expressions:</p> 
+     <pre class="color-syntax">
+<span class="color-comment">// Find the next occurrence of a pattern, ignoring delimiters</span>
+public String <strong>findInLine</strong>(Pattern <em>pattern</em>)
+public String <strong>findInLine</strong>(String <em>pattern</em>)
+public String <strong>findWithinHorizon</strong>(Pattern <em>pattern</em>, int <em>horizon</em>)
+public String <strong>findWithinHorizon</strong>(String <em>pattern</em>, int <em>horizon</em>)
+<span class="color-comment">// Skips input that matches the specified pattern, ignoring delimiters</span>
+public Scanner <strong>skip</strong>(Pattern <em>pattern</em>)
+public Scanner <strong>skip</strong>(String <em>pattern</em>)</pre> 
+     <h5>Charset</h5> 
+     <p>By default, <code>Scanner</code> uses the default charset to read the character from the input source. You can ask <code>Scanner</code> to read text file which is encoded using a particular charset, by providing the charset name.</p> 
+     <p><span class="line-heading">Example 4:</span></p> 
+     <pre class="color-example">
+import java.util.*;
+import java.io.*;
+public class TestScannerTextFile {
+   public static void main(String[] args) throws FileNotFoundException {
+      String filename = "test_scanner.txt";
+      String message = "Hi,??!\n";   <span class="color-comment">// with non-ASCII chars</span>
+      <span class="color-comment">// Create a Text file in UTF-8
+      // Can also use formatter (see below)</span>
+      try (BufferedWriter out =
+              new BufferedWriter(
+                 new OutputStreamWriter(
+                    new FileOutputStream(filename), "UTF-8"))) {
+         out.write("12345 55.66\n");
+         out.write(message);
+         out.flush();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read raws bytes and print in Hex</span>
+      try (BufferedInputStream in =
+              new BufferedInputStream(
+                 new FileInputStream(filename))) {
+         int inByte;
+         while ((inByte = in.read()) != -1) {
+            System.out.printf("%02X ", inByte);   <span class="color-comment">// Print Hex codes</span>
+         }
+         System.out.println();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Open a text file, specifying the charset for the file encoding</span>
+      <span class="color-new">Scanner in = new Scanner(new File(filename), "UTF-8");</span>
+      System.out.println(in.nextInt());
+      System.out.println(in.nextFloat());
+      in.nextLine();  <span class="color-comment">// Flush a newline</span>
+      System.out.println(in.nextLine());
+   }
+}</pre> 
+     <pre class="output">
+31 32 33 34 35 20 35 35 2E 36 36 0A 48 69 2C E6 82 A8 E5 A5 BD 21 0A
+<span class="color-comment">1  2  3  4  5  SP 5  5  .  6  6  LF H  i  ,  ?       ?       !  LF [UTF-8]</span>
+
+12345
+55.66
+Hi,??!</pre> 
+     <h4>Formatted-Text Printing with <span class="font-code">printf()</span> method</h4> 
+     <p>JDK 1.5 introduces C-like <code>printf()</code> method (in classes <code>java.io.PrintSteam</code> and <code>java.io.PrintWriter</code>) for formatted-text printing.</p> 
+     <p>To write formatted-text to console (<code>System.out</code> or <code>System.err</code>), you could simply use the convenience methods <code>System.out.printf()</code> or <code>System.out.format()</code>. <code>printf()</code> takes this syntax:</p> 
+     <pre class="color-syntax">
+public PrintStream|PrintWriter <strong>printf</strong>(String <em>formatSpecifier</em>, Object... <em>args</em>)
+public PrintStream|PrintWriter <strong>printf</strong>(Locale <em>locale</em>, String <em>formatSpecifier</em>, Object... <em>args</em>)</pre> 
+     <p><code>printf()</code> takes a variable number (zero or more) of arguments (or varargs). Varargs was introduced in JDK 1.5 (that is the reason Java cannot support <code>printf()</code> earlier).</p> 
+     <p><code>printf()</code> can be called from <code>System.out</code> or <code>System.err</code> ( which are <code>PrintStream</code>s). For example,</p> 
+     <pre class="color-example">
+System.out.printf("Hello %4d %6.2f %s, and%n   Hello again%n", 123, 5.5, "Hello");</pre> 
+     <pre class="output">
+Hello  123   5.50 Hello, and
+   Hello again</pre> 
+     <p>You can also use the <code>System.out.format()</code> method, which is identical to <code>System.out.printf()</code>.</p> 
+     <h5>Format Specifiers</h5> 
+     <p>A format specifier begins with <code>'%'</code> and ends with a conversion-type character (e.g. <code>"%d"</code> for integer, <code>"%f"</code> for <code>float</code> and <code>double</code>), with optional parameters in between, as follows:</p> 
+     <pre class="color-syntax"><strong>
+</strong>%[<em>argument_position</em>$][<em>flag(s)</em>][<em>width</em>][.<em>precision</em>]<strong><em>conversion-type-character</em></strong></pre> 
+     <ul> 
+      <li>The optional <em>argument_position</em> specifies the position of the argument in the argument list. The first argument is <code>"1$"</code>, second argument is <code>"2$"</code>, and so on.</li> 
+      <li>The optional <em>width</em> indicates the minimum number of characters to be output.</li> 
+      <li>The optional <em>precision</em> restricts the number of characters (or number of decimal places for float-point numbers).</li> 
+      <li>The mandatory <em>conversion-type-character</em> indicates how the argument should be formatted. For examples: <code>'b'</code>, <code>'B'</code> (<code>boolean</code>), <code>'h'</code>, <code>'H'</code> (hex string), <code>'s'</code>, <code>'S'</code> (string), <code>'c'</code>, <code>'C'</code> (character), <code>'d'</code> (decimal integer), <code>'o'</code> (octal integer), <code>'x'</code>, <code>'X'</code> (hexadecimal integer), <code>'e'</code>, <code>'E'</code> (float-point number in scientific notation), <code>'f'</code> (floating-point number), <code>'%'</code> (percent sign). The uppercase conversion code (e.g., <code>'S'</code>) formats the texts in uppercase.</li> 
+      <li>Flag: <code>'-'</code> (left-justified), <code>'+'</code> (include sign), <code>' '</code> (include leading space), <code>'0'</code> (zero-padded), <code>','</code> (include grouping separator). <code>'('</code> (negative value in parentheses), <code>'#'</code> (alternative form).</li> 
+     </ul> 
+     <p>Read JDK API <code>java.util.Formatter</code>'s "<a href="http://docs.oracle.com/javase/7/docs/api/java/util/Formatter.html#syntax">Format String Syntax</a>" for details on format specifiers.</p> 
+     <h5>Examples</h5> 
+     <pre class="color-example">
+System.out.printf("%2$2d %3$2d %1$2d%n", 1, 12, 123, 1234);</pre> 
+     <pre class="output">
+12 123  1</pre> 
+     <pre class="color-example">
+System.out.printf(Locale.FRANCE, "e = %+10.4f%n", Math.PI);</pre> 
+     <pre class="output">
+e =    +3,1416</pre> 
+     <pre class="color-example">
+System.out.printf("Revenue: $ %(,.2f, Profit: $ %(,.2f%n", 12345.6, -1234.5678);</pre> 
+     <pre class="output">
+Revenue: $ 12,345.60, Profit: $ (1,234.57)</pre> 
+     <h4>Formatted-Text Output via <span class="font-code">java.util.Formatter</span> Class &amp; <span class="font-code">format()</span> method</h4> 
+     <p>JDK 1.5 introduced <code>java.util.Scanner</code> for formatted text input. It also introduced <code>java.util.Formatter</code> for formatted text output. </p> 
+     <p>A <code>Formatter</code> is an interpreter for <code>printf</code>-style format strings. It supports layout justification and alignment, common formats for numeric, string, and date/time data, and locale-specific output, via the format specifiers.</p> 
+     <p>The <code>Formatter</code> has the following constructors:</p> 
+     <pre class="color-syntax">
+public <strong>Formatter</strong>(Appendable <em>a</em>);    <span class="color-comment">// StringBuffer and StringBuilder implement Appendable</span>
+public <strong>Formatter</strong>(Appendable <em>a</em>, Locale <em>l</em>);
+public <strong>Formatter</strong>(String <em>filename</em>)
+public <strong>Formatter</strong>(String <em>fileName</em>, String <em>charsetName</em>)
+public <strong>Formatter</strong>(File <em>file</em>)
+public <strong>Formatter</strong>(File <em>file</em>, String <em>charsetName</em>)
+public <strong>Formatter</strong>(OutputStream <em>os</em>)
+public <strong>Formatter</strong>(PrintStream <em>ps</em>)</pre> 
+     <p><code>Formatter</code> supports <code>StringBuffer</code>/<code>StringBuilder</code> (as <code>Appendable</code>) as output sink. It does not support <code>String</code>, probably because <code>String</code> is immutable.</p> 
+     <p>The <code>format()</code> method can be used to write formatted text output:</p> 
+     <pre class="color-syntax">
+public Formatter <strong>format</strong>(String <em>formatSpecifier</em>, Object... <em>args</em>)
+public Formatter <strong>format</strong>(Locale <em>locale</em>, String <em>formatSpecifier</em>, Object... <em>args</em>)</pre> 
+     <p>Notice that the method <code>format()</code> has the same syntax as the method <code>printf()</code>, using the same set of format specifier as <code>printf()</code>.</p> 
+     <p>Other methods are:</p> 
+     <pre class="color-syntax">
+public void <strong>flush</strong>()   <span class="color-comment">// flush out all the buffered output</span>
+public void <strong>close</strong>()</pre> 
+     <p><span class="line-heading">Example 1:</span> Using a <code>StringBuilder</code> (which implements <code>Appendable</code>) as the output sink for the <code>Formatter</code>.</p> 
+     <table class="table-program"> 
+      <colgroup>
+       <col class="col-line-number"> 
+       <col class="col-program"> 
+      </colgroup>
+      <tbody> 
+       <tr> 
+        <td> <pre class="text-right">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25</pre> </td> 
+        <td> <pre>
+import java.util.Formatter;
+import java.util.Locale;
+ 
+public class TestFormatter {
+   public static void main(String[] args) {
+ 
+   <span class="color-comment">// Use a StringBuilder (Appandable) as the output sink for the Formatter</span>
+   StringBuilder sb = new StringBuilder();
+   Formatter formatter = new Formatter(sb, Locale.US);
+ 
+   <span class="color-comment">// Re-order output.</span>
+   formatter.format("%4$2s %3$2s %2$2s %1$2s", "a", "b", "c", "d");
+   System.out.println(sb);    <span class="color-comment">// -&gt; " d  c  b  a"</span>
+ 
+   <span class="color-comment">// Use the optional locale as the first argument.</span>
+   sb.delete(0, sb.length());
+   formatter.format(Locale.FRANCE, "e = %+10.4f", Math.E);
+   System.out.println(sb);    <span class="color-comment">// -&gt; "e =    +2,7183"</span>
+ 
+   <span class="color-comment">// Try negative number with '(' flag and group separator.</span>
+   sb.delete(0, sb.length());
+   formatter.format("Net gained or lost: $ %(,.2f", -1234.567);
+   System.out.println(sb);    <span class="color-comment">// -&gt; "Net gained or lost: $ (1,234.57)"</span>
+   }
+}</pre> </td> 
+       </tr> 
+      </tbody> 
+     </table> 
+     <p>Read JDK API <code>java.util.Formatter</code>'s "<a href="http://docs.oracle.com/javase/7/docs/api/java/util/Formatter.html#syntax">Format String Syntax</a>" for details on format specifiers.</p> 
+     <p><span class="line-heading">Example 2:</span> Setting the charset for <code>Formatter</code>'s output.</p> 
+     <pre class="color-example">
+import java.io.*;
+import java.util.*;
+ 
+public class FormatterTest {
+   public static void main(String[] args) {
+      String filename = "formatter-out.txt";
+      String message = "Hi,??!";
+ 
+      <span class="color-comment">// Create a text file in "UTF-8"</span>
+      try (Formatter out = new Formatter(filename, "UTF-8")) {
+         out.format("%4d %6.2f %s%n", 0xAA, 55.66, message);
+         out.flush();
+      } catch (UnsupportedEncodingException|FileNotFoundException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read raws bytes and print in Hex</span>
+      try (BufferedInputStream in =
+              new BufferedInputStream(
+                 new FileInputStream(filename))) {
+         int inByte;
+         while ((inByte = in.read()) != -1) {
+            System.out.printf("%02X ", inByte);   <span class="color-comment">// Print Hex codes</span>
+         }
+         System.out.println();
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Set up text file input using a scanner and read records</span>
+      try (Scanner in = new Scanner(new File(filename), "UTF-8")) {
+         System.out.println(in.nextInt());
+         System.out.println(in.nextDouble());
+         System.out.println(in.next());
+      } catch (FileNotFoundException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <pre class="output">
+20 31 37 30 20 20 35 35 2E 36 36 20 48 69 2C E6 82 A8 E5 A5 BD 21 0A
+<span class="color-comment">170         SP 55.66             SP H  i  ,  ?       ?       !  LF</span>
+
+170
+55.66
+Hi,??!</pre> 
+     <h4><span class="font-code">String.format()</span></h4> 
+     <p>The <code>Formatter</code> with <code>StringBuilder</code> as the output sink allows you to build up a formatted string progressively. To produce a simple formatted <code>String</code>, you can simply use the <code>static</code> method <code>String.format()</code>. This is handy in the <code>toString()</code> method, which is required to return a <code>String</code>. For example,</p> 
+     <table class="table-program"> 
+      <colgroup>
+       <col class="col-line-number"> 
+       <col class="col-program"> 
+      </colgroup>
+      <tbody> 
+       <tr> 
+        <td> <pre class="text-right">
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre> </td> 
+        <td> <pre>
+public class Time {
+   private int hour, minute, second;
+ 
+   public Time(int hour, int minute, int second) {
+      this.hour = hour;
+      this.minute = minute;
+      this.second = second;
+   }
+ 
+   <span class="color-comment">// Returns a description in "HH:MM:SS"</span>
+   public String toString() {
+      return <span class="color-new">String.format("%02d:%02d:%02d", hour, minute, second);</span>
+   }
+ 
+   <span class="color-comment">// Test main()</span>
+   public static void main(String[] args) {
+      Time t = new Time(1, 2, 3);
+      System.out.println(t);   <span class="color-comment">// 01:02:03</span>
+   }
+}</pre> </td> 
+       </tr> 
+      </tbody> 
+     </table> 
+     <h3 id="jdk7io">File I/O in JDK 1.7</h3> 
+     <p>[This section was extracted from the Java Online Tutorial and JDK 7 API.]</p> 
+     <p>JDK 1.7 greatly enhances supports for file I/O via new package <code>java.nio.file</code> and its associated packages.</p> 
+     <h4>Interface <span class="font-code">java.nio.file.Path</span></h4> 
+     <p>A <em>path string</em> could be used to locate a <em>file</em>, a <em>directory</em> or a <em>symbolic link</em>. A <em>symbolic link</em> (or <em>symlink</em>) is a special file that references another file. A path string is system dependent, e.g., "<code>c:\myproject\java\Hello.java</code>" in Windows or "<code>/myproject/java/Hello.java</code>" in Unix. Windows uses back-slash <code>'\'</code> as the directory separator; while Unixes use forward-slash <code>'/'</code>. Windows uses semi-colon <code>';'</code> as path separator; while Unixes use colon <code>':'</code>. The "<code>c:\</code>" or "<code>\</code>" is called the <em>root</em>. Windows supports multiple roots, each maps to a drive (e.g., "<code>c:\</code>", "<code>d:\</code>"). Unix has single root ("<code>\</code>"). A path could be <em>absolute</em> (beginning from the root) or <em>relative</em> (which is relative to the current working directory). Special notations "<code>.</code>" and "<code>..</code>" denote the current directory and the parent directory, respectively. </p> 
+     <p>A <code>java.nio.file.Path</code> instance specifies the location of a file, or a directory, or a symbolic link. <code>Path</code> replaces <code>java.io.File</code> (of the standard I/O), which is less versatile and buggy.</p> 
+     <h4> Helper class <span class="font-code">java.nio.file.Paths</span></h4> 
+     <p>To create a <code>Path</code>, use the <code>static</code> method <code>get()</code> of the helper class <code>java.nio.file.Paths</code>. The helper class <code>Paths</code> contains exclusively <code>static</code> methods for creating <code>Path</code> objects. <code>Paths.get()</code> returns a <code>Path</code> object by converting a given path string or <code>URI</code>. </p> 
+     <pre class="color-syntax">
+public static Path <strong>get</strong>(String <em>first</em>, String... <em>more</em>)
+<span class="color-comment">// This method accepts variable number of arguments (varargs).
+// It converts a path string, or a sequence of strings that when joined form a path string, to a Path object.
+// The location of the Path may or may not exist.  </span>
+  
+public static Path <strong>get</strong>(URI <em>uri</em>)
+<span class="color-comment">// Converts the given URI to a Path object.</span></pre> 
+     <p>For example,</p> 
+     <pre class="color-example">
+Path p1 = Paths.get("in.txt");      <span class="color-comment">// A file in current directory, relative</span>
+Path p2 = Paths.get("c:\\myproejct\\java\\Hello.java");  <span class="color-comment">// File, absolute, need escape sequence for '\'</span>
+Path p3 = Paths.get("/use/local");  <span class="color-comment">// A directory</span>
+</pre> 
+     <p>As the directory-separator is system dependent, for writing portable and more flexible program, it is recommended to use an existing <code>Path</code> instance as an anchor to resolve the filename, e.g.,</p> 
+     <pre class="color-example">
+Path dir = ...
+Path file = dir.resolve("filename");  <span class="color-comment">// Joins the filename to the dirname with a directory-separator</span></pre> 
+     <p>A <code>Path</code> can be broken down as root, level-0, level-1, .... The method <code>getNameCount()</code> returns the levels. The method <code>getName(i)</code> returns the name of level-i. For example,</p> 
+     <pre class="color-example">
+import java.nio.file.*;
+public class <strong>PathInfo</strong> {
+   public static void main(String[] args) {
+      <span class="color-comment">// Windows</span>
+      Path path = Paths.get("D:\\myproject\\java\\test\\Hello.java");
+      <span class="color-comment">// Unix/Mac</span>
+      <span class="color-comment">//Path path = Paths.get("/myproject/java/test/Hello.java");</span>
+ 
+      <span class="color-comment">// Print Path Info</span>
+      System.out.println("toString:    " + path.toString());    <span class="color-comment">// D:\myproject\java\test\Hello.java</span>
+      System.out.println("getFileName: " + path.getFileName()); <span class="color-comment">// Hello.java</span>
+      System.out.println("getParent: " + path.getParent());     <span class="color-comment">// D:\myproject\java\test</span>
+      System.out.println("getRoot: " + path.getRoot());         <span class="color-comment">// D:\</span>
+ 
+      <span class="color-comment">// root, level-0, level-1, ...</span>
+      int nameCount = path.getNameCount();
+      System.out.println("getNameCount: " + nameCount);   <span class="color-comment">// 4</span>
+      for (int i = 0; i &lt; nameCount; ++i) {
+         System.out.println("getName(" + i + "): " + path.getName(i)); <span class="color-comment">// (0)myproject, (1)java,</span>
+      }                                                                <span class="color-comment">// (2) test, (3) Hello.java</span>
+      System.out.println("subpath(0,2): " + path.subpath(0,2));  <span class="color-comment">// myproject\java</span>
+      System.out.println("subpath(1,4): " + path.subpath(1,4));  <span class="color-comment">// java\test\Hello.java</span>
+   }
+}</pre> 
+     <h4>Helper Class <span class="font-code">java.nio.file.Files</span></h4> 
+     <p>The class <code>Files</code> contains exclusively <code>static</code> methods for file, directory and symlink operations such as create, delete, read, write, copy, move, etc.</p> 
+     <h5>Properties of a File/Directory</h5> 
+     <p>You can use <code>static</code> <code>boolean</code> methods <code>Files.exists(Path)</code> and <code>File.notExists(Path)</code> to verify if a given <code>Path</code> exists or does not exist (as a file, directory or symlink). A <code>Path</code> could be verified to exist, or not exist, or unknown (e.g., the program does not have access to the file). If the status is unknown, the <code>exists()</code> and <code>noExists()</code> returns <code>false</code>.</p> 
+     <p>You could also use <code>static</code> <code>boolean</code> methods <code>Files.isDirectory(Path)</code>, <code>Files.isRegularFile(Path)</code> and <code>Files.isSymbolicLink(Path)</code> to verify whether a <code>Path</code> locates a file, directory, or symlink.</p> 
+     <p>Many of these methods take an optional second argument of <code>LinkOption</code>, which is applicable for symlink only. For example, <code>LinkOption.NOFOLLOW_LINKS</code> specifies do not follow the symlink.</p> 
+     <pre class="color-syntax">
+public static long <strong>size</strong>(Path <em>path</em>)  <span class="color-comment">// Returns the size of the file</span>
+ 
+public static boolean <strong>exists</strong>(Path <em>path</em>, LinkOption... <em>options</em>)
+<span class="color-comment">// Verifies whether the given Path exists, as a file/directory/symlink.
+// It returns false if the file does not exist or status is unknown.
+// LinkOption specifies how symlink should be handled, 
+//   e.g., NOFOLLOW_LINKS: Do not follow symlinks.</span>
+public static boolean <strong>notExists</strong>(Path <em>path</em>, LinkOption... <em>options</em>)     <span class="color-comment">// Not exists?</span>
+ 
+public static boolean <strong>isDirectory</strong>(Path <em>path</em>, LinkOption... <em>options</em>)   <span class="color-comment">// a directory?</span>
+public static boolean <strong>isRegularFile</strong>(Path <em>path</em>, LinkOption... <em>options</em>) <span class="color-comment">// a file?</span>
+public static boolean <strong>isSymbolicLink</strong>(Path <em>path</em>)                       <span class="color-comment">// a symblink?</span>
+ 
+public static boolean <strong>isReadable</strong>(Path <em>path</em>)    <span class="color-comment">// readable?</span>
+public static boolean <strong>isWritable</strong>(Path <em>path</em>)    <span class="color-comment">// writable?</span>
+public static boolean <strong>isExecutable</strong>(Path <em>path</em>)  <span class="color-comment">// executable?</span></pre> 
+     <p>For example, to get the size of a file in JDK 1.7:</p> 
+     <pre class="color-example">
+<span class="color-comment">// JDK 7: Use static method java.nio.file.Files.size(path)</span>
+Path path = Paths.get("test.jpg");
+System.out.println("Files.Size(): " + Files.size(path));
+       
+<span class="color-comment">// Pre-JDK 7: Use java.io.File method aFile.length()</span>
+File file = new File("test.jpg");
+System.out.println("File.length():" + file.length());</pre> 
+     <h5>Deleting a File/Directory</h5> 
+     <p>You can use <code>static</code> methods <code>delete(Path)</code> to delete a file or directory. Directory can be deleted only if it is empty. A <code>boolean</code> method <code>deleteIfExists()</code> is also available.</p> 
+     <pre class="color-syntax">
+public static void <strong>delete</strong>(Path <em>path</em>) throws IOException
+public static boolean <strong>deleteIfExists</strong>(Path <em>path</em>) throws IOException</pre> 
+     <h5>Copying/Moving a File/Directory</h5> 
+     <p>You can use <code>static</code> methods <code>copy(Path, Path, CopyOption)</code> or <code>move(Path, Path, CopyOption)</code> to copy or move a file or directory. The methods return the target <code>Path</code>.</p> 
+     <p>The methods accepts an <em>optional</em> third argument of <code>CopyOption</code>. For examples: <code>CopyOption.REPLACE_EXISTING</code> replaces the target if it exists; <code>CopyOption.COPY_ATTRIBUTES</code> copies the file attributes such as the dates; <code>CopyOption.NOFOLLOW_LINKS</code> specifies not to follow symlinks.</p> 
+     <pre class="color-syntax">
+public static Path <strong>copy</strong>(Path <em>source</em>, Path <em>target</em>, CopyOption... <em>options</em>) throws IOException
+public static Path <strong>move</strong>(Path <em>source</em>, Path <em>target</em>, CopyOption... <em>options</em>) throws IOException</pre> 
+     <p>To copy a file into another directory:</p> 
+     <pre class="color-example">
+Path source = ...
+Path targetDir = ...
+Files.copy(source, targetDir.resolve(source.getFileName());</pre> 
+     <h5>Reading/Writing Small Files</h5> 
+     <p>For small files, you can use <code>static</code> methods <code>Files.readAllBytes(Path)</code> (byte-based) and <code>Files.readAllLines(Path, Charset)</code> (character-based) to read the entire file. You can use <code>Files.write(Path, byte[])</code> (byte-based) or <code>Files.write(Path, Iterable, Charset)</code> (character-based) to write to a file.</p> 
+     <p>The optional <code>OpenOption</code> includes: <code>WRITE</code>, <code>APPEND</code>, <code>TRUNCATE_EXISTING</code> (truncates the file to zero bytes), <code>CREATE_NEW</code> (creates a new file and throws an exception if the file already exists), <code>CREATE</code> (opens the file if it exists or creates a new file if it does not), among others.</p> 
+     <h5>Byte-based Operation</h5> 
+     <pre class="color-syntax">
+public static byte[] <strong>readAllBytes</strong>(Path <em>path</em>) throws IOException
+<span class="color-comment">// Reads all bytes and returns a byte array.</span> 
+public static Path <strong>write</strong>(Path <em>path</em>, byte[] <em>bytes</em>, OpenOption... <em>options</em>) throws IOException
+<span class="color-comment">// Default options are: CREATE, TRUNCATE_EXISTING, and WRITE</span></pre> 
+     <h5>Character-based Operation</h5> 
+     <pre class="color-syntax">
+public static List&lt;String&gt; <strong>readAllLines</strong>(Path <em>path</em>, Charset <em>cs</em>) throws IOException
+<span class="color-comment">// Reads all lines and returns a list of String.
+// Line terminator could be "\n", "\r\n" or "\r".
+</span>public static Path <strong>write</strong>(Path path, Iterable&lt;? extends CharSequence&gt; lines, 
+                         Charset cs, OpenOption... options) throws IOException</pre> 
+     <p><span class="line-heading">Examples:</span> The following example write a small text file (in "UTF-8"), and read the entire file back as bytes as well as characters.</p> 
+     <pre class="color-example">
+import java.io.*;
+import java.nio.file.*;
+import java.nio.charset.*;
+import java.util.*;
+ 
+public class <strong>SmallFileIOJDK7</strong> {
+   public static void main(String[] args) {
+      String fileStr = "small_file.txt";
+      Path path = Paths.get(fileStr);
+ 
+      <span class="color-comment">// Strings with unicode characters</span>
+      List&lt;String&gt; lines = new ArrayList&lt;String&gt;();
+      lines.add("Hi,??!");
+      lines.add("Hello,??????");
+ 
+      <span class="color-comment">// Write to text file in UTF-8</span>
+      try {
+         Files.write(path, lines, Charset.forName("UTF-8"));
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read the whole file as bytes</span>
+      byte[] bytes;
+      try {
+         bytes = Files.readAllBytes(path);
+         for (byte aByte: bytes) {
+            System.out.printf("%02X ", aByte);
+         }
+         System.out.printf("%n%n");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read the whole file as characters</span>
+      List&lt;String&gt; inLines;
+      try {
+         inLines = Files.readAllLines(path, Charset.forName("UTF-8"));
+         for (String aLine: inLines) {
+            for (int i = 0; i &lt; aLine.length(); ++i) {
+               char charOut = aLine.charAt(i);
+               System.out.printf("[%d]'%c'(%04X) ", (i+1), charOut, (int)charOut);
+            }
+            System.out.println();
+         }
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <pre class="output">
+48 69 2C <span class="underline">E6 82 A8</span> <span class="underline">E5 A5 BD</span> 21 0D 0A
+<span class="color-comment">H  i  ,  ?       ?       !  CR LF</span>
+48 65 6C 6C 6F 2C <span class="underline">E5 90 83</span> <span class="underline">E9 A5 B1</span> <span class="underline">E4 BA 86</span> <span class="underline">E6 B2 A1</span> <span class="underline">E6 9C 89</span> 3F 0D 0A
+<span class="color-comment">H  e  l  l  o  ,  ?       ?       ?       ?       ?        ?  CR LF</span>
+
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+
+[1]'H'(0048) [2]'e'(0065) [3]'l'(006C) [4]'l'(006C) [5]'o'(006F) [6]','(002C) 
+[7]'?'(5403) [8]'?'(9971) [9]'?'(4E86) [10]'?'(6CA1) [11]'?'(6709) [12]'?'(003F)</pre> 
+     <h5>Buffered Character-based I/O for Text Files</h5> 
+     <p>For Reading, use <code>Files.newBufferedReader(Path, Charset)</code> method to open a text file, which returns a <code>BufferedReader</code>. Use <code>BufferedReader.readLine()</code> to read a line, <code>read()</code> to read a char, or <code>read(char[] cbuf, int off, int len)</code> to read into a char-array.</p> 
+     <p>For Writing, use the <code>Files.newBufferedWriter(Path, Charset, OpenOption...)</code> method to open a output text file, which returns a <code>BufferedWriter</code>. Use <code>BufferedWriter.write(int c)</code> to write a character, <code>write(char[] cbuf, int off, int len)</code> or <code>write(String s, int off, int len)</code> to write characters.</p> 
+     <pre class="color-syntax">
+public static BufferedReader <strong>newBufferedReader</strong>(Path path, Charset cs) throws IOException
+  
+public static BufferedWriter <strong>newBufferedWriter</strong>(Path path, Charset cs, OpenOption... options)
+    throws IOException</pre> 
+     <h5>Byte-Based Stream I/O</h5> 
+     <p>Use <code>Files.newInputStream(Path, OpenOption...)</code> to allocate an <code>InputStream</code> for reading raw bytes; and <code>Files.newOutputStream(Path, OpenOption...)</code> to allocate an <code>OutputStream</code> for writing. The <code>InputStream</code> and <code>OutputStream</code> returned are not buffered.</p> 
+     <p><span class="line-heading">Example:</span> Similar to the previous program which read/write the entire file, this program read/write via Buffered I/O.</p> 
+     <pre class="color-example">
+import java.io.*;
+import java.nio.file.*;
+import java.nio.charset.*;
+import java.util.*;
+ 
+public class <strong>BufferedFileIOJDK7</strong> {
+   public static void main(String[] args) {
+      String fileStr = "buffered_file.txt";
+      Path path = Paths.get(fileStr);
+ 
+      <span class="color-comment">// Strings with unicode characters</span>
+      List&lt;String&gt; lines = new ArrayList&lt;String&gt;();
+      lines.add("Hi,??!");
+      lines.add("Hello,??????");
+      Charset charset = Charset.forName("UTF-8");
+ 
+      <span class="color-comment">// Write to text file (encoded in UTF-8)</span>
+      try (BufferedWriter out = Files.newBufferedWriter(path, charset)) {
+         for (String line: lines) {
+            out.write(line, 0, line.length());
+         }
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read the file as bytes</span>
+      try (BufferedInputStream in = new BufferedInputStream(Files.newInputStream(path))) {
+         int inByte;
+         while ((inByte = in.read()) != -1) {
+            System.out.printf("%02X ", inByte);
+         }
+         System.out.printf("%n%n");
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+ 
+      <span class="color-comment">// Read the file as characters</span>
+      String inLine;
+      try (BufferedReader in = Files.newBufferedReader(path, charset)) {
+         while ((inLine = in.readLine()) != null) {
+            for (int i = 0; i &lt; inLine.length(); ++i) {
+               char aChar = inLine.charAt(i);
+               System.out.printf("[%d]'%c'(%04X) ", (i+1), aChar, (int)aChar);
+            }
+            System.out.println();
+         }
+      } catch (IOException ex) {
+         ex.printStackTrace();
+      }
+   }
+}</pre> 
+     <pre class="output">
+48 69 2C <span class="underline">E6 82 A8</span> <span class="underline">E5 A5 BD</span> 21
+<span class="color-comment">H  i  ,  ?       ?       !</span>
+48 65 6C 6C 6F 2C <span class="underline">E5 90 83</span> <span class="underline">E9 A5 B1</span> <span class="underline">E4 BA 86</span> <span class="underline">E6 B2 A1</span> <span class="underline">E6 9C 89</span> 3F
+<span class="color-comment">H  e  l  l  o  ,  ?       ?       ?       ?       ?        ?</span>
+
+[1]'H'(0048) [2]'i'(0069) [3]','(002C) [4]'?'(60A8) [5]'?'(597D) [6]'!'(0021)
+[7]'H'(0048) [8]'e'(0065) [9]'l'(006C) [10]'l'(006C) [11]'o'(006F) [12]','(002C)
+[13]'?'(5403) [14]'?'(9971) [15]'?'(4E86) [16]'?'(6CA1) [17]'?'(6709) [18]'?'(003F)</pre> 
+     <h5>Creating a New File/Directory/Symlink</h5> 
+     <p>Beside using the <code>Files.write()</code> method with <code>OpenOption</code> of <code>CREATE</code> or <code>CREATE_NEW</code>, you can also use <code>Files.createFile()</code> method to create an empty file. You can use the default file attributes or optionally define the initial attributes of the file.</p> 
+     <pre class="color-syntax">
+public static Path <strong>createFile</strong>(Path <em>path</em>, FileAttribute&lt;?&gt;... <em>attrs</em>)</pre> 
+     <p>The <code>FileAttribute</code> includes: [TODO]</p> 
+     <ul> 
+      <li>DOS:</li> 
+      <li>Unixes: Nine file permissions: read, write, and execute permissions for the file owner, members of the same group, and "everyone else", e.g., "<code>rwxr-x---</code>".</li> 
+     </ul> 
+     <p>Example: [TODO]</p> 
+     <p>Similarly, you can create a new directory, symlink as follows:</p> 
+     <pre class="color-syntax">
+public static Path <strong>createDirectory</strong>(Path <em>dir</em>, FileAttribute&lt;?&gt;... <em>attrs</em>) throws IOException
+<span class="color-comment">// Creates a new directory.</span>
+
+public static Path <strong>createDirectories</strong>(Path <em>dir</em>, FileAttribute&lt;?&gt;... <em>attrs</em>) throws IOException
+<span class="color-comment">// Creates a directory by creating all nonexistent "parent" directories first</span>
+
+public public static Path <strong>createSymbolicLink</strong>(Path <em>link</em>, Path <em>target</em>,
+   FileAttribute&lt;?&gt;... attrs) throws IOException
+<span class="color-comment">// Creates a symbolic link to a target</span></pre> 
+     <p>Example:</p> 
+     <pre class="color-example">
+try {
+   Files.<strong>createDirectory</strong>(Paths.get("d:\\temp\\test"));
+      <span class="color-comment">// With default attribute</span>
+      <span class="color-comment">// FileAlreadyExistsException if already exists</span>
+   Files.<strong>createDirectory</strong>(Paths.get("d:\\temp\\test1\\test2"));
+      <span class="color-comment">// NoSuchFileException if parent does not exist</span>
+   Files.<strong>createDirectories</strong>(Paths.get("d:\\temp\\test1\\test2"));
+      <span class="color-comment">// Also create the parent directory</span>
+} catch (IOException ex) {
+   ex.printStackTrace();
+}</pre> 
+     <h5>Creating a Temporary File/Directory</h5> 
+     <pre class="color-syntax">
+public static Path <strong>createTempFile</strong>(Path <em>dir</em>, String <em>prefix</em>, String <em>suffix</em>,
+      FileAttribute&lt;?&gt;... <em>attrs</em>) throws IOException
+<span class="color-comment">// Creates a new empty file in the specified <em>dir</em>, 
+//  using the given <em>prefix</em> and <em>suffix</em> to generate its name.</span>
+ 
+public static Path <strong>createTempFile</strong>(String <em>prefix</em>, String <em>suffix</em>,
+      FileAttribute&lt;?&gt;... <em>attrs</em>) throws IOException
+<span class="color-comment">// Creates an empty file in the default temporary-file directory, 
+//  using the given prefix and suffix to generate its name.</span>
+
+public static Path createTempDirectory(
+      Path dir, String prefix, FileAttribute&lt;?&gt;... attrs) throws IOException
+      
+public static Path createTempDirectory(
+      String prefix, FileAttribute&lt;?&gt;... attrs) throws IOException</pre> 
+     <p>Example: [TODO]</p> 
+     <h4>File Attributes</h4> 
+     <p>You can use one of the <code>Files.readAttributes()</code> methods to read all the basic attribute of a path.</p> 
+     <pre class="color-syntax">
+public static Map&lt;String,Object&gt; <strong>readAttributes</strong>(
+      Path <em>path</em>, String <em>attributes</em>, LinkOption... <em>options</em>) throws IOException
+<span class="color-comment">// Read Reads a set of file attributes.</span>
+
+public static Object <strong>getAttribute</strong>(
+      Path <em>path</em>, String <em>attribute</em>, LinkOption... <em>options</em>) throws IOException
+<span class="color-comment">// Get a given attribute</span>
+
+public static Path <strong>setAttribute</strong>(
+      Path <em>path</em>, String <em>attribute</em>, Object <em>value</em>, LinkOption... <em>options</em>) throws IOException
+<span class="color-comment">// Set a given attribute</span></pre> 
+     <h4>FileChannel</h4> 
+     <pre class="color-syntax">
+public static SeekableByteChannel <strong>newByteChannel</strong>(
+      Path <em>path</em>, OpenOption... <em>options</em>) throws IOException
+<span class="color-comment">// Opens or creates a file, returning a seekable byte channel to access the file.</span>
+ 
+public static SeekableByteChannel <strong>newByteChannel</strong>(
+      Path <em>path</em>, Set&lt;? extends OpenOption&gt; <em>options</em>, FileAttribute&lt;?&gt;... <em>attrs</em>)
+      throws IOException
+<span class="color-comment">// Opens or creates a file, returning a seekable byte channel to access the file.</span></pre> 
+     <h4>Random Access File</h4> 
+     <p>The Interface <code>SeekableByteChannel</code> supports random access.</p> 
+     <pre class="color-syntax">
+pubic long <strong>position</strong>()   
+<span class="color-comment">// Returns this channel's position.</span>
+public SeekableByteChannel <strong>position</strong>(long <em>newPosition</em>)  
+<span class="color-comment">// Sets this channel's position.</span>
+
+public int <strong>read</strong>(ByteBuffer <em>dest</em>)  
+<span class="color-comment">// Reads a sequence of bytes from this channel into the given ByteBuffer.</span>
+public int <strong>write</strong>(ByteBuffer <em>source</em>)  
+<span class="color-comment">// Writes a sequence of bytes to this channel from the given ByteBuffer.</span>
+
+public long <strong>size</strong>()
+<span class="color-comment">// Returns the current size of entity to which this channel is connected.</span>
+public SeekableByteChannel <strong>truncate</strong>(long <em>size</em>)  
+<span class="color-comment">// Truncates the entity, to which this channel is connected, to the given size.</span></pre> 
+     <h4>Directory Operations</h4> 
+     <h5>List all root directories</h5> 
+     <pre class="color-example">
+<span class="color-comment">// Print the root directories for the default file system</span>
+Iterable&lt;Path&gt; rootDirs = FileSystems.getDefault().getRootDirectories();
+for (Path rootDir : rootDirs) {
+   System.out.println(rootDir);
+}</pre> 
+     <h5>Listing a directory</h5> 
+     <p>You can list the contents of a directory by using the <code>Files.newDirectoryStream(Path)</code> method. The returned <code>DirectoryStream</code> object implements <code>Iterable</code>. You can iterate thru the entries with for-each loop.</p> 
+     <pre class="color-syntax">
+public static DirectoryStream&lt;Path&gt; <strong>newDirectoryStream</strong>(Path <em>dir</em>) throws IOException</pre> 
+     <p><span class="line-heading">Example:</span> List the contents of a directory</p> 
+     <pre class="color-example">
+<span class="color-comment">// List the contents of a directory</span>
+Path dir = Paths.get(".");
+try (<strong>DirectoryStream&lt;Path&gt; dirStream = Files.newDirectoryStream(dir)</strong>) {
+   for (Path entry : dirStream) {
+      System.out.println(entry.getFileName());  <span class="color-comment">// Filename only</span>
+      System.out.println(entry.toString());     <span class="color-comment">// Full-path name</span>
+   }
+} catch (IOException | DirectoryIteratorException ex) {
+   ex.printStackTrace();
+}</pre> 
+     <p>In addition, you can include a glob pattern to filter the entries.</p> 
+     <pre class="color-syntax">
+public static DirectoryStream&lt;Path&gt; <strong>newDirectoryStream</strong>(Path <em>dir</em>, String <em>glob</em>)
+      throws IOException</pre> 
+     <p><span class="line-heading">Example:</span> List the contents of a directory filtered by a glob.</p> 
+     <pre class="color-example">
+<span class="color-comment">// List the contents of a directory filtered by a glob pattern</span>
+Path dir = Paths.get(".");
+try (DirectoryStream&lt;Path&gt; dirStream
+        = <strong>Files.newDirectoryStream(dir, "h*.{java,class,txt}")</strong>) {
+        <span class="color-comment">// begins with 'h' and ends with .java or .class or .txt</span>
+   for (Path entry : dirStream) {
+      System.out.println(entry.getFileName());  <span class="color-comment">// Filename only</span>
+      System.out.println(entry.toString());     <span class="color-comment">// Full-path name</span>
+   }
+} catch (IOException ex) {
+   ex.printStackTrace();
+}</pre> 
+     <h5>Glob</h5> 
+     <p>A <em>glob</em> is a subset of regular expression.</p> 
+     <ul> 
+      <li><code>'*'</code> matches zero or more character (0+).</li> 
+      <li><code>'?'</code> matches any one character.</li> 
+      <li><code>'**'</code> behaves like <code>'*'</code>, but can cross directory boundary, for matching on full path.</li> 
+      <li><code>{...,....,...}</code> encloses a set of sub-patterns separated by ','.</li> 
+      <li><code>[...]</code> encloses a set of single character or a range of character with <code>'-'</code>, e.g., [aeiou], [a-z], [0-9].</li> 
+      <li>Any other character matches itself. To match <code>'*'</code>, <code>'?'</code> or special characters, prefix with <code>'\'</code>.</li> 
+     </ul> 
+     <p>For example: "<code>h*.{java,class,txt}</code>" matches entry starts with "<code>h</code>" and ends with "<code>.java</code>", "<code>.class</code>", or "<code>.txt</code>".</p> 
+     <p>You can also write your own codes to filter the entries.</p> 
+     <pre class="color-syntax">
+public static DirectoryStream&lt;Path&gt; <strong>newDirectoryStream</strong>(
+      Path <em>dir</em>, DirectoryStream.Filter&lt;? super Path&gt; <em>filter</em>) throws IOException</pre> 
+     <p>The interface <code>DirectoryStream.Filter&lt;T&gt;</code> declares one <code>abstract</code> <code>boolean</code> method <code>accept()</code>, which will be call-back for each entry. Those entries that resulted in false <code>accept()</code> will be discarded.</p> 
+     <pre class="color-syntax">
+public boolean <strong>accept</strong>(T <em>entry</em>) throws IOException</pre> 
+     <p><span class="line-heading">Example:</span> The following program uses an anonymous instance of an anonymous <code>DirectoryStream.Filter</code> sub-class to filter the <code>DirectoryStream</code>. The call-back method <code>accept()</code> returns <code>true</code> for regular files, and discards the rest. Take note that this filtering criterion cannot be implemented in a glob-pattern.</p> 
+     <pre class="color-example">
+<span class="color-comment">// List the contents of a directory with a custom filter</span>
+Path dir = Paths.get("d:\\temp");
+try (DirectoryStream&lt;Path&gt; dirStream = Files.newDirectoryStream(dir,
+         <strong>new DirectoryStream.Filter&lt;Path&gt;() {   <span class="color-comment">// anonymous inner class</span>
+            public boolean accept(Path entry) throws IOException {
+                  return (Files.isRegularFile(entry));  <span class="color-comment">// regular file only</span>
+            }
+         }</strong>)) {
+   for (Path entry : dirStream) {
+      System.out.println(entry.getFileName());  <span class="color-comment">// Filename only</span>
+      System.out.println(entry.toString());     <span class="color-comment">// Full-path name</span>
+   }
+} catch (IOException ex) {
+   ex.printStackTrace();
+}</pre> 
+     <h4>Walking the File Tree - <span class="font-code">Files.walkFileTree()</span></h4> 
+     <p>You can use <code>static</code> method <code>Files.walkFileTree()</code> ro recursively walk thru all the files from a starting directory. </p> 
+     <p>First of all, you need to create an object that implements interface <code>FileVisitor&lt;? super Path&gt;</code>, which declares these <code>abstract</code> methods:</p> 
+     <pre class="color-syntax">
+public FileVisitResult <strong>preVisitDirectory</strong>(T <em>dir</em>, BasicFileAttributes <em>attrs</em>) throws IOException
+<span class="color-comment">// Invoked for a directory before entries in the directory are visited.
+// If this method returns CONTINUE, then entries in the directory are visited. 
+// If this method returns SKIP_SUBTREE or SKIP_SIBLINGS then entries in the directory 
+//   (and any descendants) will not be visited.</span>
+ 
+public FileVisitResult <strong>postVisitDirectory</strong>(T <em>dir</em>, IOException <em>ex</em>) throws IOException
+<span class="color-comment">// Invoked for a directory after entries in the directory, and all of their descendants, 
+//   have been visited. This method is also invoked when iteration of the directory 
+//   completes prematurely (by a visitFile method returning SKIP_SIBLINGS, 
+//   or an I/O error when iterating over the directory).</span>
+
+public FileVisitResult <strong>visitFile</strong>(T <em>file</em>, BasicFileAttributes <em>attrs</em>) throws IOException
+<span class="color-comment">// Invoked for a file/symlink in a directory.</span>
+
+public FileVisitResult <strong>visitFileFailed</strong>(T <em>file</em>, IOException <em>ex</em>) throws IOException
+<span class="color-comment">// Invoked for a file that could not be visited. This method is invoked 
+//   if the file's attributes could not be read, the file is a directory 
+//   that could not be opened, and other reasons.</span></pre> 
+     <p>These methods return an <code>enum</code> of <code>FileVisitResult</code>, which could take values of <code>CONTINUE</code>, <code>TERMINATE</code>, <code>SKIP_SUBTREES</code>, <code>SKIP_SIBLINGS</code>.</p> 
+     <p>Instead of implementing <code>FileVisitor</code> interface, you could also extend from superclass <code>SimpleFileVisitor</code>, and override the selected methods.</p> 
+     <p>There are two versions of <code>walkFileTree()</code>. The first version take a starting directory and a <code>FileVisitor</code>, and transverse through all the levels, without following the symlinks.</p> 
+     <pre class="color-syntax">
+public static Path <strong>walkFileTree</strong>(Path <em>startDir</em>, FileVisitor&lt;? super Path&gt; <em>visitor</em>) throws IOException</pre> 
+     <p><span class="line-heading">Example:</span></p> 
+     <pre class="color-example">
+import java.util.EnumSet;
+import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import static java.nio.file.FileVisitResult.*;
+ 
+public class WalkFileTreeTest <strong>extends SimpleFileVisitor&lt;Path&gt;</strong> {
+ 
+   <span class="color-comment">// Print the directory visited.</span>
+   @Override
+   public FileVisitResult <strong>preVisitDirectory</strong>(Path dir, BasicFileAttributes attr) {
+      System.out.printf("Begin Directory: %s%n", dir);
+      return CONTINUE;
+   }
+ 
+   <span class="color-comment">// Print information about each file/symlink visited.</span>
+   @Override
+   public FileVisitResult <strong>visitFile</strong>(Path file, BasicFileAttributes attr) {
+      if (attr.isSymbolicLink()) {
+         System.out.printf("Symbolic link: %s ", file);
+      } else if (attr.isRegularFile()) {
+         System.out.printf("Regular file: %s ", file);
+      } else {
+         System.out.printf("Other: %s ", file);
+      }
+      System.out.println("(" + attr.size() + "bytes)");
+      return CONTINUE;
+   }
+ 
+   <span class="color-comment">// Print the directory visited.</span>
+   @Override
+   public FileVisitResult <strong>postVisitDirectory</strong>(Path dir, IOException ex) {
+      System.out.printf("End Directory: %s%n%n", dir);
+      return CONTINUE;
+   }
+ 
+   <span class="color-comment">// If there is an error accessing the file, print a message and continue.</span>
+   @Override
+   public FileVisitResult <strong>visitFileFailed</strong>(Path file, IOException ex) {
+      System.err.println(ex);
+      return CONTINUE;  <span class="color-comment">// or TERMINATE</span>
+   }
+ 
+   <span class="color-comment">// main</span>
+   public static void main(String[] args) {
+      try {
+         Path startingDir = Paths.get("..");
+         Files.walkFileTree(startingDir, new WalkFileTreeTest());
+      } catch (IOException ex) {
+         System.out.println(ex);
+      }
+   }
+}</pre> 
+     <p>The second version takes 2 additional arguments: the <em><code>options</code></em> specifies whether to follow symlink (e.g., <code>EnumSet.noneOf(FileVisitOption.class)</code> or <code>EnumSet.of(FileVisitOption.FOLLOW_LINKS)</code>); the <em><code>maxDepth</code></em> specifies the levels to visit (set to <code>Integer.MAX_VALUE</code> for all levels).</p> 
+     <pre class="color-syntax">
+public static Path <strong>walkFileTree</strong>(
+      Path <em>startDir</em>, Set&lt;FileVisitOption&gt; <em>options</em>, int <em>maxDepth</em>, FileVisitor&lt;? super Path&gt; <em>visitor</em>)
+      throws IOException</pre> 
+     <p>For example, the following main() method can be used for the previous example.</p> 
+     <pre class="color-example">
+   public static void main(String[] args) {
+      try {
+         Path startingDir = Paths.get("..");
+         EnumSet&lt;FileVisitOption&gt; opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+            <span class="color-comment">// or EnumSet.noneOf(FileVisitOption.class)</span>
+         Files.walkFileTree(startingDir, opts, 2, new WalkFileTreeTest());
+            <span class="color-comment">// use Integer.MAX_VALUE for all level</span>
+      } catch (IOException ex) {
+         System.out.println(ex);
+      }
+   }</pre> 
+     <h4>Watching the Directory for Changes - Interface <span class="font-code">java.nio.file.WatchService</span></h4> 
+     <p>[TODO]</p> 
+     <a class="references" href="../howto/References.html#java">LINK TO JAVA REFERENCES &amp; RESOURCES</a> 
+     <p class="references">MORE REFERENCES &amp; RESOURCES</p> 
+     <ol> 
+      <li>Java Online Tutorial on "Basic I/O" @ <a href="http://download.oracle.com/javase/tutorial/essential/io/index.html">http://download.oracle.com/javase/tutorial/essential/io/index.html</a>, in particular "<a href="http://download.oracle.com/javase/tutorial/essential/io/fileio.html">File I/O (Featuring NIO.2)</a>".</li> 
+     </ol> 
+    </div> 
+    <!-- End the content-main division --> 
+    <div id="content-footer"> 
+     <p>Latest version tested: JDK 1.7.0_03<br> Last modified: May, 2012</p> 
+    </div> 
+   </div> 
+   <!-- End the wrap-inner division --> 
+   <!-- footer filled by JavaScript --> 
+   <div id="footer" class="header-footer">
+    <p>&nbsp;</p>
+   </div> 
+  </div> 
+  <!-- End the wrap-outer division -->   
+ </body>
+</html>

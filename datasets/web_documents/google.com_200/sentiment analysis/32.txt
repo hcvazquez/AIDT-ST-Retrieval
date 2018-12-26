@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="description" content="Adil Moujahid, Data Analytics and more"> 
+  <title>An Introduction to Text Mining using Twitter Streaming API and Python // Adil Moujahid // Data Analytics and more</title> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.3.0/pure-min.css"> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.min.css"> 
+  <link rel="stylesheet" href="../../../../theme/css/pure.css"> 
+  <link rel="stylesheet" href="../../../../theme/css/pygments.css"> 
+  <link rel="stylesheet" href="../../../../theme/css/custom.css"> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
+  <script src="//cdnjs.cloudflare.com/ajax/libs/fitvids/1.0.1/jquery.fitvids.min.js"></script> 
+  <script>
+        $(document).ready(function(){
+            $(".content").fitVids();
+        });
+    </script> 
+  <script src="//load.sumome.com/" data-sumo-site-id="4ce3990f4d6fb482b4d97fa9208bd2242f7bb8c711ce30290794390dbe7ed180" async></script> 
+ </head> 
+ <body> 
+  <div class="pure-g-r" id="layout"> 
+   <div class="sidebar sidebar-article pure-u"> 
+    <header class="header-article"> 
+     <hgroup> 
+      <a href="../../../../author/adil-moujahid.html" title="See posts by Adil Moujahid"> <img class="avatar" alt="Adil Moujahid" src="http://www.gravatar.com/avatar/2ac2a00f5911cc8234778be41c835e13"> </a> 
+      <h2 class="article-info">Adil Moujahid</h2> 
+      <small class="about-author"></small> 
+      <div> 
+       <a href="https://twitter.com/AdilMouja" class="twitter-follow-button" data-show-count="false"> Follow @AdilMouja </a> 
+       <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> 
+      </div> 
+      <h5>Published</h5> 
+      <p>Mon 21 July 2014</p> 
+      <a href="/">?Home</a> 
+     </hgroup> 
+    </header> 
+   </div> 
+   <div class="pure-u"> 
+    <div class="content"> 
+     <section class="post"> 
+      <header class="post-header"> 
+       <h1>An Introduction to Text Mining using Twitter Streaming API and Python</h1> 
+       <p class="post-meta"> // tags <a class="post-category" href="../../../../tag/python/">python</a> <a class="post-category" href="../../../../tag/pandas/">pandas</a> <a class="post-category" href="../../../../tag/text-mining/">text mining</a> <a class="post-category" href="../../../../tag/matplotlib/">matplotlib</a> <a class="post-category" href="../../../../tag/twitter/">twitter</a> <a class="post-category" href="../../../../tag/api/">api</a> </p> 
+      </header> 
+     </section> 
+     <p>Text mining is the application of natural language processing techniques and analytical methods to text data in order to derive relevant information. Text mining is getting a lot attention these last years, due to an exponential increase in digital text data from web pages, google's projects such as <a href="http://books.google.com/">google books</a> and <a href="https://books.google.com/ngrams">google ngram</a>, and social media services such as Twitter. Twitter data constitutes a rich source that can be used for capturing information about any topic imaginable. This data can be used in different use cases such as finding trends related to a specific keyword, measuring brand sentiment, and gathering feedback about new products and services.</p> 
+     <p>In this tutorial, I will use Twitter data to compare the popularity of 3 programming languages: Python, Javascript and Ruby, and to retrieve links to programming tutorials. In the first paragraph, I will explaing how to connect to Twitter Streaming API and how to get the data. In the second paragraph, I will explain how to structure the data for analysis, and in the last paragraph, I will explain how to filter the data and extract links from tweets.</p> 
+     <p>Using only 2 days worth of Twitter data, I could retrieve 644 links to python tutorials, 413 to javascript tutorials and 136 to ruby tutorials. Furthermore, I could confirm that python is 1.5 times more popular than javascript and 4 times more popular than ruby.</p> 
+     <div style="text-align:center"> 
+      <p><img alt="Alt Text" src="/images/Twitter-analytics.png"></p> 
+     </div> 
+     <h1>1. Getting Data from Twitter Streaming API</h1> 
+     <p>API stands for Application Programming Interface. It is a tool that makes the interaction with computer programs and web services easy. Many web services provides APIs to developers to interact with their services and to access data in programmatic way. For this tutorial, we will use Twitter Streaming API to download tweets related to 3 keywords: "python", "javascript", and "ruby".</p> 
+     <h2>Step 1: Getting Twitter API keys</h2> 
+     <p>In order to access Twitter Streaming API, we need to get 4 pieces of information from Twitter: API key, API secret, Access token and Access token secret. Follow the steps below to get all 4 elements:</p> 
+     <ul> 
+      <li>Create a twitter account if you do not already have one.</li> 
+      <li>Go to https://apps.twitter.com/ and log in with your twitter credentials.</li> 
+      <li>Click "Create New App"</li> 
+      <li>Fill out the form, agree to the terms, and click "Create your Twitter application"</li> 
+      <li>In the next page, click on "API keys" tab, and copy your "API key" and "API secret".</li> 
+      <li>Scroll down and click "Create my access token", and copy your "Access token" and "Access token secret".</li> 
+     </ul> 
+     <h2>Step 2: Connecting to Twitter Streaming API and downloading data</h2> 
+     <p>We will be using a Python library called <code>Tweepy</code> to connect to Twitter Streaming API and downloading the data. If you don't have <code>Tweepy</code> installed in your machine, go to this <a href="https://github.com/tweepy/tweepy">link</a>, and follow the installation instructions.</p> 
+     <p>Next create, a file called <code>twitter_streaming.py</code>, and copy into it the code below. Make sure to enter your credentials into <code>access_token</code>, <code>access_token_secret</code>, <code>consumer_key</code>, and <code>consumer_secret</code>.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="c1">#Import the necessary methods from tweepy library</span>
+<span class="kn">from</span> <span class="nn">tweepy.streaming</span> <span class="kn">import</span> <span class="n">StreamListener</span>
+<span class="kn">from</span> <span class="nn">tweepy</span> <span class="kn">import</span> <span class="n">OAuthHandler</span>
+<span class="kn">from</span> <span class="nn">tweepy</span> <span class="kn">import</span> <span class="n">Stream</span>
+
+<span class="c1">#Variables that contains the user credentials to access Twitter API </span>
+<span class="n">access_token</span> <span class="o">=</span> <span class="s2">"ENTER YOUR ACCESS TOKEN"</span>
+<span class="n">access_token_secret</span> <span class="o">=</span> <span class="s2">"ENTER YOUR ACCESS TOKEN SECRET"</span>
+<span class="n">consumer_key</span> <span class="o">=</span> <span class="s2">"ENTER YOUR API KEY"</span>
+<span class="n">consumer_secret</span> <span class="o">=</span> <span class="s2">"ENTER YOUR API SECRET"</span>
+
+
+<span class="c1">#This is a basic listener that just prints received tweets to stdout.</span>
+<span class="k">class</span> <span class="nc">StdOutListener</span><span class="p">(</span><span class="n">StreamListener</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">on_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">data</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">on_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">status</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+
+    <span class="c1">#This handles Twitter authetification and the connection to Twitter Streaming API</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">StdOutListener</span><span class="p">()</span>
+    <span class="n">auth</span> <span class="o">=</span> <span class="n">OAuthHandler</span><span class="p">(</span><span class="n">consumer_key</span><span class="p">,</span> <span class="n">consumer_secret</span><span class="p">)</span>
+    <span class="n">auth</span><span class="o">.</span><span class="n">set_access_token</span><span class="p">(</span><span class="n">access_token</span><span class="p">,</span> <span class="n">access_token_secret</span><span class="p">)</span>
+    <span class="n">stream</span> <span class="o">=</span> <span class="n">Stream</span><span class="p">(</span><span class="n">auth</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+
+    <span class="c1">#This line filter Twitter Streams to capture data by the keywords: 'python', 'javascript', 'ruby'</span>
+    <span class="n">stream</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">track</span><span class="o">=</span><span class="p">[</span><span class="s1">'python'</span><span class="p">,</span> <span class="s1">'javascript'</span><span class="p">,</span> <span class="s1">'ruby'</span><span class="p">])</span>
+</pre>
+     </div> 
+     <p>If you run the program from your terminal using the command: <code>python twitter_streaming.py</code>, you will see data flowing like the picture below.</p> 
+     <div style="text-align:center"> 
+      <p><img alt="Alt Text" src="/images/twitter_streaming.jpg"></p> 
+     </div> 
+     <p>You can stop the program by pressing Ctrl-C.</p> 
+     <p>We want to capture this data into a file that we will use later for the analysis. You can do so by piping the output to a file using the following command: <code>python twitter_streaming.py &gt; twitter_data.txt</code>.</p> 
+     <p>I run the program for 2 days (from 2014/07/15 till 2014/07/17) to get a meaningful data sample. This file size is 242 MB.</p> 
+     <h1>2. Reading and Understanding the data</h1> 
+     <p>The data that we stored <code>twitter_data.txt</code> is in JSON format. JSON stands for JavaScript Object Notation. This format makes it easy to humans to read the data, and for machines to parse it. Below is an example for one tweet in JSON format. You can see that the tweet contains additional information in addition to the main text which in this example: <code>"Yaayyy I learned some JavaScript today! #thatwasntsohard #yesitwas #stoptalkingtoyourself #hashbrown #hashtag"</code>. </p> 
+     <div class="highlight">
+      <pre><span></span><span class="p">{</span><span class="nt">"created_at"</span><span class="p">:</span><span class="s2">"Tue Jul 15 14:19:30 +0000 2014"</span><span class="p">,</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">489051636304990208</span><span class="p">,</span><span class="nt">"id_str"</span><span class="p">:</span><span class="s2">"489051636304990208"</span><span class="p">,</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"Yaayyy I learned some JavaScript today! #thatwasntsohard #yesitwas #stoptalkingtoyourself #hashbrown #hashtag"</span><span class="p">,</span><span class="nt">"source"</span><span class="p">:</span><span class="s2">"\u003ca href=\"http:\/\/twitter.com\/download\/iphone\" rel=\"nofollow\"\u003eTwitter for iPhone\u003c\/a\u003e"</span><span class="p">,</span><span class="nt">"truncated"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"in_reply_to_status_id"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"in_reply_to_status_id_str"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"in_reply_to_user_id"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"in_reply_to_user_id_str"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"in_reply_to_screen_name"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"user"</span><span class="p">:{</span><span class="nt">"id"</span><span class="p">:</span><span class="mi">2301702187</span><span class="p">,</span><span class="nt">"id_str"</span><span class="p">:</span><span class="s2">"2301702187"</span><span class="p">,</span><span class="nt">"name"</span><span class="p">:</span><span class="s2">"Toni Barlettano"</span><span class="p">,</span><span class="nt">"screen_name"</span><span class="p">:</span><span class="s2">"itsmetonib"</span><span class="p">,</span><span class="nt">"location"</span><span class="p">:</span><span class="s2">"Greater NYC Area"</span><span class="p">,</span><span class="nt">"url"</span><span class="p">:</span><span class="s2">"http:\/\/www.tonib.me"</span><span class="p">,</span><span class="nt">"description"</span><span class="p">:</span><span class="s2">"So Full of Art   |   \nToni Barlettano Creative Media + Design"</span><span class="p">,</span><span class="nt">"protected"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"followers_count"</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span><span class="nt">"friends_count"</span><span class="p">:</span><span class="mi">25</span><span class="p">,</span><span class="nt">"listed_count"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"created_at"</span><span class="p">:</span><span class="s2">"Mon Jan 20 16:49:46 +0000 2014"</span><span class="p">,</span><span class="nt">"favourites_count"</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span><span class="nt">"utc_offset"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"time_zone"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"geo_enabled"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"verified"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"statuses_count"</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span><span class="nt">"lang"</span><span class="p">:</span><span class="s2">"en"</span><span class="p">,</span><span class="nt">"contributors_enabled"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"is_translator"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"is_translation_enabled"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"profile_background_color"</span><span class="p">:</span><span class="s2">"C0DEED"</span><span class="p">,</span><span class="nt">"profile_background_image_url"</span><span class="p">:</span><span class="s2">"http:\/\/abs.twimg.com\/images\/themes\/theme1\/bg.png"</span><span class="p">,</span><span class="nt">"profile_background_image_url_https"</span><span class="p">:</span><span class="s2">"https:\/\/abs.twimg.com\/images\/themes\/theme1\/bg.png"</span><span class="p">,</span><span class="nt">"profile_background_tile"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"profile_image_url"</span><span class="p">:</span><span class="s2">"http:\/\/pbs.twimg.com\/profile_images\/425313048320958464\/Z2GcderW_normal.jpeg"</span><span class="p">,</span><span class="nt">"profile_image_url_https"</span><span class="p">:</span><span class="s2">"https:\/\/pbs.twimg.com\/profile_images\/425313048320958464\/Z2GcderW_normal.jpeg"</span><span class="p">,</span><span class="nt">"profile_link_color"</span><span class="p">:</span><span class="s2">"0084B4"</span><span class="p">,</span><span class="nt">"profile_sidebar_border_color"</span><span class="p">:</span><span class="s2">"C0DEED"</span><span class="p">,</span><span class="nt">"profile_sidebar_fill_color"</span><span class="p">:</span><span class="s2">"DDEEF6"</span><span class="p">,</span><span class="nt">"profile_text_color"</span><span class="p">:</span><span class="s2">"333333"</span><span class="p">,</span><span class="nt">"profile_use_background_image"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"default_profile"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="nt">"default_profile_image"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"following"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"follow_request_sent"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"notifications"</span><span class="p">:</span><span class="kc">null</span><span class="p">},</span><span class="nt">"geo"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"coordinates"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"place"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"contributors"</span><span class="p">:</span><span class="kc">null</span><span class="p">,</span><span class="nt">"retweet_count"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"favorite_count"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="nt">"entities"</span><span class="p">:{</span><span class="nt">"hashtags"</span><span class="p">:[{</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"thatwasntsohard"</span><span class="p">,</span><span class="nt">"indices"</span><span class="p">:[</span><span class="mi">40</span><span class="p">,</span><span class="mi">56</span><span class="p">]},{</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"yesitwas"</span><span class="p">,</span><span class="nt">"indices"</span><span class="p">:[</span><span class="mi">57</span><span class="p">,</span><span class="mi">66</span><span class="p">]},{</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"stoptalkingtoyourself"</span><span class="p">,</span><span class="nt">"indices"</span><span class="p">:[</span><span class="mi">67</span><span class="p">,</span><span class="mi">89</span><span class="p">]},{</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"hashbrown"</span><span class="p">,</span><span class="nt">"indices"</span><span class="p">:[</span><span class="mi">90</span><span class="p">,</span><span class="mi">100</span><span class="p">]},{</span><span class="nt">"text"</span><span class="p">:</span><span class="s2">"hashtag"</span><span class="p">,</span><span class="nt">"indices"</span><span class="p">:[</span><span class="mi">101</span><span class="p">,</span><span class="mi">109</span><span class="p">]}],</span><span class="nt">"symbols"</span><span class="p">:[],</span><span class="nt">"urls"</span><span class="p">:[],</span><span class="nt">"user_mentions"</span><span class="p">:[]},</span><span class="nt">"favorited"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"retweeted"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="nt">"filter_level"</span><span class="p">:</span><span class="s2">"medium"</span><span class="p">,</span><span class="nt">"lang"</span><span class="p">:</span><span class="s2">"en"</span><span class="p">}</span>
+</pre>
+     </div> 
+     <p>For the remaining of this tutorial, we will be using 4 Python libraries <code>json</code> for parsing the data, <code>pandas</code> for data manipulation, <code>matplotlib</code> for creating charts, adn <code>re</code> for regular expressions. The <code>json</code> and <code>re</code> libraries are installed by default in Python. You should install <code>pandas</code> and <code>matplotlib</code> if you don't have them in your machine.</p> 
+     <p>We will start first by uploading <code>json</code> and <code>pandas</code> using the commands below:</p> 
+     <div class="highlight">
+      <pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</pre>
+     </div> 
+     <p>Next we will read the data in into an array that we call <code>tweets</code>.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets_data_path</span> <span class="o">=</span> <span class="s1">'../data/twitter_data.txt'</span>
+
+<span class="n">tweets_data</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">tweets_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">tweets_data_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tweets_file</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tweet</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">tweets_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tweet</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">continue</span>
+</pre>
+     </div> 
+     <p>We can print the number of tweets using the command below. For the dataset that I prepared, the number is 71238.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">print</span> <span class="nb">len</span><span class="p">(</span><span class="n">tweets_data</span><span class="p">)</span>
+</pre>
+     </div> 
+     <p>Next, we will structure the tweets data into a pandas DataFrame to simplify the data manipulation. We will start by creating an empty DataFrame called <code>tweets</code> using the following command.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+</pre>
+     </div> 
+     <p>Next, we will add 3 columns to the <code>tweets</code> DataFrame called <code>text</code>, <code>lang</code>, and <code>country</code>. <code>text</code> column contains the tweet, <code>lang</code> column contains the language in which the tweet was written, and <code>country</code> the country from which the tweet was sent.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">'text'</span><span class="p">],</span> <span class="n">tweets_data</span><span class="p">)</span>
+<span class="n">tweets</span><span class="p">[</span><span class="s1">'lang'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">'lang'</span><span class="p">],</span> <span class="n">tweets_data</span><span class="p">)</span>
+<span class="n">tweets</span><span class="p">[</span><span class="s1">'country'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">'place'</span><span class="p">][</span><span class="s1">'country'</span><span class="p">]</span> <span class="k">if</span> <span class="n">tweet</span><span class="p">[</span><span class="s1">'place'</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">None</span><span class="p">,</span> <span class="n">tweets_data</span><span class="p">)</span>
+</pre>
+     </div> 
+     <p>Next, we will create 2 charts: The first one describing the Top 5 languages in which the tweets were written, and the second the Top 5 countries from which the tweets were sent.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets_by_lang</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'lang'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">'x'</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">'y'</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Languages'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Number of tweets'</span> <span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Top 5 languages'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">'bold'</span><span class="p">)</span>
+<span class="n">tweets_by_lang</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">'bar'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'red'</span><span class="p">)</span>
+</pre>
+     </div> 
+     <div style="text-align:center"> 
+      <p><img alt="Alt Text" src="/images/tweets_top_langs.png"></p> 
+     </div> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets_by_country</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'country'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">'x'</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">'y'</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Countries'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Number of tweets'</span> <span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Top 5 countries'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">'bold'</span><span class="p">)</span>
+<span class="n">tweets_by_country</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">'bar'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'blue'</span><span class="p">)</span>
+</pre>
+     </div> 
+     <div style="text-align:center"> 
+      <p><img alt="Alt Text" src="/images/tweets_top_countries.png"></p> 
+     </div> 
+     <h1>3. Mining the tweets</h1> 
+     <p>Our main goals in these text mining tasks are: compare the popularity of Python, Ruby and Javascript programming languages and to retrieve programming tutorial links. We will do this in 3 steps:</p> 
+     <ul> 
+      <li>We will add tags to our <code>tweets</code> DataFrame in order to be able to manipualte the data easily.</li> 
+      <li>Target tweets that have "pogramming" or "tutorial" keywords.</li> 
+      <li>Extract links from the relevants tweets</li> 
+     </ul> 
+     <h2>Adding Python, Ruby, and Javascript tags</h2> 
+     <p>First, we will create a function that checks if a specific keyword is present in a text. We will do this by using <a href="http://en.wikipedia.org/wiki/Regular_expression">regular expressions</a>. Python provides a library for regular expression called <code>re</code>. We will start by importing this library</p> 
+     <div class="highlight">
+      <pre><span></span><span class="kn">import</span> <span class="nn">re</span>
+</pre>
+     </div> 
+     <p>Next we will create a function called <code>word_in_text(word, text)</code>. This function return <code>True</code> if a <code>word</code> is found in <code>text</code>, otherwise it returns <code>False</code>.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">def</span> <span class="nf">word_in_text</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="n">word</span> <span class="o">=</span> <span class="n">word</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">word</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">return</span> <span class="bp">False</span>
+</pre>
+     </div> 
+     <p>Next, we will add 3 columns to our <code>tweets</code> DataFrame. </p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets</span><span class="p">[</span><span class="s1">'python'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'python'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">))</span>
+<span class="n">tweets</span><span class="p">[</span><span class="s1">'javascript'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'javascript'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">))</span>
+<span class="n">tweets</span><span class="p">[</span><span class="s1">'ruby'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'ruby'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">))</span>
+</pre>
+     </div> 
+     <p>We can calculate the number of tweets for each programming language as follows:</p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'python'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'javascript'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'ruby'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+</pre>
+     </div> 
+     <p>This returns: 21839 for python, 16154 for javascript and 31410 for ruby. We can make a simple comparaison chart by executing the following: </p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">prg_langs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'python'</span><span class="p">,</span> <span class="s1">'javascript'</span><span class="p">,</span> <span class="s1">'ruby'</span><span class="p">]</span>
+<span class="n">tweets_by_prg_lang</span> <span class="o">=</span> <span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'python'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">],</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'javascript'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">],</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'ruby'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]]</span>
+
+<span class="n">x_pos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">prg_langs</span><span class="p">)))</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mf">0.8</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span><span class="p">,</span> <span class="n">tweets_by_prg_lang</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'g'</span><span class="p">)</span>
+
+<span class="c1"># Setting axis labels and ticks</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Number of tweets'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Ranking: python vs. javascript vs. ruby (Raw data)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">'bold'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="n">p</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">width</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">x_pos</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">prg_langs</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+</pre>
+     </div> 
+     <div style="text-align:center"> 
+      <p><img alt="Alt Text" src="/images/top_prg_lang_raw.png"></p> 
+     </div> 
+     <p>This shows, that the keyword <code>ruby</code> is the most popular, followed by <code>python</code> then <code>javascript</code>. However, the <code>tweets</code> DataFrame contains information about all tweets that contains one of the 3 keywords and doesn't restrict the information to the programming languages. For example, there are a lot tweets that contains the keyword <code>ruby</code> and that are related to a political scandal called <a href="http://en.wikipedia.org/wiki/Rubygate">Rubygate</a>. In the next section, we will filter the tweets and re-run the analysis to make a more accurate comparison.</p> 
+     <h2>Targeting relevant tweets</h2> 
+     <p>We are intersted in targetting tweets that are related to programming languages. Such tweets often have one of the 2 keywords: "programming" or "tutorial". We will create 2 additional columns to our <code>tweets</code> DataFrame where we will add this information.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets</span><span class="p">[</span><span class="s1">'programming'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'programming'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">))</span>
+<span class="n">tweets</span><span class="p">[</span><span class="s1">'tutorial'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'tutorial'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">))</span>
+</pre>
+     </div> 
+     <p>We will add an additional column called <code>relevant</code> that take value <code>True</code> if the tweet has either "programming" or "tutorial" keyword, otherwise it takes value <code>False</code>.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'programming'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">)</span> <span class="ow">or</span> <span class="n">word_in_text</span><span class="p">(</span><span class="s1">'tutorial'</span><span class="p">,</span> <span class="n">tweet</span><span class="p">))</span>
+</pre>
+     </div> 
+     <p>We can print the counts of relevant tweet by executing the commands below.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'programming'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'tutorial'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+</pre>
+     </div> 
+     <p>This returns, 871 for <code>programming</code> column, 511 for <code>tutorial</code> column, and 1356 for <code>relevant</code> column.</p> 
+     <p>We can compare now the popularity of the programming languages by executing the commands below. </p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'python'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'javascript'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'ruby'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]</span>
+</pre>
+     </div> 
+     <p>Python is the most popular with a count of 732, followed by javascript by a count of 473, and ruby by a count of 185. We can make a comparaison graph by executing the commands below:</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets_by_prg_lang</span> <span class="o">=</span> <span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'python'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">],</span> 
+                      <span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'javascript'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">],</span> 
+                      <span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'ruby'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[</span><span class="bp">True</span><span class="p">]]</span>
+<span class="n">x_pos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">prg_langs</span><span class="p">)))</span>
+<span class="n">width</span> <span class="o">=</span> <span class="mf">0.8</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span><span class="p">,</span> <span class="n">tweets_by_prg_lang</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span><span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s1">'g'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Number of tweets'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Ranking: python vs. javascript vs. ruby (Relevant data)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s1">'bold'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">([</span><span class="n">p</span> <span class="o">+</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="n">width</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">x_pos</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">prg_langs</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+</pre>
+     </div> 
+     <div style="text-align:center"> 
+      <p><img alt="Alt Text" src="/images/top_prg_lang_relevant.png"></p> 
+     </div> 
+     <h2>Extracting links from the relevants tweets</h2> 
+     <p>Now that we extracted the relevant tweets, we want to retrieve links to programming tutorials. We will start by creating a function that uses regular expressions for retrieving link that start with "http://" or "https://" from a text. This function will return the url if found, otherwise it returns an empty string.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">def</span> <span class="nf">extract_link</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">regex</span> <span class="o">=</span> <span class="s1">r'https?://[^\s&lt;&gt;"]+|www\.[^\s&lt;&gt;"]+'</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+    <span class="k">return</span> <span class="s1">''</span>
+</pre>
+     </div> 
+     <p>Next, we will add a column called <code>link</code> to our <code>tweets</code> DataFrame. This column will contain the urls information.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets</span><span class="p">[</span><span class="s1">'link'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="s1">'text'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tweet</span><span class="p">:</span> <span class="n">extract_link</span><span class="p">(</span><span class="n">tweet</span><span class="p">))</span>
+</pre>
+     </div> 
+     <p>Next we will create a new DataFrame called <code>tweets_relevant_with_link</code>. This DataFrame is a subset of <code>tweets</code> DataFrame and contains all relevant tweets that have a link.</p> 
+     <div class="highlight">
+      <pre><span></span><span class="n">tweets_relevant</span> <span class="o">=</span> <span class="n">tweets</span><span class="p">[</span><span class="n">tweets</span><span class="p">[</span><span class="s1">'relevant'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">]</span>
+<span class="n">tweets_relevant_with_link</span> <span class="o">=</span> <span class="n">tweets_relevant</span><span class="p">[</span><span class="n">tweets_relevant</span><span class="p">[</span><span class="s1">'link'</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">''</span><span class="p">]</span>
+</pre>
+     </div> 
+     <p>We can now print out all links for <code>python</code>, <code>javascript</code>, and <code>ruby</code> by executing the commands below:</p> 
+     <div class="highlight">
+      <pre><span></span><span class="k">print</span> <span class="n">tweets_relevant_with_link</span><span class="p">[</span><span class="n">tweets_relevant_with_link</span><span class="p">[</span><span class="s1">'python'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'link'</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets_relevant_with_link</span><span class="p">[</span><span class="n">tweets_relevant_with_link</span><span class="p">[</span><span class="s1">'javascript'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'link'</span><span class="p">]</span>
+<span class="k">print</span> <span class="n">tweets_relevant_with_link</span><span class="p">[</span><span class="n">tweets_relevant_with_link</span><span class="p">[</span><span class="s1">'ruby'</span><span class="p">]</span> <span class="o">==</span> <span class="bp">True</span><span class="p">][</span><span class="s1">'link'</span><span class="p">]</span>
+</pre>
+     </div> 
+     <p>This returns 644 links for python, 413 links for javascript, and 136 for ruby. Below are some python related links</p> 
+     <ul> 
+      <li><a href="http://t.co/WmTccp3rb1">http://t.co/WmTccp3rb1</a></li> 
+      <li><a href="http://t.co/5qE3vPAy7N">http://t.co/5qE3vPAy7N</a></li> 
+      <li><a href="http://t.co/1rvmhqPsXD">http://t.co/1rvmhqPsXD</a></li> 
+      <li><a href="http://t.co/S9aq2AahjH">http://t.co/S9aq2AahjH</a></li> 
+      <li><a href="http://t.co/ORg6IL8qXT">http://t.co/ORg6IL8qXT</a></li> 
+      <li><a href="http://t.co/EnK2UlDcJ8">http://t.co/EnK2UlDcJ8</a></li> 
+      <li><a href="http://t.co/gtu9WVQCLK">http://t.co/gtu9WVQCLK</a></li> 
+      <li><a href="http://t.co/xvMTzqLGg0">http://t.co/xvMTzqLGg0</a></li> 
+      <li><a href="http://t.co/bgMZ0jIpA7">http://t.co/bgMZ0jIpA7</a></li> 
+      <li><a href="http://t.co/O03VrRyEAb">http://t.co/O03VrRyEAb</a></li> 
+      <li><a href="http://t.co/CfWYefZML7">http://t.co/CfWYefZML7</a></li> 
+      <li><a href="http://t.co/N3iU2ZYa2z">http://t.co/N3iU2ZYa2z</a></li> 
+      <li><a href="http://t.co/S9aq2AahjH">http://t.co/S9aq2AahjH</a></li> 
+      <li><a href="http://t.co/ytms7bcsQV">http://t.co/ytms7bcsQV</a></li> 
+     </ul> 
+     <h1>Conclusion</h1> 
+     <p>In this tutorial, we covered many techniques used in text mining. The code provide in this post could be modified to create a deeper analysis or could be adapted to another use case. For those who want to go further in text mining, I recommend to follow up by studying regular expressions.</p> 
+     <p>You can find the source code from this tutorial in this github repository <a href="https://github.com/adilmoujahid/Twitter_Analytics">github link</a>. </p> 
+     <h1>references</h1> 
+     <ul> 
+      <li>http://en.wikipedia.org/wiki/Text_mining</li> 
+      <li>http://en.wikipedia.org/wiki/Word-sense_disambiguation</li> 
+      <li>http://en.wikipedia.org/wiki/Regular_expression</li> 
+     </ul> 
+     <div class="hr"></div> 
+     <!-- Begin MailChimp Signup Form --> 
+     <link href="//cdn-images.mailchimp.com/embedcode/slim-081711.css" rel="stylesheet" type="text/css"> 
+     <style type="text/css">
+                #mc_embed_signup{background:#F1F3F3; clear:left; font:14px Helvetica,Arial,sans-serif; }
+                #mc-embedded-subscribe.button{background-color: #0f52ba;}
+                /* Add your own MailChimp form style overrides in your site stylesheet or in this style block.
+                   We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
+            </style> 
+     <div id="mc_embed_signup"> 
+      <form action="//adilmoujahid.us10.list-manage.com/subscribe/post?u=28846a375fbf5c13a93712283&amp;id=a45c6ff723" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate> 
+       <div id="mc_embed_signup_scroll"> 
+        <label for="mce-EMAIL">Subscribe to my Data in Practice Newsletter</label> 
+        <input type="email" value="" name="EMAIL" class="email" id="mce-EMAIL" placeholder="email address" required> 
+        <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups--> 
+        <div style="position: absolute; left: -5000px;">
+         <input type="text" name="b_28846a375fbf5c13a93712283_a45c6ff723" tabindex="-1" value="">
+        </div> 
+        <div class="clear">
+         <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+        </div> 
+       </div> 
+      </form> 
+     </div> 
+     <!--End mc_embed_signup--> 
+     <a href="#" class="go-top">Go Top</a> 
+     <div class="comments"> 
+      <div id="disqus_thread"></div> 
+      <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = "adilmoujahid"; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script> 
+      <noscript>
+       Please enable JavaScript to view the 
+       <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+      </noscript> 
+      <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+     </div>
+     <footer class="footer"> 
+      <p>© Adil Moujahid – Built with <a href="https://github.com/PurePelicanTheme/pure">Pure Theme</a> for <a href="http://blog.getpelican.com/">Pelican</a> </p> 
+     </footer> 
+    </div> 
+   </div> 
+  </div> 
+  <script>
+        var $top = $('.go-top');
+
+        // Show or hide the sticky footer button
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 200) {
+                $top.fadeIn(200);
+            } else {
+                $top.fadeOut(200);
+            }
+        });
+
+        // Animate the scroll to top
+        $top.click(function(event) {
+            event.preventDefault();
+            $('html, body').animate({scrollTop: 0}, 300);
+        })
+
+        // Makes sure that the href="#" attached to the <a> elements
+        // don't scroll you back up the page.
+        $('body').on('click', 'a[href="#"]', function(event) {
+            event.preventDefault();
+        });
+    </script> 
+  <script type="text/javascript">
+        var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+        document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    </script> 
+  <script type="text/javascript">
+        try {
+            var pageTracker = _gat._getTracker("UA-52651211-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+    </script>  
+ </body>
+</html>

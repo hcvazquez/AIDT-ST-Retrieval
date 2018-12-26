@@ -1,0 +1,1330 @@
+<!doctype html>
+<!--[if IE 7]> <html lang="en" class="ie7"> <![endif]-->
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en">
+ <!--<![endif]-->
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title>How to build your own Twitter Sentiment Analysis Tool | Datumbox</title> 
+  <!-- Meta --> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="pingback" href="http://blog.datumbox.com/xmlrpc.php"> 
+  <script type="text/javascript">
+      // <![CDATA[
+          (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+          })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+          ga('create', 'UA-42245644-1', 'datumbox.com');
+          ga('send', 'pageview');
+      // ]]>
+   </script> 
+  <link href="http://www.datumbox.com/favicon.ico" type="image/x-icon" rel="icon"> 
+  <link href="http://www.datumbox.com/favicon.ico" type="image/x-icon" rel="shortcut icon"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/bootstrap.min.css"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/style.css"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/bootstrap-responsive.min.css"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/style_responsive.css"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/font-awesome.css"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/flexslider.css"> 
+  <link rel="stylesheet" type="text/css" href="http://www.datumbox.com/css/themes-default.css"> 
+  <!--[if lt IE 9]>
+   <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+   <![endif]--> 
+  <!-- All in One SEO Pack 2.3.16 by Michael Torbert of Semper Fi Web Design[331,393] --> 
+  <link rel="author" href="https://plus.google.com/u/0/112669082786152542108"> 
+  <meta name="description" content="In this article we will show how you can build a simple Sentiment Analysis tool which classifies tweets as positive, negative or neutral by using the Twitter"> 
+  <link rel="canonical" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/"> 
+  <script type="text/javascript">
+			(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+			(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+			m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+			})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+			ga('create', 'UA-42245644-1', 'auto');
+			
+			ga('send', 'pageview');
+			</script> 
+  <!-- /all in one seo pack --> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Datumbox » Feed" href="http://blog.datumbox.com/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Datumbox » Comments Feed" href="http://blog.datumbox.com/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Datumbox » How to build your own Twitter Sentiment Analysis Tool Comments Feed" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"http:\/\/blog.datumbox.com\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.8.2"}};
+			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,56826,8203,55356,56819),0,0),c=j.toDataURL(),b!==c&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55358,56794,8205,9794,65039),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55358,56794,8203,9794,65039),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="hctpc_stylesheet-css" href="http://blog.datumbox.com/wp-content/plugins/captcha/css/front_end_style.css?ver=4.2.8" type="text/css" media="all"> 
+  <link rel="stylesheet" id="dashicons-css" href="http://blog.datumbox.com/wp-includes/css/dashicons.min.css?ver=4.8.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="hctpc_desktop_style-css" href="http://blog.datumbox.com/wp-content/plugins/captcha/css/desktop_style.css?ver=4.2.8" type="text/css" media="all"> 
+  <link rel="stylesheet" id="contact-form-7-css" href="http://blog.datumbox.com/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=4.9" type="text/css" media="all"> 
+  <link rel="stylesheet" id="crp-style-rounded-thumbs-css" href="http://blog.datumbox.com/wp-content/plugins/contextual-related-posts/css/default-style.css?ver=4.8.2" type="text/css" media="all"> 
+  <style id="crp-style-rounded-thumbs-inline-css" type="text/css">
+
+.crp_related a {
+  width: 150px;
+  height: 150px;
+  text-decoration: none;
+}
+.crp_related img {
+  max-width: 150px;
+  margin: auto;
+}
+.crp_related .crp_title {
+  width: 150px;
+}
+                
+</style> 
+  <link rel="stylesheet" id="st-widget-css" href="http://blog.datumbox.com/wp-content/plugins/share-this/css/style.css?ver=4.8.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="authorsure-css" href="http://blog.datumbox.com/wp-content/plugins/authorsure/styles/public.css?ver=2.3" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <link rel="https://api.w.org/" href="http://blog.datumbox.com/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://blog.datumbox.com/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://blog.datumbox.com/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="What is Machine Learning?" href="http://blog.datumbox.com/what-is-machine-learning/"> 
+  <link rel="next" title="10 Tips for Sentiment Analysis projects" href="http://blog.datumbox.com/10-tips-for-sentiment-analysis-projects/"> 
+  <link rel="shortlink" href="http://blog.datumbox.com/?p=138"> 
+  <link rel="alternate" type="application/json+oembed" href="http://blog.datumbox.com/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fblog.datumbox.com%2Fhow-to-build-your-own-twitter-sentiment-analysis-tool%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="http://blog.datumbox.com/wp-json/oembed/1.0/embed?url=http%3A%2F%2Fblog.datumbox.com%2Fhow-to-build-your-own-twitter-sentiment-analysis-tool%2F&amp;format=xml"> 
+  <style type="text/css">#crp_related ul {
+  list-style: none;
+  float: left;
+  margin: 0;
+}
+#crp_related li, #crp_related a {
+  float: left;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+}
+#crp_related li {
+  margin: .9em!important;
+  border: 1px solid #ddd;
+  padding: 6px;
+}
+#crp_related li:hover {
+  background: #eee;
+  border-color: #bbb;
+}
+#crp_related a {
+  width: 150px;
+  height: 150px;
+}
+#crp_related a:hover {
+  text-decoration: none;
+}
+#crp_related img {
+  max-width: 150px;
+  margin: auto;
+}
+#crp_related .crp_title {
+  position: absolute;
+  height: inherit;
+  bottom: 6px;
+  left: 0px;
+  padding: 3px;
+  width: 144px;  /* = 150px - (3px * 2) */
+  color: #fff;
+  font-size: .9em;
+  text-shadow: #000 .1em .1em .2em;
+  background: rgb(0.5, 0.5, 0.5);
+  background: rgba(0, 0, 0, 0.5);
+}
+#crp_related li:hover .crp_title {
+  background: rgb(0.2, 0.2, 0.2);
+  background: rgba(0, 0, 0, 0.8);
+}
+#crp_related {
+  padding-top: 10px;
+  border-top: 2px solid #72c02c;
+}</style>
+  <script charset="utf-8" type="text/javascript">var switchTo5x=true;</script> 
+  <script charset="utf-8" type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script> 
+  <script charset="utf-8" type="text/javascript">stLight.options({"publisher":"wp.7f9df230-9171-4514-8041-41140eab0dcd","doNotCopy":true,"hashAddressBar":false,"doNotHash":true});var st_type="wordpress3.8.1";</script> 
+  <script charset="utf-8" type="text/javascript" src="http://s.sharethis.com/loader.js"></script> 
+  <script charset="utf-8" type="text/javascript">
+var h_options={"publisher":"wp.7f9df230-9171-4514-8041-41140eab0dcd","position":"left","chicklets_params":{"twitter":{"st_via":""},"instagram":{"st_username":""}},"chicklets":{"items":["twitter","facebook","linkedin","googleplus","reddit","delicious"]}};var st_hover_widget = new sharethis.widgets.hoverbuttons(h_options);
+</script> 
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+ </head> 
+ <body id="blog"> 
+  <!--=== Top ===--> 
+  <div class="top"> 
+   <div class="container"> 
+    <ul class="loginbar pull-right"> 
+     <li><i class="icon-question-sign"></i><a href="http://www.datumbox.com/faq/" class="login-btn">Help</a></li> 
+     <li class="devider">&nbsp;</li> 
+     <li><i class="icon-edit"></i><a href="http://www.datumbox.com/users/register/" class="login-btn">Register</a></li> 
+     <li class="devider">&nbsp;</li> 
+     <li><i class="icon-signin"></i><a href="http://www.datumbox.com/users/login/" class="login-btn">Login</a></li> 
+    </ul> 
+   </div> 
+  </div>
+  <!--/top--> 
+  <!--=== End Top ===--> 
+  <div class="header"> 
+   <div class="container"> 
+    <div class="logo"> 
+     <a href="http://www.datumbox.com/"><img src="http://www.datumbox.com/img/logo.png" alt="Datumbox"></a> 
+    </div> 
+    <!-- Menu --> 
+    <div class="navbar"> 
+     <div class="navbar-inner"> 
+      <div class="nav-collapse collapse"> 
+       <ul class="nav top-2"> 
+        <li> <a href="http://www.datumbox.com/">Home</a> </li> 
+        <li class=""> <a href="http://www.datumbox.com/machine-learning-framework/">Framework</a> </li> 
+        <li class=""> <a href="http://www.datumbox.com/machine-learning-api/">API</a> </li> 
+        <li class="active"> <a href="http://blog.datumbox.com/">Blog</a> </li> 
+        <li class=""> <a href="http://blog.datumbox.com/author/bbriniotis/">About</a> </li> 
+        <li class=""> <a href="http://www.datumbox.com/contact/">Contact</a> </li> 
+       </ul> 
+      </div> 
+      <!-- /nav-collapse --> 
+     </div> 
+     <!-- /navbar-inner --> 
+    </div> 
+    <!-- /navbar --> 
+   </div> 
+   <!-- /container --> 
+  </div> 
+  <!--=== Breadcrumbs ===--> 
+  <div class="breadcrumbs margin-bottom-20"> 
+   <div class="container"> 
+    <h1 class="color-green pull-left">Machine Learning Blog &amp; Software Development News</h1> 
+    <ul class="pull-right breadcrumb"> 
+     <li><a href="http://www.datumbox.com/">Home</a> <span class="divider">/</span></li> 
+     <li class="active">Blog</li> 
+    </ul> 
+   </div>
+   <!--/container--> 
+  </div>
+  <!--/breadcrumbs--> 
+  <!--=== End Breadcrumbs ===--> 
+  <!--=== Content Part ===--> 
+  <div class="container"> 
+   <div class="row-fluid blog-page blog-item"> 
+    <!-- Left Sidebar --> 
+    <div class="span8"> 
+     <div id="post-138"> 
+      <div class="blog margin-bottom-30"> 
+       <h1><a href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" title="How to build your own Twitter Sentiment Analysis Tool" rel="bookmark">How to build your own Twitter Sentiment Analysis Tool</a></h1> 
+       <ul class="unstyled inline blog-info"> 
+        <li><i class="icon-calendar"></i> September 2, 2013</li> 
+        <li><i class="icon-user"></i> <a href="http://blog.datumbox.com/author/bbriniotis/" title="Posts by Vasilis Vryniotis" rel="author">Vasilis Vryniotis</a></li> 
+        <li><i class="icon-comments"></i> <a href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/#comments">. 20 Comments</a></li> 
+       </ul> 
+       <ul class="unstyled inline blog-tags"> 
+        <li> <i class="icon-tags"></i> <a href="/topics/machine-learning-statistics">Machine Learning &amp; Statistics</a> <a href="/topics/online-marketing">Online Marketing</a> <a href="/topics/programming">Programming</a> </li> 
+       </ul> 
+       <ul class="unstyled inline social-media-buttons"> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_fblike_hcount"></span> 
+        <span st_via="datumbox" st_username="datumbox" st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_twitter_hcount"></span> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_plusone_hcount"></span> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_facebook_hcount"></span> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_linkedin_hcount"></span> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_googleplus_hcount"></span> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_reddit_hcount"></span> 
+        <span st_title="How to build your own Twitter Sentiment Analysis Tool" st_url="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/" class="st_delicious_hcount"></span> 
+       </ul> 
+       <p><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/twitter2-720x540.jpg" alt="Twitter Sentiment Analysis" width="720" height="540" class="alignnone size-large wp-image-143" srcset="http://blog.datumbox.com/wp-content/uploads/2013/09/twitter2-720x540.jpg 720w, http://blog.datumbox.com/wp-content/uploads/2013/09/twitter2-300x225.jpg 300w, http://blog.datumbox.com/wp-content/uploads/2013/09/twitter2.jpg 756w" sizes="(max-width: 720px) 100vw, 720px">In this article we will show how you can build a simple Sentiment Analysis tool which classifies tweets as positive, negative or neutral by using the Twitter REST API 1.1v and the Datumbox API 1.0v. Even though the examples will be given in PHP, you can very easily build your own tools in the computer language of your choice. </p> 
+       <p><b>Update: The Datumbox Machine Learning Framework is now open-source and free to <a href="https://github.com/datumbox/datumbox-framework" target="_blank">download</a>. If you want to build a Sentiment Analysis classifier without hitting the API limitations, use the com.datumbox.applications.nlp.TextClassifier class.</b> </p> 
+       <p>You can find the complete PHP code of the <a href="https://github.com/datumbox/twitter-sentiment-analysis" target="_blank">Twitter Sentiment Analysis tool</a> on Github.</p> 
+       <h2>Social Media Monitoring &amp; Sentiment Analysis</h2> 
+       <p>Social Media Monitoring is one of the hottest topics nowadays. As more and more companies use Social Media Marketing to promote their brands, it became necessary for them to be able to evaluate the effectiveness of their campaigns.</p> 
+       <p>Building a Social Media Monitoring tool requires at least 2 modules: one that evaluates how many people are influenced by the campaign and one that finds out what people think about the brand.</p> 
+       <p>Evaluating the generated buzz is usually performed by using various KPIs such as the number of followers/friends, the number of likes/shares/RTs per post and more complex ones such as the engagement rate, the response rate and other composite metrics. Quantifying the buzz is usually straightforward and can be performed by using basic statistics.</p> 
+       <p>On the other hand, being able to evaluate the opinion of the users is not a trivial matter. Evaluating their opinions requires performing Sentiment Analysis, which is the task of identifying automatically the polarity, the subjectivity and the emotional states of particular document or sentence. It requires using Machine Learning and Natural Language Processing techniques and this is where most of the developers hit the wall when they try to build their own tools.</p> 
+       <p>Thankfully Datumbox simplifies the process of using Machine Learning since it offers several API functions which allow you to build custom Social Media Monitoring tools in no time. Some of the services that are available to the API users are the Sentiment Analysis, the Twitter Sentiment Analysis and the Subjectivity Analysis API functions. In this article we will focus only on the Twitter Sentiment Analysis method, nevertheless as you can easily find out the rest of the functions work similarly.</p> 
+       <h2>Performing Sentiment Analysis on Twitter</h2> 
+       <p>Performing Sentiment Analysis on Twitter is trickier than doing it for large reviews. This is because the tweets are very short (only about 140 characters) and usually contain slangs, emoticons, hash tags and other twitter specific jargon. This is the reason why Datumbox offers a completely different classifier for performing Sentiment Analysis on Twitter.</p> 
+       <h2>Building the Sentiment Analysis tool</h2> 
+       <p>In order to build the Sentiment Analysis tool we will need 2 things: First of all be able to connect on Twitter and search for tweets that contain a particular keyword. Second evaluate the polarity (positive, negative or neutral) of the tweets based on their words. For the first task we will use the Twitter REST API 1.1v and for the second the Datumbox API 1.0v.</p> 
+       <p>To speed up the development we will use 2 classes: The great <a href="https://github.com/timwhitlock/php-twitter-api" target="_blank">PHP-Twitter-API client</a> written by Tim Whitlock and the Datumbox <a href="http://www.datumbox.com/machine-learning-api/" target="_blank">PHP-API-Client</a> offered by our service. As you will soon find out getting the tweets via the Twitter API is the most complicated task of this tutorial.</p> 
+       <h3>Create your own Twitter Application</h3> 
+       <p>Unfortunately Twitter made it more complicated for developers to use their API. In order to be able to search for particular tweets you must authenticate yourself by using OAuth protocol. Fortunately the API client of Tim takes care most of the tasks and enables a fast and easy integration. Still you are required to create a new Twitter application before using the library.</p> 
+       <p>So go to <a href="https://dev.twitter.com/apps" target="_blank">Twitter Applications Console</a>, login by using your credentials, click on “Create new Application” button and fill in the form to register a new app. When you create it select the application and go to the “Details” tab (the first tab) and on the bottom of the page click the “Create my access token” button. Once you do this, go to the “OAuth tool” tab and note down the values: Consumer Key, Consumer secret, Access token and Access token secret.</p> 
+       <h3>Get your Datumbox API key</h3> 
+       <p>To access the Datumbox API <a href="http://www.datumbox.com/users/register/" target="_blank">sign up</a> for a free account and visit your <a href="http://www.datumbox.com/apikeys/view/" target="_blank">API Credentials panel</a> to get your API Key.</p> 
+       <h3>Developing the Twitter Sentiment Analysis class</h3> 
+       <p>All we need to do in order to develop the tool is write a TwitterSentimentAnalysis class which uses the Twitter and Datumbox API Clients to fetch the tweets and evaluate their polarity.</p> 
+       <p>Below you can see the code along with the necessary comments.</p> 
+       <pre class="brush: php; title: ; notranslate" title="">
+&lt;?php
+class TwitterSentimentAnalysis {
+    
+    protected $datumbox_api_key; //Your Datumbox API Key. Get it from http://www.datumbox.com/apikeys/view/
+    
+    protected $consumer_key; //Your Twitter Consumer Key. Get it from https://dev.twitter.com/apps
+    protected $consumer_secret; //Your Twitter Consumer Secret. Get it from https://dev.twitter.com/apps
+    protected $access_key; //Your Twitter Access Key. Get it from https://dev.twitter.com/apps
+    protected $access_secret; //Your Twitter Access Secret. Get it from https://dev.twitter.com/apps
+    
+    /**
+    * The constructor of the class
+    * 
+    * @param string $datumbox_api_key   Your Datumbox API Key
+    * @param string $consumer_key       Your Twitter Consumer Key
+    * @param string $consumer_secret    Your Twitter Consumer Secret
+    * @param string $access_key         Your Twitter Access Key
+    * @param string $access_secret      Your Twitter Access Secret
+    * 
+    * @return TwitterSentimentAnalysis  
+    */
+    public function __construct($datumbox_api_key, $consumer_key, $consumer_secret, $access_key, $access_secret){
+        $this-&gt;datumbox_api_key=$datumbox_api_key;
+        
+        $this-&gt;consumer_key=$consumer_key;
+        $this-&gt;consumer_secret=$consumer_secret;
+        $this-&gt;access_key=$access_key;
+        $this-&gt;access_secret=$access_secret;
+    }
+    
+    /**
+    * This function fetches the twitter list and evaluates their sentiment
+    * 
+    * @param array $twitterSearchParams The Twitter Search Parameters that are passed to Twitter API. Read more here https://dev.twitter.com/docs/api/1.1/get/search/tweets
+    * 
+    * @return array
+    */
+    public function sentimentAnalysis($twitterSearchParams) {
+        $tweets=$this-&gt;getTweets($twitterSearchParams);
+        
+        return $this-&gt;findSentiment($tweets);
+    }
+    
+    /**
+    * Calls the Search/tweets method of the Twitter API for particular Twitter Search Parameters and returns the list of tweets that match the search criteria.
+    * 
+    * @param mixed $twitterSearchParams The Twitter Search Parameters that are passed to Twitter API. Read more here https://dev.twitter.com/docs/api/1.1/get/search/tweets
+    * 
+    * @return array $tweets
+    */
+    protected function getTweets($twitterSearchParams) {
+        $Client = new TwitterApiClient(); //Use the TwitterAPIClient
+        $Client-&gt;set_oauth ($this-&gt;consumer_key, $this-&gt;consumer_secret, $this-&gt;access_key, $this-&gt;access_secret);
+
+        $tweets = $Client-&gt;call('search/tweets', $twitterSearchParams, 'GET' ); //call the service and get the list of tweets
+        
+        unset($Client);
+        
+        return $tweets;
+    }
+    
+    protected function findSentiment($tweets) {
+        $DatumboxAPI = new DatumboxAPI($this-&gt;datumbox_api_key); //initialize the DatumboxAPI client
+        
+        $results=array();
+        foreach($tweets['statuses'] as $tweet) { //foreach of the tweets that we received
+            if(isset($tweet['metadata']['iso_language_code']) &amp;&amp; $tweet['metadata']['iso_language_code']=='en') { //perform sentiment analysis only for the English Tweets
+                $sentiment=$DatumboxAPI-&gt;TwitterSentimentAnalysis($tweet['text']); //call Datumbox service to get the sentiment
+                
+                if($sentiment!=false) { //if the sentiment is not false, the API call was successful.
+                    $results[]=array( //add the tweet message in the results
+                        'id'=&gt;$tweet['id_str'],
+                        'user'=&gt;$tweet['user']['name'],
+                        'text'=&gt;$tweet['text'],
+                        'url'=&gt;'https://twitter.com/'.$tweet['user']['name'].'/status/'.$tweet['id_str'],
+                        
+                        'sentiment'=&gt;$sentiment,
+                    );
+                }
+            }
+            
+        }
+        
+        unset($tweets);
+        unset($DatumboxAPI);
+        
+        return $results;
+    }
+}
+?&gt;
+</pre> 
+       <p>What we do is pass to the constructor the necessary keys for all the services. Then on the public sentimentAnalysis function we first call Twitter service in order to get the list of tweets which much our search parameters and then we call for each tweet the Datumbox service to get is polarity.</p> 
+       <p>This is it! You ready to use this class to perform Sentiment Analysis on tweets and build your own Social Media Monitoring tool. You can find the complete PHP code of the <a href="https://github.com/datumbox/twitter-sentiment-analysis" target="_blank">Twitter Sentiment Analysis tool</a> on Github.</p> 
+       <h2>Extra: Detailed Information about the Twitter Sentiment Analysis Classifier</h2> 
+       <p>This part is optional for those of you who are interested in learning how Datumbox’s Twitter Sentiment Analysis works.</p> 
+       <p>In order to detect the Sentiment of the tweets we used our Machine Learning framework to build a classifier capable of detecting Positive, Negative and Neutral tweets. Our training set consisted of 1.2 million tweets evenly distributed across the 3 categories. We tokenized the tweets by extracting their bigrams and by taking into account the URLs, the hash tags, the usernames and the emoticons. </p> 
+       <p>In order to select the best features we used several different algorithms and at the end we chose the Mutual Information. Finally after performing several tests with various models and configurations we selected the Binarized Naïve Bayes as the best performing classifier for the particular problem (strangely enough Naïve Bayes beat SVM, Max Entropy and other classifiers which are known to perform usually better than NB). To evaluate the results we used the 10-fold cross-validation method and our best performing classifier achieves an accuracy of 83.26%.</p> 
+       <p>Did you like the article? Please take a minute to share it on Twitter. ?</p> 
+       <div class="authorsure-author-box">
+        <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=90&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=180&amp;r=g 2x" class="avatar avatar-90 photo" height="90" width="90">
+        <h4>About&nbsp;<a rel="author" href="http://blog.datumbox.com/author/bbriniotis/" class="authorsure-author-link">Vasilis Vryniotis</a></h4>
+        <p>My name is Vasilis Vryniotis. I'm a Data Scientist, a Software Engineer, author of Datumbox Machine Learning Framework and a proud geek. <a href="http://blog.datumbox.com/author/bbriniotis/">Learn more</a></p> 
+       </div>
+       <div class="clear"></div>
+       <div id="crp_related" class="crp_related">
+        <h3>Related Posts:</h3>
+        <ul>
+         <li><a href="http://blog.datumbox.com/how-to-build-your-own-facebook-sentiment-analysis-tool/"><img src="http://blog.datumbox.com/wp-content/uploads/2014/01/facebook-sentiment-analysis-150x150.png" alt="How to build your own Facebook Sentiment Analysis Tool" title="How to build your own Facebook Sentiment Analysis Tool" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/how-to-build-your-own-facebook-sentiment-analysis-tool/" class="crp_title">How to build your own Facebook Sentiment Analysis Tool</a></li>
+         <li><a href="http://blog.datumbox.com/using-datumbox-api-with-python-and-r-languages/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/api-community-150x150.jpg" alt="Using Datumbox API with Python and R languages" title="Using Datumbox API with Python and R languages" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/using-datumbox-api-with-python-and-r-languages/" class="crp_title">Using Datumbox API with Python and R languages</a></li>
+         <li><a href="http://blog.datumbox.com/using-datumbox-api-with-ruby-node-js-and-other-featured-projects/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/12/community-150x150.png" alt="Using Datumbox API with Ruby &amp; Node.js and other featured Projects" title="Using Datumbox API with Ruby &amp; Node.js and other featured Projects" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/using-datumbox-api-with-ruby-node-js-and-other-featured-projects/" class="crp_title">Using Datumbox API with Ruby &amp; Node.js and other…</a></li>
+         <li><a href="http://blog.datumbox.com/10-tips-for-sentiment-analysis-projects/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/sentiment-analysis-tips-150x150.jpg" alt="10 Tips for Sentiment Analysis projects" title="10 Tips for Sentiment Analysis projects" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/10-tips-for-sentiment-analysis-projects/" class="crp_title">10 Tips for Sentiment Analysis projects</a></li>
+         <li><a href="http://blog.datumbox.com/measuring-the-social-media-popularity-of-pages-with-dea-in-java/"><img src="http://blog.datumbox.com/wp-content/uploads/2014/02/socialmedia-popularity-150x150.jpg" alt="Measuring the Social Media Popularity of Pages with DEA in JAVA" title="Measuring the Social Media Popularity of Pages with DEA in JAVA" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/measuring-the-social-media-popularity-of-pages-with-dea-in-java/" class="crp_title">Measuring the Social Media Popularity of Pages with DEA in…</a></li>
+         <li><a href="http://blog.datumbox.com/the-importance-of-neutral-class-in-sentiment-analysis/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/sentiment-analysis-neutral-150x150.png" alt="The importance of Neutral Class in Sentiment Analysis" title="The importance of Neutral Class in Sentiment Analysis" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/the-importance-of-neutral-class-in-sentiment-analysis/" class="crp_title">The importance of Neutral Class in Sentiment Analysis</a></li>
+         <li><a href="http://blog.datumbox.com/what-is-machine-learning/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/07/machine-learning-150x150.png" alt="What is Machine Learning?" title="What is Machine Learning?" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/what-is-machine-learning/" class="crp_title">What is Machine Learning?</a></li>
+         <li><a href="http://blog.datumbox.com/how-to-build-an-intelligent-antispam-wordpress-plugin/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/wordpress-machine-learning-antispam-150x150.jpg" alt="How to build an Intelligent Antispam WordPress Plugin" title="How to build an Intelligent Antispam WordPress Plugin" width="150" height="150" class="crp_thumb crp_featured"></a><a href="http://blog.datumbox.com/how-to-build-an-intelligent-antispam-wordpress-plugin/" class="crp_title">How to build an Intelligent Antispam WordPress Plugin</a></li>
+        </ul>
+        <div style="clear:both"></div>
+       </div> 
+      </div>
+      <!--/blog--> 
+     </div> 
+     <!-- You can start editing here. --> 
+     <div id="comments"> 
+      <div class="total-comments">
+       Latest Comments
+      </div> 
+      <ol class="commentlist"> 
+       <div class="navigation"> 
+        <div class="alignleft"></div> 
+        <div class="alignright"></div> 
+       </div> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor even thread-even depth-1" id="li-comment-49"> 
+        <div id="comment-49" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>September 9, 2013</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi @Roberto,</p> 
+          <p>So basically what you mean is how someone can deal with the fact that the sentiment orientation/score of some words might change over time. This usually occurs when you are performing sentiment analysis on news articles or on twitter. For example the sentiment orientation/score of the name of a particular Political Candidate can change after a scandal is revealed. </p> 
+          <p>Sentiment drifts are a difficult topic in sentiment analysis as you know. If you are working on a domain where you expect such drifts, you can try to regularly update the training dataset over time. This way your algorithm will adapt the scores. The problem with this is that it is very hard to find an annotated fresh dataset. In that case you could use ensemble learning to combine the output of 2 classifiers: One that will use the old large dataset and one that will use a smaller one with a fresher new dataset and different feature selection method.</p> 
+          <p>Unfortunately given that I don’t know what type of analysis you are performing, I can’t provide you with a more targeted tip. At any case don’t expect to find a silver bullet for this problem. Sentiment Analysis has at its best 85% accuracy, so on its own it’s a very difficult problem. Let alone when you start dealing with irony, sarcasm, sentiment drifts and so on.</p> 
+          <p>Hope this helps!</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=49#respond" onclick="return addComment.moveForm( &quot;comment-49&quot;, &quot;49&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> 
+        <ul class="children"> 
+         <li class="comment byuser comment-author-bbriniotis bypostauthor odd alt depth-2" id="li-comment-73"> 
+          <div id="comment-73" style="position:relative;"> 
+           <div class="comment-author vcard"> 
+            <div class="avatar"> 
+             <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+             <time>September 17, 2013</time> 
+            </div> 
+           </div> 
+           <div class="comment-content"> 
+            <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+            <div class="comment-meta commentmetadata"> 
+            </div> 
+            <p>@Roberto, Sounds really interesting. If you publish your research, send us the link. ?</p> 
+            <div class="reply"> 
+             <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=73#respond" onclick="return addComment.moveForm( &quot;comment-73&quot;, &quot;73&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+            </div> 
+           </div> 
+          </div> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor even thread-odd thread-alt depth-1" id="li-comment-134"> 
+        <div id="comment-134" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>September 26, 2013</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi @himanshu,</p> 
+          <p>I have found a dataset which contained 800k tweets (positive vs negative) and then I collected another 400k tweets for the neutral class mostly from editorial and news twitter accounts. The accuracy was estimated by doing a 10 fold cross validation.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=134#respond" onclick="return addComment.moveForm( &quot;comment-134&quot;, &quot;134&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor odd alt thread-even depth-1" id="li-comment-334"> 
+        <div id="comment-334" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>October 13, 2013</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hey @Dough,</p> 
+          <p>Thanks for the comment. You can use various feature selection algorithms to extract features. Some of the methods that are widely used in Text Classification problems are the Chisquare and the Mutual Information methods.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=334#respond" onclick="return addComment.moveForm( &quot;comment-334&quot;, &quot;334&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor even thread-odd thread-alt depth-1" id="li-comment-1279"> 
+        <div id="comment-1279" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>October 30, 2013</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi Fabian,</p> 
+          <p>I already did. I uploaded on github!</p> 
+          <p>?</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=1279#respond" onclick="return addComment.moveForm( &quot;comment-1279&quot;, &quot;1279&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor odd alt thread-even depth-1" id="li-comment-1529"> 
+        <div id="comment-1529" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>November 8, 2013</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi Su,</p> 
+          <p>You probably have an issue with the twitter API because I tested the script and works without problems. You must create a Twitter Application and add your keys in config file as described in the article. </p> 
+          <p>If you still face problems, try debugging the code to see which API does not respond.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=1529#respond" onclick="return addComment.moveForm( &quot;comment-1529&quot;, &quot;1529&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor even thread-odd thread-alt depth-1" id="li-comment-9939"> 
+        <div id="comment-9939" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>January 8, 2014</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi @rizki,</p> 
+          <p>It seems to me that the Twitter API client can’t access the certificate. Make sure it is on the right place and that it has read privileges.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=9939#respond" onclick="return addComment.moveForm( &quot;comment-9939&quot;, &quot;9939&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> 
+        <ul class="children"> 
+         <li class="comment byuser comment-author-bbriniotis bypostauthor odd alt depth-2" id="li-comment-9941"> 
+          <div id="comment-9941" style="position:relative;"> 
+           <div class="comment-author vcard"> 
+            <div class="avatar"> 
+             <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+             <time>January 29, 2014</time> 
+            </div> 
+           </div> 
+           <div class="comment-content"> 
+            <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+            <div class="comment-meta commentmetadata"> 
+            </div> 
+            <p>Hi Amber,</p> 
+            <p>The script is fully functional but you need to setup properly the Twitter App and have a valid Datumbox API key. Check again the configuration and follow the steps found in the article. If this does not work for you, I’m afraid you have to check it with a debugger to see where it stacks.</p> 
+            <div class="reply"> 
+             <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=9941#respond" onclick="return addComment.moveForm( &quot;comment-9941&quot;, &quot;9941&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+            </div> 
+           </div> 
+          </div> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor even thread-even depth-1" id="li-comment-9972"> 
+        <div id="comment-9972" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>February 20, 2014</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi Ismahane,</p> 
+          <p>Sure you can. Joel Hoskin was kind enough to build an implementation of datumbox API in Python and open source it. Check out our API page to download it:<br> <a href="http://www.datumbox.com/machine-learning-api/" rel="nofollow">http://www.datumbox.com/machine-learning-api/</a></p> 
+          <p>At any case you can build your own implementation in a matter of minutes. The API is super simple so you should not face any problems.</p> 
+          <p>Good luck!</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=9972#respond" onclick="return addComment.moveForm( &quot;comment-9972&quot;, &quot;9972&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor odd alt thread-odd thread-alt depth-1" id="li-comment-9988"> 
+        <div id="comment-9988" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>April 1, 2014</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi Neelima,</p> 
+          <p>Of course you can just sign up for a free key and write an API client.</p> 
+          <p>Good luck!</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=9988#respond" onclick="return addComment.moveForm( &quot;comment-9988&quot;, &quot;9988&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment byuser comment-author-bbriniotis bypostauthor even thread-even depth-1" id="li-comment-10136"> 
+        <div id="comment-10136" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>August 20, 2014</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>I would loved to Gerald, but it is against the Twitter policy… ?</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=10136#respond" onclick="return addComment.moveForm( &quot;comment-10136&quot;, &quot;10136&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-15299"> 
+        <div id="comment-15299" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://2.gravatar.com/avatar/b6e4b1639da78d9cee4456e2317d7c00?s=68&amp;r=g" srcset="http://2.gravatar.com/avatar/b6e4b1639da78d9cee4456e2317d7c00?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>September 11, 2015</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">Isabella</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Dear Vasilis,<br> your project is really interesting.</p> 
+          <p>I am wondering if it is possible to modify the code to retrieve sentiment of italian tweet (equally tweets in other languages) using different training sets or the tool/Datumbox API works only with english texts.</p> 
+          <p>Thank you.<br> Best regards,<br> Isabella</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=15299#respond" onclick="return addComment.moveForm( &quot;comment-15299&quot;, &quot;15299&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Isabella">Reply</a> 
+          </div> 
+         </div> 
+        </div> 
+        <ul class="children"> 
+         <li class="comment byuser comment-author-bbriniotis bypostauthor even depth-2" id="li-comment-17001"> 
+          <div id="comment-17001" style="position:relative;"> 
+           <div class="comment-author vcard"> 
+            <div class="avatar"> 
+             <img alt="" src="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/0d9cf005f5d9fbbe42b6723e723a7f76?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+             <time>January 11, 2016</time> 
+            </div> 
+           </div> 
+           <div class="comment-content"> 
+            <span class="fn"><a href="http://blog.datumbox.com/author/bbriniotis/" rel="external nofollow" class="url">Vasilis Vryniotis</a></span> 
+            <div class="comment-meta commentmetadata"> 
+            </div> 
+            <p>Hi Isabella,</p> 
+            <p>You don’t need to modify the code. You just provide training examples in the language of your choice. If you have the annotated data you can train the models. ?</p> 
+            <p>Cheers,<br> Vasilis</p> 
+            <div class="reply"> 
+             <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17001#respond" onclick="return addComment.moveForm( &quot;comment-17001&quot;, &quot;17001&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Vasilis Vryniotis">Reply</a> 
+            </div> 
+           </div> 
+          </div> </li>
+         <!-- #comment-## --> 
+        </ul>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+       <li class="comment odd alt thread-even depth-1" id="li-comment-17170"> 
+        <div id="comment-17170" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://1.gravatar.com/avatar/7ccd42379e7e3f9e3c21d72b267859d2?s=68&amp;r=g" srcset="http://1.gravatar.com/avatar/7ccd42379e7e3f9e3c21d72b267859d2?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>February 4, 2016</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">Martín</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Dear Vasilis,</p> 
+          <p>First at all, yours It’s a interesting project!!<br> I don’t understand when you say “we selected the Binarized Naïve Bayes as the best performing classifier for the particular problem”, but you are classifying in 3 different categories (Positive, negative, and neutral)?</p> 
+          <p>I wait for your comments.</p> 
+          <p>Thanks in advance, regards,</p> 
+          <p>Martín.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17170#respond" onclick="return addComment.moveForm( &quot;comment-17170&quot;, &quot;17170&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Martín">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment even thread-odd thread-alt depth-1" id="li-comment-17264"> 
+        <div id="comment-17264" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://1.gravatar.com/avatar/dbe78199a4db275d4a713a2755b05847?s=68&amp;r=g" srcset="http://1.gravatar.com/avatar/dbe78199a4db275d4a713a2755b05847?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>February 26, 2016</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">Scott</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Hi Vasilis,</p> 
+          <p>Do you have any documentation you can share regarding the accuracy/testing of the Twitter Sentimental Analysis tool?<br> I am using Datumbox for academic research and would like to know more about your testing of the tool, the level of accuracy and what words are contained within datasets to judge their sentimental value.</p> 
+          <p>Thank you for your help.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17264#respond" onclick="return addComment.moveForm( &quot;comment-17264&quot;, &quot;17264&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Scott">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment odd alt thread-even depth-1" id="li-comment-17709"> 
+        <div id="comment-17709" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/3e7661cf14b6313f33082b10c96056ec?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/3e7661cf14b6313f33082b10c96056ec?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>June 15, 2016</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">john ope</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>I am new to sentiment analysis, it is a fascinating topic and i want to build a tool of my own using NetBeans java. I would love a video tutorial on how to approach building this tool using java.<br> i await your guidance.</p> 
+          <p>thanks in advance</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17709#respond" onclick="return addComment.moveForm( &quot;comment-17709&quot;, &quot;17709&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to john ope">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment even thread-odd thread-alt depth-1" id="li-comment-17919"> 
+        <div id="comment-17919" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://1.gravatar.com/avatar/47bb7761a0db23b3ea8f418f7159a68b?s=68&amp;r=g" srcset="http://1.gravatar.com/avatar/47bb7761a0db23b3ea8f418f7159a68b?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>October 16, 2016</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">ranjith ramachandran</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Dear Vasilis,</p> 
+          <p>First of all, Thanks for sharing your interesting project!!<br> Do you have the similar projects for other networks like Face book,Instagram etc.. ?</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17919#respond" onclick="return addComment.moveForm( &quot;comment-17919&quot;, &quot;17919&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to ranjith ramachandran">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment odd alt thread-even depth-1" id="li-comment-17960"> 
+        <div id="comment-17960" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/fb600b6b6dd5d079aaf864d64ad1aa90?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/fb600b6b6dd5d079aaf864d64ad1aa90?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>November 4, 2016</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">pragati</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>hey can anyone tell me about how to train classifier using maximum entropy algorithm . i want programs in java.</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17960#respond" onclick="return addComment.moveForm( &quot;comment-17960&quot;, &quot;17960&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to pragati">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment even thread-odd thread-alt depth-1" id="li-comment-17971"> 
+        <div id="comment-17971" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://2.gravatar.com/avatar/b410f73380dc0bf7df3dc75a2b44872b?s=68&amp;r=g" srcset="http://2.gravatar.com/avatar/b410f73380dc0bf7df3dc75a2b44872b?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>November 7, 2016</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">Robert Sebudandi</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>Very interesting project and works well on my side . The issues is if i need it for a different language how can i get access to the dictionary to put that language words and also train with the language data sets. The tutorial just shows us how to connect using the available dictionary. </p> 
+          <p>Thank you</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=17971#respond" onclick="return addComment.moveForm( &quot;comment-17971&quot;, &quot;17971&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to Robert Sebudandi">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <li class="comment odd alt thread-even depth-1" id="li-comment-18324"> 
+        <div id="comment-18324" style="position:relative;"> 
+         <div class="comment-author vcard"> 
+          <div class="avatar"> 
+           <img alt="" src="http://0.gravatar.com/avatar/c59f8a506b7fdfab04ba5a7cdfa8f18a?s=68&amp;r=g" srcset="http://0.gravatar.com/avatar/c59f8a506b7fdfab04ba5a7cdfa8f18a?s=136&amp;r=g 2x" class="avatar avatar-68 photo" height="68" width="68"> 
+           <time>April 1, 2017</time> 
+          </div> 
+         </div> 
+         <div class="comment-content"> 
+          <span class="fn">srinivas raghav</span> 
+          <div class="comment-meta commentmetadata"> 
+          </div> 
+          <p>I started following a course to implement sentiment analysis where i installed various softwares like git,virtual box,text editor, vagrant Apparently the course didnt show how to analyse tweets and sentiment. It taught us how to take tweets and hashtags and filtering and also tweet count<br> we built it using storm<br> please help us in completing the sentiment analysis part</p> 
+          <div class="reply"> 
+           <a rel="nofollow" class="comment-reply-link" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/?replytocom=18324#respond" onclick="return addComment.moveForm( &quot;comment-18324&quot;, &quot;18324&quot;, &quot;respond&quot;, &quot;138&quot; )" aria-label="Reply to srinivas raghav">Reply</a> 
+          </div> 
+         </div> 
+        </div> </li>
+       <!-- #comment-## --> 
+       <div class="navigation"> 
+        <div class="alignleft"></div> 
+        <div class="alignright"></div> 
+       </div> 
+      </ol> 
+     </div> 
+     <hr style="clear: both;"> 
+     <div id="respond" class="box m-t-6"> 
+      <div id="respond" class="comment-respond"> 
+       <h3 id="reply-title" class="comment-reply-title">Leave a Reply <small><a rel="nofollow" id="cancel-comment-reply-link" href="/how-to-build-your-own-twitter-sentiment-analysis-tool/#respond" style="display:none;">Cancel reply</a></small></h3> 
+       <form action="http://blog.datumbox.com/wp-comments-post.php" method="post" id="commentform" class="comment-form"> 
+        <p class="comment-notes"><span id="email-notes">Your email address will not be published.</span> Required fields are marked <span class="required">*</span></p>
+        <p class="comment-form-comment"><label for="comment">Comment</label> <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" aria-required="true" required></textarea></p>
+        <p class="comment-form-author"><label for="author">Name <span class="required">*</span></label> <input id="author" name="author" type="text" value="" size="30" maxlength="245" aria-required="true" required></p> 
+        <p class="comment-form-email"><label for="email">Email <span class="required">*</span></label> <input id="email" name="email" type="text" value="" size="30" maxlength="100" aria-describedby="email-notes" aria-required="true" required></p> 
+        <p class="comment-form-url"><label for="url">Website</label> <input id="url" name="url" type="text" value="" size="30" maxlength="200"></p> 
+        <p class="hctpc_block"><span class="wpcf7-form-control-wrap hctpc_number"><span class="wpcf7-form-control wpcf7-radio"><span class="hctpc_title">Captcha<span class="required"> *</span></span><script class="hctpc_to_remove">
+
+				(function( timeout ) {
+
+					setTimeout(
+
+						function() {
+
+							var notice = document.getElementById("hctpc_time_limit_notice_17");
+
+							if ( notice )
+
+								notice.style.display = "block";
+
+						},
+
+						timeout
+
+					);
+
+				})(120000);
+
+			</script> <span id="hctpc_time_limit_notice_17" class="hctpc_time_limit_notice hctpc_to_remove">Time limit is exhausted. Please reload the CAPTCHA.</span><span class="hctpc_wrap hctpc_"> <label class="hctpc_label" for="hctpc_input_17"><span class="hctpc_span">5</span> <span class="hctpc_span">&nbsp;?&nbsp;</span> <span class="hctpc_span"><input id="hctpc_input_17" class="hctpc_input hctpc_wp_comments" type="text" autocomplete="off" name="hctpc_number" value="" maxlength="2" size="2" aria-required="true" required style="margin-bottom:0;display:inline;font-size: 12px;width: 40px;"></span> <span class="hctpc_span">&nbsp;=&nbsp;</span> <span class="hctpc_span">four</span> <input type="hidden" name="hctpc_result" value="nP4="><input type="hidden" name="hctpc_time" value="1507032352"> <input type="hidden" name="hctpc_form" value="wp_comments"> </label><span class="hctpc_reload_button_wrap hide-if-no-js"> 
+             <noscript> 
+              <style type="text/css">
+
+							.hide-if-no-js {
+
+								display: none !important;
+
+							}
+
+						</style> 
+             </noscript> <span class="hctpc_reload_button dashicons dashicons-update"></span> </span></span></span></span></p>
+        <p class="form-submit"><input name="submit" type="submit" id="submit" class="submit" value="Post Comment"> <input type="hidden" name="comment_post_ID" value="138" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"> </p>
+        <p style="display: none;"><input type="hidden" id="akismet_comment_nonce" name="akismet_comment_nonce" value="58320e5944"></p>
+        <p style="display: none;"><input type="hidden" id="ak_js" name="ak_js" value="46"></p> 
+       </form> 
+      </div>
+      <!-- #respond --> 
+     </div> 
+    </div>
+    <!--/span9--> 
+    <!-- Right Sidebar --> 
+    <div class="span4"> 
+     <aside class="sidebar"> 
+      <div id="sidebars" class="g"> 
+       <li class="widget widget-sidebar"><h3>Follow Us</h3>
+        <div class="social-count-plus">
+         <ul class="default">
+          <li class="count-twitter"><a class="icon" href="https://twitter.com/datumbox" target="_blank"></a><span class="items"><span class="count" style="color: #333333 !important;">749</span><span class="label" style="color: #333333 !important;">followers</span></span></li>
+          <li class="count-facebook"><a class="icon" href="https://www.facebook.com/546816552044290" target="_blank"></a><span class="items"><span class="count" style="color: #333333 !important;">775</span><span class="label" style="color: #333333 !important;">likes</span></span></li>
+          <li class="count-googleplus"><a class="icon" href="https://plus.google.com/105921437813621882157" target="_blank"></a><span class="items"><span class="count" style="color: #333333 !important;">96</span><span class="label" style="color: #333333 !important;">followers</span></span></li>
+          <li class="count-comments"><a class="icon" href="http://blog.datumbox.com"></a><span class="items"><span class="count" style="color: #333333 !important;">103</span><span class="label" style="color: #333333 !important;">comments</span></span></li>
+          <li class="count-github"><a class="icon" href="https://github.com/datumbox" target="_blank"></a><span class="items"><span class="count" style="color: #333333 !important;">206</span><span class="label" style="color: #333333 !important;">followers</span></span></li>
+         </ul>
+        </div></li>
+       <li class="widget widget-sidebar"><h3>Subscribe</h3> 
+        <div class="textwidget">
+         <div id="optin-sidebar">
+          <form onsubmit="window.open('http://feedburner.google.com/fb/a/mailverify?uri=Datumbox', 'popupwindow', 'scrollbars=yes,width=550,height=520');return true" target="popupwindow" method="post" action="http://feedburner.google.com/fb/a/mailverify">
+           <input type="hidden" name="uri" value="Datumbox">
+           <input type="hidden" value="en_US" name="loc">
+           <input type="text" id="name" name="name" onblur="if ('' === this.value) {this.value = 'Enter Your Name';}" onfocus="if ('Enter Your Name' === this.value) {this.value = '';}" value="Enter Your Name">
+           <input type="text" id="email" name="email" onblur="if ('' === this.value) {this.value = 'Enter Your Email Address';}" onfocus="if ('Enter Your Email Address' === this.value) {this.value = '';}" value="Enter Your Email Address">
+           <input type="submit" value="Subscribe Now" id="submit" name="submit">
+          </form>
+         </div> 
+         <a href="http://feeds.feedburner.com/Datumbox" rel="alternate" type="application/rss+xml" target="_blank" class="rssFeed"><img src="http://www.feedburner.com/fb/images/pub/feed-icon32x32.png"><span>RSS Feed</span></a>
+        </div> </li>
+       <li class="widget widget-sidebar"><h3>Search</h3>
+        <!-- Search Bar --> <br> 
+        <div class="input-append  margin-bottom-20"> 
+         <form method="get" id="searchform" class="search-form" action="http://blog.datumbox.com" _lpchecked="1"> 
+          <input type="text" class="span9" name="s" id="s" placeholder="Search this Blog..."> 
+          <button type="submit" class="btn-u">Search</button> 
+         </form> 
+        </div></li> 
+       <div id="tabber"> 
+        <ul class="tabs"> 
+         <li class="active"><a href="#popular-posts" data-toggle="tab">Popular Posts</a></li> 
+         <li><a href="#recent-posts" data-toggle="tab">Recent Posts</a></li> 
+        </ul> 
+        <!--end .tabs--> 
+        <div class="clear"></div> 
+        <div class="inside"> 
+         <div id="popular-posts" class="active"> 
+          <ul> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/twitter2-150x150.jpg" alt="How to build your own Twitter Sentiment Analysis Tool" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="How to build your own Twitter Sentiment Analysis Tool" href="http://blog.datumbox.com/how-to-build-your-own-twitter-sentiment-analysis-tool/">How to build your own Twitter Sentiment Analysis Tool</a></p> 
+             <div class="meta"> 
+              <p>September 2, 2013</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/developing-a-naive-bayes-text-classifier-in-java/"><img src="http://blog.datumbox.com/wp-content/uploads/2014/01/NaiveBayes-JAVA-150x150.jpg" alt="Developing a Naive Bayes Text Classifier in JAVA" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Developing a Naive Bayes Text Classifier in JAVA" href="http://blog.datumbox.com/developing-a-naive-bayes-text-classifier-in-java/">Developing a Naive Bayes Text Classifier in JAVA</a></p> 
+             <div class="meta"> 
+              <p>January 27, 2014</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/10-tips-for-sentiment-analysis-projects/"><img src="http://blog.datumbox.com/wp-content/uploads/2013/09/sentiment-analysis-tips-150x150.jpg" alt="10 Tips for Sentiment Analysis projects" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="10 Tips for Sentiment Analysis projects" href="http://blog.datumbox.com/10-tips-for-sentiment-analysis-projects/">10 Tips for Sentiment Analysis projects</a></p> 
+             <div class="meta"> 
+              <p>September 9, 2013</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/using-artificial-intelligence-to-solve-the-2048-game-java-code/"><img src="http://blog.datumbox.com/wp-content/uploads/2014/04/game-2048-java-150x150.png" alt="Using Artificial Intelligence to solve the 2048 Game (JAVA code)" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Using Artificial Intelligence to solve the 2048 Game (JAVA code)" href="http://blog.datumbox.com/using-artificial-intelligence-to-solve-the-2048-game-java-code/">Using Artificial Intelligence to solve the 2048 Game (JAVA code)</a></p> 
+             <div class="meta"> 
+              <p>April 7, 2014</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/how-to-build-your-own-facebook-sentiment-analysis-tool/"><img src="http://blog.datumbox.com/wp-content/uploads/2014/01/facebook-sentiment-analysis-150x150.png" alt="How to build your own Facebook Sentiment Analysis Tool" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="How to build your own Facebook Sentiment Analysis Tool" href="http://blog.datumbox.com/how-to-build-your-own-facebook-sentiment-analysis-tool/">How to build your own Facebook Sentiment Analysis Tool</a></p> 
+             <div class="meta"> 
+              <p>February 3, 2014</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+          </ul> 
+         </div> 
+         <!--end #popular-posts--> 
+         <div id="recent-posts"> 
+          <ul> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-v0-8-1-released/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/08/machine-learning-datumbox-150x150.jpg" alt="Datumbox Machine Learning Framework v0.8.1 released" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Datumbox Machine Learning Framework v0.8.1 released" href="http://blog.datumbox.com/datumbox-machine-learning-framework-v0-8-1-released/">Datumbox Machine Learning Framework v0.8.1 released</a></p> 
+             <div class="meta"> 
+              <p>August 31, 2017</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/drilling-into-sparks-als-recommendation-algorithm/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/02/recommender-system-150x150.png" alt="Drilling into Spark’s ALS Recommendation algorithm" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Drilling into Spark’s ALS Recommendation algorithm" href="http://blog.datumbox.com/drilling-into-sparks-als-recommendation-algorithm/">Drilling into Spark’s ALS Recommendation algorithm</a></p> 
+             <div class="meta"> 
+              <p>February 25, 2017</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/getting-the-gpu-usage-of-nvidia-cards-with-the-linux-dstat-tool/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/02/GeForce_GTX_275_3qtr_large-150x150.jpg" alt="Getting the GPU usage of NVIDIA cards with the Linux dstat tool" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Getting the GPU usage of NVIDIA cards with the Linux dstat tool" href="http://blog.datumbox.com/getting-the-gpu-usage-of-nvidia-cards-with-the-linux-dstat-tool/">Getting the GPU usage of NVIDIA cards with the Linux dstat tool</a></p> 
+             <div class="meta"> 
+              <p>February 11, 2017</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-version-0-8-0-released/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/01/machine-learning-framework-150x150.png" alt="Datumbox Machine Learning Framework version 0.8.0 released" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Datumbox Machine Learning Framework version 0.8.0 released" href="http://blog.datumbox.com/datumbox-machine-learning-framework-version-0-8-0-released/">Datumbox Machine Learning Framework version 0.8.0 released</a></p> 
+             <div class="meta"> 
+              <p>January 15, 2017</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+           <li> 
+            <div class="left"> 
+             <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-0-7-0-released/"><img src="http://blog.datumbox.com/wp-content/uploads/2016/03/datumbox-framewor-speed-150x150.jpg" alt="Datumbox Machine Learning Framework 0.7.0 Released" width="65" height="50" class="wp-post-image"></a> 
+             <div class="clear"></div> 
+            </div> 
+            <div class="info"> 
+             <p class="entry-title"><a title="Datumbox Machine Learning Framework 0.7.0 Released" href="http://blog.datumbox.com/datumbox-machine-learning-framework-0-7-0-released/">Datumbox Machine Learning Framework 0.7.0 Released</a></p> 
+             <div class="meta"> 
+              <p>March 19, 2016</p> 
+             </div> 
+             <!--end .entry-meta--> 
+            </div> 
+            <!--end .info--> 
+            <div class="clear"></div> </li> 
+          </ul> 
+         </div> 
+         <!--end #recent-posts--> 
+         <div class="clear"></div> 
+        </div> 
+        <!--end .inside --> 
+        <div class="clear"></div> 
+       </div>
+       <!--end #tabber --> 
+       <li class="widget widget-sidebar"> <h3>Recent Posts</h3> 
+        <ul> 
+         <li> <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-v0-8-1-released/">Datumbox Machine Learning Framework v0.8.1 released</a> </li> 
+         <li> <a href="http://blog.datumbox.com/drilling-into-sparks-als-recommendation-algorithm/">Drilling into Spark’s ALS Recommendation algorithm</a> </li> 
+         <li> <a href="http://blog.datumbox.com/getting-the-gpu-usage-of-nvidia-cards-with-the-linux-dstat-tool/">Getting the GPU usage of NVIDIA cards with the Linux dstat tool</a> </li> 
+         <li> <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-version-0-8-0-released/">Datumbox Machine Learning Framework version 0.8.0 released</a> </li> 
+         <li> <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-0-7-0-released/">Datumbox Machine Learning Framework 0.7.0 Released</a> </li> 
+        </ul> </li> 
+       <li class="widget widget-sidebar"><h3>Archives</h3> 
+        <ul> 
+         <li><a href="http://blog.datumbox.com/2017/08/">August 2017</a></li> 
+         <li><a href="http://blog.datumbox.com/2017/02/">February 2017</a></li> 
+         <li><a href="http://blog.datumbox.com/2017/01/">January 2017</a></li> 
+         <li><a href="http://blog.datumbox.com/2016/03/">March 2016</a></li> 
+         <li><a href="http://blog.datumbox.com/2016/01/">January 2016</a></li> 
+         <li><a href="http://blog.datumbox.com/2015/05/">May 2015</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/11/">November 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/10/">October 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/07/">July 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/06/">June 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/05/">May 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/04/">April 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/03/">March 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/02/">February 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2014/01/">January 2014</a></li> 
+         <li><a href="http://blog.datumbox.com/2013/12/">December 2013</a></li> 
+         <li><a href="http://blog.datumbox.com/2013/11/">November 2013</a></li> 
+         <li><a href="http://blog.datumbox.com/2013/10/">October 2013</a></li> 
+         <li><a href="http://blog.datumbox.com/2013/09/">September 2013</a></li> 
+         <li><a href="http://blog.datumbox.com/2013/07/">July 2013</a></li> 
+        </ul> </li> 
+       <li class="widget widget-sidebar"> 
+        <!-- Blog Tags --> <h3>Categories</h3> 
+        <ul class="unstyled inline blog-tags"> 
+         <li><a href="/topics/machine-learning-statistics"><i class="icon-tags"></i> Machine Learning &amp; Statistics</a></li> 
+         <li><a href="/topics/programming"><i class="icon-tags"></i> Programming</a></li> 
+         <li><a href="/topics/framework"><i class="icon-tags"></i> Framework</a></li> 
+         <li><a href="/topics/online-marketing"><i class="icon-tags"></i> Online Marketing</a></li> 
+         <li><a href="/topics/misc"><i class="icon-tags"></i> Misc</a></li> 
+        </ul> </li> 
+      </div> 
+     </aside> 
+    </div>
+    <!--/span4--> 
+   </div>
+   <!--/row-fluid--> 
+  </div>
+  <!--/container--> 
+  <!--=== End Content Part ===--> 
+  <div class="footer"> 
+   <div class="container"> 
+    <div class="row-fluid"> 
+     <div class="span4"> 
+      <div class="headline"> 
+       <h3>About</h3> 
+      </div> 
+      <p class="margin-bottom-25"> Datumbox offers an open-source Machine Learning Framework and an easy to use and powerful API. </p> 
+      <div class="headline"> 
+       <h3>Subscribe To Newsletter</h3> 
+      </div> 
+      <p>Subscribe to our newsletter and get our latest news!</p> 
+      <form action="http://www.datumbox.com/newsletters/subscribe/" class="form-inline" id="MailchimpSubscriberDisplayForm" method="post" accept-charset="utf-8"> 
+       <div style="display:none;">
+        <input type="hidden" name="_method" value="POST">
+       </div> 
+       <div class="input-append"> 
+        <input name="data[MailchimpSubscriber][email]" placeholder="Email Address" required class="input-medium" type="email" id="MailchimpSubscriberEmail"> 
+        <input class="btn-u" type="submit" value="Subscribe"> 
+       </div> 
+      </form> 
+     </div> 
+     <!--/span4--> 
+     <div class="span4"> 
+      <div class="posts"> 
+       <div class="headline"> 
+        <h3>Recent Blog Posts</h3> 
+       </div> 
+       <dl class="dl-horizontal"> 
+        <dt>
+         <a href="http://blog.datumbox.com/datumbox-machine-learning-framework-v0-8-1-released/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/08/machine-learning-datumbox-150x150.jpg" alt="Datumbox Machine Learning Framework v0.8.1 released"></a>
+        </dt> 
+        <dd> 
+         <p><a href="http://blog.datumbox.com/datumbox-machine-learning-framework-v0-8-1-released/">Datumbox Machine Learning Framework v0.8.1 released</a></p> 
+        </dd> 
+       </dl> 
+       <dl class="dl-horizontal"> 
+        <dt>
+         <a href="http://blog.datumbox.com/drilling-into-sparks-als-recommendation-algorithm/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/02/recommender-system-150x150.png" alt="Drilling into Spark’s ALS Recommendation algorithm"></a>
+        </dt> 
+        <dd> 
+         <p><a href="http://blog.datumbox.com/drilling-into-sparks-als-recommendation-algorithm/">Drilling into Spark’s ALS Recommendation algorithm</a></p> 
+        </dd> 
+       </dl> 
+       <dl class="dl-horizontal"> 
+        <dt>
+         <a href="http://blog.datumbox.com/getting-the-gpu-usage-of-nvidia-cards-with-the-linux-dstat-tool/"><img src="http://blog.datumbox.com/wp-content/uploads/2017/02/GeForce_GTX_275_3qtr_large-150x150.jpg" alt="Getting the GPU usage of NVIDIA cards with the Linux dstat tool"></a>
+        </dt> 
+        <dd> 
+         <p><a href="http://blog.datumbox.com/getting-the-gpu-usage-of-nvidia-cards-with-the-linux-dstat-tool/">Getting the GPU usage of NVIDIA cards with the Linux dstat tool</a></p> 
+        </dd> 
+       </dl> 
+      </div> 
+     </div> 
+     <!--/span4--> 
+     <div class="span4"> 
+      <!-- Monthly Newsletter --> 
+      <div class="headline"> 
+       <h3>Contact Us</h3> 
+      </div> 
+      <address> Email: <span class="email">info [at] datumbox.com</span> <br> </address> 
+      <!-- Stay Connected --> 
+      <div class="headline"> 
+       <h3>Social Media</h3> 
+      </div> 
+      <ul class="social-icons"> 
+       <li> <a href="http://feeds.feedburner.com/Datumbox/" class="social_rss" data-original-title="Feed" target="_blank"></a> </li> 
+       <li> <a href="https://www.facebook.com/Datumbox/" class="social_facebook" data-original-title="Facebook" target="_blank"></a> </li> 
+       <li> <a href="https://twitter.com/datumbox/" class="social_twitter" data-original-title="Twitter" target="_blank"></a> </li>
+       <li> <a href="https://plus.google.com/105921437813621882157/" class="social_googleplus" data-original-title="Google Plus" target="_blank"></a> </li> 
+       <li> <a href="http://www.linkedin.com/in/bbriniotis/" class="social_linkedin" data-original-title="LinkedIn" target="_blank"></a> </li> 
+      </ul> 
+     </div> 
+     <!--/span4--> 
+    </div> 
+    <!--/row-fluid--> 
+   </div> 
+   <!--/container--> 
+  </div> 
+  <div class="copyright"> 
+   <div class="container"> 
+    <div class="row-fluid"> 
+     <div class="span8"> 
+      <p>2013-2017 © Datumbox. All Rights Reserved. <a href="http://www.datumbox.com/privacy-policy/">Privacy Policy</a> | <a href="http://www.datumbox.com/terms-of-use/">Terms of Use</a> </p> 
+     </div> 
+     <div class="span4"> 
+     </div> 
+    </div> 
+    <!--/row-fluid--> 
+   </div> 
+   <!--/container--> 
+  </div> 
+  <script type="text/javascript" src="http://www.datumbox.com/js/jquery-1.8.2.min.js"></script> 
+  <script type="text/javascript" src="http://www.datumbox.com/js/modernizr.custom.js"></script> 
+  <script type="text/javascript" src="http://www.datumbox.com/js/bootstrap.min.js"></script> 
+  <script type="text/javascript" src="http://www.datumbox.com/js/jquery.flexslider-min.js"></script> 
+  <script type="text/javascript" src="http://www.datumbox.com/js/app.js"></script> 
+  <script type="text/javascript">
+   // <![CDATA[
+       jQuery(document).ready(function() {
+             App.init();
+       });
+
+   // ]]>
+</script> 
+  <!--[if lt IE 9]>
+<script type="text/javascript" src="http://www.datumbox.com/js/respond.js"></script>    <![endif]--> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shCore.js?ver=3.0.9b"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushPhp.js?ver=3.0.9b"></script> 
+  <script type="text/javascript">
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "http://blog.datumbox.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "http://blog.datumbox.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeEclipse.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '?';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script> 
+  <link rel="stylesheet" id="thickbox-css" href="http://blog.datumbox.com/wp-includes/js/thickbox/thickbox.css?ver=4.8.2" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wpdk-jquery-ui-css" href="http://blog.datumbox.com/wp-content/plugins/wp-cleanfix/wpdk/assets/css/jquery-ui/jquery-ui.custom.css?ver=1.1.0" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wpdk-style-css" href="http://blog.datumbox.com/wp-content/plugins/wp-cleanfix/wpdk/assets/css/wpdk.css?ver=1.1.0" type="text/css" media="all"> 
+  <link rel="stylesheet" id="social-count-plus-css" href="http://blog.datumbox.com/wp-content/plugins/social-count-plus/assets/css/counter.css?ver=3.3.6" type="text/css" media="all"> 
+  <link rel="stylesheet" id="fboif_sidebar_style-css" href="http://blog.datumbox.com/wp-content/plugins/feedburner-optin-form/css/fboif-sidebar.css?ver=0.2.8_8202014113455" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/comment-reply.min.js?ver=4.8.2"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var wpcf7 = {"apiSettings":{"root":"http:\/\/blog.datumbox.com\/wp-json\/contact-form-7\/v1","namespace":"contact-form-7\/v1"},"recaptcha":{"messages":{"empty":"Please verify that you are not a robot."}}};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/contact-form-7/includes/js/scripts.js?ver=4.9"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/wp-embed.min.js?ver=4.8.2"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/core.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/widget.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/tabs.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/mouse.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/resizable.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/draggable.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/button.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/position.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/dialog.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/datepicker.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/menu.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/wp-a11y.min.js?ver=4.8.2"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var uiAutocompleteL10n = {"noResults":"No results found.","oneResult":"1 result found. Use up and down arrow keys to navigate.","manyResults":"%d results found. Use up and down arrow keys to navigate.","itemSelected":"Item selected."};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/autocomplete.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/slider.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/sortable.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/jquery/ui/droppable.min.js?ver=1.11.4"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var thickboxL10n = {"next":"Next >","prev":"< Prev","image":"Image","of":"of","close":"Close","noiframes":"This feature requires inline frames. You have iframes disabled or your browser does not support them.","loadingAnimation":"http:\/\/blog.datumbox.com\/wp-includes\/js\/thickbox\/loadingAnimation.gif"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-includes/js/thickbox/thickbox.js?ver=3.1-20121105"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/wp-cleanfix/wpdk/assets/js/timepicker/jquery.timepicker.js?ver=1.1.0"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/wp-cleanfix/wpdk/assets/js/validate/jquery.validate.js?ver=1.1.0"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var wpdk_i18n = {"ajaxURL":"http:\/\/blog.datumbox.com\/wp-admin\/admin-ajax.php","messageUnLockField":"Please confirm before unlock this form field.\nDo you want unlock this form field?","timeOnlyTitle":"Choose Time","timeText":"Time","hourText":"Hour","minuteText":"Minute","secondText":"Seconds","currentText":"Now","dayNamesMin":"Su,Mo,Tu,We,Th,Fr,Sa","monthNames":"January,February,March,April,May,June,July,August,September,October,November,December","monthNamesShort":"Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec","closeText":"Close","dateFormat":"mm\/dd\/yy","timeFormat":"HH:mm"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/wp-cleanfix/wpdk/assets/js/wpdk.js?ver=1.1.0"></script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/akismet/_inc/form.js?ver=3.3.4"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var hctpc_vars = {"nonce":"ba1b5598ca","ajaxurl":"http:\/\/blog.datumbox.com\/wp-admin\/admin-ajax.php","enlarge":"0"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://blog.datumbox.com/wp-content/plugins/captcha/js/front_end_script.js?ver=4.8.2"></script>  
+ </body>
+</html>

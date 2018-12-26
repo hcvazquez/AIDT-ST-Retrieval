@@ -1,0 +1,486 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Node.js authentication series: Passport local strategy using email and password.</title> 
+  <meta name="description" content=""> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="shortcut icon" href="/favicon.ico"> 
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Merriweather:300,700,700italic,300italic|Open+Sans:700,400"> 
+  <link rel="stylesheet" type="text/css" href="/assets/css/screen.css?v=5fde78e6d7"> 
+  <link rel="canonical" href="http://blog.robertonodi.me/node-authentication-series-email-and-password/"> 
+  <meta name="referrer" content="no-referrer-when-downgrade"> 
+  <link rel="amphtml" href="http://blog.robertonodi.me/node-authentication-series-email-and-password/amp/"> 
+  <meta property="og:site_name" content="robert onodi"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Node.js authentication series: Passport local strategy using email and password."> 
+  <meta property="og:description" content="Before getting started, we can rule out that there are many authentication strategies that we can implement in our application. This depends on the use-case, we can have local authentication strategies, that use in most of the time the e-mail and password of the user. In other cases we can"> 
+  <meta property="og:url" content="http://blog.robertonodi.me/node-authentication-series-email-and-password/"> 
+  <meta property="article:published_time" content="2015-10-21T15:31:24.000Z"> 
+  <meta property="article:modified_time" content="2015-10-21T22:43:48.000Z"> 
+  <meta property="article:tag" content="nodejs"> 
+  <meta property="article:tag" content="mongodb"> 
+  <meta property="article:tag" content="security"> 
+  <meta property="article:tag" content="authenticaiton"> 
+  <meta property="article:tag" content="passport"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:title" content="Node.js authentication series: Passport local strategy using email and password."> 
+  <meta name="twitter:description" content="Before getting started, we can rule out that there are many authentication strategies that we can implement in our application. This depends on the use-case, we can have local authentication strategies, that use in most of the time the e-mail and password of the user. In other cases we can"> 
+  <meta name="twitter:url" content="http://blog.robertonodi.me/node-authentication-series-email-and-password/"> 
+  <meta name="twitter:label1" content="Written by"> 
+  <meta name="twitter:data1" content="Robert Onodi"> 
+  <meta name="twitter:label2" content="Filed under"> 
+  <meta name="twitter:data2" content="nodejs, mongodb, security, authenticaiton, passport"> 
+  <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "robert onodi",
+        "logo": "http://blog.robertonodi.me/ghost/img/ghosticon.jpg"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Robert Onodi",
+        "image": {
+            "@type": "ImageObject",
+            "url": "//www.gravatar.com/avatar/0c8a9980c750f8d79971f03f53025bce?s=250&d=mm&r=x",
+            "width": 250,
+            "height": 250
+        },
+        "url": "http://blog.robertonodi.me/author/robert/",
+        "sameAs": []
+    },
+    "headline": "Node.js authentication series: Passport local strategy using email and password.",
+    "url": "http://blog.robertonodi.me/node-authentication-series-email-and-password/",
+    "datePublished": "2015-10-21T15:31:24.000Z",
+    "dateModified": "2015-10-21T22:43:48.000Z",
+    "keywords": "nodejs, mongodb, security, authenticaiton, passport",
+    "description": "Before getting started, we can rule out that there are many authentication strategies that we can implement in our application. This depends on the use-case, we can have local authentication strategies, that use in most of the time the e-mail and password of the user. In other cases we can",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "http://blog.robertonodi.me"
+    }
+}
+    </script> 
+  <meta name="generator" content="Ghost 0.11"> 
+  <link rel="alternate" type="application/rss+xml" title="robert onodi" href="http://blog.robertonodi.me/rss/"> 
+  <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-48184323-1', 'robertonodi.me');
+      ga('send', 'pageview');
+
+    </script> 
+ </head> 
+ <body class="post-template tag-nodejs tag-mongodb tag-security tag-authenticaiton tag-passport nav-closed"> 
+  <div class="nav"> 
+   <h3 class="nav-title">Menu</h3> 
+   <a href="#" class="nav-close"> <span class="hidden">Close</span> </a> 
+   <ul> 
+    <li class="nav-home"><a href="http://blog.robertonodi.me/">Home</a></li> 
+   </ul> 
+   <a class="subscribe-button icon-feed" href="http://blog.robertonodi.me/rss/">Subscribe</a> 
+  </div> 
+  <span class="nav-cover"></span> 
+  <div class="site-wrapper"> 
+   <header class="main-header post-head no-cover"> 
+    <nav class="main-nav  clearfix"> 
+     <a class="menu-button icon-menu" href="#"><span class="word">Menu</span></a> 
+    </nav> 
+   </header> 
+   <main class="content" role="main"> 
+    <article class="post tag-nodejs tag-mongodb tag-security tag-authenticaiton tag-passport"> 
+     <header class="post-header"> 
+      <h1 class="post-title">Node.js authentication series: Passport local strategy using email and password.</h1> 
+      <section class="post-meta"> 
+       <time class="post-date" datetime="2015-10-21">21 October 2015</time> on 
+       <a href="/tag/nodejs/">nodejs</a>, 
+       <a href="/tag/mongodb/">mongodb</a>, 
+       <a href="/tag/security/">security</a>, 
+       <a href="/tag/authenticaiton/">authenticaiton</a>, 
+       <a href="/tag/passport/">passport</a> 
+      </section> 
+     </header> 
+     <section class="post-content"> 
+      <p>Before getting started, we can rule out that there are many authentication strategies that we can implement in our application. This depends on the use-case, we can have local authentication strategies, that use in most of the time the e-mail and password of the user. In other cases we can use third party providers to authenticate our users, like login with Facebook buttons.</p> 
+      <p><strong>The full app is available on <a href="https://github.com/robert52/express-starter">GitHub</a> the article will go through only important parts.</strong></p> 
+      <p>I don't want to get into details for each method, we will discuss them at in the appropriate article. I would like to focus on the e-mail and password authentication. This is the most simple, yet in many cases wrongly implemented. Don't get me wrong probably this implementation will become obsolete someday, due to frequent changes and loop holes in security.</p> 
+      <p>Many people don't take security seriously enough when building their application from scratch. Many companies have invested millions in proper security systems for their platforms. So this should raise an alarm when we talk about the security of our application.</p> 
+      <h2 id="shortlistofbestpractices">Short list of best practices</h2> 
+      <p>This is my list of best practices when dealing with e-mail and password authentication (suggestions are much appreciated):</p> 
+      <ul> 
+       <li>Do not store passwords in plain text in DB.</li> 
+       <li>Generate password hash using a key stretching/derivation function.</li> 
+       <li>Generate a random salt for each user.</li> 
+       <li>Do not return password and salt in results from DB query.</li> 
+       <li>Return password and salt only if explicitly requested.</li> 
+       <li>Do not persist user sensitive data in sessions, like password and salt.</li> 
+       <li>Try to be "slow" when computing hashes. </li> 
+       <li>Throttle multiple requests for login request.</li> 
+       <li>Throttle bad login attempts.</li> 
+       <li>Consider using something like <a href="https://www.npmjs.com/package/helmet">helmet</a>.</li> 
+      </ul> 
+      <h2 id="abouttheauthenticationstrategy">About the authentication strategy</h2> 
+      <p>Probably you all have seen a simple login form with e-mail and password fields. Almost every website or application has a similar login mechanism. The magic behind this is very simple, a user inserts the e-mail and password used on registration, which is matched against the persisted values in the database.</p> 
+      <p>Obviously the implementation is a bit more complex. First, we don't store the user's password in the database, instead we store a one way derived key (or hash) of the password in a stretched form. One way means that we cannot revert the process and get the initial password from the hash. Stretched means, that regardless of the user's password length we are always going to have a string of, let's say 40 characters.</p> 
+      <p>Secondly, we want to have something unique for each user, to combine it with the user's password, so that we don't obtain the same hash for the same password for two users, we will call this the <em>salt</em>. Like we and salt and pepper in food, to get different flavors.</p> 
+      <h2 id="applicationstructure">Application structure</h2> 
+      <pre><code class="language-text">    app
+    -- controllers
+    ---- authenticaiton.js
+    ---- account.js
+    -- models
+    ---- user.js
+    -- helpers
+    ---- password.js
+    -- middlewares
+    ---- authentication.js
+    -- routes
+    ---- authentication.js
+    ---- account.js
+    ---- main.js
+    -- views
+    ---- home.html
+    ---- signin.html
+    ---- signup.html
+    ---- account.html
+    config
+    -- environments
+    -- strategies
+    ---- local.js
+    -- index.js
+    -- express.js
+    -- passport.js
+    -- mongoose.js
+    -- routes.js
+    -- models.js
+    public
+    tests
+    -- unit
+    -- integration
+    package.json
+    server.js
+</code></pre> 
+      <p>This is a conceptual application structure, I've used my <a href="https://github.com/robert52/express-starter">express starter</a> app. We'll only focus on some parts of the application and the rest of the application will be available on <a href="https://github.com/robert52/express-starter">GitHub</a>.</p> 
+      <h2 id="hashingthepassword">Hashing the password</h2> 
+      <p>We discussed that we cannot store the user's password in plain text in the database, because of security reasons. Beside that, we have to combine the password with a salt.</p> 
+      <p>In order to hash the password we can use Node's built in <code>crypto</code> module. An alternative would be to use <a href="https://github.com/ncb000gt/node.bcrypt.js">bcrypt</a> for node.js, but I will let you figure out what suits your needs.</p> 
+      <p>Generally people think that password hashing should be fast. But, its the other way around, when hashing password, I want it to be slow as possible, not slow as a lazy cat, but slow enough to be expensive to compute.</p> 
+      <p>Why expensive to compute? Well because MD5 is super fast, too fast, you can generate all the possible passwords of 6 characters long in tens of seconds. You could use MD5 like this, M5(password + salt), but will not help you. With the proper hardware you could crack and try as many possibilities as you want.</p> 
+      <h3 id="solution">Solution?</h3> 
+      <p>Password stretching, and password stretching. Let's say that to generate our hash, it takes 200ms. To generate 10 passwords using the same algorithm would take 2000ms, which is 2 seconds, obviously we can use parallel computing to reduce the time needed, but this is not the case. Hence the computing necessity increases, and becomes time consuming.</p> 
+      <p>Be advised that this can be a double edged blade, which means it can have side effects, if it takes too long to generate the hash. Try what best suits your needs, there is no one solution for all.</p> 
+      <h2 id="implementingthepasswordhelper">Implementing the password helper</h2> 
+      <p>We are going to use <code>crypto.pbkdf2()</code> method, which is a key derivation function. It uses an HMAC digest function, like SHA1, to create a derived key from the password using a salt in a number of iterations. </p> 
+      <p>One important part is the number of iterations. The method uses iterations to create the derived key, which will make it expensive as computing time. If in time the hardware to compute hashes improves we can increase the number of iterations to generate the hash.</p> 
+      <p>We are going to create a file called <code>app/helpers/password.js</code> and add the following content:</p> 
+      <pre><code class="language-javascript">'use strict';
+
+var LEN = 256;  
+var SALT_LEN = 64;  
+var ITERATIONS = 10000;  
+var DIGEST = 'sha256';
+
+var crypto = require('crypto');
+
+module.exports.hash = hashPassword;
+
+function hashPassword(password, salt, callback) {  
+  var len = LEN / 2;
+
+  if (3 === arguments.length) {
+    crypto.pbkdf2(password, salt, ITERATIONS, len, DIGEST, function(err, derivedKey) {
+      if (err) {
+        return callback(err);
+      }
+
+      return callback(null, derivedKey.toString('hex'));
+    });
+  } else {
+    callback = salt;
+    crypto.randomBytes(SALT_LEN / 2, function(err, salt) {
+      if (err) {
+        return callback(err);
+      }
+
+      salt = salt.toString('hex');
+      crypto.pbkdf2(password, salt, ITERATIONS, len, DIGEST, function(err, derivedKey) {
+        if (err) {
+          return callback(err);
+        }
+
+        callback(null, derivedKey.toString('hex'), salt);
+      });
+    });
+  }
+}
+</code></pre> 
+      <p>The <code>hashPassword()</code> function takes three argmunts: a password, an optional salt and a node.js style callback function. The salt is optional, because we can use this function in two scenarios. </p> 
+      <p>First scenario is, when we want to hash the user's password for the first time, the salt does not exists in this case, and we will generate a random salt using <code>crypto.randomBytes()</code> method to generate a cryptographically strong, pseudo-random string.</p> 
+      <p>The second scenarios will occur, when we already have a user in the database, and a salt exists for that user. In this scenario we are going to use the same salt to generate a hash for the input, to get the same hash as output.</p> 
+      <h2 id="passportlocalauthenticationstrategy">Passport local authentication strategy</h2> 
+      <p>We are going to use Passport.js to authenticate users. Passport has many strategies already implemented. First we are going to configure passport for our needs, create a file called <code>config/passport.js</code>, and add the following content:</p> 
+      <pre><code class="language-javascript">'use strict';
+
+var passport = require('passport');  
+var mongoose = require('mongoose');  
+var User = mongoose.model('User');
+
+module.exports.init = function(app) {  
+  passport.serializeUser(function(user, done) {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(function(id, done) {
+    User.findById(id, done);
+  });
+
+  // load strategies
+  require('./strategies/local')();
+};
+</code></pre> 
+      <p>Secondly, we are going to implement the local strategy, by creating the following file, <code>config/strategies/local.js</code>:</p> 
+      <pre><code class="language-javascript">'use strict';
+
+var passport = require('passport');  
+var LocalStrategy = require('passport-local').Strategy;  
+var mongoose = require('mongoose');  
+var User = mongoose.model('User');
+
+module.exports = function() {  
+  passport.use('local', new LocalStrategy({
+      usernameField: 'email',
+      passwordField: 'password'
+    },
+    function(email, password, done) {
+      User.authenticate(email, password, function(err, user) {
+        if (err) {
+          return done(err);
+        }
+
+        if (!user) {
+          return done(null, false, { message: 'Invalid email or password.' });
+        }
+
+        return done(null, user);
+      });
+    }
+  ));
+};
+</code></pre> 
+      <p>As you can see we are using a custom <code>.authenticate()</code> method from our mongoose <code>User</code> model. Do not worry, we will implement this method shortly. Passport let's us define a middleware to mount a strategy, we are going to call it 'local'. We created a new instance of Passport's local strategy and added our own callback when the strategy is called.</p> 
+      <h2 id="mongooseusermodel">Mongoose User model</h2> 
+      <p>We are using MongoDB to persist data, to ease things we are going to use <a href="mongoosejs.com">mongoose</a> to define collections and communicate with Mongo. Create a file called <code>app/models/user.js</code>, and add the following lines of code:</p> 
+      <pre><code class="language-javascript">'use strict';
+
+var mongoose = require('mongoose');  
+var passwordHelper = require('../helpers/password');  
+var Schema = mongoose.Schema;  
+var _ = require('lodash');
+
+var UserSchema = new Schema({  
+  email:  {
+    type: String,
+    required: true,
+    unique: true
+  },
+  name: {
+    type: String
+  },
+  password: {
+    type: String,
+    required: true,
+    select: false
+  },
+  passwordSalt: {
+    type: String,
+    required: true,
+    select: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// compile User model
+module.exports = mongoose.model('User', UserSchema);
+</code></pre> 
+      <p>The schema is fairly simple, so no explanation is required. One thing to note is that we added <code>{ select: false }</code> property to the <code>password</code> and <code>passwordSalt</code> fields. This will prevent them from showing in query results. </p> 
+      <p>Next we are going to add the authentication method, by appending it to the model file after the <code>UserSchema</code>:</p> 
+      <pre><code class="language-javascript">UserSchema.statics.authenticate = function(email, password, callback) {  
+  this.findOne({ email: email }).select('+password +passwordSalt').exec(function(err, user) {
+    if (err) {
+      return callback(err, null);
+    }
+
+    // no user found just return the empty user
+    if (!user) {
+      return callback(err, user);
+    }
+
+    // verify the password with the existing hash from the user
+    passwordHelper.verify(password, user.password, user.passwordSalt, function(err, result) {
+      if (err) {
+        return callback(err, null);
+      }
+
+      // if password does not match don't return user
+      if (result === false) {
+        return callback(err, null);
+      }
+
+      // remove password and salt from the result
+      user.password = undefined;
+      user.passwordSalt = undefined;
+      // return user if everything is ok
+      callback(err, user);
+    });
+  });
+};
+</code></pre> 
+      <p>Before in the user schema we set the <code>password</code> and <code>passwordSalt</code> field to be hidden from the query output. But this time we explicitly request them, so that we can construct the hash using the persisted salt. Afterwards we check if the persisted password hash matched the one generated on the fly.</p> 
+      <h3 id="authenticationcontroller">Authentication controller</h3> 
+      <p>We are going to create a controller file called, <code>app/controllers/authentication.js</code>, which is going to consume the local strategy from passport. Add the following lines of code:</p> 
+      <pre><code class="language-javascript">'use strict';
+
+var passport = require('passport');
+
+module.exports.signin = signinUser;
+
+function signinUser(req, res, next) {  
+  // add validation before calling the authenicate() method
+
+  passport.authenticate('local', function(err, user, info) {
+    if (err || !user) {
+      return res.status(400).send(info);
+    }
+
+    req.logIn(user, function(err) {
+      if (err) {
+        return next(err);
+      }
+
+      // you can send a json response instead of redirecting the user
+      //res.status(200).json(user);
+
+      res.redirect('/');
+    });
+  })(req, res, next);
+};
+</code></pre> 
+      <p>The controller exports a <code>.signin()</code> method that calls the local strategy, and redirects the user to the root path of the application, in case of a successful sign in. We could add validation before executing the local strategy, but we are going to keep it simple as possible for now.</p> 
+      <h3 id="definingtheauthenticationroute">Defining the authentication route</h3> 
+      <p>In order for everything to work we need to expose an endpoint, create a file called <code>app/routes/authentication.js</code>:</p> 
+      <pre><code class="language-javascript">'use strict';
+
+var express = require('express');  
+var router = express.Router();  
+var authCtrl = require('../controllers/authentication');
+
+router.post('/signin', authCtrl.signin);
+
+module.exports = router;
+</code></pre> 
+      <p>I'm using the <code>Router</code> class from Express to create a new route instance and later on mount it to the main express application. This way you can easily reuse defined routes and add prefixes as desired.</p> 
+      <p>A simple way to mount the preceding route in your Express app, is with the following code:</p> 
+      <pre><code class="language-javascript">app.use('/', require('./app/routes/authentication'));
+</code></pre> 
+      <h2 id="considerationsforsessionstorage">Considerations for session storage</h2> 
+      <p>Passport requires to be initialized and also call the <code>passport.session()</code> method to persist sessions. This method requires the express session to be present. For the express session I use mainly two configurations, one for development and one for production.</p> 
+      <p>The reason why I use two is because by default session information is stored in memory, you don't want this for a production environment, because of memory leaks. Another reason for this could be shared sessions states, when you run your node application in cluster mode.</p> 
+      <p>A simple solution would be to use a persistent storage, because we already use MongoDB, we could simply use it for our session store. There is a very nice implementation called <a href="https://github.com/kcbanner/connect-mongo">connect-mongo</a>. An alternative solution would be to use <a href="https://github.com/tj/connect-redis">connect-redis</a> to store sessions in Redis.</p> 
+      <p>Sample of implementaion found in <code>config/express.js</code>:</p> 
+      <pre><code class="language-javascript">  var sessionOpts = {
+    secret: config.session.secret,
+    key: 'skey.sid',
+    resave: false,
+    saveUninitialized: false
+  };
+
+  switch(env) {
+    case 'production':
+      sessionOpts.store = new MongoStore({
+        url: config.mongodb.uri
+      });
+    case 'staging':
+    case 'test':
+    case 'development':
+    default:
+      app.use(session(sessionOpts));
+  }
+
+  /**
+   * Use passport session
+   */
+  app.use(passport.initialize());
+  app.use(passport.session());
+</code></pre> 
+      <p>The full source code can be found on <a href="https://github.com/robert52/express-starter">here</a>.</p> 
+      <p>Thanks for reading.</p> 
+     </section> 
+     <footer class="post-footer"> 
+      <figure class="author-image"> 
+       <a class="img" href="/author/robert/" style="background-image: url(//www.gravatar.com/avatar/0c8a9980c750f8d79971f03f53025bce?s=250&amp;d=mm&amp;r=x)"><span class="hidden">Robert Onodi's Picture</span></a> 
+      </figure> 
+      <section class="author"> 
+       <h4><a href="/author/robert/">Robert Onodi</a></h4> 
+       <p>Read <a href="/author/robert/">more posts</a> by this author.</p> 
+       <div class="author-meta"> 
+       </div> 
+      </section> 
+      <section class="share"> 
+       <h4>Share this post</h4> 
+       <a class="icon-twitter" href="https://twitter.com/intent/tweet?text=Node.js%20authentication%20series%3A%20Passport%20local%20strategy%20using%20email%20and%20password.&amp;url=http://blog.robertonodi.me/node-authentication-series-email-and-password/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"> <span class="hidden">Twitter</span> </a> 
+       <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.robertonodi.me/node-authentication-series-email-and-password/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;"> <span class="hidden">Facebook</span> </a> 
+       <a class="icon-google-plus" href="https://plus.google.com/share?url=http://blog.robertonodi.me/node-authentication-series-email-and-password/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;"> <span class="hidden">Google+</span> </a> 
+      </section> 
+     </footer> 
+     <div id="disqus_thread"></div> 
+     <script type="text/javascript">
+            var disqus_shortname = 'robertonodi';
+            var disqus_identifier = '';
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+     </noscript> 
+     <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+    </article> 
+   </main> 
+   <aside class="read-next"> 
+    <a class="read-next-story prev no-cover" href="/managing-files-with-node-js-and-mongodb-gridfs/"> 
+     <section class="post"> 
+      <h2>Managing files with Node.js and MongoDB GridFS</h2> 
+      <p>I've been working for a while with a pretty small team on a large(ish) project ( and of course…</p> 
+     </section> </a> 
+   </aside> 
+   <footer class="site-footer clearfix"> 
+    <section class="copyright">
+     <a href="http://blog.robertonodi.me">robert onodi</a> © 2017
+    </section> 
+    <section class="poweredby">
+     Proudly published with 
+     <a href="https://ghost.org">Ghost</a>
+    </section> 
+   </footer> 
+  </div> 
+  <script type="text/javascript" src="//code.jquery.com/jquery-1.12.0.min.js"></script> 
+  <script type="text/javascript" src="/assets/js/jquery.fitvids.js?v=5fde78e6d7"></script> 
+  <script type="text/javascript" src="/assets/js/index.js?v=5fde78e6d7"></script>   
+ </body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html SYSTEM "about:legacy-compat">
+<html xmlns:dita2html="http://dita-ot.sourceforge.net/ns/200801/dita2html" lang="en-US">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title>Example: Sentiment Analysis Using MapReduce Custom Counters</title> 
+  <link rel="stylesheet" type="text/css" media="screen, projection" href="/content/dam/docs/css/A.screen.css.pagespeed.cf.-tE4z79Rws.css"> 
+  <link rel="stylesheet" media="print" type="text/css" href="https://www.cloudera.com/documentation/other/tutorial/CDH5/themes/html5-cloudera/css/A.print.css.pagespeed.cf.YivB3GD8qn.css"> 
+  <script type="text/javascript" src="https://www.cloudera.com/documentation/other/tutorial/CDH5/themes/html5-cloudera/js/script.js.pagespeed.jm.DkpwulFJwV.js"></script> 
+  <script type="text/javascript">var d4p={"relativePath":"..\/","dev":false,"debug":false,"draft":false,"nextTopicHref":"topics\/ht_flume_to_hdfs.html","previousTopicHref":"topics\/ht_wordcount3.html","ext":".html","root":false,"topic":{"chunked":""},"map":{"title":"Hadoop Tutorial","version":"1.0.0","chunked":false},"search":{"minlength":2},"l":{"hideNav":"Hide Navigation","showNav":"Show Navigation","previousTopic":"Previous Topic","nextTopic":"Next Topic","twitter":"Twitter","facebook":"Facebook","mail":"Mail","print":"Print"}}</script> 
+  <script type="text/javascript">(function($){$(function(){if($('body').css('background-color')!=="rgb(41, 167, 222)"){$('head').append('<link rel="stylesheet" media="screen, projection" type="text/css" href="../themes/html5-cloudera/css/screen.css">');}});})(window.jQuery);</script> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="format-detection" content="telephone=no"> 
+  <meta name="theme-color" content="#ffffff"> 
+  <link rel="shortcut icon" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/favicon.ico" type="image/x-icon"> 
+  <link rel="apple-touch-icon" sizes="57x57" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-57x57.png.pagespeed.ic.7qhPBJC5Sj.png"> 
+  <link rel="apple-touch-icon" sizes="60x60" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-60x60.png.pagespeed.ic.sImIF3tY-R.png"> 
+  <link rel="apple-touch-icon" sizes="72x72" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-72x72.png.pagespeed.ic.0CTaASwISN.png"> 
+  <link rel="apple-touch-icon" sizes="76x76" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-76x76.png.pagespeed.ic.S-76mcAPom.png"> 
+  <link rel="apple-touch-icon" sizes="114x114" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-114x114.png.pagespeed.ic.jXlRtsy-N_.png"> 
+  <link rel="apple-touch-icon" sizes="120x120" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-120x120.png.pagespeed.ic.dHI07F41v8.png"> 
+  <link rel="apple-touch-icon" sizes="144x144" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-144x144.png.pagespeed.ic.3NDSH7pD0r.png"> 
+  <link rel="apple-touch-icon" sizes="152x152" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-152x152.png.pagespeed.ic.NcR1CKMzoV.png"> 
+  <link rel="apple-touch-icon" sizes="180x180" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xapple-touch-icon-180x180.png.pagespeed.ic.lV6N23lMsh.png"> 
+  <link rel="icon" type="image/png" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xfavicon-32x32.png.pagespeed.ic.HEYWa6CcJx.png" sizes="32x32"> 
+  <link rel="icon" type="image/png" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xandroid-chrome-192x192.png.pagespeed.ic.O4thMQeH5v.png" sizes="192x192"> 
+  <link rel="icon" type="image/png" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xfavicon-96x96.png.pagespeed.ic.Cz9fbezTfp.png" sizes="96x96"> 
+  <link rel="icon" type="image/png" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/xfavicon-16x16.png.pagespeed.ic.j8GaKd5x8f.png" sizes="16x16"> 
+  <link rel="manifest" href="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/manifest.json"> 
+  <meta name="msapplication-TileColor" content="#da532c"> 
+  <meta name="msapplication-TileImage" content="http://www.cloudera.com/etc/designs/www/clientlibs/css/assets/icons/favicon/mstile-144x144.png"> 
+  <link rel="schema.DC" href="http://purl.org/dc/terms/"> 
+  <meta name="DC.Type" content="concept"> 
+  <meta name="prodname" content="none"> 
+  <meta name="version" content="1.0.0"> 
+  <meta name="DC.Format" content="XHTML"> 
+  <meta name="DC.Identifier" content="concept_ftr_nm4_fs"> 
+  <meta name="Category" content="Hadoop"> 
+  <meta name="Category" content="MapReduce"> 
+  <meta name="Category" content="Tutorial"> 
+  <meta name="Category" content="Sentiment analysis"> 
+  <meta name="Category" content="Walkthrough"> 
+  <meta name="Category" content="Applications"> 
+  <meta name="facet" content="Content Type|Documentation"> 
+ </head> 
+ <body class="en-us"> 
+  <!--BEGIN_HEADER--> 
+  <header id="site-head"> 
+   <div id="language-bar"></div> 
+   <div id="search-bar" class="search-bar"> 
+    <div class="container"> 
+     <form action="/search.html#results" id="site-search" method="get" novalidate name="site-search">
+      <label for="q" class="visuallyhidden">Search</label> 
+      <input type="search square" name="q" id="q" placeholder="Search">
+      <button type="submit" class=""><i class="glyphicon glyphicon-search"></i></button>
+     </form> 
+    </div> 
+   </div> 
+   <nav id="primary-nav"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-md-12 col-sm-12"> 
+       <div class="pull-left"> 
+        <ul> 
+         <li><a href="http://www.cloudera.com/downloads.html">Downloads</a></li> 
+         <li><a href="http://www.cloudera.com/training.html">Training</a></li> 
+         <li><a href="http://www.cloudera.com/support.html">Support Portal</a></li> 
+         <li><a href="http://www.cloudera.com/partners.html">Partners</a></li> 
+         <li><a href="http://www.cloudera.com/developers.html">Developers</a></li> 
+         <li><a href="https://cloudera-production.okta.com/app/template_saml_2_0/exk1az52keQqZWEnE0x7/sso/saml">Community</a></li> 
+        </ul> 
+       </div> 
+       <div class="pull-right"> 
+        <ul> 
+         <li><a class="search-link" href="#search-bar"><span class="fa fa-search" aria-hidden="true"></span> <span class="util-txt">Search</span></a></li> 
+         <li style="visibility: hidden;"><a class="signinLink" href="http://tiny.cloudera.com/sign-in"><span class="fa fa-user" aria-hidden="true"></span> <span class="util-txt">Sign In</span></a></li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </nav> 
+   <nav id="main-nav"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-xs-6 col-sm-12 col-md-3"> 
+       <div class="cloudera_brand">
+        <a class="logo" href="http://tiny.cloudera.com/docs">Cloudera</a>
+       </div> 
+      </div> 
+      <div class="mobile-navbar"> 
+       <div class="sign_in"> 
+        <ul> 
+         <li style="visibility: hidden;"><a class="signinLink" href="http://tiny.cloudera.com/sign-in"><span class="fa fa-user" aria-hidden="true"></span> <span class="util-txt">Sign In</span></a></li> 
+        </ul> 
+       </div> 
+       <ul class="mobile_menu"> 
+        <li><a class="search-link" href="#search-bar"><span class="fa fa-search" aria-hidden="true"></span> <span class="util-txt">Search</span></a></li> 
+       </ul> 
+      </div> 
+      <div id="side-nav" class="col-xs-6 col-sm-12 col-md-9"> 
+       <ul> 
+        <li><a href="http://www.cloudera.com/why-cloudera.html" data-link="external">Why Cloudera</a></li> 
+        <li><a href="http://www.cloudera.com/products.html" data-link="external">Products</a></li> 
+        <li><a href="http://www.cloudera.com/services-support.html" data-link="external">Services &amp; Support</a></li> 
+        <li><a href="http://www.cloudera.com/solutions.html/" data-link="external">Solutions</a></li> 
+        <li><a href="http://www.cloudera.com/get-started.html" data-link="external">Get Started</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+    </div> 
+   </nav> 
+   <div id="subnav"> 
+    <div id="version_message"> 
+     <div class="container" id="version_message_text"> 
+      <div class="col-xs-1" id="hamburger_container"></div> 
+      <div class="col-xs-11"> 
+       <p class="lines">This is supplemental documentation pertaining to all Cloudera products and releases.</p> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="breadcrumbs"> 
+     <div class="container"> 
+      <div id="breadcrumbs_crumbs" class="col-xs-12 col-md-8">
+       <a href="http://www.cloudera.com/content/support/en/documentation.html">Documentation</a>
+       <!--generate-inline-breadcrumbs-->
+       <span class="arrow"></span>
+       <a class="breadcrumb" href="../topics/Hadoop-Tutorial.html" title="Hadoop Tutorial">Hadoop Tutorial</a>
+      </div> 
+      <div id="breadcrumbs_search" class="col-xs-12 col-md-4 text-left-xs text-right-md"> 
+       <div class="form-holder" id="form-holder"></div> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+  </header> 
+  <!--END_HEADER--> 
+  <div id="main-container"> 
+   <div class="container"> 
+    <div class="row"> 
+     <div id="leftbar" class="hidden-xs col-sm-3 col-lg-3"> 
+      <nav id="local-navigation" class="toc current" role="navigation" aria-label="Main navigation">
+       <!--CATEGORY_BTN_PLACEHOLDER--> 
+       <div class="category_button taxonomy">
+        <a title="Navigate by Component, Job Role, Task, Feature" href="../categories/hub.html">View All Categories</a>
+       </div> 
+       <ul> 
+        <li class="collapsible active"><a href="Hadoop-Tutorial.html">Hadoop Tutorial</a> 
+         <ul> 
+          <li><a href="ht_overview.html">Overview</a></li> 
+          <li class="collapsible collapsed"><a href="ht_wordcount1.html">Example: WordCount v1.0</a> 
+           <ul> 
+            <li><a href="ht_wordcount1_source.html">WordCount v1.0 Source Code</a></li> 
+            <li><a href="ht_usage.html">Running WordCount v1.0</a></li> 
+            <li><a href="ht_walk_through.html">Walkthrough of WordCount v1.0</a></li> 
+           </ul> </li> 
+          <li><a href="ht_wordcount2.html">Example: WordCount v2.0</a></li> 
+          <li><a href="ht_wordcount3.html">Example: WordCount v3.0</a></li> 
+          <li class=" active"><a href="ht_example_4_sentiment_analysis.html" class=" selected">Example: Sentiment Analysis Using MapReduce Custom Counters</a></li> 
+          <li><a href="ht_flume_to_hdfs.html">Example: Writing from Flume to HDFS</a></li> 
+          <li class="collapsible collapsed"><a href="ht_mapreduce_if.html">MapReduce – User Interfaces</a> 
+           <ul> 
+            <li><a href="ht_interfaces.html">Essential Interfaces</a></li> 
+            <li><a href="ht_job_config.html">Job Configuration</a></li> 
+            <li><a href="ht_task_exec_and_env.html">Task Execution and Environment</a></li> 
+            <li><a href="ht_job_submission.html">Job Submission and Monitoring</a></li> 
+            <li><a href="ht_job_input.html">Job Input</a></li> 
+            <li><a href="ht_job_output.html">Job Output</a></li> 
+            <li><a href="ht_other_features.html">Other Features</a></li> 
+           </ul> </li> 
+         </ul> </li> 
+       </ul> 
+      </nav> 
+     </div> 
+     <div id="section-container" class="col-xs-12 col-sm-9 col-lg-8"> 
+      <section id="main-section">
+       <noscript> 
+        <p>To read this documentation, you must turn JavaScript on.</p> 
+       </noscript> 
+       <article id="article">
+        <noscript> 
+         <p>To read this documentation, you must turn JavaScript on.</p> 
+        </noscript> 
+        <div id="beta_message"></div> 
+        <div class="main_topic" id="concept_ftr_nm4_fs_div">
+         <a id="concept_ftr_nm4_fs" class="anchor level-1"></a> 
+         <h1 class="title topictitle1">Example: Sentiment Analysis Using MapReduce Custom Counters</h1> 
+         <div class="body conbody"> 
+          <p class="p">MapReduce jobs report results using a wide array of built-in counters. You can add your own counters and analyze the results in your applications. One use for custom counters is sentiment analysis.</p> 
+          <p class="p">To perform a basic sentiment analysis, you count up the positive words and negative words in a data set. Divide the difference by the sum to calculate an overall sentiment score.</p> 
+          <div class="p"> 
+           <pre class="pre codeblock">sentiment = (positive - negative) / (postitive + negative)</pre>
+          </div> 
+          <p class="p">See <a class="xref" href="https://github.com/EuroSentiment/eurosentiment-tutorial-java/wiki/Creating-your-first-sentiment-analysis-application." target="_blank">Creating Your First Sentiment Analysis Application</a>.</p> 
+         </div> 
+         <section class="nested1" id="MrMapRed_section">
+          <a id="MrMapRed" class="anchor"></a> 
+          <h2 class="title topictitle2">Modularizing the Application</h2> 
+          <div class="body conbody"> 
+           <p class="p">In this example, <samp class="ph codeph">Map</samp> and <samp class="ph codeph">Reduce</samp> are compiled as separate classes to keep the code samples short and easier to read. <samp class="ph codeph">MrManager</samp> handles the setup, defines the <samp class="ph codeph">Job</samp>, and provides the <samp class="ph codeph">main</samp> method.</p> 
+           <div class="p">
+            All of the source is provided in 
+            <span class="ph filepath">sentimentAnalysis.tar.gz</span>, which contains: 
+            <ul class="ul" id="MrMapRed__ul_pxx_k3q_fs"> 
+             <li class="li"><span class="ph filepath">makefile</span></li> 
+             <li class="li"><span class="ph filepath">Map.java</span></li> 
+             <li class="li"><span class="ph filepath">MrManager.java</span></li> 
+             <li class="li"><span class="ph filepath">Reduce.java</span></li> 
+             <li class="li"><span class="ph filepath">neg-words.txt</span></li> 
+             <li class="li"><span class="ph filepath">pos-words.txt</span></li> 
+             <li class="li"><span class="ph filepath">stop-words.txt</span></li> 
+             <li class="li"><span class="ph filepath">/shakespeare</span> 
+              <ul class="ul" id="MrMapRed__ul_awb_fkq_fs"> 
+               <li class="li">?<span class="ph filepath">comedies</span></li> 
+               <li class="li"><span class="ph filepath">histories</span></li> 
+               <li class="li"><span class="ph filepath">poems</span></li> 
+               <li class="li"><span class="ph filepath">tragedies</span></li> 
+              </ul> </li> 
+            </ul> 
+           </div> 
+          </div> 
+         </section> 
+         <section class="nested1" id="concept_fps_njv_fs_section">
+          <a id="concept_fps_njv_fs" class="anchor"></a> 
+          <h2 class="title topictitle2">Application Highlights</h2> 
+          <div class="body conbody"> 
+           <p class="p">In this example, most of the work is done in the Map class. It begins with an enumeration used by the custom counters to store the number of positive and negative words from the input source.</p> 
+           <pre class="pre codeblock">enum Gauge{POSITIVE, NEGATIVE}</pre> 
+           <div class="p">
+            The 
+            <samp class="ph codeph">setup</samp> method processes the command line arguments. If 
+            <span class="keyword cmdname">-skip</span> is true, it calls 
+            <samp class="ph codeph">parseSkipFile</samp>. It then calls the 
+            <samp class="ph codeph">parsePostitive</samp> and 
+            <samp class="ph codeph">parseNegative</samp> methods to populate the hash sets used to compare and identify words in their respective lists. 
+            <pre class="pre codeblock">?URI[] localPaths = context.getCacheFiles();
+int uriCount = 0;
+if (config.getBoolean("mrmanager.skip.patterns", false))
+{
+  parseSkipFile(localPaths[uriCount++]);
+}
+parsePositive(localPaths[uriCount++]);
+parseNegative(localPaths[uriCount]);</pre>
+           </div> 
+           <p class="p">The <samp class="ph codeph">parsePositive</samp> method cycles through the list of positive terms and creates an entry for each word. The <samp class="ph codeph">parseNegative</samp> method does the same with the negative terms.</p> 
+           <div class="p"> 
+            <pre class="pre codeblock">?private void parsePositive(URI goodWordsUri) {
+  try {
+    BufferedReader fis = new BufferedReader(new FileReader(
+    new File(goodWordsUri.getPath()).getName()));
+    String goodWord;
+    while ((goodWord = fis.readLine()) != null) {
+      goodWords.add(goodWord);
+    }
+  } catch (IOException ioe) {
+    System.err.println("Caught exception parsing cached file '"
+      + goodWords + "' : " + StringUtils.stringifyException(ioe));
+  }
+}</pre>
+           </div> 
+           <div class="p">
+            While the 
+            <samp class="ph codeph">map</samp> method continues to perform its word count activity from earlier examples, two additional counters filter and capture the positive and negative terms. 
+            <pre class="pre codeblock">for (String word : WORD_BOUNDARY.split(line))
+{
+  if (word.isEmpty() || patternsToSkip.contains(word)) {
+    continue;
+  }
+  // Count instances of each (non-skipped) word.
+  currentWord = new Text(word);
+  context.write(currentWord,one);         
+
+  // Filter and count "good" words.
+  if (goodWords.contains(word)) {
+    context.getCounter(Gauge.POSITIVE).increment(1);
+  }
+
+
+
+
+  // Filter and count "bad" words.
+  if (badWords.contains(word)) {
+    context.getCounter(Gauge.NEGATIVE).increment(1);
+  }
+}</pre>
+           </div> 
+           <p class="p">The <samp class="ph codeph">Reduce</samp> method assembles the results and returns them to <samp class="ph codeph">MrManager</samp>.</p> 
+           <div class="p">
+            Instead of returning the results immediately, though, 
+            <samp class="ph codeph">MrManager</samp> stores the result in a variable. This gives you a chance to work with the results and write to the console (or perform any other Java-esque processing) before ending the program. 
+            <pre class="pre codeblock">?int result = job.waitForCompletion(true) ? 0 : 1;
+
+/*
+ *  Work with the results before returning control to the main method.
+ * 
+ */ 
+
+// Get the counters from the Map class.
+
+Counters counters = job.getCounters();
+float good = counters.findCounter("org.myorg.Map$Gauge", "POSITIVE").getValue();
+float bad = counters.findCounter("org.myorg.Map$Gauge", "NEGATIVE").getValue();
+    
+// Calculate the basic sentiment score by dividing the difference of good and 
+// bad words by their sum.
+
+
+float sentiment = ((good - bad) / (good + bad));
+
+// Calculate the positivity score by dividing good results by the sum of
+// good and bad results. Multiply by 100 and round off to get a percentage.
+// Results 50% and above are more positive, overall.
+
+float positivity = (good / (good + bad))*100;
+int positivityScore = Math.round(positivity);
+
+
+
+// Display the results in the console.
+
+System.out.println("\n\n\n**********\n\n\n");
+System.out.println("Sentiment score = (" + good + " - " + bad + ") / (" + good +
+  " + " + bad + ")");
+System.out.println("Sentiment score = " + sentiment);
+System.out.println("\n\n");
+System.out.println("Positivity score = " + good + "/(" + good + "+" + bad + ")");
+System.out.println("Positivity score = " + positivityScore + "%");
+System.out.println("\n\n\n********** \n\n\n\n");
+
+/*
+ *
+ * Return and finish.
+ *
+ */
+
+return result;</pre>
+           </div> 
+          </div> 
+         </section> 
+         <section class="nested1" id="concept_rwt_xzv_fs_section">
+          <a id="concept_rwt_xzv_fs" class="anchor"></a> 
+          <h2 class="title topictitle2">Running the Sentiment Analysis Application</h2> 
+          <div class="body conbody"> 
+           <p class="p">These are the steps for building and running the Sentiment Analysis example.</p> 
+           <ol class="ol" id="concept_rwt_xzv_fs__ol_j5h_fbw_fs"> 
+            <li class="li">Download and expand <a class="xref" href="http://tiny.cloudera.com/sentimentAnalysis-sample">sentimentAnalysis.tar.gz</a>. <p class="p">The <span class="ph filepath">makefile</span> provides a number of convenient utility commands. If you are using a parcel installation, delete or comment out the <samp class="ph codeph">compile_</samp> commands for packages, then un-comment the commands for parcel-based compilation.</p> </li> 
+            <li class="li">Open a terminal window and go to the expanded <span class="ph filepath">/sentimentAnalysis</span> directory.</li> 
+            <li class="li">Enter <span class="keyword cmdname">make run</span>. This sets off a chain of events. 
+             <ol class="ol" type="a" id="concept_rwt_xzv_fs__ol_ipk_pjw_fs"> 
+              <li class="li">Cleans up by deleting results of previous invocations of the <span class="keyword cmdname">make run</span> command.</li> 
+              <li class="li">Creates HDFS directories for input and output.</li> 
+              <li class="li">Copies the works of Shakespeare to the input directory.</li> 
+              <li class="li">Creates and uploads three short poems about Hadoop.</li> 
+              <li class="li">Copies <span class="ph filepath">stop-words.txt</span>, <span class="ph filepath">pos-words.txt</span>, and <span class="ph filepath">neg-words.txt</span> to HDFS.</li> 
+              <li class="li">Compiles and jars <samp class="ph codeph">Map</samp>, <samp class="ph codeph">Reduce</samp>, and <samp class="ph codeph">MrManager</samp>.</li> 
+              <li class="li">Runs the application.</li> 
+             </ol> </li> 
+           </ol> 
+           <p class="p"><samp class="ph codeph">MrManager</samp> appends the results of your custom counters to the end of the list of standard counters. The sentiment and positivity scores appear after the standard output.</p> 
+           <p class="p">A positivity score 50% or higher indicates that the words from the input tend to be mostly positive. In the case of Shakespeare, it falls just 1% short of that goal. However, this is a rudimentary example of a sentiment analysis. If the content includes phrases such as "not unhappy," that would count as two negative words, even though the overall intent of the phrase is positive. You can implement more robust sentiment analysis algorithms that are beyond the scope of this example.</p> 
+           <div class="p"> 
+            <pre class="pre codeblock">?
+org.myorg.Map$Gauge
+
+
+NEGATIVE=42163
+
+
+POSITIVE=41184
+**********
+
+
+
+Sentiment score = (41184.0 - 42163.0) / (41184.0 + 42163.0)
+Sentiment score = -0.011746074
+
+
+
+Positivity score = 41184.0/(41184.0+42163.0)
+Positivity score = 49%
+
+
+
+********** 
+
+</pre>
+           </div> 
+           <p class="p">See the <span class="ph filepath">makefile</span> for command line options and variations for compiling and running the application.</p> 
+          </div> 
+         </section> 
+        </div> 
+        <div id="categories_footer_div" class="categories_in_topic">
+         <p><b>Categories:</b> <a href="../categories/hub_applications.html">Applications</a> <span>|</span> <a href="../categories/hub_hadoop.html">Hadoop</a> <span>|</span> <a href="../categories/hub_mapreduce.html">MapReduce</a> <span>|</span> <a href="../categories/hub_sentiment_analysis.html">Sentiment analysis</a> <span>|</span> <a href="../categories/hub_tutorial.html">Tutorial</a> <span>|</span> <a href="../categories/hub_walkthrough.html">Walkthrough</a> <span>|</span> <a href="../categories/hub.html">All Categories</a></p>
+        </div> 
+        <!--CATEGORY_DIV_PLACEHOLDER--> 
+        <div class="row" id="topicsNPLinks"> 
+         <div class="col-xs-6"> 
+          <div class="previousLink">
+           <a href="../topics/ht_wordcount3.html" class="previous" rel="internal"><span class="fa fa-chevron-circle-left previous" aria-hidden="true"></span><span class="prevnext_text">Example: WordCount v3.0</span></a>
+          </div> 
+         </div> 
+         <div class="col-xs-6"> 
+          <div class="nextLink pull-right">
+           <a href="../topics/ht_flume_to_hdfs.html" class="next" rel="internal"><span class="prevnext_text">Example: Writing from Flume to HDFS</span><span class="fa fa-chevron-circle-right next" aria-hidden="true"></span></a>
+          </div> 
+         </div> 
+        </div> 
+       </article> 
+      </section> 
+     </div> 
+     <div class="hidden-xs col-lg-1" id="topbutton_container"> 
+      <div id="topbuttons" class="relative"></div> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <!--BEGIN_FOOTER--> 
+  <footer> 
+   <div class="container"> 
+    <div class="col-sm-8 footer-left"> 
+     <div class="section"> 
+      <div id="footer-contact-info"> 
+       <ul> 
+        <li><a href="http://www.cloudera.com/about-cloudera.html">About Cloudera</a></li> 
+        <li><a href="http://www.cloudera.com/resources.html">Resources</a></li> 
+        <li><a href="http://www.cloudera.com/contact-us.html">Contact</a></li> 
+        <li><a href="http://www.cloudera.com/about-cloudera/careers.html">Careers</a></li> 
+        <li><a href="/about-cloudera/press-center.html">Press</a></li> 
+        <li><a href="/documentation.html">Documentation</a></li> 
+       </ul> 
+       <p>United States: +1 888 789 1488<br> Outside the US: +1 650 362 0488</p> 
+      </div> 
+     </div> 
+     <div class="section"> 
+      <p><span class="byline">© 2016 Cloudera, Inc. All rights reserved. <a href="http://hadoop.apache.org">Apache Hadoop</a> and associated open source project names are trademarks of the <a href="http://apache.org">Apache Software Foundation</a>. For a complete list of trademarks, <a href="/legal/terms-and-conditions.html">click here.</a></span></p> 
+     </div> 
+    </div> 
+    <div class="col-sm-4 footer-right"> 
+     <ul> 
+      <li><a href="https://www.linkedin.com/company/cloudera"><script data-pagespeed-no-defer type="text/javascript">//<![CDATA[
+(function(){var g=this;function h(b,d){var a=b.split("."),c=g;a[0]in c||!c.execScript||c.execScript("var "+a[0]);for(var e;a.length&&(e=a.shift());)a.length||void 0===d?c[e]?c=c[e]:c=c[e]={}:c[e]=d};function l(b){var d=b.length;if(0<d){for(var a=Array(d),c=0;c<d;c++)a[c]=b[c];return a}return[]};function m(b){var d=window;if(d.addEventListener)d.addEventListener("load",b,!1);else if(d.attachEvent)d.attachEvent("onload",b);else{var a=d.onload;d.onload=function(){b.call(this);a&&a.call(this)}}};var n;function p(b,d,a,c,e){this.h=b;this.j=d;this.l=a;this.f=e;this.g={height:window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight,width:window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth};this.i=c;this.b={};this.a=[];this.c={}}function q(b,d){var a,c,e=d.getAttribute("data-pagespeed-url-hash");if(a=e&&!(e in b.c))if(0>=d.offsetWidth&&0>=d.offsetHeight)a=!1;else{c=d.getBoundingClientRect();var f=document.body;a=c.top+("pageYOffset"in window?window.pageYOffset:(document.documentElement||f.parentNode||f).scrollTop);c=c.left+("pageXOffset"in window?window.pageXOffset:(document.documentElement||f.parentNode||f).scrollLeft);f=a.toString()+","+c;b.b.hasOwnProperty(f)?a=!1:(b.b[f]=!0,a=a<=b.g.height&&c<=b.g.width)}a&&(b.a.push(e),b.c[e]=!0)}p.prototype.checkImageForCriticality=function(b){b.getBoundingClientRect&&q(this,b)};h("pagespeed.CriticalImages.checkImageForCriticality",function(b){n.checkImageForCriticality(b)});h("pagespeed.CriticalImages.checkCriticalImages",function(){r(n)});function r(b){b.b={};for(var d=["IMG","INPUT"],a=[],c=0;c<d.length;++c)a=a.concat(l(document.getElementsByTagName(d[c])));if(0!=a.length&&a[0].getBoundingClientRect){for(c=0;d=a[c];++c)q(b,d);a="oh="+b.l;b.f&&(a+="&n="+b.f);if(d=0!=b.a.length)for(a+="&ci="+encodeURIComponent(b.a[0]),c=1;c<b.a.length;++c){var e=","+encodeURIComponent(b.a[c]);131072>=a.length+e.length&&(a+=e)}b.i&&(e="&rd="+encodeURIComponent(JSON.stringify(t())),131072>=a.length+e.length&&(a+=e),d=!0);u=a;if(d){c=b.h;b=b.j;var f;if(window.XMLHttpRequest)f=new XMLHttpRequest;else if(window.ActiveXObject)try{f=new ActiveXObject("Msxml2.XMLHTTP")}catch(k){try{f=new ActiveXObject("Microsoft.XMLHTTP")}catch(v){}}f&&(f.open("POST",c+(-1==c.indexOf("?")?"?":"&")+"url="+encodeURIComponent(b)),f.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),f.send(a))}}}function t(){var b={},d=document.getElementsByTagName("IMG");if(0==d.length)return{};var a=d[0];if(!("naturalWidth"in a&&"naturalHeight"in a))return{};for(var c=0;a=d[c];++c){var e=a.getAttribute("data-pagespeed-url-hash");e&&(!(e in b)&&0<a.width&&0<a.height&&0<a.naturalWidth&&0<a.naturalHeight||e in b&&a.width>=b[e].o&&a.height>=b[e].m)&&(b[e]={rw:a.width,rh:a.height,ow:a.naturalWidth,oh:a.naturalHeight})}return b}var u="";h("pagespeed.CriticalImages.getBeaconData",function(){return u});h("pagespeed.CriticalImages.Run",function(b,d,a,c,e,f){var k=new p(b,d,a,e,f);n=k;c&&m(function(){window.setTimeout(function(){r(k)},0)})});})();pagespeed.CriticalImages.Run('/mod_pagespeed_beacon','https://www.cloudera.com/documentation/other/tutorial/CDH5/topics/ht_example_4_sentiment_analysis.html','szwQ07jYrw',true,false,'8NEHGRRrb-E');
+//]]></script><img src="http://www.cloudera.com/etc/designs/www/clientlibs/icons/xicon-linkedin.png.pagespeed.ic.dwQqthP6pF.png" data-pagespeed-url-hash="157091745" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a></li> 
+      <li><a href="https://www.facebook.com/cloudera"><img src="http://www.cloudera.com/etc/designs/www/clientlibs/icons/xicon-facebook.png.pagespeed.ic.Ri6ukB0SDX.png" data-pagespeed-url-hash="2151424970" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a></li> 
+      <li><a href="https://twitter.com/cloudera"><img src="http://www.cloudera.com/etc/designs/www/clientlibs/icons/xicon-twitter.png.pagespeed.ic.2X_OrA7wsp.png" data-pagespeed-url-hash="2792432993" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a></li> 
+      <li><a href="/contact-us.html"><img src="http://www.cloudera.com/etc/designs/www/clientlibs/icons/xicon-mail.png.pagespeed.ic.ASrwNyaYc6.png" data-pagespeed-url-hash="1733613476" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a></li> 
+     </ul> 
+     <div class="text parbase section"> 
+      <p><a href="/legal/terms-and-conditions.html">Terms &amp; Conditions</a>&nbsp; | &nbsp;<a href="/legal/privacy-policy.html">Privacy Policy</a></p> 
+     </div> 
+     <div id="page_creation_message">
+      Page generated June&nbsp;29,&nbsp;2016.
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <!--END_FOOTER--> 
+  <script type="text/javascript">document.getElementById('form-holder').innerHTML='<form action="http://dev-pub01.sjc.cloudera.com:4503/content/www/en-us/search.html" id="docs-search" method="get" novalidate="" name="docs-search">'+'<label for="q" class="visuallyhidden">Search<\/label>'+'<input name= "q" id="q" placeholder="Search Docs" type="search"/>'+'<input name="fq" id="fq1" type="hidden" value=\'all_facet_hier:\"Content Type|Documentation\"\'/>'+'<button type="submit"><span class="fa fa-search" aria-hidden="true"><\/span><\/button><\/form>';window.onload=function(){if(document.domain=='www.cloudera.com'){document.getElementById('docs-search').action='http://www.cloudera.com/content/www/en-us/search.html';}else if(document.domain=='dev-aem.core.cloudera.com'){document.getElementById('docs-search').action='http://dev-aem.core.cloudera.com/content/www/en-us/search.html';}else{document.getElementById('docs-search').action='http://staging-aem.core.cloudera.com/content/www/en-us/search.html';}}</script> 
+  <script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-2275969-4','auto');ga('send','pageview');</script> 
+  <script type="text/javascript">if(document.domain=='www.cloudera.com'){document.write('<script type="text/javascript" src="//assets.adobedtm.com/98a3a1c24ee5de4297f8ae77cf444e0c86ff2f04/satelliteLib-2b934fee5c4cb90dad47c223f80ea9c99e9761b2.js"><\/scr'+'ipt>')}else{document.write('<script type="text/javascript" src="//assets.adobedtm.com/98a3a1c24ee5de4297f8ae77cf444e0c86ff2f04/satelliteLib-2b934fee5c4cb90dad47c223f80ea9c99e9761b2-staging.js"><\/scr'+'ipt>')}</script> 
+  <script type="text/javascript">_satellite.pageBottom();</script>   
+ </body>
+</html>

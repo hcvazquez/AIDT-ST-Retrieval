@@ -1,0 +1,845 @@
+<!doctype html>
+<html>
+ <head> 
+  <title>Translating mathematics into code: Examples in Java, Python, Haskell and Racket
+</title> 
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="http://matt.might.net/articles/feed.rss"> 
+  <link rel="stylesheet" href="../../css/raised-paper-2.css"> 
+  <meta name="viewport" content="width=480, initial-scale=1"> 
+  <link rel="stylesheet" media="screen and (max-device-width: 480px)" href="../../css/raised-paper-2-handheld.css"> 
+  <script type="text/javascript" src="../../matt.might.js"></script> 
+  <script type="text/javascript">
+  var ArticleVersion = 2 ;
+ </script> 
+  <script>
+ <!--
+  include("article-style.js");
+ //-->
+ </script> 
+  <script type="text/javascript" src="../manifest.js"></script> 
+  <script type="text/javascript" src="../index-manifest.js"></script> 
+  <script type="text/javascript">
+ <!--
+//  var Key = "[an error occurred while processing the directive]";
+ var Pathname = location.pathname ;
+ var PathParts = Pathname.split(/\//) ;
+ var Key = PathParts[PathParts.length-1] ;
+ if (Key == "")
+  Key = PathParts[PathParts.length-2] ;
+ //-->
+ </script> 
+ </head> 
+ <body> 
+  <div id="body"> 
+   <div id="abstract-container" class="module"> 
+    <div id="abstract-content" class="fat-content"> 
+     <h1>Translating math into code with examples in Java, Racket, Haskell and Python </h1> 
+     <div>
+       [
+      <a href="../">article index</a>] [
+      <script>
+       var emailMatt = '<a href="mai'+'lto:matt-blog'+'@'+'migh'+'t.net">email me</a>'
+document.write(emailMatt);
+ //-->
+</script>] [
+      <a href="http://twitter.com/mattmight">@mattmight</a>] [
+      <a href="http://gplus.to/mattmight">+mattmight</a>] [
+      <a href="../feed.rss">rss</a>] 
+     </div> 
+     <p> Discrete mathematical structures form the foundation of computer science. </p> 
+     <p> These structures are so universal that most research papers in the theory of computation, programming languages and formal methods present concepts in terms of discrete mathematics rather than code. </p> 
+     <p> The underlying assumption is that the reader will know how to translate these structures into a faithful implementation as a working program. </p> 
+     <p> A lack of material explaining this translation frustrates outsiders. </p> 
+     <p> What deepens that frustration is that each language paradigm encodes discrete structures in a distinct way. </p> 
+     <p> Many of the encodings are as immutable, purely functional data structures (even in imperative languages), a topic unfortunately omitted from many computer science curricula. Many standard libraries provide only mutable versions of these data structures, which instantly leads to pitfalls. </p> 
+     <p> Okasaki's classic <a href="http://www.amazon.com/gp/product/0521663504/ref=as_li_ss_tl?ie=UTF8&amp;tag=aboutmatthewm-20&amp;linkCode=as2&amp;camp=217145&amp;creative=399369&amp;creativeASIN=0521663504">Purely Functional Data Structures</a><img src="http://www.assoc-amazon.com/e/ir?t=aboutmatthewm-20&amp;l=as2&amp;o=1&amp;a=0521663504&amp;camp=217145&amp;creative=399369" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;"> is an essential reference: </p> 
+     <center> 
+      <a href="http://www.amazon.com/gp/product/0521663504/ref=as_li_ss_il?ie=UTF8&amp;tag=aboutmatthewm-20&amp;linkCode=as2&amp;camp=217145&amp;creative=399369&amp;creativeASIN=0521663504"><img border="0" src="http://ws.assoc-amazon.com/widgets/q?_encoding=UTF8&amp;Format=_SL160_&amp;ASIN=0521663504&amp;MarketPlace=US&amp;ID=AsinImage&amp;WS=1&amp;tag=aboutmatthewm-20&amp;ServiceVersion=20070822"></a>
+      <img src="http://www.assoc-amazon.com/e/ir?t=aboutmatthewm-20&amp;l=as2&amp;o=1&amp;a=0521663504&amp;camp=217145&amp;creative=399369" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;"> 
+     </center> 
+     <p> Read on for my guide to translating the common discrete mathematical structures--sets, sequences, functions, disjoint unions, relations and syntax--into working code in Java, Python, Racket and Haskell. </p> 
+    </div> 
+    <!-- /#content --> 
+   </div> 
+   <!-- /#content-container --> 
+   <div class="module fat-container"> 
+    <div class="fat-content"> 
+     <center> 
+      <script type="text/javascript"><!--
+google_ad_client = "pub-4400645483943138";
+/* Header ad unit */
+google_ad_slot = "8276008011";
+google_ad_width = 468;
+google_ad_height = 60;
+//-->
+</script> 
+      <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+     </center> 
+    </div> 
+   </div> 
+   <div id="content-container" class="module"> 
+    <div id="article-content"> 
+     <script type="text/javascript">
+<!--
+// Might.enableSyntaxHighlighting("Scala") ;
+//-->
+</script> 
+     <h2>Caution: Math has no side effects</h2> 
+     <p> The fatal mistake newcomers make when translating math into code is using mutable data structures where only an immutable structure was correct. </p> 
+     <p> Mathematics has no side effects. </p> 
+     <p> Math cannot modify the value of a variable--either global or local. It cannot mutate an element in an array. And, a mathematical function always returns the same value for the same input. </p> 
+     <p> The literal rendering of mathematics into code cannot contain side effects. </p> 
+     <p> Mathematics is a purely functional language. </p> 
+     <p> Of course, once the constraints on an implementation are understood, it's usually possible to exchange immutable data structures for mutable ones in key places to achieve performance savings. </p> 
+     <p> But, for the purposes of prototyping, it's always best to start with a direct, purely functional implementation. </p> 
+     <h2>Sets and power sets</h2> 
+     <p> The rendering of a set as code will usually be a type; a collection backed by a balanced tree or a hash map; or a predicate. </p> 
+     <p> In mathematics, a set is an unordered collection of elements. </p> 
+     <p> The empty set--<i>?</i>--is a special set containing no elements. </p> 
+     <p> The syntax for literal sets is curly braces: {}. For example, the set {1,2,3} is the set containing 1, 2 and 3. </p> 
+     <p> The relationship <i>x</i> ? S declares that the value <i>x</i> is a member of the set <i>S</i>. </p> 
+     <h3>Sets as types</h3> 
+     <p> Infinite sets tend to be encoded as types. </p> 
+     <p> (Of course, some finite sets are encoded as types too.) </p> 
+     <p> In some cases, a set <i>X</i> is defined as a subset of another set Y: </p> 
+     <pre>
+  <i>X</i> ? <i>Y</i>.
+</pre> 
+     <p> This subset relationship could be represented as inheritence in a language like Java or Python, if these sets are meant to be types: </p> 
+     <pre>
+class X extends Y { ... } 
+</pre> 
+     <p> When a set <i>X</i> is defined to be the power set of another set <i>Y</i>: </p> 
+     <center> 
+      <i>X</i> = 
+      <i>P</i>(Y) = 2
+      <sup><i>Y</i></sup>, 
+     </center> 
+     <p> then <i>X</i> and <i>Y</i> will be types, and members of <i>X</i> will be collections. </p> 
+     <h3>Sets as collections</h3> 
+     <p> When a set's contents are computed at run-time, then it will often be a <em>sorted</em> collection backed by a structure like a red-black tree. </p> 
+     <p> [See my post on <a href="http://matt.might.net/articles/red-black-delete/">purely functional red-black trees including deletion</a>.] </p> 
+     <p> It's not hard to implement a purely functional, sorted (but unbalanced) search tree in Java: </p> 
+     <pre>
+interface Ordered &lt;T&gt; {
+  public boolean isLessThan(T that) ;
+}
+
+abstract class SortedSet&lt;T extends Ordered&lt;T&gt;&gt; {
+  public abstract boolean isEmpty() ;
+  public abstract boolean contains(T element) ;
+  public abstract SortedSet&lt;T&gt; add(T element) ;
+
+  public static final &lt;E extends Ordered&lt;E&gt;&gt; SortedSet&lt;E&gt; empty() {
+    return new EmptySet&lt;E&gt;();
+  }
+}
+
+final class EmptySet&lt;T extends Ordered&lt;T&gt;&gt; extends SortedSet&lt;T&gt; {
+  public boolean isEmpty() {
+    return true ;
+  }
+
+  public boolean contains(T element) {
+    return false ;
+  }
+
+  public SortedSet&lt;T&gt; add(T element) {
+    return new Node&lt;T&gt;(this,element,this) ;
+  }
+
+  public EmptySet() {
+  }
+}
+
+final class Node&lt;T extends Ordered&lt;T&gt;&gt; extends SortedSet&lt;T&gt; {
+
+  private final SortedSet&lt;T&gt; left ;
+  private final T element ;
+  private final SortedSet&lt;T&gt; right ;
+
+  public boolean isEmpty() {
+    return false ;
+  }
+
+  public Node(SortedSet&lt;T&gt; left, T element, SortedSet&lt;T&gt; right) {
+    this.left = left ;
+    this.right = right ;
+    this.element = element ;
+  }
+
+  public boolean contains(T needle) {
+    if (needle.isLessThan(this.element)) {
+      return this.left.contains(needle) ;
+    } else if (this.element.isLessThan(needle)) {
+      return this.right.contains(needle) ;
+    } else {
+      return true ;
+    }
+  }
+
+  public SortedSet&lt;T&gt; add(T newGuy) {
+    if (newGuy.isLessThan(this.element)) {
+      return new Node&lt;T&gt;(left.add(newGuy),this.element,right) ;
+    } else if (this.element.isLessThan(newGuy)) {
+      return new Node&lt;T&gt;(left,this.element,right.add(newGuy)) ;
+    } else {
+      return this ; // Already in set.
+    }
+  }
+}
+</pre> 
+     <p> Be warned that the Java library's <code>Set</code> interface (optionally) allows imperative addition and removal of elements. A computational rendering of mathematics cannot use these features. </p> 
+     <p> A run-time set might also be backed by an immutable hash table. </p> 
+     <p> Regardless of representation, these set data structures typically need to support operations like enumeration, union, intersection and difference, and relations like membership, equality and subset. </p> 
+     <p> Whether a balanced tree or a hash map is better for ease of implementation and performance rests on type of the elements in the set and the algorithmic uses-cases for the set operations. </p> 
+     <p> In some cases, it's easy to provide an efficient ordering function. Sometimes, it's easier to provide a hash function and a definition of equality. </p> 
+     <p> Python provides syntactic support for hash-backed sets: </p> 
+     <pre>
+&gt;&gt;&gt; { 3 , 2 , 1 } == { 1 , 2 , 3 }
+True
+
+&gt;&gt;&gt; {1,2,3} | {3,4,5}
+set([1, 2, 3, 4, 5])
+</pre> 
+     <p> Racket also provides native sets: </p> 
+     <pre>
+&gt; (equal? (set 3 2 1) (set 1 2 3)) 
+#t
+
+&gt; (set-union (set 3 2 1) (set 3 4 5))
+(set 1 2 3 4 5)
+</pre> 
+     <p> In Haskell, <code>Data.Set</code> provides a full-featured implementation of sorted, balanced tree-backed sets. </p> 
+     <p> I'm fond of the following notation for Haskell: </p> 
+     <pre>
+import Data.Set
+
+type P = Data.Set.Set
+</pre> 
+     <p> so that I can write things like: </p> 
+     <pre>
+type Ints = P(Int)
+</pre> 
+     <p> which is aesthetically closer to the formal mathematics. </p> 
+     <h3>Sets as predicates</h3> 
+     <p> If the set <i>X</i> is a subset of <i>Y</i>, but the structure of the set <i>X</i> is outside the descriptive capacity of the type system, then <i>X</i> could be represented as a predicate: </p> 
+     <pre>
+class Y {
+  public boolean isX() { ... }
+}
+</pre> or in Haskell: 
+     <pre>
+isX :: Y -&gt; Bool
+</pre> 
+     <p> Some advanced programming languages like Agda support <em>dependent</em> types, which allow predicates in the type system itself. </p> 
+     <p> In Racket, rich, expressive contracts take the place of dependent types. </p> 
+     <h2>Disjoint union (sums)</h2> 
+     <p> A disjoint (or tagged) union of several sets is a new set containing all of the elements of the constituent sets, but with an implicit mark (or tag) added to each element to indicate from which constitutent set it came. </p> 
+     <p> The set <i>A</i> + <i>B</i> is the disjoint union of the sets <i>A</i> and <i>B</i>. </p> 
+     <p> In mathematics, that distinguishing mark is almost always kept implicit or inferred from context. (The tag is rarely needed.) </p> 
+     <p> In fact, when that mark is required, it is common to use <a href="#syntax">syntactic sets</a>. </p> 
+     <p> In Java (and other object-oriented languages), sum types are represented through class-based inheritence. The sum forms an abstract base type, and each constituent forms a subtype. For example, the type <i>A</i> + <i>B</i> + <i>C</i> would become: </p> 
+     <pre>
+abstract class ApBpC { ... }
+
+class A extends ApBpC { ... }
+class B extends ApBpC { ... }
+class C extends ApBpC { ... }
+</pre> 
+     <p> Haskell supports algebraic data types that closely mimic the sum form. Explicit constructors serve as tags. For example: </p> 
+     <pre>
+data ApBpC = ACons A
+           | BCons B
+           | CCons C
+</pre> 
+     <p> The constructors are also used for pattern-matching; for example: </p> 
+     <pre>
+whatAmI (ACons _) = "I'm an A."
+whatAmI (BCons _) = "I'm a B."
+whatAmI (CCons _) = "I'm a C."
+</pre> 
+     <p> Of course, in Java, a <code>whatAmI</code> method becomes dynamic dispatch: </p> 
+     <pre>
+abstract class ApBpC {
+  abstract public String whatAmI() ;
+}
+
+class A extends ApBpC {
+  public String whatAmI() {
+    return "I'm an A." ;
+  }
+}  
+class B extends ApBpC {
+  public String whatAmI() {
+    return "I'm a B." ;
+  }
+}
+class C extends ApBpC {
+  public String whatAmI() {
+    return "I'm a C." ;
+  }
+}
+
+</pre> 
+     <p> In untyped languages like Racket, where the universal type is already the sum of all types, there is no need for a special embedding. </p> 
+     <p> Languages like Python can exploit class-based inheritance or take the Racket-like approach for representing sum types. </p> 
+     <h2>Sequences and vectors</h2> 
+     <p> Sequences are a common discrete structure, and their rendering in code is perhaps the most straightforward. </p> 
+     <p> In formal notation, the set of sequences over elements in <i>S</i> is written <i>S</i><sup>*</sup>. </p> 
+     <p> It is usually clear from context whether <i>S</i><sup>*</sup> should contain infinite sequences or only finite ones. (And, in many cases, it doesn't matter.) </p> 
+     <p> For example, if the set <i>A</i> = {<code>a</code>, <code>b</code>} is an alphabet, then the set of strings over this alphabet is <i>A<sup>*</sup></i>, which would contain elements like <code>ab</code> and <code>babba</code>. </p> 
+     <p> If the variable used to denote elements of the set <i>S</i> is <i>s</i>, then a sequence in the set <i>S<sup>*</sup></i> is usually a bold-faced <i><b>s</b></i> or <b>s</b>. (It is a common convention to use the lower-case version of a set to denote members of that set.) </p> 
+     <p> Given a sequence <b><i>s</i></b>, its first element is <i>s</i><sub>1</sub>, and its <i>i</i>th element is <i>s</i><sub>i</sub>. </p> 
+     <p> Explicit sequences tend to be wrapped in angle-brackets, so that: </p> 
+     <center> 
+      <i><b>s</b></i> = &lt;
+      <i>s</i>
+      <sub>1</sub>, 
+      <i>s</i>
+      <sub>2</sub>, ... 
+      <i>s</i>
+      <sub>n</sub>&gt; 
+     </center> 
+     <p> (Please note that in LaTeX, one should use <code>\langle</code> and <code>\rangle</code> for angle brackets--not less than and greater than.) </p> 
+     <h3>Sequences as linked lists</h3> 
+     <p> Most frequently, a finite sequence will be encoded as a linked list. </p> 
+     <p> For example, in Java: </p> 
+     <pre>
+abstract class Sequence&lt;S&gt; {
+  public abstract S getHead() ;
+  public abstract Sequence&lt;S&gt; getTail() ;
+  public abstract boolean isEmpty() ;
+
+  public static final &lt;T&gt; Sequence&lt;T&gt; cons(T head, Sequence&lt;T&gt; tail) {
+    return new Cons&lt;T&gt;(head,tail) ;
+  }
+
+  public static final &lt;T&gt; Sequence&lt;T&gt; nil() {
+    return new Nil&lt;T&gt;() ;
+  }
+}
+
+final class Cons&lt;S&gt; extends Sequence&lt;S&gt; {
+  private final S head ;
+  private final Sequence&lt;S&gt; tail ;
+
+  public S getHead() {
+    return this.head ;
+  }
+
+  public Sequence&lt;S&gt; getTail() {
+    return this.tail ;
+  }
+ 
+  public boolean isEmpty() {
+    return false ;
+  }
+
+  public Cons(S head, Sequence&lt;S&gt; tail) {
+   this.head = head ;
+   this.tail = tail ;
+  }
+}
+
+final class Nil&lt;S&gt; extends Sequence&lt;S&gt; {
+  public S getHead() {
+    throw new EmptySequenceException() ;
+  }
+
+  public Sequence&lt;S&gt; getTail() {
+    throw new EmptySequenceException() ;
+  }
+
+  public boolean isEmpty() {
+    return true ;
+  }
+
+  public Nil() {  }
+}
+
+class EmptySequenceException extends RuntimeException {
+}
+
+class Test {
+  public static void main(String[] args) {
+    Sequence&lt;Integer&gt; end = Sequence.nil() ;
+
+    Sequence&lt;Integer&gt; si =
+     Sequence.cons(3, end) ;
+  }
+}
+</pre> 
+     <p> Functional languages excel at encoding sequences. Haskell has a list type: <code>[]</code>. A function that adds one to every element of a list could be written: </p> 
+     <pre>
+add1 :: [Int] -&gt; [Int]
+add1 [] = []
+add1 (hd:tl) = (hd + 1):(add1 tl)
+</pre> 
+     <p> Or, more succinctly using <code>map</code>: </p> 
+     <pre>
+add1 :: [Int] -&gt; [Int]
+add1 = map (+1)
+</pre> 
+     <p> In most Lisps (like Racket), <code>cons</code> constructs lists, while <code>car</code> and cdr destruct: </p> 
+     <pre>
+ (car (cons 1 (cons 2 '())))  ==  1
+ (car (cdr (cons 1 (cons 2 '()))))  ==  2
+ (pair? '())  ==  #f
+ (pair? (cons 1 '()))  ==  #t 
+</pre> 
+     <p> In Python, tuples and lists work about equally well as sequences, but tuples might be less error-prone since they're immutable. </p> 
+     <p> Of course, the standard warning about side effects applies: do not use the side-effecting features of Python lists like popping an element. </p> 
+     <h3>Vectors as arrays</h3> 
+     <p> When dealing with a set of sequences which all have the same length, the term <em>vector</em> is commonly used instead of <em>sequence</em>. </p> 
+     <p> The set of vectors over the set <i>S</i> of length <em>n</em> is written <i>S<sup>n</sup></i>. </p> 
+     <p> Sometimes vectors are written with a right-arrow (?) over the unbolded representative variable. </p> 
+     <p> Vectors can be efficiently encoded using arrays, but lists also suffice. </p> 
+     <p> Remember: the array must not be mutated! </p> 
+     <p> If you need to update an index in a vector, it should be copied into a new array first, leaving the original array untouched. </p> 
+     <p> That said, it is often the case that you can prove that when one vector is computed as the update of another vector that the original vector is garbage. In these cases, it is a safe and common optimization to mutate the array. </p> 
+     <h3>Infinite sequences as streams</h3> 
+     <p> Infinite sequences are not common, but when they arise, they are often encoded as streams. </p> 
+     <p> In Haskell, laziness means that any list can be an infinite list. </p> 
+     <p> It is easy to encode an infinite sequence like the list of all natural numbers: </p> 
+     <pre>
+nats = 1:(map (+1) nats)
+</pre> 
+     <p> so that <code>take 5 nats</code> yields <code>[1,2,3,4,5]</code>. </p> 
+     <p> and, even more remarkably, we can filter this list to produce the list of all primes: </p> 
+     <pre>
+isPrime n = all (\ m -&gt; n `mod` m /= 0) [2..n-1]
+
+primes = filter isPrime (tail nats)
+</pre> 
+     <p> It is actually the case that <code>take 6 primes</code> yields <code>[2,3,5,7,11,13]</code>. </p> 
+     <p> Racket includes a <a href="http://docs.racket-lang.org/reference/streams.html">stream library</a>, allowing the equivalent: </p> 
+     <pre>
+(define (inc n) (+ 1 n))
+
+(define nats (stream-cons 1 (stream-map inc nats)))
+
+(define (prime? n)
+  (call/ec (? (return)
+    (for ([m (in-range 2 (- n 1))])
+      (when (= (modulo n m) 0) 
+        (return #f)))
+    (return #t))))
+
+(define primes (stream-filter prime? (stream-rest nats)))
+</pre> 
+     <p> In an object-oriented setting like Python or Java, streams can be constructed from an interface: </p> 
+     <pre>
+interface Stream&lt;A&gt; {
+  public A first() ;
+  public Stream&lt;A&gt; rest() ;
+}
+</pre> 
+     <p> The <code>first()</code> method should be sure to cache its result, and if the stream is I/O-backed, then the <code>rest()</code> method should invoke the <code>first()</code> method. </p> [See also 
+     <a href="http://matt.might.net/articles/implementation-of-lazy-list-streams-in-scala/">my explanation of Streams in Scala</a>.] 
+     <h2>Cartesian products (tuples)</h2> 
+     <p> Cartesian products, or tuples, are ordered collections, where the location of the element in the collection determines its type. </p> 
+     <p> Cartesian products map onto records, structs and objects, with each index into the tuple occupying a field. </p> 
+     <p> For instance, <i>A</i> × <i>B</i> produces a set of pairs, where the first element is from the set <i>A</i>, and the second is from the set <i>B</i>. </p> 
+     <p> Individual tuples are denoted with parentheses. </p> 
+     <p> For example, (<i>a</i>, <i>b</i>, <i>c</i>) is a member of <i>A</i> × <i>B</i> × <i>C</i>. </p> 
+     <p> In Java, the type <i>A</i> × <i>B</i> would be a class: </p> 
+     <pre>
+class AtimesB {
+  public final A a ;
+  public final B b ;
+  
+  public AtimesB(A a, B b) {
+    this.a = a ;
+    this.b = b ;
+  }
+}
+</pre> 
+     <p> In Racket, this would be a struct: </p> 
+     <pre>
+(define-struct a×b (a b))
+</pre> 
+     <p> Python contains native tuple support: </p> 
+     <pre>
+&gt;&gt;&gt; x = (1,1,2,3)
+&gt;&gt;&gt; x[3]
+3
+</pre> 
+     <p> But, one might just as easily have defined a class: </p> 
+     <pre>
+class MyTuple:
+
+  def __init__(self,first,second,third,fourth):
+    self.first = first ;
+    self.second = second ;
+    self.third = third ;
+    self.fourth = fourth ;
+</pre> 
+     <p> Haskell provides native tuple support too: </p> 
+     <pre>
+Prelude&gt; let t = (1,2,3)
+Prelude&gt; t
+(1,2,3)
+</pre> 
+     <p> Haskell also allows for record-like data types, such as in the following two definitions: </p> 
+     <pre>
+data AB = Pair A B
+data AB' = Pair' { a :: A, b :: B }
+</pre> 
+     <p> Both definitions introduce constructors: </p> 
+     <pre>
+Pair :: A -&gt; B -&gt; AB
+Pair' :: A -&gt; B -&gt; AB'
+</pre> 
+     <p> The second definition introduces two extractors, one for each field: </p> 
+     <pre>
+a :: AB' -&gt; A
+b :: AB' -&gt; B
+</pre> 
+     <h2>Functions (maps)</h2> 
+     <p> Mathematical functions transform inputs to outputs. </p> 
+     <p> The set of functions from the set <i>A</i> into the set <i>B</i> is the set <i>A</i> ? <i>B</i>. </p> 
+     <p> Under the interpretation of (?) as an operator on sets, the signature: </p> 
+     <center> 
+      <i>f</i> : 
+      <i>X</i> ? 
+      <i>Y</i> 
+     </center> 
+     <p> can be interpreted as the function <i>f</i> is a member of the set <i>X</i> ? <i>Y</i>: </p> 
+     <center> 
+      <i>f</i> ? 
+      <i>X</i> ? 
+      <i>Y</i> 
+     </center> 
+     <p> In mathematical notation, there are several extant notations for application: </p> 
+     <center> 
+      <i>f</i>(
+      <i>x</i>) = 
+      <i>f</i> 
+      <i>x</i> = 
+      <i>f</i>.
+      <i>x</i> 
+     </center> 
+     <p> All of these are the application of the function <i>f</i> to the value <i>x</i>. </p> 
+     <p> In code, functions can translate into procedures and methods, but if they're finite, they can also translate into finite maps backed by hash tables or sorted, balanced tree maps. </p> 
+     <h3>Fuctions as code</h3> 
+     <p> Most of the time a mathematical function will map into a procedure in the underlying language. </p> 
+     <p> When a function is supposed to map into executable code, it's usually straightforward to make the mapping using the data structures and algorithms presented elsewhere in this guide. </p> 
+     <h3>Functions as maps</h3> 
+     <p> In some cases, mathematicians use functions as the formal analog of a hash table or a dictionary. For example: </p> 
+     <center> 
+      <i>f</i>[
+      <i>x</i> ? 
+      <i>y</i>] 
+     </center> 
+     <p> represents a function identical to <i>f</i> except that <i>x</i> maps to <i>y</i>. </p> 
+     <p> Please note that extending a function like this does not (and cannot) change the original function <i>f</i>! </p> 
+     <p> <a href="http://matt.might.net/articles/red-black-delete/">Immutable red-black tree map</a> are a great data structure for representing these finite functions meant to be extended. </p> 
+     <p> Once again, it is <em>not</em> safe to use the mutable sorted maps and hash tables provided by the Java library, or the mutable dictionaries provided by Python.</p> 
+     <p> Haskell provides the <code>Data.Map</code> library for this purpose, and Racket also offers <a href="http://docs.racket-lang.org/reference/hashtables.html">immutable hash maps</a>. </p> 
+     <p> Sometimes, it is acceptable to hijack the native notion of functions to get them to act like immutable dictionaries. For instance, in Python, we can define <code>extend</code>: </p> 
+     <pre>
+def extend (f, x, y):
+  return lambda xx: y if xx == x else f(xx)
+
+def empty(x): raise Exception("No such input")
+</pre> 
+     <p> so that the following works: </p> 
+     <pre>
+g = extend(extend(empty, 3, 4), 5, 6)
+
+print(g(3)) # prints 4
+print(g(5)) # prints 6
+</pre> 
+     <p> The disadvantage of taking over the internal notion of function like this is that one cannot enumerate the contents of the function, as with a hash or tree-backed formulation. </p> 
+     <h3>Immutable maps atop mutable structures</h3> 
+     <p> If a language already provides a good native map-like structure (like Python's dictionaries), then it is possible to exploit this structure through shallow copies every time the map is extended: </p> 
+     <pre>
+class DictMap:
+
+  def __init__(self, contents):
+    self.contents = contents
+
+  def extend(self,x,y):
+    contents_ = copy.copy(self.contents)
+    contents_[x] = y
+    return DictMap(contents_)
+
+  def __call__(self,x):
+    return self.contents[x] 
+</pre> 
+     <h2>Relations</h2> 
+     <p> Structurally, a relation <i>R</i> is a (possibly infinite) set of subset of some Cartesian product. </p> 
+     <p> The set of all relations over <i>A</i> × <i>B</i> is <i>P</i>(<i>A</i> × <i>B</i>). </p> 
+     <p> Computational encodings of relations center around understanding relations in terms of other data structures. </p> 
+     <p> In the special case where a relation relates elements of the same set, e.g. <i>R</i> ? <i>A</i> × <i>A</i>, then <i>R</i> defines a directed graph over nodes in <i>A</i>. </p> 
+     <p> Given a relation <i>R</i>, the notation: </p> 
+     <center> 
+      <i>R</i>(
+      <i>x</i>
+      <sub>1</sub>,...,
+      <i>x</i>
+      <sub>n</sub>) 
+     </center> 
+     <p> is equivalent to: </p> 
+     <center>
+       (
+      <i>x</i>
+      <sub>1</sub>,...,
+      <i>x</i>
+      <sub>n</sub>) ? 
+      <i>R</i>. 
+     </center> 
+     <p> There are three common ways to encode a relation computationally: as a collection, as a function and as a predicate. </p> 
+     <h3>Relations as collections</h3> 
+     <p> Structurally, a relation is a set of tuples, and for finite relations, an encoding as a set of tuples is reasonable. </p> 
+     <h3>Relations as functions</h3> 
+     <p> Given a relation <i>R</i> ? <i>A</i> × <i>B</i>, the following congruences allow a relation to be represented as a function: </p> 
+     <center> 
+      <i>P</i>(
+      <i>A</i> × 
+      <i>B</i>) ? 
+      <i>A</i> ? 
+      <i>P</i>(
+      <i>B</i>). 
+     </center> 
+     <p> This functional encoding of a relation is particularly popular for implementing the <a href="http://matt.might.net/articles/cek-machines/">transition relation of abstract machines</a>, which relates a machine state to all of its possible successors. </p> 
+     <h3>Relations as predicates</h3> 
+     <p> If one only needs to know whether or not some tuple is within the relation, then it is frequently most efficient to encode the relation as a predicate. </p> 
+     <p> This view is supported by another congruence: </p> 
+     <center> 
+      <i>P</i>(
+      <i>A</i> × 
+      <i>B</i>) ? 
+      <i>A</i> × 
+      <i>B</i> ? {
+      <b>true</b>,
+      <b>false</b>} 
+     </center> 
+     <a name="syntax"></a> 
+     <h2>Syntax</h2> 
+     <p> Syntactic sets are common within the fields of formal methods and programming languages. </p> 
+     <p> A syntactic definition for the set <i>E</i> uses the following form: </p> 
+     <center> 
+      <i>E</i> ::= 
+      <i>pat</i>
+      <sub>1</sub> | ... | 
+      <i>pat</i>
+      <sub>n</sub> 
+     </center> 
+     <p> where each syntactic pattern <i>pat</i> defines a new syntactic form for constructing members of the set <i>E</i>. </p> 
+     <p> A syntactic set is, in essence, a disjoint union with explicit tags. </p> 
+     <p> Viewing syntactic sets as sum types guides translation into code. </p> 
+     <h3>Syntactic set examples</h3> 
+     <p> For example, we can define a syntax for expression trees: </p> 
+     <center> 
+      <table> 
+       <tbody>
+        <tr> 
+         <td><i>E</i></td> 
+         <td>::=</td> 
+         <td><i>e</i> <code>+</code> <i>e</i></td> 
+        </tr> 
+        <tr> 
+         <td></td> 
+         <td>
+          <center>
+           |
+          </center></td> 
+         <td><i>e</i> <code>*</code> <i>e</i></td> 
+        </tr> 
+        <tr> 
+         <td></td> 
+         <td>
+          <center>
+           |
+          </center></td> 
+         <td> <i>n</i> </td> 
+        </tr> 
+       </tbody>
+      </table> 
+     </center> 
+     <p> We might then define an evaluator <i>eval</i> : <i>E</i> ? <i>N</i> on this set: </p> 
+     <center> 
+      <table> 
+       <tbody>
+        <tr>
+         <td><i>eval</i>(<i>e</i> <code>+</code> <i>e</i>)</td> 
+         <td> = <i>eval</i>(e) + <i>eval(e)</i></td>
+        </tr> 
+        <tr>
+         <td><i>eval</i>(<i>e</i> <code>*</code> <i>e</i>)</td> 
+         <td> = <i>eval</i>(e) × <i>eval(e)</i></td>
+        </tr> 
+        <tr>
+         <td><i>eval</i>(<i>n</i>)</td> 
+         <td> = <i>n</i></td>
+        </tr> 
+       </tbody>
+      </table> 
+     </center> 
+     <p> In Java (or any object-oriented language), this could become: </p> 
+     <pre>
+abstract class Exp {
+  abstract public int eval() ;
+}
+
+class Sum extends Exp {
+  public final Exp left ;
+  public final Exp right ;
+
+  public Sum(Exp left, Exp right) {
+    this.left = left ;
+    this.right = right ;
+  }
+
+  public int eval() {
+    return left.eval() + right.eval() ;
+  }
+}
+
+class Product extends Exp {
+  public final Exp left ;
+  public final Exp right ;
+
+  public Product(Exp left, Exp right) {
+    this.left = left ;
+    this.right = right ;
+  }
+
+  public int eval() {
+    return left.eval() * right.eval() ;
+  }
+}
+
+class Const extends Exp {
+  public int value ;
+
+  public Const(int value) {
+    this.value = value ;
+  }
+
+  public int eval() {
+    return value ;
+  }
+}
+</pre> 
+     <p> To define a sum type with explicit tags, one might use the following form: </p> 
+     <center> 
+      <table> 
+       <tbody>
+        <tr> 
+         <td><i>Kont</i></td> 
+         <td>::=</td> 
+         <td><b>letk</b>(<i>v</i>, <i>e<i>, <i>?</i>, <i>?</i>)</i></i></td> 
+        </tr> 
+        <tr> 
+         <td></td> 
+         <td>
+          <center>
+           |
+          </center></td> 
+         <td><b>seqk</b>(<i>e<i>, <i>?</i>, <i>?</i>)</i></i></td> 
+        </tr> 
+        <tr> 
+         <td></td> 
+         <td>
+          <center>
+           |
+          </center></td> 
+         <td><b>setk</b>(<i>v</i>,<i>e<i>, <i>?</i>, <i>?</i>)</i></i></td> 
+        </tr> 
+        <tr> 
+         <td></td> 
+         <td>
+          <center>
+           |
+          </center></td> 
+         <td> <b>halt</b> </td> 
+        </tr> 
+       </tbody>
+      </table> 
+     </center> 
+     <p> In Haskell, this structure could be: </p> 
+     <pre>
+data Kont = LetK Var Exp Env Kont
+         |  SeqK Exp Env Kont
+         |  SetK Var Exp Env Kont
+         |  Halt
+</pre> 
+     <p> In mathematics, the syntactic notation can only be used if the representative variables for each set (e.g. <i>?</i> for <i>Kont</i>, <i>?</i> for <i>Env</i>) have been clearly established, since in the Haskell notation, these types are required. </p> 
+     <h2>More resources</h2> 
+     <p> Chris Okasaki's <a href="http://www.amazon.com/gp/product/0521663504/ref=as_li_ss_tl?ie=UTF8&amp;tag=aboutmatthewm-20&amp;linkCode=as2&amp;camp=217145&amp;creative=399369&amp;creativeASIN=0521663504">Purely Functional Data Structures</a><img src="http://www.assoc-amazon.com/e/ir?t=aboutmatthewm-20&amp;l=as2&amp;o=1&amp;a=0521663504&amp;camp=217145&amp;creative=399369" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;"> is an essential reference: </p> 
+     <div class="graphic"> 
+      <a href="http://www.amazon.com/gp/product/0521663504/ref=as_li_ss_il?ie=UTF8&amp;tag=aboutmatthewm-20&amp;linkCode=as2&amp;camp=217145&amp;creative=399369&amp;creativeASIN=0521663504"><img border="0" src="http://ws.assoc-amazon.com/widgets/q?_encoding=UTF8&amp;Format=_SL160_&amp;ASIN=0521663504&amp;MarketPlace=US&amp;ID=AsinImage&amp;WS=1&amp;tag=aboutmatthewm-20&amp;ServiceVersion=20070822"></a>
+      <img src="http://www.assoc-amazon.com/e/ir?t=aboutmatthewm-20&amp;l=as2&amp;o=1&amp;a=0521663504&amp;camp=217145&amp;creative=399369" width="1" height="1" border="0" alt="" style="border:none !important; margin:0px !important;"> 
+     </div> 
+     <p> For a lengthy example, <a href="http://matt.might.net/articles/cek-machines/">my post on the CEK machine</a> shows how to encode a nontrivial discrete structure---an abstract machine for the lambda calculus---in Haskell. </p> 
+     <h2>Related posts</h2> 
+     <ul> 
+      <script>
+RenderTagLinks("math") ;
+</script> 
+     </ul> 
+     <script type="text/javascript">
+<!--
+// SyntaxHighlighter.all() ;
+//-->
+</script> 
+     <hr> 
+     <div id="footer-links">
+       [
+      <a href="../">article index</a>] [
+      <script>
+       var emailMatt = '<a href="mai'+'lto:matt-blog'+'@'+'migh'+'t.net">email me</a>'
+document.write(emailMatt);
+ //-->
+</script>] [
+      <a href="http://twitter.com/mattmight">@mattmight</a>] [
+      <a href="http://gplus.to/mattmight">+mattmight</a>] [
+      <a href="../feed.rss">rss</a>] 
+     </div> 
+    </div> 
+    <!-- /#content --> 
+   </div> 
+   <!-- /#content-container --> 
+   <div id="footer-ad" class="module fat-container"> 
+    <div class="fat-content"> 
+     <center> 
+      <script type="text/javascript"><!--
+google_ad_client = "pub-4400645483943138";
+/* Article footer banner */
+google_ad_slot = "3531754286";
+google_ad_width = 468;
+google_ad_height = 60;
+//-->
+</script> 
+      <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> 
+     </center> 
+    </div> 
+    <!-- /footer-ad --> 
+   </div> 
+   <!-- /footer-ad-container --> 
+   <div id="footer-linode" class="module fat-container"> 
+    <div class="fat-content"> 
+     <center>
+       matt.might.net is powered by 
+      <b><a href="http://www.linode.com/?r=bf5d4e7c8a1af61855b5227279a6744c3bde8a8a">linode</a></b> | 
+      <a href="../legal/">legal information</a> 
+     </center> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- /#body --> 
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script> 
+  <script type="text/javascript">
+var pageTracker = _gat._getTracker("UA-3661244-1");
+pageTracker._trackPageview();
+</script>   
+ </body>
+</html>

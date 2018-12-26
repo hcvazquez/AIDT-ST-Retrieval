@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="keywords" content="http, authentication, basic, digest, Node.js, npm"> 
+  <meta name="description" content="Node.js package for HTTP basic and digest access authentication"> 
+  <title>Node.js package for HTTP basic and digest access authentication</title> 
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico"> 
+  <link rel="stylesheet" href="/css/prism.css"> 
+  <link rel="stylesheet" href="/css/styles.css"> 
+  <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-48892246-3', 'http-auth.info');
+        ga('send', 'pageview');
+    </script> 
+ </head> 
+ <body> 
+  <div class="content"> 
+   <header> 
+    <h1>http-auth</h1> 
+    <h4>Node.js package for HTTP basic and digest access authentication</h4> 
+    <a class="github-fork-ribbon right-top" href="https://github.com/http-auth/http-auth" title="Fork me on GitHub">Fork me on GitHub</a> 
+   </header> 
+   <div class="page"> 
+    <h3>Installation</h3> 
+    <p>Via git (or downloaded tarball):</p> 
+    <pre><code class="language-bash">$ git clone git://github.com/http-auth/http-auth.git</code></pre> 
+    <p>or via <a href="https://npmjs.org/" target="_blank">npm</a>:</p> 
+    <pre><code class="language-bash">$ npm install http-auth</code></pre> 
+    <h3>Basic example</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Creating new HTTP server.
+http.createServer(basic, (req, res) =&gt; {
+    res.end(`Welcome to private area - ${req.user}!`);
+}).listen(1337);
+</code></pre> 
+    <h3>Custom authentication</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+        realm: "Simon Area."
+    }, (username, password, callback) =&gt; {
+        // Custom authentication.
+        // Use callback(error) if you want to throw async error.
+        callback(username === "Tina" &amp;&amp; password === "Bullock");
+    }
+);
+
+// Creating new HTTP server.
+http.createServer(basic, (req, res) =&gt; {
+    res.end(`Welcome to private area - ${req.user}!`);
+}).listen(1337);
+</code></pre> 
+    <h3><a target="_blank" href="http://expressjs.com/">express framework</a> integration</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Application setup.
+var app = express();
+app.use(auth.connect(basic));
+
+// Setup route.
+app.get('/', (req, res) =&gt; {
+    res.send(`Hello from express - ${req.user}!`);
+});
+</code></pre> 
+    <h3><a target="_blank" href="http://koajs.com/">koa framework</a> integration</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Final handler.
+app.use(function *(next) {
+    yield next;
+    this.body = `Hello from koa - ${this.req.user}!`;
+});
+
+// Enable auth.
+app.use(auth.koa(basic));
+</code></pre> 
+    <h3>For <a target="_blank" href="https://github.com/koajs/koa/tree/v2.x">koa@next</a> you can use <a href="https://github.com/http-auth/http-auth-koa">http-auth-koa</a></h3> 
+    <pre><code class="language-javascript">// Authentication module.
+import auth from 'http-auth'
+import koaAuth from 'http-auth-koa'
+const basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Koa setup.
+import Koa from 'koa'
+const app = new Koa();
+
+// Setup basic handler.
+app.use(async (ctx, next) =&gt; {
+    await next();
+    ctx.body = `Welcome to koa ${ctx.req.user}!`;
+});
+
+// Setup auth.
+app.use(koaAuth(basic));
+</code></pre> 
+    <h3><a target="_blank" href="http://hapijs.com/">hapi framework</a> integration</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+const auth = require('http-auth');
+
+// Setup auth.
+const basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Create server.
+const server = new Hapi.Server();
+server.connection({ port: 1337 });
+
+// Register auth plugin.
+server.register(auth.hapi());
+
+// Setup strategy.
+server.auth.strategy('http-auth', 'http', basic);
+
+// Setup route.
+server.route({
+    method: 'GET',
+    path: '/',
+    config: {
+        auth: 'http-auth',
+        handler: (request, reply) =&gt; {
+            reply(`Welcome from Hapi - ${request.auth.credentials.name}!`);
+        }
+    }
+});
+</code></pre> 
+    <h3>Protecting specific path</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Application setup.
+var app = express();
+
+// Setup route.
+app.get('/admin', auth.connect(basic), (req, res) =&gt; {
+    res.send(`Hello from admin area - ${req.user}!`);
+});
+
+// Setup route.
+app.get('/', (req, res) =&gt; {
+    res.send("Not protected area!");
+});
+</code></pre> 
+    <h3><a target="_blank" href="http://passportjs.org/">passport</a> integration</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Application setup.
+var app = express();
+
+// Setup strategy.
+var passport = require('passport');
+passport.use(auth.passport(basic));
+
+// Setup route.
+app.get('/', passport.authenticate('http', { session: false }),
+    (req, res) =&gt; {
+        res.end(`Welcome to private area - ${req.user}!`);
+    }
+);
+</code></pre> 
+    <h3><a target="_blank" href="https://github.com/nodejitsu/node-http-proxy/">http-proxy</a> integration</h3> 
+    <pre><code class="language-javascript">// Authentication module.
+var auth = require('http-auth');
+var basic = auth.basic({
+    realm: "Simon Area.",
+    file: __dirname + "/../data/users.htpasswd"
+});
+
+// Create your proxy server.
+httpProxy.createServer(basic, {
+    target: 'http://localhost:1338'
+}).listen(1337);
+
+// Create your target server.
+http.createServer((req, res) =&gt; {
+    res.end("Request successfully proxied!");
+}).listen(1338);
+</code></pre> 
+   </div> 
+   <footer>
+     Project is published under 
+    <a href="http://github.com/http-auth/http-auth/blob/master/LICENSE" target="_blank">MIT License</a> 
+   </footer> 
+  </div> 
+  <script src="/js/prism.js"></script>  
+ </body>
+</html>

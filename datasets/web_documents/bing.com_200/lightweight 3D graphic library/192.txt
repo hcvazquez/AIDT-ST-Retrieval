@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <title>Java games animation - creating animations in Java 2D</title> 
+  <link rel="stylesheet" href="/cfg/format2.css" type="text/css"> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="keywords" content="Java, Swing, tutorial, animation, programming, GUI, multiplatform"> 
+  <meta name="description" content="Java games animation chapter shows how to create animations 
+in Java using Java 2D."> 
+  <meta name="author" content="Jan Bodnar"> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-5536206-1', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+  <script src="https://apis.google.com/js/platform.js" async defer></script> 
+ </head> 
+ <body> 
+  <div class="container"> 
+   <div id="wide_ad" class="ltow"> 
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+    <!-- 160x600, August 2011 --> 
+    <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px" data-ad-client="ca-pub-9706709751191532" data-ad-slot="2484182563"></ins> 
+    <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> 
+   </div> 
+   <div class="content"> 
+    <header> 
+     <nav> 
+      <a href="/" title="Home">Home</a> 
+      <a href="..">Contents</a> 
+      <a title="Subscribe to ZetCode news" href="http://zetcode.us13.list-manage.com/subscribe?u=9def9ccd4c70dbbaf691f90fc&amp;id=6556210f80">Subscribe</a> 
+      <div class="nav_r"> 
+       <a href="../basics/">Previous</a> 
+       <a href="../movingsprites/">Next</a> 
+      </div> 
+     </nav> 
+    </header> 
+    <h1>Animation</h1> 
+    <p> In this part of the Java 2D games tutorial, we will work with animation. </p> 
+    <div class="social"> 
+     <div class="fb-like" data-href="http://zetcode.com/tutorials/javagamestutorial/animation/" data-layout="button_count" data-action="like" data-show-faces="false" data-share="true"></div> 
+     <div class="g-plusone" data-size="medium"></div> 
+     <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a> 
+     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id))
+{js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 
+'twitter-wjs');</script> 
+    </div> 
+    <h2>Animation</h2> 
+    <p> <em>Animation</em> is a rapid display of sequence of images which creates an illusion of movement. We will animate a star on our Board. We will implement the movement in three basic ways. We will use a Swing timer, a standard utility timer, and a thread. </p> 
+    <div class="large_rec"> 
+     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+     <!-- LargeSquare --> 
+     <ins class="adsbygoogle" style="display:inline-block;width:336px;height:280px" data-ad-client="ca-pub-9706709751191532" data-ad-slot="5070696322"></ins> 
+     <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> 
+    </div> 
+    <p> Animation is a complex subject in game programming. Java games are expected to run on multiple operating systems with different hardware specifications. Threads give the most accurate timing solutions. However, for our simple 2D games, other two options can be an option too. </p> 
+    <h2>Swing timer</h2> 
+    <p> In the first example we will use a Swing timer to create animation. This is the easiest but also the least effective way of animating objects in Java games. </p> 
+    <div class="codehead">
+     SwingTimerExample.java
+    </div> 
+    <pre class="code">
+package com.zetcode;
+
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+
+public class SwingTimerExample extends JFrame {
+
+    public SwingTimerExample() {
+        
+        initUI();
+    }
+    
+    private void initUI() {
+
+        add(new Board());
+        
+        setResizable(false);
+        pack();
+        
+        setTitle("Star");
+        setLocationRelativeTo(null);        
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
+
+    public static void main(String[] args) {
+        
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {                
+                JFrame ex = new SwingTimerExample();
+                ex.setVisible(true);                
+            }
+        });
+    }
+}
+</pre> 
+    <p> This is the main class for the code example. </p> 
+    <pre class="explanation">
+setResizable(false);
+pack();
+</pre> 
+    <p> The <code>setResizable()</code> sets whether the frame can be resized. The <code>pack()</code> method causes this window to be sized to fit the preferred size and layouts of its children. Note that the order in which these two methods are called is important. (The <code>setResizable()</code> changes the insets of the frame on some platforms; calling this method after the <code>pack()</code> method might lead to incorrect results—the star would not go precisely into the right-bottom border of the window.) </p> 
+    <div class="codehead">
+     Board.java
+    </div> 
+    <pre class="code">
+package com.zetcode;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+
+public class Board extends JPanel
+        implements ActionListener {
+
+    private final int B_WIDTH = 350;
+    private final int B_HEIGHT = 350;
+    private final int INITIAL_X = -40;
+    private final int INITIAL_Y = -40;
+    private final int DELAY = 25;
+
+    private Image star;
+    private Timer timer;
+    private int x, y;
+
+    public Board() {
+
+        initBoard();
+    }
+
+    private void loadImage() {
+
+        ImageIcon ii = new ImageIcon("star.png");
+        star = ii.getImage();
+    }
+
+    private void initBoard() {
+
+        setBackground(Color.BLACK);
+        setPreferredSize(new Dimension(B_WIDTH, B_HEIGHT));
+        setDoubleBuffered(true);
+
+        loadImage();
+        
+        x = INITIAL_X;
+        y = INITIAL_Y;
+        
+        timer = new Timer(DELAY, this);
+        timer.start();
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        drawStar(g);
+    }
+
+    private void drawStar(Graphics g) {
+
+        g.drawImage(star, x, y, this);
+        Toolkit.getDefaultToolkit().sync();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+
+        x += 1;
+        y += 1;
+
+        if (y &gt; B_HEIGHT) {
+
+            y = INITIAL_Y;
+            x = INITIAL_X;
+        }
+
+        repaint();
+    }
+}
+</pre> 
+    <p> In the <code>Board</code> class we move a star that from the upper-left corner to the right-bottom corner. </p> 
+    <pre class="explanation">
+private final int B_WIDTH = 350;
+private final int B_HEIGHT = 350;
+private final int INITIAL_X = -40;
+private final int INITIAL_Y = -40;
+private final int DELAY = 25;
+</pre> 
+    <p> Five constants are defined. The first two constants are the board width and height. The third and fourth are the initial coordinates of the star. The last one determines the speed of the animation. </p> 
+    <pre class="explanation">
+private void loadImage() {
+    
+    ImageIcon ii = new ImageIcon("star.png");
+    star = ii.getImage();        
+}
+</pre> 
+    <p> In the <code>loadImage()</code> method we create an instance of the <code>ImageIcon</code> class. The image is located in the project directory. The <code>getImage()</code> method will return the the <code>Image</code> object from this class. This object will be drawn on the board. </p> 
+    <pre class="explanation">
+setDoubleBuffered(true);
+</pre> 
+    <p> The <code>JPanel</code> component will use a buffer to paint. This means that all drawing will be done in memory first. Later the off-screen buffer will be copied to the screen. In this simple example, we might not notice any differences. </p> 
+    <pre class="explanation">
+timer = new Timer(DELAY, this);
+timer.start();
+</pre> 
+    <p> Here we create a Swing <code>Timer</code> class and call its <code>start()</code> method. Every <code>DELAY</code> ms the timer will call the <code>actionPerformed()</code> method. In order to use the <code>actionPerformed()</code> method, we must implement the <code>ActionListener</code> interface. </p> 
+    <pre class="explanation">
+@Override
+public void paintComponent(Graphics g) {
+    super.paintComponent(g);
+
+    drawStar(g);
+}
+</pre> 
+    <p> Custom painting is done in the <code>paintComponent()</code> method. Note that we also call the <code>paintComponent()</code> method of its parent. The actual painting is delegated to the drawStar() method. </p> 
+    <pre class="explanation">
+private void drawStar(Graphics g) {
+
+    g.drawImage(star, x, y, this);
+    Toolkit.getDefaultToolkit().sync();
+}
+</pre> 
+    <p> In the drawStar() method, we draw the image on the window with the usage of the <code>drawImage()</code> method. The <code>Toolkit.getDefaultToolkit().sync()</code> synchronises the painting on systems that buffer graphics events. Without this line, the animation might not be smooth on Linux. </p> 
+    <pre class="explanation">
+@Override
+public void actionPerformed(ActionEvent e) {
+
+    x += 1;
+    y += 1;
+
+    if (y &gt; B_HEIGHT) {
+
+        y = INITIAL_Y;
+        x = INITIAL_X;
+    }
+
+    repaint();
+}
+</pre> 
+    <p> The <code>actionPerformed()</code> method is repeatedly called by the timer. Inside the method, we increase the x and y values of the star object. Then we call the <code>repaint()</code> method which will cause the <code>paintComponent()</code> to be called. This way we regularly repaint the <code>Board</code> thus making the animation. </p> 
+    <figure> 
+     <img src="/img/gfx/javagames/star.png" alt="Star"> 
+     <figcaption>
+      Figure: Star
+     </figcaption> 
+    </figure> 
+    <h2>Utility timer</h2> 
+    <p> This is very similar to the previous way. We use the <code>java.util.Timer</code> instead of the <code>javax.Swing.Timer</code>. For Java Swing games this way should be more accurate. </p> 
+    <div class="codehead">
+     UtilityTimerExample.java
+    </div> 
+    <pre class="code">
+package com.zetcode;
+
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+
+public class UtilityTimerExample extends JFrame {
+
+    public UtilityTimerExample() {
+
+        initUI();
+    }
+    
+    private void initUI() {
+        
+        add(new Board());
+                        
+        setResizable(false);
+        pack();
+        
+        setTitle("Star");
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);        
+    }
+
+    public static void main(String[] args) {
+        
+        EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {                
+                JFrame ex = new UtilityTimerExample();
+                ex.setVisible(true);                
+            }
+        });
+    }
+}
+</pre> 
+    <p> This is the main class. </p> 
+    <div class="codehead">
+     Board.java
+    </div> 
+    <pre class="code">
+package com.zetcode;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
+
+
+public class Board extends JPanel  {
+
+    private final int B_WIDTH = 350;
+    private final int B_HEIGHT = 350;
+    private final int INITIAL_X = -40;
+    private final int INITIAL_Y = -40;    
+    private final int INITIAL_DELAY = 100;
+    private final int PERIOD_INTERVAL = 25;
+    
+    private Image star;
+    private Timer timer;
+    private int x, y;
+    
+    public Board() {
+    
+        
+        initBoard();        
+    }
+    
+    private void loadImage() {
+        
+        ImageIcon ii = new ImageIcon("star.png");
+        star = ii.getImage();        
+    }
+    
+    private void initBoard() {
+        
+        setBackground(Color.BLACK);
+        setPreferredSize(new Dimension(B_WIDTH, B_HEIGHT));
+        setDoubleBuffered(true);
+        
+        loadImage();
+
+        x = INITIAL_X;
+        y = INITIAL_Y;
+        
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new ScheduleTask(), 
+                INITIAL_DELAY, PERIOD_INTERVAL);        
+    }
+        
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        drawStar(g);
+    }
+    
+    private void drawStar(Graphics g) {
+        
+        g.drawImage(star, x, y, this);
+        Toolkit.getDefaultToolkit().sync();
+    }
+
+
+    private class ScheduleTask extends TimerTask {
+
+        @Override
+        public void run() {
+            x += 1;
+            y += 1;
+
+            if (y &gt; B_HEIGHT) {
+                y = INITIAL_Y;
+                x = INITIAL_X;
+            }
+            
+            repaint();
+        }
+    }
+}
+</pre> 
+    <p> In this example, the timer will regularly call the <code>run()</code> method of the <code>ScheduleTask</code> class. </p> 
+    <pre class="explanation">
+timer = new Timer();
+timer.scheduleAtFixedRate(new ScheduleTask(), 
+        INITIAL_DELAY, PERIOD_INTERVAL); 
+</pre> 
+    <p> Here we create a timer and schedule a task with a specific interval. There is an initial delay. </p> 
+    <pre class="explanation">
+@Override
+public void run() {
+    ...
+}
+</pre> 
+    <p> Each 10ms the timer will call this <code>run()</code> method. </p> 
+    <h2>Thread</h2> 
+    <p> Animating objects using a thread is the most effective and accurate way of animation. </p> 
+    <div class="codehead">
+     ThreadAnimationExample.java
+    </div> 
+    <pre class="code">
+package com.zetcode;
+
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+
+public class ThreadAnimationExample extends JFrame {
+
+    public ThreadAnimationExample() {
+
+        initUI();
+    }
+    
+    private void initUI() {
+        
+        add(new Board());
+
+        setResizable(false);
+        pack();
+        
+        setTitle("Star");    
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);        
+    }
+
+    public static void main(String[] args) {
+        
+        EventQueue.invokeLater(new Runnable() {
+            
+            @Override
+            public void run() {                
+                JFrame ex = new ThreadAnimationExample();
+                ex.setVisible(true);                
+            }
+        });
+    }
+}
+</pre> 
+    <p> This is the main class. </p> 
+    <div class="codehead">
+     Board.java
+    </div> 
+    <pre class="code">
+package com.zetcode;
+
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Toolkit;
+
+import javax.swing.ImageIcon;
+import javax.swing.JPanel;
+
+public class Board extends JPanel
+        implements Runnable {
+
+    private final int B_WIDTH = 350;
+    private final int B_HEIGHT = 350;
+    private final int INITIAL_X = -40;
+    private final int INITIAL_Y = -40;
+    private final int DELAY = 25;
+
+    private Image star;
+    private Thread animator;
+    private int x, y;
+
+    public Board() {
+
+        initBoard();
+    }
+
+    private void loadImage() {
+
+        ImageIcon ii = new ImageIcon("star.png");
+        star = ii.getImage();
+    }
+
+    private void initBoard() {
+
+        setBackground(Color.BLACK);
+        setPreferredSize(new Dimension(B_WIDTH, B_HEIGHT));
+        setDoubleBuffered(true);
+
+        loadImage();
+
+        x = INITIAL_X;
+        y = INITIAL_Y;
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+
+        animator = new Thread(this);
+        animator.start();
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        drawStar(g);
+    }
+
+    private void drawStar(Graphics g) {
+
+        g.drawImage(star, x, y, this);
+        Toolkit.getDefaultToolkit().sync();
+    }
+
+    private void cycle() {
+
+        x += 1;
+        y += 1;
+
+        if (y &gt; B_HEIGHT) {
+
+            y = INITIAL_Y;
+            x = INITIAL_X;
+        }
+    }
+
+    @Override
+    public void run() {
+
+        long beforeTime, timeDiff, sleep;
+
+        beforeTime = System.currentTimeMillis();
+
+        while (true) {
+
+            cycle();
+            repaint();
+
+            timeDiff = System.currentTimeMillis() - beforeTime;
+            sleep = DELAY - timeDiff;
+
+            if (sleep &lt; 0) {
+                sleep = 2;
+            }
+
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted: " + e.getMessage());
+            }
+
+            beforeTime = System.currentTimeMillis();
+        }
+    }
+}
+</pre> 
+    <p> In the previous examples, we executed a task at specific intervals. In this example, the animation will take place inside a thread. The <code>run()</code> method is called only once. This is why why we have a while loop in the method. From this method, we call the <code>cycle()</code> and the <code>repaint()</code> methods. </p> 
+    <pre class="explanation">
+@Override
+public void addNotify() {
+    super.addNotify();
+
+    animator = new Thread(this);
+    animator.start();
+}
+</pre> 
+    <p> The <code>addNotify()</code> method is called after our <code>JPanel</code> has been added to the <code>JFrame</code> component. This method is often used for various initialisation tasks. </p> 
+    <p> We want our game run smoothly, at constant speed. Therefore we compute the system time. </p> 
+    <pre class="explanation">
+timeDiff = System.currentTimeMillis() - beforeTime;
+sleep = DELAY - timeDiff;
+</pre> 
+    <p> The <code>cycle()</code> and the <code>repaint()</code> methods might take different time at various while cycles. We calculate the time both methods run and subtract it from the <code>DELAY</code> constant. This way we want to ensure that each while cycle runs at constant time. In our case, it is <code>DELAY</code> ms each cycle. </p> 
+    <p> This part of the Java 2D games tutorial covered animation. </p> 
+    <div class="big_hor"> 
+     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+     <!-- big_horizontal --> 
+     <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px" data-ad-client="ca-pub-9706709751191532" data-ad-slot="2904953388"></ins> 
+     <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> 
+    </div> 
+    <footer> 
+     <nav> 
+      <a href="/">Home</a> 
+      <a href="..">Contents</a> 
+      <a href="#">Top of Page</a> 
+      <div class="nav_r"> 
+       <a href="../basics/">Previous</a> 
+       <a href="../movingsprites/">Next</a> 
+      </div> 
+     </nav> 
+     <div class="signature"> 
+      <a href="/">ZetCode</a> last modified July 28, 2014 
+      <span class="copyright">© 2007 - 2017 Jan Bodnar</span> 
+      <span>Follow on <a href="https://www.facebook.com/zetcode7/">Facebook</a></span> 
+     </div> 
+    </footer> 
+   </div> 
+   <!-- content --> 
+  </div> 
+  <!-- container --> 
+  <!-- Silktide Cookie --> 
+  <script>
+    window.cookieconsent_options = {"message":"This website uses cookies to ensure you get the best experience on our website",
+    "dismiss":"Got it!","learnMore":"More info","link":null,"theme":"dark-floating"};
+</script> 
+  <div id="fb-root"></div> 
+  <script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>   
+ </body>
+</html>

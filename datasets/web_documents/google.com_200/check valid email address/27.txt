@@ -1,0 +1,119 @@
+<!doctype html>
+<!--[if lt IE 7 ]><html class="ie ie6" lang="en"> <![endif]-->
+<!--[if IE 7 ]><html class="ie ie7" lang="en"> <![endif]-->
+<!--[if IE 8 ]><html class="ie ie8" lang="en"> <![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!-->
+<html lang="en">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="google-site-verification" content="VikwqTxe7ybu1qSM7LFgIQpvHLN0_j-iVzaLqF88vEw"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Matt Swanson - How not to validate email addresses</title> 
+  <meta name="author" content="Matt Swanson"> 
+  <meta name="description" content="writing on software, book writeups and projects by a software engineer from Indianapolis"> 
+  <link rel="canonical" href="http://mdswanson.com/blog/2013/10/14/how-not-to-validate-email-addresses.html"> 
+  <link href="//fonts.googleapis.com/css?family=Nunito:400,700,300|Varela+Round" rel="stylesheet" type="text/css"> 
+  <link rel="shortcut icon" href="/static/favicon.png"> 
+  <link rel="alternate" type="application/rss+xml" title="Matt Swanson's Blog" href="https://mdswanson.com/atom.xml"> 
+  <link rel="stylesheet" href="/css/site.css?sha=153c0e7e33ff6cf1bf91c96753b700381ff646d4"> 
+ </head> 
+ <body> 
+  <section> 
+   <header class="navigation"> 
+    <a href="/" class="logo" title="ÄLG, a solitary moose."> <img src="/static/moose.png" alt="Moose"> </a> 
+    <nav> 
+     <ul> 
+      <li><a href="/">writing</a></li> 
+      <li><a href="/archive">archive</a></li> 
+      <li><a href="/about">about</a></li> 
+      <li class="no-bullet"><a href="/atom.xml">rss</a></li> 
+     </ul> 
+    </nav> 
+   </header> 
+   <article> 
+    <h1 class="title"> How not to validate email addresses </h1> 
+    <p class="subtitle"> <span> Series: <a href="/#delightful_products">delightful products</a> </span> <span class="date"> October 14, 2013 </span> </p> 
+    <div id="post">
+     <p>One task I’ve seen in nearly every web project I’ve worked on was: make sure this form field is a valid email address.</p> 
+     <p>Whether this is for creating an account or some other function inside your app (inviting others, sending reports, etc), email address validation seems totally reasonable on the surface.</p> 
+     <p>And it is a typical computer science-y problem. If you look around the internet, you will quickly find <a href="http://tools.ietf.org/html/rfc2822">RFC 2822</a>, a 47 page technical spec describing what a valid email address is. Or maybe you will find a regular expression that looks something like <code class="highlighter-rouge">^[_a-z0-9-]+(\.[_a-z0-9-]omg-whyyyyy$</code>.</p> 
+     <p>You can probably even find a library in your language of choice that implements a full, RFC 2822 compliant parser or wraps that unreadable 200 line regex.</p> 
+     <p>Both of these solutions are <strong>wrong and a waste of development hours</strong>.</p> 
+     <p>So what should you do instead?</p> 
+     <p>Just check for the existence of <code class="highlighter-rouge">@</code>. Every email address will have at least one of them and it is trivially easy to write this code.</p> 
+     <hr> 
+     <p>Let’s step back and talk about why you might want to validate an email address in the first place.</p> 
+     <p>The most common two reasons I hear are:</p> 
+     <ul> 
+      <li>To prevent fake/spam signups</li> 
+      <li>To make sure the real email account owner is the one signing up</li> 
+     </ul> 
+     <p>I think trying to prevent spammy signups is a pre-mature optimization, but let’s put that aside for now. Trying to prevent fake email addresses from getting into your app harms legitimate users.</p> 
+     <p>How sure are you that your complex validator is not going to have any false positives? People use Gmail’s tag-syntax (i.e. <code class="highlighter-rouge"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="731e12070758041b12071605160133141e121a1f5d101c1e">[email&nbsp;protected]</a></code>) to sign up for stuff all the time. Are you allowing those?</p> 
+     <p>How about <code class="highlighter-rouge"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ddfcb0bca9a9f9e0bcaab8aeb2b0b89db0bcb4b1f3bcb2b1f3bfb4a7">[email&nbsp;protected]</a></code>? Yep, that is a valid email address according to the spec.</p> 
+     <p>Especially in the early stages of a product, every user counts when you are trying to learn about how real people use your software. Don’t lose a potential customer in order to block a few spammers (if they really want to get in, they will just make tons of real email addresses anyways).</p> 
+     <p>The second reason really has nothing to do with the <em>format</em> of the email address, but it often gets conflated. If you require a user to confirm their email address, why don’t you just let them enter whatever they want and let fake emails bounce? Just make sure you tell the user they have to confirm their address to use your software.</p> 
+     <hr> 
+     <p>Here are my recommendations for how to use the time you saved from <em>not</em> implementing complex email address validation and dealing with bugs and support tickets from valid users that can’t sign up for your app.</p> 
+     <h1 id="detect-typos">Detect typos</h1> 
+     <p>How about checking for common domain typos? There is a really slick Javascript library called <a href="https://github.com/Kicksend/mailcheck">mailcheck</a> that handles this well.</p> 
+     <p><img src="https://mdswanson.com/static/mailcheck-example.png" alt="mailcheck example"></p> 
+     <p>Again, don’t be strict and auto-correct the address, but pointing out that <code class="highlighter-rouge"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9cfef3fedcfbf1f5fdf0b2fff3f1">[email&nbsp;protected]</a></code> is a typo is a win for user experience. You can even add custom domains easily — if you know the current user’s email is from “microsoft.com” and he tries to send a report to someone with a “microsotf.com” address, you can catch this!</p> 
+     <h1 id="be-more-accepting">Be more accepting</h1> 
+     <p>Have you ever copied an email address from your Outlook address book and tried to paste it into a form? It probably pasted something like <code class="highlighter-rouge">Matt Swanson &lt;<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="85e8e4f1f1c5e8e1f6f2e4ebf6eaebabe6eae8">[email&nbsp;protected]</a>&gt;</code> when you really just wanted the email part. That’s going to break some email validations.</p> 
+     <p>Does your app handle this case and extract the address for the user? No? Well, adding that sure seems more valuable than implementing the complex validation.</p> 
+     <hr> 
+     <p>Do you know any other UX improvements for email address fields? I’d love to hear them, let me know on <a href="http://twitter.com/_swanson">Twitter</a>.</p> 
+    </div> 
+    <hr class="fin"> 
+   </article> 
+   <footer> 
+    <div id="bio"> 
+     <div id="bio-image"> 
+      <img src="/static/mugshot.jpg" alt="Matt Swanson"> 
+     </div> 
+     <div id="bio-text"> 
+      <p>Hi. I'm <b>Matt Swanson</b>.</p> 
+      <p>I do things and sometimes write about it here. I'm a Software Engineer from Indiana and I ship code at <a href="http://www.sep.com/">SEP</a>.</p> 
+      <div id="bio-social"> 
+       <strike>
+        Stalk
+       </strike> Follow me: 
+       <div id="social-links"> 
+        <a title="swanson on Github" href="http://github.com/swanson/"><i class="fa fa-github-square"></i></a> 
+        <a title="swanson on Hacker News" href="http://news.ycombinator.com/user?id=swanson"><i class="fa fa-hacker-news"></i></a> 
+        <a title="_swanson on Twitter" href="http://twitter.com/_swanson"><i class="fa fa-twitter-square"></i></a> 
+        <a title="RSS feed" id="rss" href="/atom.xml"><i class="fa fa-rss-square"></i></a> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <aside> 
+     <h3>Further reading</h3> 
+     <ul class="posts"> 
+      <li><a href="/blog/2017/02/14/why-machine-learning-is-interesting.html">Software ate the world</a></li> 
+      <li><a href="/blog/2013/09/30/crappy-emails-make-me-sad.html">Crappy emails make me sad</a></li> 
+     </ul> 
+    </aside> 
+   </footer> 
+   <div id="fine-print"> 
+    <p> built with <a href="#">?</a>, <a href="http://jekyllrb.com/">Jekyll</a>, and <a href="https://github.com/swanson/swanson.github.com">GitHub Pages</a> — read the <a href="/legal">fine print</a> </p> 
+   </div> 
+  </section> 
+  <script>!function(e,t,r,n,c,h,o){function a(e,t,r,n){for(r='',n='0x'+e.substr(t,2)|0,t+=2;t<e.length;t+=2)r+=String.fromCharCode('0x'+e.substr(t,2)^n);return r}try{for(c=e.getElementsByTagName('a'),o='/cdn-cgi/l/email-protection#',n=0;n<c.length;n++)try{(t=(h=c[n]).href.indexOf(o))>-1&&(h.href='mailto:'+a(h.href,t+o.length))}catch(e){}for(c=e.querySelectorAll('.__cf_email__'),n=0;n<c.length;n++)try{(h=c[n]).parentNode.replaceChild(e.createTextNode(a(h.getAttribute('data-cfemail'),0)),h)}catch(e){}}catch(e){}}(document);</script>
+  <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-13005539-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>   
+ </body>
+</html>

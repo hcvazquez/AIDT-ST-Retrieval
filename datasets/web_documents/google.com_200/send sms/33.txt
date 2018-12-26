@@ -1,0 +1,1599 @@
+<!doctype html>
+<html xmlns:og="http://opengraphprotocol.org/schema/" xmlns:fb="http://www.facebook.com/2008/fbml" xmlns:article="http://ogp.me/ns/article" lang="en-US" itemscope itemtype="http://schema.org/Article">
+ <head> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="initial-scale=1"> 
+  <!-- This is Squarespace. -->
+  <!-- amir-boroumand-i3qa --> 
+  <base href=""> 
+  <meta charset="utf-8"> 
+  <title>Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js | Code by Amir</title> 
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico"> 
+  <link rel="canonical" href="https://www.codebyamir.com/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs"> 
+  <link rel="amphtml" href="https://www.codebyamir.com/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs?format=amp"> 
+  <meta property="og:site_name" content="Code by Amir"> 
+  <meta property="og:title" content="Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js"> 
+  <meta property="og:latitude" content="37.09024"> 
+  <meta property="og:longitude" content="-95.71289100000001"> 
+  <meta property="og:url" content="https://www.codebyamir.com/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:description" content="Overview
+
+In this article, we'll develop an automated solution that checks rental car 
+prices on the Costco Travel site. &nbsp;It will send us an SMS message with the 
+lowest price on a daily basis. &nbsp;
+
+TechnologiesAWS Lambda
+
+Lambda is Amazon's serverless compute platform which allows us to run o"> 
+  <meta property="og:image" content="http://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/?format=1000w"> 
+  <meta property="og:image:width" content="761"> 
+  <meta property="og:image:height" content="315"> 
+  <meta itemprop="name" content="Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js"> 
+  <meta itemprop="url" content="https://www.codebyamir.com/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs"> 
+  <meta itemprop="description" content="Overview
+
+In this article, we'll develop an automated solution that checks rental car 
+prices on the Costco Travel site. &nbsp;It will send us an SMS message with the 
+lowest price on a daily basis. &nbsp;
+
+TechnologiesAWS Lambda
+
+Lambda is Amazon's serverless compute platform which allows us to run o"> 
+  <meta itemprop="thumbnailUrl" content="http://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/?format=1000w"> 
+  <link rel="image_src" href="http://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/?format=1000w"> 
+  <meta itemprop="image" content="http://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/?format=1000w"> 
+  <meta name="twitter:title" content="Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js"> 
+  <meta name="twitter:image" content="http://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/?format=1000w"> 
+  <meta name="twitter:url" content="https://www.codebyamir.com/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:description" content="Overview
+
+In this article, we'll develop an automated solution that checks rental car 
+prices on the Costco Travel site. &nbsp;It will send us an SMS message with the 
+lowest price on a daily basis. &nbsp;
+
+TechnologiesAWS Lambda
+
+Lambda is Amazon's serverless compute platform which allows us to run o"> 
+  <meta name="description" content=""> 
+  <script type="text/javascript" src="//use.typekit.net/ik/AO06x_BjNdVhZosBCxK5w1XKx6nKhwM9kRrLHQAVKlCfe7SffFHN4UJLFRbh52jhWD9XZebaFRFRZQsKw2BcFcJ3FA4yjRiqjy7iMPG0jAuTSKuKda4ziAuydcbl-QFUjPoDSWmyScmDSeBRZPoRdhXCjAuTSKuKda4ziAuydcbl-QFUjPoDSWmyScmDSeBRZPoRdhXCjhNqZA4ojAuTSKoRdhXCdeNRjAUGdaFXOYiaikoydA8kOA4zScNudAB0ZfuTwaByO1FUiABkZWF3jAF8OcFzdPUaiaS0jhNqZA4ojAuTSKoRdhXK2YgkdayTdAIldcNhjPG4f5J7IMMjMkMfH6qJn3IbMg6IJMJ7fbKlMsMMeMj6MKG4fJCgIMMjgkMfH6qJtkGbMg6FJMJ7fbK3MsMMeMt6MKG4fJ3gIMMjIPMfqMe-3iawgb.js"></script> 
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script> 
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Montserrat:400|Open+Sans:700,700i,400i,400|Varela+Round:400"> 
+  <script type="text/javascript">SQUARESPACE_ROLLUPS = {};</script> 
+  <script>(function(rollups, name) { if (!rollups[name]) { rollups[name] = {}; } rollups[name].js = ["//static.squarespace.com/universal/scripts-compressed/common-4b8956cf329a8525fa2a-min.js"]; })(SQUARESPACE_ROLLUPS, 'squarespace-common');</script> 
+  <script crossorigin="anonymous" src="//static.squarespace.com/universal/scripts-compressed/common-4b8956cf329a8525fa2a-min.js"></script>
+  <script data-name="static-context">Static.SQUARESPACE_CONTEXT = {"facebookAppId":"314192535267336","rollups":{"squarespace-announcement-bar":{"css":"//static.squarespace.com/universal/styles-compressed/announcement-bar-d41d8cd98f00b204e9800998ecf8427e-min.css","js":"//static.squarespace.com/universal/scripts-compressed/announcement-bar-f777e82e492dcd092dde-min.js"},"squarespace-audio-player":{"css":"//static.squarespace.com/universal/styles-compressed/audio-player-e1b486594965430889af24c93ffeb509-min.css","js":"//static.squarespace.com/universal/scripts-compressed/audio-player-74dd4002bb36591c1576-min.js"},"squarespace-blog-collection-list":{"css":"//static.squarespace.com/universal/styles-compressed/blog-collection-list-d41d8cd98f00b204e9800998ecf8427e-min.css","js":"//static.squarespace.com/universal/scripts-compressed/blog-collection-list-5e07ad9c7ba992102ed3-min.js"},"squarespace-calendar-block-renderer":{"css":"//static.squarespace.com/universal/styles-compressed/calendar-block-renderer-bba726056d2134131ce9d3077c28adbe-min.css","js":"//static.squarespace.com/universal/scripts-compressed/calendar-block-renderer-ba5cb8caa12302801e3a-min.js"},"squarespace-chartjs-helpers":{"css":"//static.squarespace.com/universal/styles-compressed/chartjs-helpers-9935a41d63cf08ca108505d288c1712e-min.css","js":"//static.squarespace.com/universal/scripts-compressed/chartjs-helpers-63dc470fd9ec35c5b28a-min.js"},"squarespace-comments":{"css":"//static.squarespace.com/universal/styles-compressed/comments-228a7276f159133cc3ea801187c348fa-min.css","js":"//static.squarespace.com/universal/scripts-compressed/comments-785a2005b6731ce7dae6-min.js"},"squarespace-dialog":{"css":"//static.squarespace.com/universal/styles-compressed/dialog-aba41cb3c0853ecd2e2fb2303806d950-min.css","js":"//static.squarespace.com/universal/scripts-compressed/dialog-5930df8d4fc5de1b4169-min.js"},"squarespace-events-collection":{"css":"//static.squarespace.com/universal/styles-compressed/events-collection-bba726056d2134131ce9d3077c28adbe-min.css","js":"//static.squarespace.com/universal/scripts-compressed/events-collection-bd1247ef828e2196b2c5-min.js"},"squarespace-form-rendering-utils":{"js":"//static.squarespace.com/universal/scripts-compressed/form-rendering-utils-65e596cb459c6f0af33f-min.js"},"squarespace-gallery-collection-list":{"css":"//static.squarespace.com/universal/styles-compressed/gallery-collection-list-d41d8cd98f00b204e9800998ecf8427e-min.css","js":"//static.squarespace.com/universal/scripts-compressed/gallery-collection-list-04c1dc5a2dae4d7191ec-min.js"},"squarespace-image-zoom":{"css":"//static.squarespace.com/universal/styles-compressed/image-zoom-ae974921915aeccaff8ad60c60e19c31-min.css","js":"//static.squarespace.com/universal/scripts-compressed/image-zoom-160f33fbc569c7e0a8eb-min.js"},"squarespace-pinterest":{"css":"//static.squarespace.com/universal/styles-compressed/pinterest-d41d8cd98f00b204e9800998ecf8427e-min.css","js":"//static.squarespace.com/universal/scripts-compressed/pinterest-d9d7626884de99a104fe-min.js"},"squarespace-popup-overlay":{"css":"//static.squarespace.com/universal/styles-compressed/popup-overlay-b5d0993c85a2b5a604d02091b6b86723-min.css","js":"//static.squarespace.com/universal/scripts-compressed/popup-overlay-c40f65d23afd41854398-min.js"},"squarespace-product-quick-view":{"css":"//static.squarespace.com/universal/styles-compressed/product-quick-view-e115b32dc09c37fe6f7e98f568e08b74-min.css","js":"//static.squarespace.com/universal/scripts-compressed/product-quick-view-0aeea5ad47c577f36997-min.js"},"squarespace-products-collection-item-v2":{"css":"//static.squarespace.com/universal/styles-compressed/products-collection-item-v2-ae974921915aeccaff8ad60c60e19c31-min.css","js":"//static.squarespace.com/universal/scripts-compressed/products-collection-item-v2-efc0734a8ebb86faeb46-min.js"},"squarespace-products-collection-list-v2":{"css":"//static.squarespace.com/universal/styles-compressed/products-collection-list-v2-ae974921915aeccaff8ad60c60e19c31-min.css","js":"//static.squarespace.com/universal/scripts-compressed/products-collection-list-v2-38190acbc408ac9b10fe-min.js"},"squarespace-search-page":{"css":"//static.squarespace.com/universal/styles-compressed/search-page-9c747eeaabe96dacfea4932a63336f54-min.css","js":"//static.squarespace.com/universal/scripts-compressed/search-page-391642825d0e198268f8-min.js"},"squarespace-search-preview":{"js":"//static.squarespace.com/universal/scripts-compressed/search-preview-839823996c3a02c2e010-min.js"},"squarespace-share-buttons":{"js":"//static.squarespace.com/universal/scripts-compressed/share-buttons-96fd30213477f3a6007c-min.js"},"squarespace-simple-liking":{"css":"//static.squarespace.com/universal/styles-compressed/simple-liking-09fa291ec2800c97714f0d157fd0a6ca-min.css","js":"//static.squarespace.com/universal/scripts-compressed/simple-liking-a2e918f3312aa3779a4f-min.js"},"squarespace-social-buttons":{"css":"//static.squarespace.com/universal/styles-compressed/social-buttons-7a696232d1cd101fd62b5f174f9ae6ff-min.css","js":"//static.squarespace.com/universal/scripts-compressed/social-buttons-e3de6515cf9de999dbd3-min.js"},"squarespace-tourdates":{"css":"//static.squarespace.com/universal/styles-compressed/tourdates-d41d8cd98f00b204e9800998ecf8427e-min.css","js":"//static.squarespace.com/universal/scripts-compressed/tourdates-c722c7af9e4c9902ff72-min.js"},"squarespace-website-overlays-manager":{"css":"//static.squarespace.com/universal/styles-compressed/website-overlays-manager-d1b0ace5f5af772d643f5a6ce0056946-min.css","js":"//static.squarespace.com/universal/scripts-compressed/website-overlays-manager-a03a5453d47686668e23-min.js"}},"pageType":50,"website":{"id":"54dd763ce4b01f6b05bab7db","identifier":"amir-boroumand-i3qa","websiteType":1,"contentModifiedOn":1505316624615,"cloneable":false,"siteStatus":{},"language":"en-US","timeZone":"America/New_York","machineTimeZoneOffset":-14400000,"timeZoneOffset":-14400000,"timeZoneAbbr":"EDT","siteTitle":"Code by Amir","siteTagLine":"Amir Boroumand","siteDescription":"<p>Software Development Blog by Amir Boroumand</p>","location":{"mapZoom":13.0,"mapLat":37.09024,"mapLng":-95.71289100000001,"markerLat":37.09024,"markerLng":-95.71289100000001,"addressTitle":"","addressLine1":"","addressLine2":"","addressCountry":"United States"},"logoImageId":"578eacad6a4963e0421c3be4","shareButtonOptions":{"3":true,"1":true,"5":true,"4":true,"2":true,"6":true,"8":true,"7":true},"logoImageUrl":"//static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/578eacad6a4963e0421c3be4/1505316624615/","authenticUrl":"https://www.codebyamir.com","internalUrl":"https://amir-boroumand-i3qa.squarespace.com","baseUrl":"https://www.codebyamir.com","primaryDomain":"www.codebyamir.com","sslSetting":3,"isHstsEnabled":true,"socialAccounts":[{"serviceId":14,"userId":"EX6egTF8_Z","userName":"amirboroumand","screenname":"Amir Boroumand","addedOn":1423837925834,"profileUrl":"https://www.linkedin.com/in/amirboroumand","iconUrl":"https://media.licdn.com/mpr/mprx/0_5fq3TImo-4MJb-KVL7LYTejbKRfVwl3VbShYTeDn7ORINz9sddXDfHMZYv7XHnh9k290mfxz1hxT","iconEnabled":true,"serviceName":"linkedin"},{"serviceId":4,"userId":"710089421413081088","userName":"codebyamir","screenname":"Amir Boroumand","addedOn":1458318953128,"profileUrl":"https://twitter.com/codebyamir","iconUrl":"http://pbs.twimg.com/profile_images/710093702182641664/mJ6qY-0P_normal.jpg","collectionId":"56ec2e6920c647e7ec54d020","iconEnabled":true,"serviceName":"twitter"},{"serviceId":32,"screenname":"Medium","addedOn":1496778881992,"profileUrl":"https://medium.com/@codebyamir","iconEnabled":true,"serviceName":"medium"},{"serviceId":23,"userId":"5330669","userName":"codebyamir","screenname":"Amir Boroumand","addedOn":1496778909476,"profileUrl":"https://github.com/codebyamir","iconUrl":"https://avatars2.githubusercontent.com/u/5330669?v=3","iconEnabled":true,"serviceName":"github"},{"serviceId":2,"userId":"1491565794","screenname":"Amir Boroumand","addedOn":1502756374943,"profileUrl":"http://www.facebook.com/137015600233933","iconUrl":"http://graph.facebook.com/1491565794/picture?type=square","metaData":{"service":"facebook"},"iconEnabled":true,"serviceName":"facebook"}],"typekitId":"","statsMigrated":false,"imageMetadataProcessingEnabled":false,"screenshotId":"e6571faa"},"websiteSettings":{"id":"54dd763ce4b01f6b05bab7de","websiteId":"54dd763ce4b01f6b05bab7db","type":"Personal","subjects":[],"country":"US","state":"PA","simpleLikingEnabled":true,"mobileInfoBarSettings":{"isContactEmailEnabled":false,"isContactPhoneNumberEnabled":false,"isLocationEnabled":false,"isBusinessHoursEnabled":false},"commentLikesAllowed":false,"commentAnonAllowed":false,"commentThreaded":true,"commentApprovalRequired":false,"commentAvatarsOn":false,"commentSortType":2,"commentFlagThreshold":0,"commentFlagsAllowed":false,"commentEnableByDefault":true,"commentDisableAfterDaysDefault":0,"disqusShortname":"","commentsEnabled":true,"contactPhoneNumber":"","businessHours":{"monday":{"text":"","ranges":[{}]},"tuesday":{"text":"","ranges":[{}]},"wednesday":{"text":"","ranges":[{}]},"thursday":{"text":"","ranges":[{}]},"friday":{"text":"","ranges":[{}]},"saturday":{"text":"","ranges":[{}]},"sunday":{"text":"","ranges":[{}]}},"storeSettings":{"returnPolicy":null,"termsOfService":null,"privacyPolicy":null,"orderRefundedSubjectFormat":"%s: Order #%o Refunded","orderRefundedTitleFormat":"Order Refunded: #%o","paymentSettings":{},"expressCheckout":false,"useLightCart":false,"showNoteField":false,"shippingCountryDefaultValue":"US","billToShippingDefaultValue":false,"showShippingPhoneNumber":true,"isShippingPhoneRequired":false,"showBillingPhoneNumber":true,"isBillingPhoneRequired":false,"multipleQuantityAllowedForServices":true,"currenciesSupported":["CHF","HKD","MXN","EUR","DKK","USD","CAD","MYR","NOK","THB","AUD","SGD","ILS","PLN","GBP","CZK","SEK","NZD","PHP","RUB"],"defaultCurrency":"USD","selectedCurrency":"USD","measurementStandard":1,"orderConfirmationInjectCode":"","showCustomCheckoutForm":false,"enableMailingListOptInByDefault":true,"contactLocation":{"addressLine1":"","addressLine2":"","addressCountry":""},"businessName":"Code by Amir","sameAsRetailLocation":false,"businessId":"","isLive":false},"useEscapeKeyToLogin":false,"ssBadgeType":1,"ssBadgePosition":4,"ssBadgeVisibility":1,"ssBadgeDevices":1,"pinterestOverlayOptions":{"mode":"disabled"},"ampEnabled":true},"cookieSettings":{"isRestrictiveCookiePolicyEnabled":false},"websiteCloneable":false,"collection":{"title":"Software Development Blog","id":"54dd7f7ce4b06247416446a9","fullUrl":"/","publicCommentCount":0,"type":1},"item":{"title":"Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js","id":"598af6687131a5274bdb1bc1","fullUrl":"/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs","publicCommentCount":0,"commentState":1,"recordType":1},"subscribed":false,"appDomain":"squarespace.com","templateTweakable":true,"tweakJSON":{"outerPadding":"100px","pagePadding":"80px","product-gallery-auto-crop":"true","product-image-auto-crop":"false","topPadding":"40px"},"templateId":"50521cf884aeb45fa5cfdb80","pageFeatures":[1,2,4],"impersonatedSession":false,"demoCollections":[{"collectionId":"5052176b84aeb45fa5cfcc90","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc91","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc8a","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc94","deleted":true},{"collectionId":"506f288ae4b085c259ac5780","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc8e","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc87","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc8f","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc8c","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc93","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc86","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc92","deleted":true},{"collectionId":"50710289e4b04b0e1038e449","deleted":true},{"collectionId":"5112b282e4b0790fcd3b0e6b","deleted":true},{"collectionId":"5052176b84aeb45fa5cfcc95","deleted":true},{"collectionId":"5214d2dce4b09480ccb68d5a","deleted":true}],"isFacebookTab":false,"tzData":{"zones":[[-300,"US","E%sT",null]],"rules":{"US":[[1967,2006,null,"Oct","lastSun","2:00","0","S"],[1987,2006,null,"Apr","Sun>=1","2:00","1:00","D"],[2007,"max",null,"Mar","Sun>=8","2:00","1:00","D"],[2007,"max",null,"Nov","Sun>=1","2:00","0","S"]]}},"useNewImageLoader":true};</script>
+  <script type="text/javascript"> SquarespaceFonts.loadViaContext(); Squarespace.load(window);</script>
+  <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="https://www.codebyamir.com/blog?format=RSS"> 
+  <script type="application/ld+json">{"@context":"http://schema.org","@type":"WebSite","url":"https://www.codebyamir.com","name":"Code by Amir","description":"<p>Software Development Blog by Amir Boroumand</p>","image":"//static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/578eacad6a4963e0421c3be4/1505316624615/"}</script>
+  <script type="application/ld+json">{"@context":"http://schema.org","@type":"Organization","legalName":"Code by Amir","address":"United States","email":"","telephone":""}</script>
+  <script type="application/ld+json">{"@context":"http://schema.org","@type":"LocalBusiness","address":"","image":"https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/578eacad6a4963e0421c3be4/1505316624615/","name":"Code by Amir","openingHours":", , , , , , "}</script>
+  <!--[if gte IE 9]> <link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&part=1"/><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&part=2"/><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&part=3"/><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&part=4"/><![endif]--> 
+  <!--[if lt IE 9]><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&noMedia=true&part=1"/><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&noMedia=true&part=2"/><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&noMedia=true&part=3"/><link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&filterFeatures=false&noMedia=true&part=4"/><![endif]--> 
+  <!--[if !IE]> -->
+  <link rel="stylesheet" type="text/css" href="//static1.squarespace.com/static/sitecss/54dd763ce4b01f6b05bab7db/41/50521cf884aeb45fa5cfdb80/54dd7d36e4b0779d1ecd5f9d/920-05142015/1505250181730/site.css?&amp;filterFeatures=false">
+  <!-- <![endif]--> 
+  <meta name="google-site-verification" content="QzUuR0kldjnr31FqLKtTmBhj3rIb7L-hsC9hVxTswOY"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/themes/prism-coy.min.css"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/plugins/command-line/prism-command-line.min.css"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/plugins/line-numbers/prism-line-numbers.min.css"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/plugins/line-highlight/prism-line-highlight.min.css">
+  <script type="text/javascript"> var _gaq = _gaq || []; _gaq.push(['_setAccount', 'UA-43665771-4']); _gaq.push(['_trackPageview']); (function() { var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s); })(); </script>
+  <!-- End of Squarespace Headers --> 
+  <script src="https://static1.squarespace.com/static/ta/5052176b84aeb45fa5cfcc83/920/scripts/site-bundle.js" type="text/javascript"></script> 
+ </head> 
+ <body class="show-products-category-navigation   page-borders-none canvas-style-normal  header-subtitle-custom banner-alignment-right blog-layout-right-sidebar project-layout-left-sidebar thumbnails-on-open-page-show-all social-icon-style-round  hide-info-footer        event-show-past-events event-thumbnails event-thumbnail-size-32-standard event-date-label  event-list-show-cats event-list-date event-list-time event-list-address   event-icalgcal-links  event-excerpts  event-item-back-link    product-list-titles-under product-list-alignment-center product-item-size-32-standard  product-gallery-size-11-square product-gallery-auto-crop show-product-price show-product-item-nav product-social-sharing newsletter-style-dark hide-opentable-icons opentable-style-dark small-button-style-solid small-button-shape-pill medium-button-style-solid medium-button-shape-pill large-button-style-solid large-button-shape-square image-block-poster-text-alignment-center image-block-card-dynamic-font-sizing image-block-card-content-position-center image-block-card-text-alignment-left image-block-overlap-dynamic-font-sizing image-block-overlap-content-position-center image-block-overlap-text-alignment-left image-block-collage-dynamic-font-sizing image-block-collage-content-position-top image-block-collage-text-alignment-left image-block-stack-dynamic-font-sizing image-block-stack-text-alignment-left button-style-solid button-corner-style-square tweak-product-quick-view-button-style-floating tweak-product-quick-view-button-position-bottom tweak-product-quick-view-lightbox-excerpt-display-truncate tweak-product-quick-view-lightbox-show-arrows tweak-product-quick-view-lightbox-show-close-button tweak-product-quick-view-lightbox-controls-weight-light native-currency-code-usd view-item collection-54dd7f7ce4b06247416446a9 collection-type-blog collection-layout-default mobile-style-available logo-image" id="item-598af6687131a5274bdb1bc1"> 
+  <div id="canvas"> 
+   <div id="mobileNav" class=""> 
+    <div class="wrapper"> 
+     <nav class="main-nav mobileNav">
+      <ul> 
+       <li class="blog-collection active-link"> <a href="/">Blog</a> </li> 
+       <li class="page-collection"> <a href="/projects/">Projects</a> </li> 
+       <li class="page-collection"> <a href="/resume/">Resume</a> </li> 
+       <li class="page-collection"> <a href="/hire-me/">Hire Me</a> </li> 
+       <li class="page-collection"> <a href="/about/">About</a> </li> 
+       <li class="page-collection"> <a href="/contact/">Contact</a> </li> 
+      </ul> 
+     </nav> 
+    </div> 
+   </div> 
+   <div id="mobileMenuLink">
+    <a>Menu</a>
+   </div> 
+   <header id="header" class="clear"> 
+    <div id="upper-logo"> 
+     <h1 class="logo" data-content-field="site-title"> <a href="/"><img src="//static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/578eacad6a4963e0421c3be4/1505316624615/?format=1500w" alt="Code by Amir"></a> </h1> 
+    </div> 
+    <script>
+      if (parseInt(Y.one('body').getComputedStyle('width'),10) <= 640) {
+        Y.use('squarespace-ui-base', function(Y) {
+          Y.one("#upper-logo .logo").plug(Y.Squarespace.TextShrink, {
+            parentEl: Y.one('#upper-logo')
+          });
+        });
+      }
+      </script> 
+    <div class="site-info" data-content-field="business-information"> 
+     <div class="site-address">
+      Street Address
+     </div> 
+     <div class="site-city-state">
+      City, State, Zip
+     </div> 
+     <div class="site-phone">
+      Phone Number
+     </div> 
+    </div> 
+    <div class="site-tag-line"> 
+     <span>Amir Boroumand</span> 
+    </div> 
+    <div class="custom-info"> 
+     <div class="sqs-layout sqs-grid-12 columns-12" data-layout-label="Header Subtitle: Custom Content" data-type="block-field" data-updated-on="1496777065146" id="customInfoBlock">
+      <div class="row sqs-row">
+       <div class="col sqs-col-12 span-12">
+        <div class="sqs-block horizontalrule-block sqs-block-horizontalrule" data-block-type="47" id="block-yui_3_17_2_2_1496776559597_32203">
+         <div class="sqs-block-content">
+          <hr>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div> 
+    </div> 
+    <div id="lower-logo"> 
+     <h1 class="logo" data-content-field="site-title"><a href="/"><img src="//static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/578eacad6a4963e0421c3be4/1505316624615/?format=1500w" alt="Code by Amir"></a></h1> 
+    </div> 
+    <script>
+        Y.use('squarespace-ui-base', function(Y) {
+          Y.one("#lower-logo .logo").plug(Y.Squarespace.TextShrink, {
+            parentEl: Y.one('#lower-logo')
+          });
+        });
+      </script> 
+    <div id="topNav"> 
+     <nav class="main-nav" data-content-field="navigation"> 
+      <ul> 
+       <li class="blog-collection active-link"> <a href="/">Blog</a> </li> 
+       <li class="page-collection"> <a href="/projects/">Projects</a> </li> 
+       <li class="page-collection"> <a href="/resume/">Resume</a> </li> 
+       <li class="page-collection"> <a href="/hire-me/">Hire Me</a> </li> 
+       <li class="page-collection"> <a href="/about/">About</a> </li> 
+       <li class="page-collection"> <a href="/contact/">Contact</a> </li> 
+      </ul> 
+      <div class="page-divider"></div> 
+     </nav> 
+    </div> 
+   </header> 
+   <div class="page-divider top-divider"></div> 
+   <!-- // page image or divider --> 
+   <section id="page" class="clear" role="main" data-content-field="main-content" data-collection-id="54dd7f7ce4b06247416446a9" data-edit-main-image="Banner"> 
+    <!-- // CATEGORY NAV --> 
+    <div class="article-wrapper"> 
+     <article class="hentry promoted promoted-block-image category-back-end tag-aws tag-javascript tag-node author-amir-boroumand post-type-text" id="article-598af6687131a5274bdb1bc1" data-item-id="598af6687131a5274bdb1bc1"> 
+      <!--POST HEADER--> 
+      <header> 
+       <h1 class="entry-title" itemprop="headline" data-content-field="title"> <a href="/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs">Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js</a> </h1> 
+       <div class="meta"> 
+        <span class="date"><time class="published dt-published" datetime="2017-08-10" itemprop="datePublished" pubdate>August 10, 2017</time></span> 
+        <span class="author"><a href="/?author=521d7662e4b0692e6a862f23" rel="author">Amir Boroumand</a></span> 
+       </div> 
+      </header> 
+      <!--SPECIAL CONTENT--> 
+      <div class="special-content">
+       <div class="sqs-layout sqs-grid-12 columns-12" data-layout-label="Promoted Block" data-type="promoted-block" id="promoted-block-598af6687131a5274bdb1bc1">
+        <div class="row sqs-row">
+         <div class="col sqs-col-12 span-12">
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_2_1502411887976_14390">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:761.0px;"> 
+              <div style="padding-bottom:41.392906188964844%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db459e58c627d2527c455/1502484087933/" data-image-dimensions="761x315" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598db459e58c627d2527c455" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div> 
+      <!--POST BODY--> 
+      <div class="body entry-content">
+       <div class="sqs-layout sqs-grid-12 columns-12" data-layout-label="Post Body" data-type="item" data-updated-on="1502279695262" id="item-598af6687131a5274bdb1bc1">
+        <div class="row sqs-row">
+         <div class="col sqs-col-12 span-12">
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-582d15eb222edce9071d">
+           <div class="sqs-block-content">
+            <h1>Overview</h1>
+            <p>In this article, we'll develop an automated solution that checks rental car prices on the Costco Travel site. &nbsp;It will send us an SMS message with the lowest price on a daily basis. &nbsp;</p>
+            <h1>Technologies</h1>
+            <h2>AWS Lambda</h2>
+            <p>Lambda is Amazon's serverless compute platform which allows us to run our code without the need to rely on servers. &nbsp;&nbsp;It supports code written in Node.js, Java, C#, and Python.&nbsp;</p>
+            <p>For our example, we'll be using Node.js which is the server runtime for JavaScript.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_2_1502411887976_18583">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:2500.0px;"> 
+              <div style="padding-bottom:31.240001678466797%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598cff1846c3c4d3316ab676/1502412577170/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598cff1846c3c4d3316ab676/1502412577170/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598cff1846c3c4d3316ab676/1502412577170/" data-image-dimensions="2500x781" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598cff1846c3c4d3316ab676" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_2_1502411887976_18859">
+           <div class="sqs-block-content">
+            <h2>AWS SNS</h2>
+            <p>SNS is Amazon's notification service and allows us to send SMS messages from Lambda.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_2_1502411887976_40690">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:2500.0px;"> 
+              <div style="padding-bottom:32.31999969482422%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d0047d482e936774a46cb/1502412877675/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d0047d482e936774a46cb/1502412877675/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d0047d482e936774a46cb/1502412877675/" data-image-dimensions="2500x808" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598d0047d482e936774a46cb" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_2_1502411887976_40967">
+           <div class="sqs-block-content">
+            <p>SMS messaging is not available in all regions. &nbsp; For more details, check <a href="http://docs.aws.amazon.com/sns/latest/dg/sms_supported-countries.html">Supported Regions and Countries</a>&nbsp;from the <em>Amazon SNS Developer Guide</em>.</p>
+            <h1>Configuring SNS</h1>
+            <p>In this section, we'll walk through the steps to configure SNS.</p>
+            <h2>Create a Topic</h2>
+            <p>Topics are basically lists of subscriptions that we can publish messages to. &nbsp;</p>
+            <p>In the SNS dashboard, click on <strong>Create topic.</strong></p>
+            <p>Let's create a topic named NotifyMe. &nbsp;&nbsp;</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_9_1502415822318_42793">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:894.0px;"> 
+              <div style="padding-bottom:35.34675598144531%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc62a893fc081942239ba/1502463533419/Screen+Shot+2017-08-10+at+10.33.55+PM.png" alt="Screen Shot 2017-08-10 at 10.33.55 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 10.33.55 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc62a893fc081942239ba/1502463533419/Screen+Shot+2017-08-10+at+10.33.55+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc62a893fc081942239ba/1502463533419/Screen+Shot+2017-08-10+at+10.33.55+PM.png" data-image-dimensions="894x316" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dc62a893fc081942239ba" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_9_1502415822318_43070">
+           <div class="sqs-block-content">
+            <p>Each topic is assigned a unique identifier called a <em>Topic ARN</em>. &nbsp; Make note of this since we'll need it later in our code.</p>
+            <p>The topic ARN will look something like this:</p>
+            <pre>arn:aws:sns:us-east-1:000000000000:NotifyMe</pre>
+            <h2>Create a Subscription</h2>
+            <ul>
+             <li>Click on <strong>Create Subscription</strong></li>
+             <li>Select <em>SMS</em> from the <strong>Protocol</strong> dropdown list. &nbsp;If SMS is not listed, then the region does not support it.</li>
+             <li>Enter a cell phone number in the <strong>Endpoint</strong> field</li>
+            </ul>
+            <p>A confirmation text message will be sent to the number.&nbsp;</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_9_1502415822318_40166">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:895.0px;"> 
+              <div style="padding-bottom:39.32960891723633%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc660bebafb14605301e8/1502463588844/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc660bebafb14605301e8/1502463588844/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc660bebafb14605301e8/1502463588844/" data-image-dimensions="895x352" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dc660bebafb14605301e8" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_9_1502415822318_40444">
+           <div class="sqs-block-content">
+            <h1>Costco Travel site</h1>
+            <p>Let's take a look at the Costco Travel site. &nbsp; The <a href="https://www.costcotravel.com/h=4005">form</a> on the Rental Cars tab asks for some standard information:</p>
+            <ul>
+             <li>Pickup location</li>
+             <li>Dropoff location (if different)</li>
+             <li>Pickup date/time</li>
+             <li>Dropoff date/time</li>
+            </ul>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_5_1502279250768_6469">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:1162.0px;"> 
+              <div style="padding-bottom:37.435455322265625%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc5e2cd39c34327e50dcf/1502463468518/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc5e2cd39c34327e50dcf/1502463468518/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc5e2cd39c34327e50dcf/1502463468518/" data-image-dimensions="1162x435" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dc5e2cd39c34327e50dcf" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_5_1502279250768_7877">
+           <div class="sqs-block-content">
+            <h1>Trip Details</h1>
+            <p>Suppose we're planning a trip to California in 2018, and we're flying into LAX. &nbsp; &nbsp;</p>
+            <p>Let's define our search criteria:</p>
+            <pre>Pickup location: LAX
+Dropoff location: LAX
+
+Pickup date: 3/22/2018
+Pickup time: 10:00 AM
+
+Dropoff date: 3/26/2018
+Dropoff time: 10:00 AM</pre>
+            <p>We can see below that the lowest price is $171.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_8_1502337929691_17472">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:1025.0px;"> 
+              <div style="padding-bottom:73.26829528808594%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc6c659cc6834fc559813/1502463692188/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc6c659cc6834fc559813/1502463692188/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dc6c659cc6834fc559813/1502463692188/" data-image-dimensions="1025x751" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dc6c659cc6834fc559813" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_8_1502337929691_17750">
+           <div class="sqs-block-content">
+            <h1>How the Form Works</h1>
+            <p>When the page containing the search form loads, the web server sends a cookie in its response header named <em>Csrf-token. </em>&nbsp;This token will be used by the browser during form submission.&nbsp;&nbsp;</p>
+            <p>(Read more about CSRF in the article titled <a href="https://www.codebyamir.com/blog/understanding-preventing-csrf">Understanding &amp; Preventing CSRF Attacks</a>)</p>
+            <p>The "Find My Car"&nbsp;button on the search form submits a POST request to the following page:</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_27_1502393827572_10670">
+           <div class="sqs-block-content">
+            <pre><code class="language-markup">https://www.costcotravel.com/rentalCarSearch.act
+</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_27_1502393827572_10738">
+           <div class="sqs-block-content">
+            <p>This URL requires that form submissions include the CSRF token. &nbsp;</p>
+            <p>However, there's a page that doesn't require a CSRF token located at:</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_29_1502393827572_24788">
+           <div class="sqs-block-content">
+            <pre><code class="language-markup">https://www.costcotravel.com/carSearch.act</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_29_1502393827572_24855">
+           <div class="sqs-block-content">
+            <p>We'll be using the second page for our solution.</p>
+            <h1>NPM Modules</h1>
+            <p>NPM is the package manager that comes bundled with the Node runtime. &nbsp; The latest version of Node can be downloaded from <a href="https://nodejs.org/en/download/">here</a>.</p>
+            <p>We'll be using a couple packages to make our life easier:</p>
+            <ul>
+             <li><a href="https://www.npmjs.com/package/request">request</a>&nbsp;- create http requests with form data with no fuss</li>
+             <li><a href="https://www.npmjs.com/package/cheerio">cheerio</a> - parse the HTML page returned form the server using standard selector syntax</li>
+            </ul>
+            <p>These can be installed using the following commands in our project folder:</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_8_1502337929691_39314">
+           <div class="sqs-block-content">
+            <pre class="command-line" data-user="amir" data-host="dev01"><code class=" language-bash">npm init
+npm install request
+npm install cheerio</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_8_1502337929691_39380">
+           <div class="sqs-block-content">
+            <h1>Code</h1>
+            <p>Here's the code that does all the heavy lifting for us.</p>
+            <h2>index.js</h2>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_4_1502337929691_8589">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript line-numbers">'use strict';
+
+console.log("Loading function");
+
+const request = require('request');
+const cheerio = require('cheerio');
+const AWS = require("aws-sdk");
+
+AWS.config.region = 'us-east-1';
+
+const formData = {
+  'cs': 1,
+  'pickupCity': process.env.AIRPORT,
+  'pickupAsAirport': 'True',
+  'dropoffCity': process.env.AIRPORT,
+  'dropoffAsAirport': 'True',
+  'pickupDate': process.env.PICKUP_DATE,
+  'dropoffDate': process.env.PICKUP_DATE,
+  'pickupTime': process.env.TIME,
+  'dropoffTime': process.env.TIME,
+  'driverAge': 25
+};
+
+const url = 'https://www.costcotravel.com/carSearch.act';
+
+const options = {
+  url: url,
+  formData: formData,
+  'User-Agent': 'codebyamir.com'
+};
+
+exports.handler = function (event, context, callback) {
+
+  request.post(options, function reqCallback(err, httpResponse, body) {
+    if (err) {
+      const error = new Error("Form submission failed");
+      callback(error);
+    }
+
+    // Load HTML page into cheerio
+    const $ = cheerio.load(body);
+
+    const prices = [];
+
+    // Populate array with prices
+    $('div.carCell &gt; a').each(function (index, element) {
+      let price = parseFloat($(element).text().replace(/\$|,/g, ''));
+      prices.push(price);
+    });
+
+    // Find lowest price
+    const lowestPrice = Math.min.apply(Math, prices);
+
+    const sns = new AWS.SNS();
+
+    const params = {
+      Message: JSON.stringify('Lowest Costco rental car price: ' + lowestPrice),
+      Subject: "SNS Notification from Lambda",
+      TopicArn: process.env.SNS_TOPIC_ARN
+    };
+
+    sns.publish(params, context.done);
+  }
+  );
+
+};</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_4_1502337929691_8657">
+           <div class="sqs-block-content">
+            <h2>Explaining the Code</h2>
+            <p>First, we invoke the require method to tell Node we want to use the packages for request, cheerio, and the AWS SDK.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_29121">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">const request = require('request');
+const cheerio = require('cheerio');
+const AWS = require("aws-sdk");</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_29189">
+           <div class="sqs-block-content">
+            <p>Next, we configure the AWS client object for us-east-1.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_30766">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">AWS.config.region = 'us-east-1';</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_30833">
+           <div class="sqs-block-content">
+            <p>We declare a formData object to be used in the POST request.&nbsp;This object references some environment variables we'll define in a later section.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_69777">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">const formData = {
+  'cs': 1,
+  'pickupCity': process.env.AIRPORT,
+  'pickupAsAirport': 'True',
+  'dropoffCity': process.env.AIRPORT,
+  'dropoffAsAirport': 'True',
+  'pickupDate': process.env.PICKUP_DATE,
+  'dropoffDate': process.env.DROPOFF_DATE,
+  'pickupTime': process.env.TIME,
+  'dropoffTime': process.env.TIME,
+  'driverAge': 25
+};</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_69844">
+           <div class="sqs-block-content">
+            <p>Next, we define the URL we want to submit the form to and an options object to be used by the request. &nbsp;&nbsp;The User-Agent can be any arbitrary string and this is usually set by our browser. &nbsp; Since there is no browser here, we'll be good web citizens and set it to our site name so the web site owners can see that in their logs.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_72346">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">const url = 'https://www.costcotravel.com/carSearch.act';
+
+const options = {
+  url: url,
+  formData: formData,
+  'User-Agent': 'codebyamir.com'
+};</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_72413">
+           <div class="sqs-block-content">
+            <p>The next section in the code declares a handler function that is required by Lambda.&nbsp;</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_148878">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">exports.handler = function (event, context, callback) {</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_154693">
+           <div class="sqs-block-content">
+            <p>Inside the handler function, we call the <a href="https://github.com/request/request#forms">request.post()</a> method and pass in our options object and a callback function. &nbsp;&nbsp;</p>
+            <p>The request callback function defines what happens on error and success. &nbsp; On error, we simply want to output "Form submission failed" to the Lambda callback. &nbsp;</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_157023">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">request.post(options, function reqCallback(err, httpResponse, body) {
+  if (err) {
+    const error = new Error("Form submission failed");
+    callback(error);
+  }</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_148945">
+           <div class="sqs-block-content">
+            <p>On success, we want to parse the response body which contains our prices. &nbsp;However, these prices are buried inside a ton of HTML markup. &nbsp; This is where cheerio comes in.</p>
+            <p>We load the response body into cheerio. &nbsp;Then we use standard CSS selector syntax to grab the prices and populate an array.</p>
+            <p>The prices have dollar signs and commas which we filter out using <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/parseFloat">parseFloat()</a>&nbsp;function.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_162992">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">const $ = cheerio.load(body);
+const prices = [];
+
+$('div.carCell &gt; a').each(function (index, element) {
+  let price = parseFloat($(element).text().replace(/\$|,/g, ''));
+  prices.push(price);
+});
+</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_163058">
+           <div class="sqs-block-content">
+            <p>We then find the lowest value in the array using the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/min">Math.min.apply()</a>&nbsp;function.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_159804">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">const lowestPrice = Math.min.apply(Math, prices);</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_159871">
+           <div class="sqs-block-content">
+            <p>Finally, we can create an SNS client, define its parameters,&nbsp;&nbsp;and publish the message to our topic. This results in SMS message delivery to all subscribers of that topic.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_17_1502415822318_157774">
+           <div class="sqs-block-content">
+            <pre><code class="language-javascript">const sns = new AWS.SNS();
+
+const params = {
+  Message: JSON.stringify('Lowest Costco rental car price: ' + lowestPrice),
+  Subject: "SNS Notification from Lambda",
+  TopicArn: process.env.SNS_TOPIC_ARN
+};
+
+sns.publish(params, context.done);</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_17_1502415822318_157841">
+           <div class="sqs-block-content">
+            <h2>DOM Selectors</h2>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_19_1502393827572_14247">
+           <div class="sqs-block-content">
+            For a better explanation on why we chose 
+            <code>$('div.carCell &gt; a')</code>, let's take a look at an excerpt of the response body.
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_19_1502393827572_14314">
+           <div class="sqs-block-content">
+            <p>We can see the prices are located inside anchor links. &nbsp;These links are children of div elements which class carCell.</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_6_1502337929691_12227">
+           <div class="sqs-block-content">
+            <pre><code class="language-markup line-numbers">&lt;tr&gt;
+  &lt;th class="tar"&gt;Economy Car&lt;/th&gt;
+  
+  &lt;td class=""&gt;
+    &lt;div class="carCell"&gt;
+      &lt;a class="u linkredU"&gt;$210&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/td&gt;
+  
+  &lt;td class=""&gt;
+    &lt;div class="carCell"&gt;
+      &lt;a class="u"&gt;$276&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/td&gt;
+  
+  &lt;td class=""&gt;
+    &lt;div class="carCell"&gt;
+      &lt;a class="u "&gt;$243&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/td&gt;
+  
+  &lt;td class=""&gt;
+    &lt;div class="carCell"&gt;
+      &lt;a class="u " &gt;$255&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/td&gt;
+  
+&lt;/tr&gt;</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_6_1502337929691_12294">
+           <div class="sqs-block-content">
+            <h1>Create the Deployment Package</h1>
+            <p>Before we can run our code on Lambda, we'll need to create a deployment package.</p>
+            <p>This can be done by simply zipping up the contents of our project directory:</p>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_4_1502415822318_50882">
+           <div class="sqs-block-content">
+            <pre class="command-line" data-user="amir" data-host="dev01"><code class=" language-bash">cd project
+zip -r ../deployment.zip index.js package.json node_modules/</code></pre>
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_4_1502415822318_50949">
+           <div class="sqs-block-content">
+            <p>The deployment package is a ZIP file that includes our index.js file, package.json,&nbsp;and the node_modules directory that holds our dependencies.</p>
+            <p>We need to be careful to package the <em>contents</em> of the directory, and not the directory itself. &nbsp;</p>
+            <p>So the contents listing of the ZIP would look like this:</p>
+            <pre>index.js
+package.json
+node_modules/*
+</pre>
+            <p>The node_modules directory will have a bunch of stuff in it because request and cheerio each have their own dependencies.&nbsp;</p>
+            <p>For more details, check out <a href="http://docs.aws.amazon.com/lambda/latest/dg/nodejs-create-deployment-pkg.html">Creating Deployment Package (Node.js)</a>&nbsp;in the <em>Amazon Lambda Developer Guide</em>.</p>
+            <h1>Create the Lambda Function</h1>
+            <p>Now we're ready to create our Lambda function.</p>
+            <p>In the Lambda Management Console, click <strong>Create a Lambda function</strong>.</p>
+            <h2>Select blueprint page</h2>
+            <p>On the <em><strong>Select blueprint</strong></em> page, click <strong>Author from scratch</strong>.</p>
+            <h2>Configure triggers</h2>
+            <p>On the <em><strong>Configure triggers</strong></em> page, select CloudWatch Events from the dropdown.&nbsp;</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_239226">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:400.0px;"> 
+              <div style="padding-bottom:120.25%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d2286f9a61e8746ef5720/1502421669110/Screen+Shot+2017-08-10+at+11.20.17+PM.png" alt="Screen Shot 2017-08-10 at 11.20.17 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 11.20.17 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d2286f9a61e8746ef5720/1502421669110/Screen+Shot+2017-08-10+at+11.20.17+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d2286f9a61e8746ef5720/1502421669110/Screen+Shot+2017-08-10+at+11.20.17+PM.png" data-image-dimensions="400x481" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598d2286f9a61e8746ef5720" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_14_1502415822318_247040">
+           <div class="sqs-block-content">
+            <p>We'll create a new CloudWatch rule so the Lambda function can run on a schedule.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_38743">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:843.0px;"> 
+              <div style="padding-bottom:88.49347686767578%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbbdccf81e004ba387692/1502460896973/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbbdccf81e004ba387692/1502460896973/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbbdccf81e004ba387692/1502460896973/" data-image-dimensions="843x746" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dbbdccf81e004ba387692" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_14_1502415822318_39021">
+           <div class="sqs-block-content">
+            <h2>Configure function</h2>
+            <p>Next, we're taken to the <strong><em>Configure function</em></strong> page. &nbsp;Here we'll enter a name for the function and select Node.js 6.10 as the Runtime.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_64791">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:846.0px;"> 
+              <div style="padding-bottom:39.243499755859375%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db79d6a496330572fbefa/1502459808997/Screen+Shot+2017-08-10+at+11.01.06+PM.png" alt="Screen Shot 2017-08-10 at 11.01.06 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 11.01.06 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db79d6a496330572fbefa/1502459808997/Screen+Shot+2017-08-10+at+11.01.06+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598db79d6a496330572fbefa/1502459808997/Screen+Shot+2017-08-10+at+11.01.06+PM.png" data-image-dimensions="846x332" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598db79d6a496330572fbefa" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_14_1502415822318_65068">
+           <div class="sqs-block-content">
+            <p>In the <strong><em>Lambda function code</em> </strong>box, we'll select the option to <strong>Upload a ZIP file </strong>and then click the Upload<strong> </strong>button. &nbsp; Then we select our deployment package file. &nbsp;</p>
+            <p>Lambda supports environment variables so we'll use these to define our search criteria rather than hard coding them into our function. &nbsp; We'll also define a variable for our SNS topic ARN so we can change it easily later.</p>
+            <h3>Environment Variables</h3>
+           </div>
+          </div>
+          <div class="sqs-block code-block sqs-block-code" data-block-type="23" id="block-yui_3_17_2_4_1502458075596_156110">
+           <div class="sqs-block-content">
+            <style>
+	/* info (hed, dek, source, credit) */
+.rg-container {
+	font-family: 'Lato', Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 1.4;
+	margin: 0;
+	padding: 1em 0.5em;
+	color: #222;
+}
+.rg-header {
+	margin-bottom: 1em;
+	text-align: left;
+}
+
+.rg-header > * {
+	display: block;
+}
+.rg-hed {
+	font-weight: bold;
+	font-size: 1.4em;
+}
+.rg-dek {
+	font-size: 1em;
+}
+
+.rg-source {
+	margin: 0;
+	font-size: 0.75em;
+	text-align: right;
+}
+.rg-source .pre-colon {
+	text-transform: uppercase;
+}
+
+.rg-source .post-colon {
+	font-weight: bold;
+}
+
+/* table */
+table.rg-table {
+	width: auto;
+	margin-bottom: 0.5em;
+	font-size: 1em;
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+table.rg-table tr {
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+	text-align: left;
+	color: #333;
+}
+table.rg-table thead {
+	border-bottom: 3px solid #ddd;
+}
+table.rg-table tr {
+	border-bottom: 1px solid #ddd;
+	color: #222;
+}
+table.rg-table tr.highlight {
+	background-color: #dcf1f0 !important;
+}
+table.rg-table.zebra tr:nth-child(even) {
+	background-color: #f6f6f6;
+}
+table.rg-table th {
+	font-weight: bold;
+	padding: 0.35em;
+	font-size: 0.9em;
+}
+table.rg-table td {
+	padding: 0.35em;
+	font-size: 0.9em;
+}
+table.rg-table .highlight td {
+	font-weight: bold;
+}
+table.rg-table th.number, td.number {
+	text-align: right;
+}
+
+/* media queries */
+@media screen and (max-width: 600px) {
+.rg-container {
+	max-width: 600px;
+	margin: 0 auto;
+}
+table.rg-table {
+	width: 100%;
+}
+table.rg-table tr.hide-mobile, table.rg-table th.hide-mobile, table.rg-table td.hide-mobile {
+	display: none;
+}
+table.rg-table thead {
+	display: none;
+}
+table.rg-table tbody {
+	width: 100%;
+}
+table.rg-table tr, table.rg-table th, table.rg-table td {
+	display: block;
+	padding: 0;
+}
+table.rg-table tr {
+	border-bottom: none;
+	margin: 0 0 1em 0;
+	padding: 0.5em;
+}
+table.rg-table tr.highlight {
+	background-color: inherit !important;
+}
+table.rg-table.zebra tr:nth-child(even) {
+	background-color: none;
+}
+table.rg-table.zebra td:nth-child(even) {
+	background-color: #f6f6f6;
+}
+table.rg-table tr:nth-child(even) {
+	background-color: none;
+}
+table.rg-table td {
+	padding: 0.5em 0 0.25em 0;
+	border-bottom: 1px dotted #ccc;
+	text-align: right;
+}
+table.rg-table td[data-title]:before {
+	content: attr(data-title);
+	font-weight: bold;
+	display: inline-block;
+	content: attr(data-title);
+	float: left;
+	margin-right: 0.5em;
+	font-size: 0.95em;
+}
+table.rg-table td:last-child {
+	padding-right: 0;
+	border-bottom: 2px solid #ccc;
+}
+table.rg-table td:empty {
+	display: none;
+}
+table.rg-table .highlight td {
+	background-color: inherit;
+	font-weight: normal;
+}
+}
+
+</style> 
+            <div class="rg-container"> 
+             <div class="rg-content"> 
+              <table class="rg-table zebra" summary="Hed"> 
+               <thead> 
+                <tr> 
+                 <th class="text">Key</th> 
+                 <th class="text">Value</th> 
+                </tr> 
+               </thead> 
+               <tbody> 
+                <tr class=""> 
+                 <td class="text" data-title="Key">AIRPORT</td> 
+                 <td class="text" data-title="Value">LAX</td> 
+                </tr> 
+                <tr class=""> 
+                 <td class="text" data-title="Key">PICKUP_DATE</td> 
+                 <td class="text" data-title="Value">03/22/2018</td> 
+                </tr> 
+                <tr class=""> 
+                 <td class="text" data-title="Key">DROPOFF_DATE</td> 
+                 <td class="text" data-title="Value">03/26/2018</td> 
+                </tr> 
+                <tr class=""> 
+                 <td class="text" data-title="Key">TIME</td> 
+                 <td class="text" data-title="Value">10:00 AM</td> 
+                </tr> 
+                <tr class=""> 
+                 <td class="text" data-title="Key">SNS_TOPIC_ARN</td> 
+                 <td class="text" data-title="Value">arn:aws:sns:us-east-1:000000000000:NotifyMe</td> 
+                </tr> 
+               </tbody> 
+              </table> 
+             </div> 
+            </div>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_69010">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:845.0px;"> 
+              <div style="padding-bottom:91.12425994873047%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598df9dce45a7caff2f8f043/1502476772251/Screen+Shot+2017-08-10+at+11.05.39+PM.png" alt="Screen Shot 2017-08-10 at 11.05.39 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 11.05.39 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598df9dce45a7caff2f8f043/1502476772251/Screen+Shot+2017-08-10+at+11.05.39+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598df9dce45a7caff2f8f043/1502476772251/Screen+Shot+2017-08-10+at+11.05.39+PM.png" data-image-dimensions="845x770" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598df9dce45a7caff2f8f043" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_14_1502415822318_69287">
+           <div class="sqs-block-content">
+            <p>In the <em><strong>Lambda function handler and role </strong></em>box, we'll leave the handler name as <em>index.handler</em> and choose an IAM role that has permissions to publish to our SNS topic.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_71232">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:855.0px;"> 
+              <div style="padding-bottom:50.409358978271484%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbc0dbebafb1460526008/1502460944100/Screen+Shot+2017-08-10+at+11.07.11+PM.png" alt="Screen Shot 2017-08-10 at 11.07.11 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 11.07.11 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbc0dbebafb1460526008/1502460944100/Screen+Shot+2017-08-10+at+11.07.11+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbc0dbebafb1460526008/1502460944100/Screen+Shot+2017-08-10+at+11.07.11+PM.png" data-image-dimensions="855x431" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dbc0dbebafb1460526008" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_14_1502415822318_71509">
+           <div class="sqs-block-content">
+            <p>In the <strong><em>Advanced settings</em> </strong>box, let's increase the timeout to 10 seconds. &nbsp;</p>
+            <p>(The default is 3 seconds and maximum timeout is 5 minutes.)</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_73414">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:851.0px;"> 
+              <div style="padding-bottom:74.26557159423828%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbc32f43b5583265bc048/1502460983441/Screen+Shot+2017-08-10+at+11.08.12+PM.png" alt="Screen Shot 2017-08-10 at 11.08.12 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 11.08.12 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbc32f43b5583265bc048/1502460983441/Screen+Shot+2017-08-10+at+11.08.12+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598dbc32f43b5583265bc048/1502460983441/Screen+Shot+2017-08-10+at+11.08.12+PM.png" data-image-dimensions="851x632" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598dbc32f43b5583265bc048" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_14_1502415822318_73691">
+           <div class="sqs-block-content">
+            <h2>Review</h2>
+            <p>On the <strong>Review</strong>&nbsp;page, click <strong>Create function</strong>.</p>
+            <h1>Testing</h1>
+            <p>Our Lambda function has now been created with the schedule trigger in a disabled state.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_107363">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:2068.0px;"> 
+              <div style="padding-bottom:15.764023780822754%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d2101e6f2e1876fb584d2/1502421253110/">
+               </noscript>
+               <img class="thumb-image" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d2101e6f2e1876fb584d2/1502421253110/" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d2101e6f2e1876fb584d2/1502421253110/" data-image-dimensions="2068x326" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598d2101e6f2e1876fb584d2" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+          <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_1_1502465052499_42378">
+           <div class="sqs-block-content">
+            <p>Let's test the function out by clicking on the <strong>Test</strong> button</p>
+            <p>Click <strong>Save and Test</strong>&nbsp;on the next screen asking for inputs to run the function.</p>
+           </div>
+          </div>
+          <div class="sqs-block image-block sqs-block-image" data-block-type="5" id="block-yui_3_17_2_14_1502415822318_109122">
+           <div class="sqs-block-content"> 
+            <div class="image-block-outer-wrapper layout-caption-below design-layout-inline"> 
+             <div class="intrinsic" style="max-width:2096.0px;"> 
+              <div style="padding-bottom:34.54198455810547%;" class="image-block-wrapper   has-aspect-ratio" data-description=""> 
+               <noscript>
+                <img src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d21a3d2b8578b4a81e4df/1502421413920/Screen+Shot+2017-08-10+at+11.16.35+PM.png" alt="Screen Shot 2017-08-10 at 11.16.35 PM.png">
+               </noscript>
+               <img class="thumb-image" alt="Screen Shot 2017-08-10 at 11.16.35 PM.png" data-src="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d21a3d2b8578b4a81e4df/1502421413920/Screen+Shot+2017-08-10+at+11.16.35+PM.png" data-image="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/t/598d21a3d2b8578b4a81e4df/1502421413920/Screen+Shot+2017-08-10+at+11.16.35+PM.png" data-image-dimensions="2096x724" data-image-focal-point="0.5,0.5" data-load="false" data-image-id="598d21a3d2b8578b4a81e4df" data-type="image"> 
+              </div> 
+             </div> 
+            </div> 
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div> 
+      <!--POST FOOTER--> 
+      <footer class="clear"> 
+       <div class="meta"> 
+        <div class="first meta-row"> 
+         <span class="categories"><span class="categories-title">In</span> <a href="/?category=back-end" rel="tag">back-end</a></span> 
+         <span class="tags"><span class="tags-title">Tags</span> <a href="/?tag=aws" rel="tag">aws</a>, <a href="/?tag=javascript" rel="tag">javascript</a>, <a href="/?tag=node" rel="tag">node</a></span> 
+        </div> 
+        <div class="second meta-row"> 
+         <span class="squarespace-social-buttons inline-style" data-system-data-id="" data-asset-url="https://static1.squarespace.com/static/54dd763ce4b01f6b05bab7db/54dd7f7ce4b06247416446a9/598af6687131a5274bdb1bc1/1502484346736/" data-record-type="1" data-full-url="/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs" data-title="Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js"></span> 
+         <span class="sqs-simple-like" data-item-id="598af6687131a5274bdb1bc1" data-like-count="1"> <span class="like-icon"></span> <span class="like-count"></span> </span> 
+        </div> 
+       </div> 
+      </footer> 
+     </article> 
+     <!--PAGINATION--> 
+     <nav class="pagination clear"> 
+      <a class="prev-item" href="/blog/view-unconfirmed-subscribers-with-mailchimp-api">? View Unconfirmed Subscribers with the MailChimp API</a>
+      <a class="next-item" href="/blog/use-duplicate-keys-in-a-map-with-multimap-from-google-guava">Use Duplicate Keys in a Map with Multimap from Google Guava ?</a> 
+     </nav> 
+     <!-- COMMENTS --> 
+     <section id="comments-598af6687131a5274bdb1bc1" class="comments-wrapper"> 
+      <div class="squarespace-comments" id="comments-598af6687131a5274bdb1bc1" data-item-id="598af6687131a5274bdb1bc1" data-public-comment-count="0" data-comment-state="1"></div> 
+     </section> 
+    </div>
+    <!-- /article-wrapper --> 
+    <aside id="sidebar">
+     <div class="sqs-layout sqs-grid-1 columns-1" data-layout-label="Sidebar Content" data-type="block-field" data-updated-on="1502908534608" id="sidebarBlocks">
+      <div class="row sqs-row">
+       <div class="col sqs-col-1 span-1">
+        <div class="sqs-block search-block sqs-block-search" data-block-type="33" id="block-yui_3_17_2_2_1496776559597_28489">
+         <div class="sqs-block-content">
+          <div class="sqs-search-ui-text-input sqs-search-ui-button-wrapper color-dark" data-source="block" data-preview="false" data-collection=""> 
+           <div class="spinner-wrapper"></div> 
+           <input type="search" class="search-input" value="" placeholder="Search"> 
+          </div> 
+         </div>
+        </div>
+        <div class="sqs-block horizontalrule-block sqs-block-horizontalrule" data-block-type="47" id="block-yui_3_17_2_9_1496677002067_9005">
+         <div class="sqs-block-content">
+          <hr>
+         </div>
+        </div>
+        <div class="sqs-block html-block sqs-block-html" data-block-type="2" id="block-yui_3_17_2_4_1496764416858_5855">
+         <div class="sqs-block-content">
+          <h2>Archive</h2>
+         </div>
+        </div>
+        <div class="sqs-block archive-block sqs-block-archive" data-block-type="61" id="block-yui_3_17_2_36_1496624454298_11800">
+         <div class="sqs-block-content"> 
+          <div class="
+  archive-block-wrapper
+  archive-block-setting-layout-index
+  archive-block-setting-text-alignment-left
+  archive-block-setting-multicolumns
+  
+  "> 
+           <ul class="archive-group-list"> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=September-2017" class="archive-group-name-link"> September 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Sep 13, 2017 </span> <a href="/blog/apache-struts-vulnerability-exploited-in-equifax-breach-cve-2017-5638" class="archive-item-link ">Apache Struts Vulnerability Exploited in Equifax Breach (CVE-2017-5638)</a> <span class="archive-item-date-after"> Sep 13, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=August-2017" class="archive-group-name-link"> August 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 31, 2017 </span> <a href="/blog/stop-returning-null-in-java" class="archive-item-link ">Stop Returning Null in Java</a> <span class="archive-item-date-after"> Aug 31, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 16, 2017 </span> <a href="/blog/view-unconfirmed-subscribers-with-mailchimp-api" class="archive-item-link ">View Unconfirmed Subscribers with the MailChimp API</a> <span class="archive-item-date-after"> Aug 16, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 10, 2017 </span> <a href="/blog/pushing-price-alert-notifications-with-aws-lambda-sns-and-nodejs" class="archive-item-link ">Pushing Price Alert Notifications with AWS Lambda, SNS, and Node.js</a> <span class="archive-item-date-after"> Aug 10, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 1, 2017 </span> <a href="/blog/use-duplicate-keys-in-a-map-with-multimap-from-google-guava" class="archive-item-link ">Use Duplicate Keys in a Map with Multimap from Google Guava</a> <span class="archive-item-date-after"> Aug 1, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=July-2017" class="archive-group-name-link"> July 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 31, 2017 </span> <a href="/blog/never-trust-data-from-the-browser" class="archive-item-link ">Never Trust Data from the Browser</a> <span class="archive-item-date-after"> Jul 31, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 25, 2017 </span> <a href="/blog/a-web-developers-guide-to-browser-caching" class="archive-item-link ">A Web Developer's Guide to Browser Caching</a> <span class="archive-item-date-after"> Jul 25, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 20, 2017 </span> <a href="/blog/web-storage-api-localstorage-sessionstorage" class="archive-item-link ">Web Storage API: Local Storage &amp; Session Storage</a> <span class="archive-item-date-after"> Jul 20, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 16, 2017 </span> <a href="/blog/creating-a-fixed-header-on-a-scroll-event" class="archive-item-link ">Creating a Dynamic Fixed Header on a Scroll Event</a> <span class="archive-item-date-after"> Jul 16, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 7, 2017 </span> <a href="/blog/suppressing-console-log-messages-in-production" class="archive-item-link ">Suppressing console.log() messages in production</a> <span class="archive-item-date-after"> Jul 7, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=June-2017" class="archive-group-name-link"> June 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jun 28, 2017 </span> <a href="/blog/java-map-fundamentals" class="archive-item-link ">Java Map Fundamentals</a> <span class="archive-item-date-after"> Jun 28, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jun 21, 2017 </span> <a href="/blog/software-anti-patterns-magic-numbers" class="archive-item-link ">Software Anti-Patterns: Magic Numbers</a> <span class="archive-item-date-after"> Jun 21, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jun 12, 2017 </span> <a href="/blog/curbing-complexity-in-software" class="archive-item-link ">Curbing Complexity in Software</a> <span class="archive-item-date-after"> Jun 12, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jun 7, 2017 </span> <a href="/blog/view-source-vs-inspect-element" class="archive-item-link ">View Source vs. Inspect Element</a> <span class="archive-item-date-after"> Jun 7, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jun 5, 2017 </span> <a href="/blog/work-faster-in-spring-boot-with-devtools" class="archive-item-link ">Work Faster in Spring Boot with DevTools</a> <span class="archive-item-date-after"> Jun 5, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=May-2017" class="archive-group-name-link"> May 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> May 31, 2017 </span> <a href="/blog/user-account-registration-with-spring-boot" class="archive-item-link ">User Account Registration feature with Spring Boot</a> <span class="archive-item-date-after"> May 31, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> May 4, 2017 </span> <a href="/blog/forgot-password-feature-with-java-and-spring-boot" class="archive-item-link ">Forgot Password feature with Java and Spring Boot</a> <span class="archive-item-date-after"> May 4, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=April-2017" class="archive-group-name-link"> April 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Apr 29, 2017 </span> <a href="/blog/mcsd-app-builder-certification-path-microsoft-70-480-exam" class="archive-item-link ">MCSD: App Builder Certification Path: Microsoft 70-480 Exam </a> <span class="archive-item-date-after"> Apr 29, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Apr 27, 2017 </span> <a href="/blog/a-developers-guide-to-accepting-online-payments-with-stripe" class="archive-item-link ">A Developer's Guide to Accepting Online Payments with Stripe</a> <span class="archive-item-date-after"> Apr 27, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Apr 23, 2017 </span> <a href="/blog/create-excel-files-in-c-sharp" class="archive-item-link ">Create Excel Files in C#</a> <span class="archive-item-date-after"> Apr 23, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Apr 7, 2017 </span> <a href="/blog/bootstrap-fundamentals" class="archive-item-link ">Bootstrap Fundamentals - Layout</a> <span class="archive-item-date-after"> Apr 7, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=March-2017" class="archive-group-name-link"> March 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 30, 2017 </span> <a href="/blog/parse-command-line-arguments-using-getopt" class="archive-item-link ">Parse Command-Line Arguments Using Getopt</a> <span class="archive-item-date-after"> Mar 30, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 18, 2017 </span> <a href="/blog/using-apache-reverse-proxy-spring-boot-embedded-tomcat" class="archive-item-link ">Using Apache as a Reverse Proxy for Spring Boot Embedded Tomcat</a> <span class="archive-item-date-after"> Mar 18, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 14, 2017 </span> <a href="/blog/check-for-logged-in-user-with-thymeleaf-and-spring-security-4" class="archive-item-link ">Check for Logged in User with Thymeleaf and Spring Security 4</a> <span class="archive-item-date-after"> Mar 14, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 12, 2017 </span> <a href="/blog/create-rest-api-with-spring-boot" class="archive-item-link ">Create a REST API with Spring Boot</a> <span class="archive-item-date-after"> Mar 12, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 6, 2017 </span> <a href="/blog/the-rise-of-microservices-smashing-the-monolith" class="archive-item-link ">The Rise of Microservices: Smashing the Monolith</a> <span class="archive-item-date-after"> Mar 6, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=February-2017" class="archive-group-name-link"> February 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 17, 2017 </span> <a href="/blog/using-vagrant-for-consistent-development-environments" class="archive-item-link ">Using Vagrant for Consistent Development Environments</a> <span class="archive-item-date-after"> Feb 17, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 13, 2017 </span> <a href="/blog/automated-ebs-snapshots-using-aws-lambda-cloudwatch" class="archive-item-link ">Automated EBS Snapshots using AWS Lambda &amp; CloudWatch</a> <span class="archive-item-date-after"> Feb 13, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 2, 2017 </span> <a href="/blog/mysql-database-indexing-for-developers" class="archive-item-link ">MySQL Database Indexing for Developers</a> <span class="archive-item-date-after"> Feb 2, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=January-2017" class="archive-group-name-link"> January 2017 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jan 14, 2017 </span> <a href="/blog/aws-developer-certification-exam" class="archive-item-link ">AWS Certified Developer Exam</a> <span class="archive-item-date-after"> Jan 14, 2017 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jan 3, 2017 </span> <a href="/blog/why-version-control-matters" class="archive-item-link ">Why Version Control Matters</a> <span class="archive-item-date-after"> Jan 3, 2017 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=December-2016" class="archive-group-name-link"> December 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Dec 19, 2016 </span> <a href="/blog/discovering-jshell-in-jdk9" class="archive-item-link ">Discovering JShell in JDK 9</a> <span class="archive-item-date-after"> Dec 19, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Dec 10, 2016 </span> <a href="/blog/remove-unused-css-rules-using-chrome-audit-panel" class="archive-item-link ">Remove Unused CSS Rules using Chrome Audit Panel</a> <span class="archive-item-date-after"> Dec 10, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Dec 7, 2016 </span> <a href="/blog/getting-started-with-grunt" class="archive-item-link ">Getting Started with Grunt</a> <span class="archive-item-date-after"> Dec 7, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Dec 4, 2016 </span> <a href="/blog/http2-the-sequel" class="archive-item-link ">HTTP/2 - The Sequel</a> <span class="archive-item-date-after"> Dec 4, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=November-2016" class="archive-group-name-link"> November 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Nov 7, 2016 </span> <a href="/blog/cache-me-if-you-can" class="archive-item-link ">Cache Me If You Can</a> <span class="archive-item-date-after"> Nov 7, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=October-2016" class="archive-group-name-link"> October 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Oct 26, 2016 </span> <a href="/blog/how-algorithms-shape-our-world" class="archive-item-link ">How Algorithms Shape Our World</a> <span class="archive-item-date-after"> Oct 26, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Oct 13, 2016 </span> <a href="/blog/lets-talk-about-http-cookies" class="archive-item-link ">Let's Talk about HTTP Cookies</a> <span class="archive-item-date-after"> Oct 13, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=September-2016" class="archive-group-name-link"> September 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Sep 9, 2016 </span> <a href="/blog/understanding-optional-types-in-swift" class="archive-item-link ">Understanding Optional Types in Swift</a> <span class="archive-item-date-after"> Sep 9, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=August-2016" class="archive-group-name-link"> August 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 29, 2016 </span> <a href="/blog/libcabidylib-terminating-with-uncaught-exception-of-type-nsexception" class="archive-item-link ">libc++abi.dylib: terminating with uncaught exception of type NSException</a> <span class="archive-item-date-after"> Aug 29, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 25, 2016 </span> <a href="/blog/finalize-methods-are-a-bad-idea" class="archive-item-link ">Finalize Methods are a Bad Idea</a> <span class="archive-item-date-after"> Aug 25, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Aug 1, 2016 </span> <a href="/blog/static-method-call-does-not-generate-nullpointerexception" class="archive-item-link ">Why doesn't a static method call on null object reference generate a NullPointerException?</a> <span class="archive-item-date-after"> Aug 1, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=July-2016" class="archive-group-name-link"> July 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 19, 2016 </span> <a href="/blog/use-character-arrays-to-store-sensitive-data-java" class="archive-item-link ">Use Character Arrays to Store Sensitive Text Data in Java</a> <span class="archive-item-date-after"> Jul 19, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 13, 2016 </span> <a href="/blog/books-every-developer-should-read" class="archive-item-link ">10 Books Every Software Developer Should Read</a> <span class="archive-item-date-after"> Jul 13, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 8, 2016 </span> <a href="/blog/pitfalls-java-import-wildcards" class="archive-item-link ">Pitfalls of import wildcards in Java</a> <span class="archive-item-date-after"> Jul 8, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jul 1, 2016 </span> <a href="/blog/interfaces-in-object-oriented-design" class="archive-item-link ">Interfaces in Object-Oriented Design</a> <span class="archive-item-date-after"> Jul 1, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=June-2016" class="archive-group-name-link"> June 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jun 24, 2016 </span> <a href="/blog/technical-debt" class="archive-item-link ">Technical Debt in Software Design</a> <span class="archive-item-date-after"> Jun 24, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=May-2016" class="archive-group-name-link"> May 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> May 15, 2016 </span> <a href="/blog/object-to-json-in-php" class="archive-item-link ">Converting an Object to JSON in PHP</a> <span class="archive-item-date-after"> May 15, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> May 10, 2016 </span> <a href="/blog/netsftpforeign-callbacks-perl" class="archive-item-link ">Using Callbacks with Net::SFTP::Foreign in Perl</a> <span class="archive-item-date-after"> May 10, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> May 9, 2016 </span> <a href="/blog/automated-ikea-stock-check" class="archive-item-link ">IKEA stock notifications using PHP and XML</a> <span class="archive-item-date-after"> May 9, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> May 2, 2016 </span> <a href="/blog/removing-empty-array-elements-in-php" class="archive-item-link ">Removing empty array elements in PHP</a> <span class="archive-item-date-after"> May 2, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=April-2016" class="archive-group-name-link"> April 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Apr 15, 2016 </span> <a href="/blog/javascript-designpattern-iife" class="archive-item-link ">JavaScript Design Pattern - IIFE</a> <span class="archive-item-date-after"> Apr 15, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Apr 1, 2016 </span> <a href="/blog/hardening-ssl-in-apache" class="archive-item-link ">Hardening SSL in Apache 2.x</a> <span class="archive-item-date-after"> Apr 1, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=March-2016" class="archive-group-name-link"> March 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 30, 2016 </span> <a href="/blog/single-page-application" class="archive-item-link ">The Single Page Application (SPA) Model</a> <span class="archive-item-date-after"> Mar 30, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 27, 2016 </span> <a href="/blog/understanding-preventing-csrf" class="archive-item-link ">Understanding &amp; Preventing CSRF Attacks</a> <span class="archive-item-date-after"> Mar 27, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 20, 2016 </span> <a href="/blog/sms-integration-twilio-php" class="archive-item-link ">SMS Integration with Twilio in PHP</a> <span class="archive-item-date-after"> Mar 20, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 18, 2016 </span> <a href="/blog/root-password-rotation-redhat-satellite" class="archive-item-link ">Root Password Rotation using the Red Hat Satellite 5 API</a> <span class="archive-item-date-after"> Mar 18, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 11, 2016 </span> <a href="/blog/using-pdo-for-database-access-in-php" class="archive-item-link ">Using PDO for Database Access in PHP</a> <span class="archive-item-date-after"> Mar 11, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Mar 4, 2016 </span> <a href="/blog/getting-started-with-aws-sdk-php" class="archive-item-link ">Getting Started with AWS SDK for PHP</a> <span class="archive-item-date-after"> Mar 4, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=February-2016" class="archive-group-name-link"> February 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 26, 2016 </span> <a href="/blog/php-debugging-varexport-vardump-printr" class="archive-item-link ">PHP Debugging - print_r vs var_dump vs var_export</a> <span class="archive-item-date-after"> Feb 26, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 19, 2016 </span> <a href="/blog/using-moose-for-perl-objects" class="archive-item-link ">Using Moose for Perl Objects</a> <span class="archive-item-date-after"> Feb 19, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 12, 2016 </span> <a href="/blog/static-vs-dynamic-typing" class="archive-item-link ">Static vs Dynamic Typing</a> <span class="archive-item-date-after"> Feb 12, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Feb 5, 2016 </span> <a href="/blog/javascript-execution-contexts" class="archive-item-link ">JavaScript Execution Contexts</a> <span class="archive-item-date-after"> Feb 5, 2016 </span> </li> 
+             </ul> </li> 
+            <li class="archive-group"> 
+             <!-- item --> <a href="/blog?month=January-2016" class="archive-group-name-link"> January 2016 </a> 
+             <ul class="archive-item-list"> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jan 29, 2016 </span> <a href="/blog/css-specificity" class="archive-item-link ">CSS Specificity</a> <span class="archive-item-date-after"> Jan 29, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jan 22, 2016 </span> <a href="/blog/perl-sftp-file-listing" class="archive-item-link ">Perl SFTP File Listing</a> <span class="archive-item-date-after"> Jan 22, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jan 15, 2016 </span> <a href="/blog/javascript-loop-caching" class="archive-item-link ">JavaScript Loop Caching</a> <span class="archive-item-date-after"> Jan 15, 2016 </span> </li> 
+              <li class="archive-item archive-item--show-date"> <span class="archive-item-date-before"> Jan 8, 2016 </span> <a href="/blog/why-inline-css-sucks" class="archive-item-link ">Why Inline CSS Sucks</a> <span class="archive-item-date-after"> Jan 8, 2016 </span> </li> 
+             </ul> </li> 
+           </ul> 
+          </div> 
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </aside> 
+   </section> 
+   <div class="sqs-layout sqs-grid-12 columns-12 empty" data-layout-label="Software Development Blog Footer Content" data-type="block-field" id="item-598af6687131a5274bdb1bc1">
+    <div class="row sqs-row">
+     <div class="col sqs-col-12 span-12"></div>
+    </div>
+   </div> 
+   <!-- <div class="page-divider bottom-divider"></div> --> 
+   <div class="info-footer-wrapper clear"> 
+    <div class="info-footer"> 
+     <div class="sqs-layout sqs-grid-12 columns-12" data-layout-label="Info Footer Content" data-type="block-field" data-updated-on="1411670375842" id="infoFooterBlock">
+      <div class="row sqs-row">
+       <div class="col sqs-col-12 span-12">
+        <div class="sqs-block summary-v2-block sqs-block-summary-v2" data-block-json="{&quot;collectionId&quot;:&quot;5052176b84aeb45fa5cfcc8a&quot;,&quot;design&quot;:&quot;autogrid&quot;,&quot;headerText&quot;:&quot;Featured&quot;,&quot;textSize&quot;:&quot;small&quot;,&quot;pageSize&quot;:1,&quot;imageAspectRatio&quot;:&quot;Auto&quot;,&quot;columnWidth&quot;:600,&quot;gutter&quot;:0,&quot;listImageSize&quot;:30,&quot;listImageAlignment&quot;:&quot;left&quot;,&quot;slidesPerRow&quot;:3,&quot;textAlignment&quot;:&quot;left&quot;,&quot;showTitle&quot;:true,&quot;showThumbnail&quot;:false,&quot;showExcerpt&quot;:false,&quot;showReadMoreLink&quot;:false,&quot;showPrice&quot;:true,&quot;showPastOrUpcomingEvents&quot;:&quot;Upcoming&quot;,&quot;metadataPosition&quot;:&quot;below-content&quot;,&quot;primaryMetadata&quot;:&quot;none&quot;,&quot;secondaryMetadata&quot;:&quot;none&quot;,&quot;filter&quot;:{},&quot;autoCrop&quot;:true,&quot;lightbox&quot;:false,&quot;mixedContent&quot;:true,&quot;hSize&quot;:null,&quot;floatDir&quot;:null}" data-block-type="55" id="block-yui_3_17_2_1_1411670098573_15867">
+         <div class="sqs-block-content"> 
+          <div class="sqs-blockStatus sqs-blockStatus--overlayMode" data-state="uninitialized"> 
+           <div class="sqs-blockStatus-disclosure"></div> 
+           <div class="sqs-blockStatus-box"> 
+            <div class="sqs-blockStatus-box-title">
+             Summary Block
+            </div> 
+            <div class="sqs-blockStatus-box-message">
+              This is example content. Double-click here and select a page to feature its content. 
+             <a class="sqs-blockStatus-box-kbArticleLink" href="https://support.squarespace.com/hc/en-us/articles/206543337" target="_blank">Learn more.</a> 
+            </div> 
+           </div> 
+          </div> 
+          <div class="
+  summary-block-wrapper
+
+  summary-block-collection-type-blog
+  
+  summary-block-setting-text-size-small
+  summary-block-setting-text-align-left
+
+  summary-block-setting-design-autogrid
+  summary-block-setting-design-list-thumbnail-left
+
+  summary-block-setting-metadata-position-below-content
+  summary-block-setting-primary-metadata-none
+  summary-block-setting-secondary-metadata-none
+
+  
+  summary-block-setting-show-title
+  summary-block-setting-show-price
+  summary-block-setting-hide-excerpt
+  
+
+  
+
+  sqs-gallery-design-autogrid
+
+  
+  sqs-block-is-clone" data-block-state="uninitialized"> 
+           <div class="summary-item-list-container sqs-gallery-container"> 
+            <header class="summary-block-header"> 
+             <!-- Collection Title --> 
+             <div class="summary-heading"> 
+              <span class="summary-header-text">Featured</span> 
+             </div> 
+             <!-- Carousel Nav --> 
+             <div class="summary-carousel-pager sqs-gallery-controls"> 
+              <span class="summary-carousel-pager-next next"></span> 
+              <span class="summary-carousel-pager-prev previous"></span> 
+             </div> 
+            </header> 
+            <div class="summary-item-list sqs-gallery"> 
+             <div class="
+          summary-item
+          summary-item-record-type-text
+          sqs-gallery-design-autogrid-slide
+          
+           summary-item-has-thumbnail
+          
+          
+          
+          summary-item-has-author
+          summary-item-has-comments-enabled
+          "> 
+              <div class="summary-content sqs-gallery-meta-container"> 
+               <!-- Metadata (Above Title) --> 
+               <div class="summary-metadata-container summary-metadata-container--above-title"> 
+                <div class="summary-metadata summary-metadata--primary"> 
+                 <!-- Timestamp --> 
+                 <time class="summary-metadata-item summary-metadata-item--date" datetime="2012-06-11">Jun 11, 2012</time> 
+                 <!-- Author --> 
+                 <span class="summary-metadata-item summary-metadata-item--author"><a href="/blog-montauk/?author=#show-archive">John Doe</a></span> 
+                 <!-- Comments --> 
+                 <span class="summary-metadata-item summary-metadata-item--comments"> <a href="/blog-montauk/2012/6/11/latest-article#comments-5052176b84aeb45fa5cfcca7">Comment</a> </span> 
+                </div> 
+                <div class="summary-metadata summary-metadata--secondary"> 
+                 <!-- Timestamp --> 
+                 <time class="summary-metadata-item summary-metadata-item--date" datetime="2012-06-11">Jun 11, 2012</time> 
+                 <!-- Author --> 
+                 <span class="summary-metadata-item summary-metadata-item--author"><a href="/blog-montauk/?author=#show-archive">John Doe</a></span> 
+                 <!-- Comments --> 
+                 <span class="summary-metadata-item summary-metadata-item--comments"> <a href="/blog-montauk/2012/6/11/latest-article#comments-5052176b84aeb45fa5cfcca7">Comment</a> </span> 
+                </div> 
+               </div> 
+               <!-- Title --> 
+               <div class="summary-title"> 
+                <a href="/blog-montauk/2012/6/11/latest-article" class="summary-title-link">Latest Article</a>
+               </div> 
+               <!-- Metadata (Below Title) --> 
+               <div class="summary-metadata-container summary-metadata-container--below-title"> 
+                <div class="summary-metadata summary-metadata--primary"> 
+                 <!-- Timestamp --> 
+                 <time class="summary-metadata-item summary-metadata-item--date" datetime="2012-06-11">Jun 11, 2012</time> 
+                 <!-- Author --> 
+                 <span class="summary-metadata-item summary-metadata-item--author"><a href="/blog-montauk/?author=#show-archive">John Doe</a></span> 
+                 <!-- Comments --> 
+                 <span class="summary-metadata-item summary-metadata-item--comments"> <a href="/blog-montauk/2012/6/11/latest-article#comments-5052176b84aeb45fa5cfcca7">Comment</a> </span> 
+                </div> 
+                <div class="summary-metadata summary-metadata--secondary"> 
+                 <!-- Timestamp --> 
+                 <time class="summary-metadata-item summary-metadata-item--date" datetime="2012-06-11">Jun 11, 2012</time> 
+                 <!-- Author --> 
+                 <span class="summary-metadata-item summary-metadata-item--author"><a href="/blog-montauk/?author=#show-archive">John Doe</a></span> 
+                 <!-- Comments --> 
+                 <span class="summary-metadata-item summary-metadata-item--comments"> <a href="/blog-montauk/2012/6/11/latest-article#comments-5052176b84aeb45fa5cfcca7">Comment</a> </span> 
+                </div> 
+               </div> 
+               <!-- Metadata (Below Content) --> 
+               <div class="summary-metadata-container summary-metadata-container--below-content"> 
+                <div class="summary-metadata summary-metadata--primary"> 
+                 <!-- Timestamp --> 
+                 <time class="summary-metadata-item summary-metadata-item--date" datetime="2012-06-11">Jun 11, 2012</time> 
+                 <!-- Author --> 
+                 <span class="summary-metadata-item summary-metadata-item--author"><a href="/blog-montauk/?author=#show-archive">John Doe</a></span> 
+                 <!-- Comments --> 
+                 <span class="summary-metadata-item summary-metadata-item--comments"> <a href="/blog-montauk/2012/6/11/latest-article#comments-5052176b84aeb45fa5cfcca7">Comment</a> </span> 
+                </div> 
+                <div class="summary-metadata summary-metadata--secondary"> 
+                 <!-- Timestamp --> 
+                 <time class="summary-metadata-item summary-metadata-item--date" datetime="2012-06-11">Jun 11, 2012</time> 
+                 <!-- Author --> 
+                 <span class="summary-metadata-item summary-metadata-item--author"><a href="/blog-montauk/?author=#show-archive">John Doe</a></span> 
+                 <!-- Comments --> 
+                 <span class="summary-metadata-item summary-metadata-item--comments"> <a href="/blog-montauk/2012/6/11/latest-article#comments-5052176b84aeb45fa5cfcca7">Comment</a> </span> 
+                </div> 
+               </div> 
+              </div> 
+              <!-- End .summary-content --> 
+             </div> 
+             <!-- End .summary-item --> 
+            </div> 
+            <!-- End .summary-item-list --> 
+           </div> 
+           <!-- End .summary-item-list-container --> 
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div> 
+     <div id="socialLinks" class="social-links sqs-svg-icon--list" data-content-field="connected-accounts"> 
+      <a href="https://www.linkedin.com/in/amirboroumand" target="_blank" class="sqs-svg-icon--wrapper linkedin"> 
+       <div> 
+        <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+         <use class="sqs-use--icon" xlink:href="#linkedin-icon"></use> 
+         <use class="sqs-use--mask" xlink:href="#linkedin-mask"></use> 
+        </svg> 
+       </div> </a> 
+      <a href="https://twitter.com/codebyamir" target="_blank" class="sqs-svg-icon--wrapper twitter"> 
+       <div> 
+        <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+         <use class="sqs-use--icon" xlink:href="#twitter-icon"></use> 
+         <use class="sqs-use--mask" xlink:href="#twitter-mask"></use> 
+        </svg> 
+       </div> </a> 
+      <a href="https://medium.com/@codebyamir" target="_blank" class="sqs-svg-icon--wrapper medium"> 
+       <div> 
+        <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+         <use class="sqs-use--icon" xlink:href="#medium-icon"></use> 
+         <use class="sqs-use--mask" xlink:href="#medium-mask"></use> 
+        </svg> 
+       </div> </a> 
+      <a href="https://github.com/codebyamir" target="_blank" class="sqs-svg-icon--wrapper github"> 
+       <div> 
+        <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+         <use class="sqs-use--icon" xlink:href="#github-icon"></use> 
+         <use class="sqs-use--mask" xlink:href="#github-mask"></use> 
+        </svg> 
+       </div> </a> 
+      <a href="http://www.facebook.com/137015600233933" target="_blank" class="sqs-svg-icon--wrapper facebook"> 
+       <div> 
+        <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+         <use class="sqs-use--icon" xlink:href="#facebook-icon"></use> 
+         <use class="sqs-use--mask" xlink:href="#facebook-mask"></use> 
+        </svg> 
+       </div> </a> 
+     </div> 
+    </div> 
+   </div> 
+   <footer id="footer" class="clear"> 
+    <div class="sqs-layout sqs-grid-12 columns-12" data-layout-label="Footer Content" data-type="block-field" data-updated-on="1496778965544" id="footerBlock">
+     <div class="row sqs-row">
+      <div class="col sqs-col-12 span-12">
+       <div class="sqs-block horizontalrule-block sqs-block-horizontalrule" data-block-type="47" id="block-yui_3_17_2_2_1496778670116_12102">
+        <div class="sqs-block-content">
+         <hr>
+        </div>
+       </div>
+       <div class="sqs-block newsletter-block sqs-block-newsletter" data-block-type="51" id="block-yui_3_17_2_2_1496778670116_4783">
+        <div class="sqs-block-content"> 
+         <div class="newsletter-form-wrapper newsletter-form-wrapper--layoutFloat newsletter-form-wrapper--alignCenter"> 
+          <form class="newsletter-form" data-form-id="593707c8d482e962f19a8cfb" autocomplete="on" method="POST" onsubmit="return (function(form) { Y.use
+  ('squarespace-form-submit', 'node',
+  function (Y) { (new Y.Squarespace.FormSubmit({ formNode: Y.Node(form) })).submit('593707c8d482e962f19a8cfb', '', 'footerBlock') }); return false;})(this)"> 
+           <header class="newsletter-form-header"> 
+            <h2 class="newsletter-form-header-title">Subscribe</h2> 
+            <div class="newsletter-form-header-description">
+             <p>Sign up with your email address to receive news and updates.</p>
+            </div> 
+           </header> 
+           <div class="newsletter-form-body"> 
+            <div class="newsletter-form-fields-wrapper form-fields"> 
+             <div id="email-yui_3_17_2_2_1496778670116_4790" class="newsletter-form-field-wrapper form-item field email required"> 
+              <label class="newsletter-form-field-label title" for="email-yui_3_17_2_2_1496778670116_4790-field">Email Address</label> 
+              <input id="email-yui_3_17_2_2_1496778670116_4790-field" class="newsletter-form-field-element field-element" name="email" x-autocompletetype="email" type="text" spellcheck="false" placeholder="Email Address"> 
+             </div> 
+            </div> 
+            <div class="newsletter-form-button-wrapper submit-wrapper"> 
+             <button class="newsletter-form-button sqs-system-button sqs-editable-button-layout sqs-editable-button-style sqs-editable-button-shape" type="submit" value="Sign Up"><span class="newsletter-form-spinner sqs-spin light large"></span><span class="newsletter-form-button-label">Sign Up</span><span class="newsletter-form-button-icon"></span></button> 
+            </div> 
+           </div> 
+           <div class="newsletter-form-footnote"></div> 
+           <div class="hidden form-submission-text">
+            Thank you!
+           </div> 
+           <div class="hidden form-submission-html" data-submission-html=""></div> 
+          </form> 
+         </div> 
+        </div>
+       </div>
+       <div class="sqs-block socialaccountlinks-v2-block sqs-block-socialaccountlinks-v2" data-block-type="54" id="block-yui_3_17_2_1_1407708776025_50235">
+        <div class="sqs-block-content"> 
+         <div class="sqs-svg-icon--outer social-icon-alignment-center social-icons-color-black social-icons-size-extra-large social-icons-shape-circle social-icons-style-solid"> 
+          <nav class="sqs-svg-icon--list"> 
+           <a href="https://www.linkedin.com/in/amirboroumand" target="_blank" class="sqs-svg-icon--wrapper linkedin"> 
+            <div> 
+             <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+              <use class="sqs-use--icon" xlink:href="#linkedin-icon"></use> 
+              <use class="sqs-use--mask" xlink:href="#linkedin-mask"></use> 
+             </svg> 
+            </div> </a>
+           <a href="https://twitter.com/codebyamir" target="_blank" class="sqs-svg-icon--wrapper twitter"> 
+            <div> 
+             <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+              <use class="sqs-use--icon" xlink:href="#twitter-icon"></use> 
+              <use class="sqs-use--mask" xlink:href="#twitter-mask"></use> 
+             </svg> 
+            </div> </a>
+           <a href="https://medium.com/@codebyamir" target="_blank" class="sqs-svg-icon--wrapper medium"> 
+            <div> 
+             <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+              <use class="sqs-use--icon" xlink:href="#medium-icon"></use> 
+              <use class="sqs-use--mask" xlink:href="#medium-mask"></use> 
+             </svg> 
+            </div> </a>
+           <a href="https://github.com/codebyamir" target="_blank" class="sqs-svg-icon--wrapper github"> 
+            <div> 
+             <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+              <use class="sqs-use--icon" xlink:href="#github-icon"></use> 
+              <use class="sqs-use--mask" xlink:href="#github-mask"></use> 
+             </svg> 
+            </div> </a>
+           <a href="http://www.facebook.com/137015600233933" target="_blank" class="sqs-svg-icon--wrapper facebook"> 
+            <div> 
+             <svg class="sqs-svg-icon--social" viewbox="0 0 64 64"> 
+              <use class="sqs-use--icon" xlink:href="#facebook-icon"></use> 
+              <use class="sqs-use--mask" xlink:href="#facebook-mask"></use> 
+             </svg> 
+            </div> </a> 
+          </nav> 
+         </div>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div> 
+   </footer> 
+  </div> 
+  <div></div> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/prism.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-perl.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-php.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-python.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-json.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-bash.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-csharp.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-java.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-swift.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-sql.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/plugins/command-line/prism-command-line.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/plugins/line-numbers/prism-line-numbers.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/plugins/file-highlight/prism-file-highlight.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.4.1/components/prism-http.min.js"></script>
+  <script type="text/javascript" data-sqs-type="imageloader-bootstraper">(function() {if(window.ImageLoader) { window.ImageLoader.bootstrap({}, document); }})();</script>
+  <script>Squarespace.afterBodyLoad(Y);</script>
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="display:none">
+   <symbol id="linkedin-icon" viewbox="0 0 64 64">
+    <path d="M20.4,44h5.4V26.6h-5.4V44z M23.1,18c-1.7,0-3.1,1.4-3.1,3.1c0,1.7,1.4,3.1,3.1,3.1 c1.7,0,3.1-1.4,3.1-3.1C26.2,19.4,24.8,18,23.1,18z M39.5,26.2c-2.6,0-4.4,1.4-5.1,2.8h-0.1v-2.4h-5.2V44h5.4v-8.6 c0-2.3,0.4-4.5,3.2-4.5c2.8,0,2.8,2.6,2.8,4.6V44H46v-9.5C46,29.8,45,26.2,39.5,26.2z" />
+   </symbol>
+   <symbol id="linkedin-mask" viewbox="0 0 64 64">
+    <path d="M0,0v64h64V0H0z M25.8,44h-5.4V26.6h5.4V44z M23.1,24.3c-1.7,0-3.1-1.4-3.1-3.1c0-1.7,1.4-3.1,3.1-3.1 c1.7,0,3.1,1.4,3.1,3.1C26.2,22.9,24.8,24.3,23.1,24.3z M46,44h-5.4v-8.4c0-2,0-4.6-2.8-4.6c-2.8,0-3.2,2.2-3.2,4.5V44h-5.4V26.6 h5.2V29h0.1c0.7-1.4,2.5-2.8,5.1-2.8c5.5,0,6.5,3.6,6.5,8.3V44z" />
+   </symbol>
+   <symbol id="twitter-icon" viewbox="0 0 64 64">
+    <path d="M48,22.1c-1.2,0.5-2.4,0.9-3.8,1c1.4-0.8,2.4-2.1,2.9-3.6c-1.3,0.8-2.7,1.3-4.2,1.6 C41.7,19.8,40,19,38.2,19c-3.6,0-6.6,2.9-6.6,6.6c0,0.5,0.1,1,0.2,1.5c-5.5-0.3-10.3-2.9-13.5-6.9c-0.6,1-0.9,2.1-0.9,3.3 c0,2.3,1.2,4.3,2.9,5.5c-1.1,0-2.1-0.3-3-0.8c0,0,0,0.1,0,0.1c0,3.2,2.3,5.8,5.3,6.4c-0.6,0.1-1.1,0.2-1.7,0.2c-0.4,0-0.8,0-1.2-0.1 c0.8,2.6,3.3,4.5,6.1,4.6c-2.2,1.8-5.1,2.8-8.2,2.8c-0.5,0-1.1,0-1.6-0.1c2.9,1.9,6.4,2.9,10.1,2.9c12.1,0,18.7-10,18.7-18.7 c0-0.3,0-0.6,0-0.8C46,24.5,47.1,23.4,48,22.1z" />
+   </symbol>
+   <symbol id="twitter-mask" viewbox="0 0 64 64">
+    <path d="M0,0v64h64V0H0z M44.7,25.5c0,0.3,0,0.6,0,0.8C44.7,35,38.1,45,26.1,45c-3.7,0-7.2-1.1-10.1-2.9 c0.5,0.1,1,0.1,1.6,0.1c3.1,0,5.9-1,8.2-2.8c-2.9-0.1-5.3-2-6.1-4.6c0.4,0.1,0.8,0.1,1.2,0.1c0.6,0,1.2-0.1,1.7-0.2 c-3-0.6-5.3-3.3-5.3-6.4c0,0,0-0.1,0-0.1c0.9,0.5,1.9,0.8,3,0.8c-1.8-1.2-2.9-3.2-2.9-5.5c0-1.2,0.3-2.3,0.9-3.3 c3.2,4,8.1,6.6,13.5,6.9c-0.1-0.5-0.2-1-0.2-1.5c0-3.6,2.9-6.6,6.6-6.6c1.9,0,3.6,0.8,4.8,2.1c1.5-0.3,2.9-0.8,4.2-1.6 c-0.5,1.5-1.5,2.8-2.9,3.6c1.3-0.2,2.6-0.5,3.8-1C47.1,23.4,46,24.5,44.7,25.5z" />
+   </symbol>
+   <symbol id="medium-icon" viewbox="0 0 64 64">
+    <path d="M46.908,23.95c-0.006-0.005-0.011-0.01-0.018-0.014l-0.01-0.005l-9.05-4.525c-0.061-0.031-0.125-0.051-0.19-0.068c-0.082-0.021-0.165-0.034-0.249-0.034c-0.347,0-0.692,0.174-0.878,0.477l-5.21,8.467l6.538,10.625l9.095-14.779C46.966,24.046,46.952,23.985,46.908,23.95z M28.433,35.958L37,40.241L28.433,26.32V35.958zM38.287,40.884l7.052,3.526C46.256,44.869,47,44.548,47,43.693V26.726L38.287,40.884z M26.946,23.964l-8.839-4.419c-0.16-0.08-0.312-0.118-0.449-0.118c-0.387,0-0.659,0.299-0.659,0.802v19.083c0,0.511,0.374,1.116,0.831,1.344l7.785,3.892c0.2,0.1,0.39,0.147,0.561,0.147c0.484,0,0.823-0.374,0.823-1.003V24.051C27,24.014,26.979,23.98,26.946,23.964z" />
+   </symbol>
+   <symbol id="medium-mask" viewbox="0 0 64 64">
+    <path d="M0,0v64h64V0H0z M27,43.693c0,0.628-0.339,1.003-0.823,1.003c-0.172,0-0.362-0.047-0.561-0.147l-7.785-3.892C17.374,40.428,17,39.823,17,39.312V20.229c0-0.503,0.271-0.802,0.659-0.802c0.137,0,0.289,0.038,0.449,0.118l8.839,4.419C26.979,23.98,27,24.014,27,24.051V43.693z M28.433,35.958V26.32L37,40.241L28.433,35.958z M31.303,28.248l5.21-8.467c0.187-0.303,0.532-0.477,0.878-0.477c0.084,0,0.167,0.013,0.249,0.034c0.065,0.017,0.129,0.038,0.19,0.068l9.05,4.525l0.01,0.005c0.007,0.003,0.012,0.009,0.018,0.014c0.043,0.034,0.058,0.095,0.028,0.145l-9.095,14.779L31.303,28.248z M47,43.693c0,0.855-0.744,1.176-1.661,0.717l-7.052-3.526L47,26.726V43.693z" />
+   </symbol>
+   <symbol id="github-icon" viewbox="0 0 64 64">
+    <path d="M32,16c-8.8,0-16,7.2-16,16c0,7.1,4.6,13.1,10.9,15.2 c0.8,0.1,1.1-0.3,1.1-0.8c0-0.4,0-1.4,0-2.7c-4.5,1-5.4-2.1-5.4-2.1c-0.7-1.8-1.8-2.3-1.8-2.3c-1.5-1,0.1-1,0.1-1 c1.6,0.1,2.5,1.6,2.5,1.6c1.4,2.4,3.7,1.7,4.7,1.3c0.1-1,0.6-1.7,1-2.1c-3.6-0.4-7.3-1.8-7.3-7.9c0-1.7,0.6-3.2,1.6-4.3 c-0.2-0.4-0.7-2,0.2-4.2c0,0,1.3-0.4,4.4,1.6c1.3-0.4,2.6-0.5,4-0.5c1.4,0,2.7,0.2,4,0.5c3.1-2.1,4.4-1.6,4.4-1.6 c0.9,2.2,0.3,3.8,0.2,4.2c1,1.1,1.6,2.5,1.6,4.3c0,6.1-3.7,7.5-7.3,7.9c0.6,0.5,1.1,1.5,1.1,3c0,2.1,0,3.9,0,4.4 c0,0.4,0.3,0.9,1.1,0.8C43.4,45.1,48,39.1,48,32C48,23.2,40.8,16,32,16z" />
+   </symbol>
+   <symbol id="github-mask" viewbox="0 0 64 64">
+    <path d="M0,0v64h64V0H0z M37.1,47.2c-0.8,0.2-1.1-0.3-1.1-0.8c0-0.5,0-2.3,0-4.4c0-1.5-0.5-2.5-1.1-3 c3.6-0.4,7.3-1.7,7.3-7.9c0-1.7-0.6-3.2-1.6-4.3c0.2-0.4,0.7-2-0.2-4.2c0,0-1.3-0.4-4.4,1.6c-1.3-0.4-2.6-0.5-4-0.5 c-1.4,0-2.7,0.2-4,0.5c-3.1-2.1-4.4-1.6-4.4-1.6c-0.9,2.2-0.3,3.8-0.2,4.2c-1,1.1-1.6,2.5-1.6,4.3c0,6.1,3.7,7.5,7.3,7.9 c-0.5,0.4-0.9,1.1-1,2.1c-0.9,0.4-3.2,1.1-4.7-1.3c0,0-0.8-1.5-2.5-1.6c0,0-1.6,0-0.1,1c0,0,1,0.5,1.8,2.3c0,0,0.9,3.1,5.4,2.1 c0,1.3,0,2.3,0,2.7c0,0.4-0.3,0.9-1.1,0.8C20.6,45.1,16,39.1,16,32c0-8.8,7.2-16,16-16c8.8,0,16,7.2,16,16 C48,39.1,43.4,45.1,37.1,47.2z" />
+   </symbol>
+   <symbol id="facebook-icon" viewbox="0 0 64 64">
+    <path d="M34.1,47V33.3h4.6l0.7-5.3h-5.3v-3.4c0-1.5,0.4-2.6,2.6-2.6l2.8,0v-4.8c-0.5-0.1-2.2-0.2-4.1-0.2 c-4.1,0-6.9,2.5-6.9,7V28H24v5.3h4.6V47H34.1z" />
+   </symbol>
+   <symbol id="facebook-mask" viewbox="0 0 64 64">
+    <path d="M0,0v64h64V0H0z M39.6,22l-2.8,0c-2.2,0-2.6,1.1-2.6,2.6V28h5.3l-0.7,5.3h-4.6V47h-5.5V33.3H24V28h4.6V24 c0-4.6,2.8-7,6.9-7c2,0,3.6,0.1,4.1,0.2V22z" />
+   </symbol>
+  </svg>   
+ </body>
+</html>

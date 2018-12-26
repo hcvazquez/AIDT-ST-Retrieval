@@ -1,0 +1,210 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+ <head> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <title>Three-dimensional Mapping</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="description" content=""> 
+  <meta name="author" content=""> 
+  <link rel="stylesheet" href="/css/bootstrap.css" type="text/css"> 
+  <link rel="stylesheet" href="/css/k.css" type="text/css"> 
+  <!-- Le fav and touch icons --> 
+  <link rel="shortcut icon" href="/favicon.ico"> 
+  <link rel="apple-touch-icon" href="/img/apple-touch-57.png"> 
+  <link rel="apple-touch-icon" sizes="72x72" href="/img/apple-touch-72.png"> 
+  <link rel="apple-touch-icon" sizes="114x114" href="/img/apple-touch-114.png"> 
+  <link rel="stylesheet" href="/js/highlight/styles/github.css" type="text/css"> 
+  <script type="text/javascript" src="/js/jquery-1.10.2.min.js"></script> 
+  <script type="text/javascript" src="/js/raphael-2.1.0.min.js"></script> 
+  <script type="text/javascript" src="/js/kartograph.js"></script> 
+ </head> 
+ <body> 
+  <div class="container"> 
+   <div class="row"> 
+    <div class="span6 offset6">
+      &nbsp; 
+    </div> 
+   </div> 
+   <div class="row"> 
+    <div class="span3 sidebar"> 
+     <div class="head"> 
+      <a href="/"><img src="/img/logo.png" alt="Kartograph"></a> 
+      <p class="tagline">A simple and lightweight framework for creating beautiful, interactive vector maps.</p> 
+     </div> 
+     <div class="toc"> 
+      <h3>Showcases</h3> 
+      <ul> 
+       <li><a href="/showcase/animated-symbols">Animated Symbols</a></li> 
+       <li><a href="/showcase/italia">La Bella Italia</a></li> 
+       <li><a href="/showcase/choropleth">Choropleth Maps</a></li> 
+       <li><a href="/showcase/symbols">Symbol Maps</a></li> 
+       <li><a href="/showcase/clustering">Clustering Map Symbols</a></li> 
+       <li><a href="/showcase/charts">Chart Maps</a></li> 
+       <li><a href="/showcase/dotgrid">Dot-grid Maps</a></li> 
+       <li class="active"><a href="/showcase/3d">3D-Projections</a></li> 
+       <li><a href="/showcase/projections">Map Projections</a></li> 
+       <li><a href="/showcase/eastcoast">High-res vector mapping</a></li> 
+      </ul> 
+     </div> 
+    </div> 
+    <div class="span9"> 
+     <div class="content"> 
+      <h1><small style="float:right; font-size: 12px; font-family:Georgia">(<a href="https://github.com/kartograph/kartograph.org/blob/master/showcase/3d/index.html">view source</a>)</small>Three-dimensional Mapping</h1> 
+      <link rel="stylesheet" type="text/css" href="/css/jquery.qtip.css"> 
+      <script type="text/javascript" src="/js/jquery.qtip.min.js"></script> 
+      <script type="text/javascript">
+$(function() {
+    var map, c, scale, updateMap, symbols = [];
+
+    $.fn.qtip.defaults.style.classes = 'ui-tooltip-bootstrap';
+    $.fn.qtip.defaults.style.def = false;
+
+    c = $('#map');
+    c.height(c.width()*.5);
+
+    map = kartograph.map('#map');
+
+    map.loadMap('map-usa.svg', function() {
+
+        map.loadCSS('style.css', function() {
+
+            map.addLayer('graticule');
+            map.addLayer('graticule_1');
+            map.addLayer('usa');
+
+            $.getJSON('us-crime-cities.json', function(crimeCities) {
+
+                $.each(crimeCities, function(i,city) {
+                    $.each(['ViolentCrime','Rape','Murder'], function(i,prop) {
+                        $.each(['2011','2010'], function(i,yr) {
+                            city[prop+yr+'Rate'] = city[prop+yr] / city.Population;
+                        });
+                    });
+                });
+
+                updateMap = function() {
+
+                    var prop = $('.dataset.btn-primary').data('val')
+                        + $('.year.btn-primary').html()
+                        + $('.type.btn-primary').data('val'),
+
+                    maxRad = $('.type.btn-primary').data('maxrad');
+
+                    scale = kartograph.scale.linear(crimeCities, prop);
+
+                    $.each(crimeCities, function(i, c) {
+                        var bar, pts;
+
+                        pts = [c.ll, [c.ll[0], c.ll[1], scale(c[prop])*maxRad]];
+
+                        if (symbols[i]) {
+
+                            bar = symbols[i];
+                            if (Raphael.svg) bar.animate({ path: map.getGeoPathStr(pts) }, 500);
+                            else bar.attr('path', map.getGeoPathStr(pts));
+
+                        } else {
+
+                            bar = map.addGeoPath([c.ll,c.ll]);
+                            bar.attr({
+                                stroke: '#024',
+                                opacity: .6,
+                                'stroke-width': 4,
+                                fill: 'none',
+                                'stroke-linecap': 'square'
+                            });
+
+                            if (Raphael.svg) {
+                                bar.animate({ path: map.getGeoPathStr(pts) }, 500);
+                                bar.node.setAttribute('title', c.City);
+                                setTimeout(function() {
+                                    $(bar.node).qtip({
+                                        content: {
+                                            title: c.City,
+                                            text: c[prop]
+                                        },
+                                        position: {
+                                            target: 'mouse',
+                                            viewport: $(window),
+                                            adjust: { x:7, y:7}
+                                        },
+                                    }, 800);
+                                });
+                            } else {
+                                bar.attr('path', map.getGeoPathStr(pts));
+                            }
+                            symbols.push(bar);
+                        }
+                    });
+
+                }
+
+                updateMap();
+
+            });
+        });
+
+    }, { padding: -150 });
+
+    $('.btn').click(function(event) {
+        var tgt = $(event.target), par = tgt.parent();
+        $('.btn', par).removeClass('btn-primary');
+        tgt.addClass('btn-primary');
+        updateMap();
+    });
+});
+</script> 
+      <p>This map shows crime data for some cities in the United States. You can choose between showing actual quantities of incidents or the rates. Note that the purpose of this demo is not to promote 3D bar charts (which are fairly ineffective), but to showcase the satellite projection along with the possibility to project three dimensional geo-coordinates. In fact, the height of the bars in this example is given in km above ground.</p> 
+      <div id="map"></div> 
+      <span style="margin-right:1em"> <a class="dataset btn btn-primary" data-val="ViolentCrime">Violent Crime</a> <a class="dataset btn" data-val="Rape">Rape</a> <a class="dataset btn" data-val="Murder">Murder</a> </span> 
+      <span style="margin-right:1em"> <a class="year btn btn-primary">2011</a> <a class="year btn">2010</a> </span> 
+      <span> <a class="type btn btn-primary" data-val="" data-maxrad="500">Quantity</a> <a class="type btn" data-val="Rate" data-maxrad="250">Density</a> </span> 
+     </div> 
+     <script type="text/javascript" src="/js/highlight/highlight.pack.js"></script> 
+     <script type="text/javascript">
+
+    $('pre code').each(function(i, e) {
+        var code = $(e).html().trim(), 
+            code2 = code.replace(/\s/g, ''),
+            last = code2.substr(code2.length-1, 1);
+
+        if (code.substr(0,1) == '"' && (last == '}' || last == ']')) {
+            e.className = 'json';
+            $(e).html('{'+code+'}');
+            hljs.highlightBlock(e);
+            var i = $(e).html()
+            $(e).html(i.substr(1, i.length-2));
+            return;
+        } else if (last == ';') {
+            e.className = 'javascript';
+        }
+
+        hljs.highlightBlock(e)
+    });
+
+</script> 
+    </div> 
+    <div class="footer">
+      © Copyright 2012-2014. Created by 
+     <a href="http://driven-by-data.net">Gregor Aisch</a>. 
+    </div> 
+   </div> 
+  </div>  
+  <!-- Piwik --> 
+  <script type="text/javascript">
+var pkBaseURL = (("https:" == document.location.protocol) ? "https://piwik.kartograph.org/" : "http://piwik.kartograph.org/");
+document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+  <script type="text/javascript">
+try {
+var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", 14);
+piwikTracker.trackPageView();
+piwikTracker.enableLinkTracking();
+} catch( err ) {}
+</script>
+  <noscript>
+   <p><img src="http://piwik.kartograph.org/piwik.php?idsite=14" style="border:0" alt=""></p>
+  </noscript> 
+  <!-- End Piwik Tracking Code -->   
+ </body>
+</html>

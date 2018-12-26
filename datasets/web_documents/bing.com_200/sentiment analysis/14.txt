@@ -1,0 +1,846 @@
+<!doctype html>
+<!--[if lt IE 7]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9 lt-ie8 lt-ie7"><![endif]-->
+<!--[if (IE 7)&!(IEMobile)]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9 lt-ie8"><![endif]-->
+<!--[if (IE 8)&!(IEMobile)]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Reddit sentiment analysis in SparkR and CouchDB - Watson Data Platform</title> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="apple-touch-icon" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/ibm-favicon.png"> 
+  <link rel="icon" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/ibm-favicon.png"> 
+  <link href="//1.www.s81c.com/common/v18/css/www.css" rel="stylesheet"> 
+  <link rel="stylesheet" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/css/style.css"> 
+  <script src="//1.www.s81c.com/common/stats/ida_stats.js"></script> 
+  <!--[if IE]>
+    <link rel="shortcut icon" href="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/favicon.ico">
+  <![endif]--> 
+  <meta name="msapplication-TileColor" content="#f01d4f"> 
+  <meta name="msapplication-TileImage" content="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/ibm-favicon.png"> 
+  <meta name="theme-color" content="#121212"> 
+  <!-- google analytics --> 
+  <meta name="google-site-verification" content="ZOQeHRygaaWj2MxEwU36AgbPigyRTIM9RmNd6jwoNUk"> 
+  <!-- This site is optimized with the Yoast SEO plugin v4.4 - https://yoast.com/wordpress/plugins/seo/ --> 
+  <meta name="description" content="More analysis options for Simple Data Pipe output. Once data is in Cloudant, connect via CouchDB then analyze the JSON with SparkR in a Jupyter notebook."> 
+  <meta name="robots" content="noodp"> 
+  <link rel="canonical" href="https://developer.ibm.com/clouddataservices/2016/08/15/reddit-sentiment-analysis-in-sparkr-and-couchdb/"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Reddit sentiment analysis in SparkR and CouchDB - Watson Data Platform"> 
+  <meta property="og:description" content="More analysis options for Simple Data Pipe output. Once data is in Cloudant, connect via CouchDB then analyze the JSON with SparkR in a Jupyter notebook."> 
+  <meta property="og:url" content="https://developer.ibm.com/clouddataservices/2016/08/15/reddit-sentiment-analysis-in-sparkr-and-couchdb/"> 
+  <meta property="og:site_name" content="Watson Data Platform"> 
+  <meta property="article:section" content="Cloudant"> 
+  <meta property="article:published_time" content="2016-08-15T10:16:41+00:00"> 
+  <meta property="article:modified_time" content="2017-03-06T13:26:51+00:00"> 
+  <meta property="og:updated_time" content="2017-03-06T13:26:51+00:00"> 
+  <meta property="og:image" content="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/07/redditSparkRCouchDBArchitecture.png"> 
+  <meta property="og:image" content="https://deployment-tracker.mybluemix.net/stats/eff5ff771f3cfd9e9443463c383565a1/button.svg"> 
+  <meta property="og:image" content="https://developer.ibm.com/bluemix/wp-content/uploads/sites/20/2015/11/440px-Reddit_logo.svg_-e1447795053845.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/save_reddit_connector.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/deploy_w_connector.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/app_url.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/openurl.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/sdp_type_ama.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/reddit_ama_run.png"> 
+  <meta property="og:image" content="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/08/db_name_sparkrr.png"> 
+  <meta property="og:image" content="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/08/output_lg-615x308.png"> 
+  <meta property="og:image" content="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/08/HistogramSparkRCouchDB.png"> 
+  <meta property="og:image" content="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/08/list_by_sent_sparkr.png"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:description" content="More analysis options for Simple Data Pipe output. Once data is in Cloudant, connect via CouchDB then analyze the JSON with SparkR in a Jupyter notebook."> 
+  <meta name="twitter:title" content="Reddit sentiment analysis in SparkR and CouchDB - Watson Data Platform"> 
+  <meta name="twitter:image" content="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/07/redditSparkRCouchDBArchitecture.png"> 
+  <!-- / Yoast SEO plugin. --> 
+  <link rel="dns-prefetch" href="//s0.wp.com"> 
+  <link rel="dns-prefetch" href="//fonts.googleapis.com"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Watson Data Platform » Feed" href="https://developer.ibm.com/clouddataservices/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Watson Data Platform » Comments Feed" href="https://developer.ibm.com/clouddataservices/comments/feed/"> 
+  <meta name="segment" property="(developerWorks)" productTitle="developerWorks" value="Cloud Data Services (developerWorks)"> 
+  <link rel="alternate" type="application/rss+xml" title="Watson Data Platform » Reddit sentiment analysis in SparkR and CouchDB Comments Feed" href="https://developer.ibm.com/clouddataservices/2016/08/15/reddit-sentiment-analysis-in-sparkr-and-couchdb/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.2.1\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.2.1\/svg\/","svgExt":".svg","source":{"concatemoji":"\/\/dw1.s81c.com\/dw\/wp-includes\/js\/wp-emoji-release.min.js"}};
+			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),!(j.toDataURL().length<3e3)&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57331,65039,8205,55356,57096),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57331,55356,57096),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55357,56425,55356,57341,8205,55357,56507),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55357,56425,55356,57341,55357,56507),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="events-manager-css" href="https://developer.ibm.com/clouddataservices/wp-content/plugins/events-manager/includes/css/events_manager.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="tab-styles-css" href="https://developer.ibm.com/clouddataservices/wp-content/plugins/projectnext-shortcodes/tab-styles.css" type="text/css" media="all"> 
+  <link rel="stylesheet" id="googleFonts-css" href="//fonts.googleapis.com/css?family=Lato%3A400%2C700%2C400italic%2C700italic" type="text/css" media="all"> 
+  <!--[if lt IE 9]>
+<link rel='stylesheet' id='bones-ie-only-css'  href='https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/css/ie.css' type='text/css' media='all' />
+<![endif]--> 
+  <link rel="stylesheet" id="jetpack_css-css" href="https://developer.ibm.com/clouddataservices/wp-content/plugins/jetpack/css/jetpack.css" type="text/css" media="all"> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/jquery.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/jquery-migrate.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/core.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/widget.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/position.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/mouse.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/sortable.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/datepicker.min.js"></script> 
+  <script type="text/javascript">
+jQuery(document).ready(function(jQuery){jQuery.datepicker.setDefaults({"closeText":"Close","currentText":"Today","monthNames":["January","February","March","April","May","June","July","August","September","October","November","December"],"monthNamesShort":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"nextText":"Next","prevText":"Previous","dayNames":["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],"dayNamesShort":["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],"dayNamesMin":["S","M","T","W","T","F","S"],"dateFormat":"MM d, yy","firstDay":1,"isRTL":false});});
+</script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/menu.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/wp-a11y.min.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var uiAutocompleteL10n = {"noResults":"No results found.","oneResult":"1 result found. Use up and down arrow keys to navigate.","manyResults":"%d results found. Use up and down arrow keys to navigate.","itemSelected":"Item selected."};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/autocomplete.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/resizable.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/draggable.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/button.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/jquery/ui/dialog.min.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var EM = {"ajaxurl":"https:\/\/developer.ibm.com\/clouddataservices\/wp-admin\/admin-ajax.php","locationajaxurl":"https:\/\/developer.ibm.com\/clouddataservices\/wp-admin\/admin-ajax.php?action=locations_search","firstDay":"1","locale":"en","dateFormat":"dd\/mm\/yy","ui_css":"https:\/\/developer.ibm.com\/clouddataservices\/wp-content\/plugins\/events-manager\/includes\/css\/jquery-ui.min.css","show24hours":"0","is_ssl":"1","bookingInProgress":"Please wait while the booking is being submitted.","tickets_save":"Save Ticket","bookingajaxurl":"https:\/\/developer.ibm.com\/clouddataservices\/wp-admin\/admin-ajax.php","bookings_export_save":"Export Bookings","bookings_settings_save":"Save Settings","booking_delete":"Are you sure you want to delete?","bb_full":"Sold Out","bb_book":"Book Now","bb_booking":"Booking...","bb_booked":"Booking Submitted","bb_error":"Booking Error. Try again?","bb_cancel":"Cancel","bb_canceling":"Canceling...","bb_cancelled":"Cancelled","bb_cancel_error":"Cancellation Error. Try again?","txt_search":"Search","txt_searching":"Searching...","txt_loading":"Loading..."};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/events-manager/includes/js/events-manager.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/projectnext-shortcodes/tab-dropdown.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/expose$.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/libs/modernizr.custom.min.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/libs/jquery-ui.min.js"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var dev_advo = {"siteurl":"http:\/\/developer.ibm.com\/clouddataservices"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/search-tool.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/resources_menu.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/infobox.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/tray-interaction.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/events-filter.js"></script> 
+  <link rel="https://api.w.org/" href="https://developer.ibm.com/clouddataservices/wp-json/"> 
+  <link rel="shortlink" href="https://wp.me/p6nwVO-2g1"> 
+  <link rel="alternate" type="application/json+oembed" href="https://developer.ibm.com/clouddataservices/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdeveloper.ibm.com%2Fclouddataservices%2F2016%2F08%2F15%2Freddit-sentiment-analysis-in-sparkr-and-couchdb%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="https://developer.ibm.com/clouddataservices/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdeveloper.ibm.com%2Fclouddataservices%2F2016%2F08%2F15%2Freddit-sentiment-analysis-in-sparkr-and-couchdb%2F&amp;format=xml"> 
+  <link rel="dns-prefetch" href="//v0.wordpress.com"> 
+  <style type="text/css">img#wpstats{display:none}</style>
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+ </head> 
+ <body id="ibm-com"> 
+  <!-- MASTHEAD_BEGIN --> 
+  <!-- Masthead mobile --> 
+  <div id="ibm-masthead" role="banner" aria-label="IBM"> 
+   <div id="ibm-mast-options"> 
+    <ul role="toolbar" aria-labelledby="ibm-masthead"> 
+     <li id="ibm-geo" role="presentation"> <a href="http://www.ibm.com/planetwide/select/selector.html">United States</a> </li> 
+    </ul> 
+   </div> 
+   <div id="ibm-universal-nav"> 
+    <div id="ibm-home">
+     <a href="http://www.ibm.com/us-en/">IBM®</a>
+    </div> 
+    <ul id="ibm-menu-links" role="toolbar" aria-label="Site map"> 
+     <li><a href="http://www.ibm.com/sitemap/us/en/">Site map</a></li> 
+    </ul> 
+    <div id="ibm-search-module" role="search" aria-labelledby="ibm-masthead"> 
+     <form id="ibm-search-form" action="//www.ibm.com/Search/" method="get"> 
+      <p> <label for="q"><span class="ibm-access">Search</span></label> <input type="text" maxlength="100" value="" name="q" id="q"> <input type="hidden" value="18" name="v"> <input type="hidden" value="utf" name="en"> <input type="hidden" value="en" name="lang"> <input type="hidden" value="us" name="cc"> <input type="submit" id="ibm-search" class="ibm-btn-search" value="Submit"> </p> 
+     </form> 
+    </div> 
+   </div> 
+  </div> 
+  <!-- MASTHEAD_END --> 
+  <div class="ibm-sitenav-menu-container ibm-hide" data-sticky="false"> 
+   <div class="ibm-sitenav-menu-name">
+    <a href="https://developer.ibm.com/clouddataservices">IBM Developer Advocacy</a>
+   </div> 
+   <div class="ibm-sitenav-menu-list"> 
+    <ul role="menubar"> 
+     <li role="presentation" class="ibm-haschildlist ibm-highlight"> <span role="menuitem">Services</span> 
+      <ul role="menu"> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/cloudant/">IBM Cloudant</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/compose/">IBM Compose</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/spark/">IBM Analytics for Apache Spark</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/ibm-analytics-engine/">IBM Analytics Engine</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/ibm-data-science-experience/">IBM Data Science Experience</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/data-refinery/">IBM Data Refinery</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/ibm-watson-machine-learning/">IBM Watson Machine Learning</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/data-catalog/">IBM Data Catalog</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/streaming-analytics/">IBM Streaming Analytics</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/dataconnect/">IBM Bluemix Data Connect</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/lift/">IBM Bluemix Lift</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/biginsights/">IBM BigInsights on Cloud</a></li> 
+       <li role="presentation"><a role="menuitem" href="https://developer.ibm.com/clouddataservices/docs/graph/">IBM Graph</a></li> 
+      </ul> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Blog</a> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Showcases</a> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Search Resources</a> </li> 
+     <li role="presentation"> <a href="#" role="menuitem">Events</a> </li> 
+    </ul> 
+   </div> 
+  </div> 
+  <!-- End of all Masthead works --> 
+  <div id="container" class="container"> 
+   <header class="header" role="banner" itemscope itemtype="http://schema.org/WPHeader"> 
+    <div id="inner-header" class="cf"> 
+     <!-- wrap wrap-tc  --> 
+     <nav class="tray search-resources service-resources"> 
+      <div class="tray-container services"> 
+       <div class="top-content clearfix"> 
+        <div class="intro-text clearfix">
+          Services to 
+         <span>get</span>, 
+         <span>build</span>, and 
+         <span>analyze</span> data on the ibm cloud 
+        </div> 
+        <div class="close clearfix">
+         <a href="#"><img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/close-x.png" alt="close"></a>
+        </div> 
+       </div> 
+       <div class="service-list"> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/cloudant/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/06/cloudant64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Cloudant
+          </div> </a> 
+         <p> A fully-managed NoSQL database as a service (DBaaS) built from the ground up to scale globally, run non-stop, and handle a wide variety of data… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/compose/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/08/mongodb_lg.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Compose
+          </div> </a> 
+         <p> Production-ready hosting for the following databases: MongoDB with SSL, Elasticsearch, RethinkDB, PostgreSQL, Redis, etcd, and RabbitMQ. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/spark/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/10/apacheSpark_50x.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Analytics for Apache Spark
+          </div> </a> 
+         <p> Analytics for Apache Spark provides fast, in-memory, distributed analytics processing of large data sets. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/ibm-analytics-engine/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/09/spark-hadoop_logo_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Analytics Engine
+          </div> </a> 
+         <p> IBM Analytics Engine is a combined Apache Spark and Apache Hadoop service that provides an environment for developing and deploying advanced analytics applications. It uses… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/ibm-data-science-experience/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/01/DSx-Icon-2.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Data Science Experience
+          </div> </a> 
+         <p> IBM Data Science Experience (DSx) is an interactive, collaborative, cloud-based environment where data scientists can use multiple tools to activate their insights. Data scientists can… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/data-refinery/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/09/temp-logo.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Data Refinery
+          </div> </a> 
+         <p> IBM Data Refinery is a self-service data preparation client for data scientists, data engineers, and business analysts. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/ibm-watson-machine-learning/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/01/icon-WML.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Watson Machine Learning
+          </div> </a> 
+         <p> Machine learning is everywhere – influencing nearly everything we do. You’ve likely heard that Uber is world’s largest taxi company, yet owns no vehicles. Facebook,… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/data-catalog/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/09/logo_dataCatalog.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Data Catalog
+          </div> </a> 
+         <p> A secure enterprise catalog to index, classify, and govern your data with greater efficiency. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/streaming-analytics/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2017/02/StreamingAnalytics-FA-64x64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Streaming Analytics
+          </div> </a> 
+         <p> Perform real-time analysis on data in motion as part of your Bluemix® applications by using IBM® Streaming Analytics for Bluemix. Streaming Analytics is powered by… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/dataconnect/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/06/DATAWORKS_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Bluemix Data Connect
+          </div> </a> 
+         <p> Data Connect is a cloud-based data refinery that transforms raw data into relevant and actionable information. Find data, shape it, and deliver it to applications… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/lift/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/09/DATAWORKS_LIFT_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Bluemix Lift
+          </div> </a> 
+         <p> Migrate data from on-premises to the cloud quickly and securely. </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/biginsights/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2015/05/BIonCloud_64.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM BigInsights on Cloud
+          </div> </a> 
+         <p> IBM BigInsights on Cloud provides Hadoop-as-a-service on IBM’s SoftLayer global cloud infrastructure. It offers the performance and security of an on-premises deployment without the cost… </p> 
+        </div> 
+        <div class="service-item clearfix"> 
+         <a href="https://developer.ibm.com/clouddataservices/docs/graph/"> 
+          <div class="service-icon">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/08/GraphDB-FA-big-hero.png" alt="thumbnail">
+          </div> 
+          <div class="service-title">
+           IBM Graph
+          </div> </a> 
+         <p> IBM Graph is an easy-to-use, fully managed graph database service for storing, querying, and visualizing data points, their connections, and properties. IBM Graph is based… </p> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="tray-container search"> 
+       <div class="search-area"> 
+        <form id="search-form-tray" method="get"> 
+         <input type="text" name="search"> 
+         <button type="submit" class="project-btn">Search</button> 
+        </form> 
+        <div class="close clearfix">
+         <a href="#"><img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/close-x.png" alt="close"></a>
+        </div> 
+       </div> 
+       <div class="topics"> 
+        <div class="topic-list" id="topic"> 
+         <span class="topic-title">Topic</span> 
+         <ul></ul> 
+         <span><a href="https://developer.ibm.com/clouddataservices/how-tos" class="advanced">Advanced Search</a></span> 
+        </div> 
+        <div class="topic-list" id="language"> 
+         <span class="topic-title">Language</span> 
+         <ul></ul> 
+        </div> 
+        <div class="topic-list" id="technology"> 
+         <span class="topic-title">Technology</span> 
+         <ul></ul> 
+         <span> <a href="#" class="engine-info">Powered by the Simple Search Service</a> <a href="#" class="engine-info">i</a> </span> 
+         <div class="modal powered"> 
+          <div class="arrow-up"></div> 
+          <div class="powered-info"> 
+           <span>What's This?</span> 
+           <p> The most popular Topics, Technologies and Languages are determined by the Simple Search Service - a microservice that lets you quickly create a faceted search engine. See what else IBM can do for you. </p> 
+           <a href="https://developer.ibm.com/clouddataservices/simple-search-service"><p class="powered-cta">Learn More about the Simple Search Service</p></a> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </nav> 
+     <nav role="navigation" class="navigation-main"> 
+      <div class="home"> 
+       <a href="https://developer.ibm.com/clouddataservices" class="home-link "> <span><span class="cds-logo-text">CloudDataServices</span> <span class="labs-logo-text">Labs</span></span> <button class="nav-trigger">Open Menu</button> </a> 
+      </div>  
+      <ul class="main-menu"> 
+       <li class="tablet-logo"> <a href="https://developer.ibm.com/clouddataservices"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/IBM-Logo.svg" alt="logo"> </span> </a> </li> 
+       <li> <a href="#" class="expanded " data-target="services"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/services-icon.svg" alt="services"> </span> <span class="title">Services</span> <span class="arrow"> 
+          <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+           <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+          </svg> </span> </a> 
+        <ul class="sub-menu"> 
+         <li class="back"> <a href="#"> <span class="arrow"> 
+            <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+             <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+            </svg> </span> <span class="title">Back to Navigation</span> </a> </li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/data-refinery/">IBM Data Refinery</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/ibm-analytics-engine/">IBM Analytics Engine</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/data-catalog/">IBM Data Catalog</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/streaming-analytics/">IBM Streaming Analytics</a></li> 
+         <li><a href="https://developer.ibm.com/clouddataservices/docs/ibm-data-science-experience/">IBM Data Science Experience</a></li> 
+        </ul> </li> 
+       <li> <a href="https://developer.ibm.com/clouddataservices/blog/#" class="active"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/blog-icon.svg" alt="blog"> </span> <span class="title">Blog</span> </a> </li> 
+       <li> <a href="https://developer.ibm.com/clouddataservices/showcases/#"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/showcases-icon.svg" alt="showcases"> </span> <span class="title">Showcases</span> </a> </li> 
+       <li class="search-submenu"> <a href="#" class="expanded special " data-target="search"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/search-icon.svg" alt="search resources"> </span> <span class="title special">Search resources</span> <span class="arrow special"> 
+          <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+           <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+          </svg> </span> </a> 
+        <ul class="sub-menu"> 
+         <li class="back"> <a href="#"> <span class="arrow"> 
+            <svg id="DESIGN" class="cls-1" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 9.11 15.73">
+             <polyline points="0.35 0.37 8.38 7.63 0.35 15.37" />
+            </svg> </span> <span class="title">Back to Navigation</span> </a> </li> 
+        </ul> </li>  
+       <li> <a href="https://developer.ibm.com/clouddataservices/events/#"> <span> <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/events-icon.svg" alt="events"> </span> <span class="title">Events</span> </a> </li> 
+      </ul> 
+     </nav> 
+    </div> 
+    <div class="logo"> 
+     <img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/IBM-Logo.svg" alt="logo"> 
+    </div> 
+   </header> 
+   <div id="content" class="blog-single content"> 
+    <div class="top-art"> 
+     <div class="wrap"> 
+      <div class="page-title"> 
+       <h1>Reddit sentiment analysis in SparkR and CouchDB</h1> 
+       <hr> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="inner-content" class="wrap cf"> 
+     <hr class="line"> 
+     <div class="blog-content clearfix"> 
+      <article id="post-8681" class="cf post-8681 post type-post status-publish format-standard hentry category-cloudant-2 category-community category-couchdb category-spark" role="article"> 
+       <div class="blog-author clearfix"> 
+        <div class="more-info">
+         <img alt="" src="//www.ibm.com/developerworks/community/profiles/photo.do?userid=1100008D2U" srcset="//www.ibm.com/developerworks/community/profiles/photo.do?userid=1100008D2U" class="avatar avatar-96 photo" height="96" width="96">
+        </div> 
+        <div class="more-info">
+         Chetna Warade
+        </div> 
+        <div>
+         8/15/16
+        </div> 
+       </div> 
+       <div class="modal author"> 
+        <div class="arrow-up"></div> 
+        <div class="exit clearfix">
+         <a href="#"><img src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/close-x.png" alt="close"></a>
+        </div> 
+        <div class="clearfix"> 
+         <p>Chetna Warade</p> 
+         <p>Chetna is a software engineer who writes articles and publications, does programming, practices agile software development, and performance engineering. In 2014 and 2010 Chetna was issued patents from USPTO and IBM First Invention Plateau award in 2010. She has three patents pending and several IBM IP patent review board publications.…</p> 
+         <a class="project-btn" href="https://developer.ibm.com/clouddataservices/author/warade/">Learn More</a> 
+        </div> 
+        <div class="clearfix"> 
+         <span class="modal-subhead">Recent Posts</span> 
+         <ul class="recent-posts"> 
+          <li> <a class="recent-title" href="https://developer.ibm.com/clouddataservices/2016/08/15/reddit-sentiment-analysis-in-sparkr-and-couchdb/">Reddit sentiment analysis in SparkR and CouchDB</a> <span class="excerpt"> More analysis options for Simple Data Pipe output. Once data is in Cloudant, connect via… </span> </li> 
+          <li> <a class="recent-title" href="https://developer.ibm.com/clouddataservices/2016/06/23/sentiment-analysis-of-reddit-amas-using-dashdb-and-r/">Sentiment Analysis of Reddit AMAs using dashDB and R</a> <span class="excerpt"> Another analysis solution you can apply to Simple Data Pipe output. See how easy it… </span> </li> 
+          <li> <a class="recent-title" href="https://developer.ibm.com/clouddataservices/2016/03/10/sentiment-analysis-of-reddit-amas/">Sentiment Analysis of Reddit AMAs</a> <span class="excerpt"> Use Apache Spark, Cloudant, and Watson Tone Analyzer to perform sentiment analysis on a reddit… </span> </li> 
+         </ul> 
+        </div> 
+       </div> 
+       <div class="blog-article"> 
+        <p> </p>
+        <p>A few months ago, I published <a href="https://developer.ibm.com/clouddataservices/2016/03/10/sentiment-analysis-of-reddit-amas/">Sentiment Analysis of Reddit AMAs</a>, which explained how to grab a reddit Ask Me Anything (AMA) conversation and export its data for analysis using our Simple Data Pipe app. From there, I used the Spark-Cloudant Connector, and Watson Tone Analyzer to get insights into writer sentiment.</p> 
+        <p>Recently, I followed up with a similar exercise, but this time performing analysis using <a href="https://developer.ibm.com/clouddataservices/2016/06/23/sentiment-analysis-of-reddit-amas-using-dashdb-and-r/">dashDB data warehouse and R</a>.</p> 
+        <p>I’m back at it again, to share my excitement over <a href="https://spark.apache.org/docs/latest/sparkr.html">SparkR</a>, an R API for Apache Spark. Analysis using SparkR lets you create a full working notebook really fast and iterate with ease. In this tutorial, I connect to our Cloudant database using a handy new CouchDB R package, fetch all json documents, create a SparkR dataframe, analyze with SQL and SparkR, then plot results with R.</p> 
+        <p>Here’s the flow:</p> 
+        <p><img src="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/07/redditSparkRCouchDBArchitecture.png" alt=""></p> 
+        <h2 id="toc_1">Before you begin</h2> 
+        <p>If you haven’t already, read my earlier <a href="https://developer.ibm.com/clouddataservices/2016/03/10/sentiment-analysis-of-reddit-amas/">Sentiment Analysis of Reddit AMAs blog post</a>, so you understand what we’re up to here. You’ll get the background you need, and we can dive right in to this alternate analysis approach. (You don’t need to follow that earlier tutorial, nor <a href="https://developer.ibm.com/clouddataservices/2016/06/23/sentiment-analysis-of-reddit-amas-using-dashdb-and-r/">the follow-up on dashDB + R</a> in order to implement this SparkR solution. All the steps you need are here in this blog post.)</p> 
+        <h2 id="toc_1">Deploy Simple Data Pipe</h2> 
+        <p>The fastest way to deploy this app to Bluemix (IBM’s Cloud platform) is to click the <strong>Deploy to Bluemix</strong> button, which automatically provisions and binds the Cloudant service too. (Bluemix offers a free trial, which means you can try this tutorial out for free.)</p> 
+        <p><a href="https://bluemix.net/deploy?repository=https://github.com/ibm-cds-labs/simple-data-pipe" target="_blank"><img src="https://deployment-tracker.mybluemix.net/stats/eff5ff771f3cfd9e9443463c383565a1/button.svg" alt="Deploy to Bluemix"></a></p> 
+        <p>If you would rather deploy manually, or have any issues, refer to the <a href="https://github.com/ibm-cds-labs/simple-data-pipe/blob/master/README.md" target="_blank">readme</a>.</p> 
+        <p>When deployment is done, click the <strong>EDIT CODE</strong> button.</p> 
+        <h2 id="toc_2">Install reddit Connector</h2> 
+        <p><img src="https://developer.ibm.com/bluemix/wp-content/uploads/sites/20/2015/11/440px-Reddit_logo.svg_-e1447795053845.png" alt="Reddit logo"></p> 
+        <p>Since we’re importing data from reddit, you need to establish a connection between reddit and Simple Data Pipe.</p> 
+        <p><em><strong>Note:</strong> If you have a local copy of Simple Data Pipe, you can <a href="https://github.com/ibm-cds-labs/simple-data-pipe/wiki/Installing-a-Simple-Data-Pipe-Connector" target="_blank">install this connector using Cloud Foundry</a>.</em></p> 
+        <ol> 
+         <li>In Bluemix, at the deployment succeeded screen, click the <strong>EDIT CODE</strong> button.</li> 
+         <li>Click the <code>package.json</code> file to open it.</li> 
+         <li>Edit the package.json file to add the following line to the <code>dependencies</code> list:<br> <code> "simple-data-pipe-connector-reddit": "^0.1.2"</code><br> <em><strong>Tip:</strong> be sure to end the line above with a comma and follow proper JSON syntax.</em></li> 
+         <li>From the menu, choose <strong>File &gt; Save</strong>. <p><img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/save_reddit_connector.png" alt="save"></p></li> 
+         <li>Press the <span class="glyphicon glyphicon-triangle-right"></span> Deploy app button and wait for the app to deploy again. <p><img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/deploy_w_connector.png" alt="deploy button"></p></li> 
+        </ol> 
+        <h2 id="toc_3">Add Services in Bluemix</h2> 
+        <p>To work its magic, the reddit connector needs help from a couple of additional services. In Bluemix, we’re going analyze our data using the Apache Spark and Watson Tone Analyzer services. So add them now by following these steps:</p> 
+        <h3>Provision IBM Analytics for Apache Spark Service </h3> 
+        <ol> 
+         <li>On your Bluemix dashboard, click <strong>Work with Data</strong>. </li>
+         <li>Click <strong>New Service</strong>.</li> 
+         <li>Find and click <strong>Apache Spark</strong> then click <strong>Choose Apache Spark </strong> </li> 
+         <li>Click <strong>Create</strong>.</li> 
+        </ol> 
+        <h3>Provision Watson Tone Analyzer Service</h3> 
+        <ol> 
+         <li>In Bluemix, go to the top menu, and click <strong>Catalog</strong>.</li> 
+         <li>In the Search box, type <strong>Tone Analyzer</strong>, then click the <strong>Tone Analyzer</strong> tile. </li> 
+         <li>Under <strong>app</strong>, click the arrow and choose your new Simple Data Pipe application. Doing so binds the service to your new app.</li> 
+         <li>In <strong>Service name</strong> enter only <strong>tone analyzer</strong> (delete any extra characters)</li> 
+         <li> Click <strong>Create</strong>. </li> 
+         <li>If you’re prompted to restage your app, do so by clicking <strong>Restage</strong>.</li> 
+        </ol> 
+        <h2 id="toc_2">Load reddit Data</h2> 
+        <ol> 
+         <li>Launch simple data pipe in one of the following ways: 
+          <ul> 
+           <li>If you just restaged, click the URL for your simple data pipe app.<br> <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/app_url.png" alt="open url button"></li> 
+           <li>Or, in Bluemix, go to the top menu and click <strong>Dashboard</strong>, then on your Simple Data Pipe app tile, click the <strong>Open URL</strong> button.<br> <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/openurl.png" alt="open url button"></li> 
+          </ul> </li> 
+         <li>In Simple Data Pipe, go to menu on the left and click <strong>Create a New Pipe</strong>.<p></p> </li> 
+         <li>Click the <strong>Type</strong> dropdown list, and choose <strong>Reddit AMA</strong>. 
+          <div id="attachment_5891" style="width: 374px" class="wp-caption aligncenter">
+           <img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/sdp_type_ama.png" alt="Type dropdown" width="364" height="158" class="size-full wp-image-5891" srcset="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/02/sdp_type_ama.png 364w, https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/02/sdp_type_ama-300x130.png 300w" sizes="(max-width: 364px) 100vw, 364px">
+           <p class="wp-caption-text">When you added a reddit connector earlier, you added the Reddit option you’re choosing now.</p>
+          </div> </li> 
+         <li>In <strong>Name</strong>, enter <strong>ibmama</strong>, or whatever you wish.<p></p> </li> 
+         <li>If you want, enter a <strong>Description</strong>.<p></p> </li> 
+         <li>Click <strong>Save and continue</strong>.<p></p> </li> 
+         <li>Enter the URL for the reddit conversation you want to analyze. You’re not limited to using an AMA conversation here. You can enter the URL of any reddit conversation, including the IBM-hosted AMA we used in earlier tutorials: <code>https://www.reddit.com/r/IAmA/comments/3ilzey/were_a_bunch_of_developers_from_ibm_ask_us</code><p></p> </li> 
+         <li>Click <strong>Connect to AMA</strong>.<br> You see a <strong>You’re connected</strong> confirmation message.<p></p> </li> 
+         <li>Click <strong>Save and continue</strong>.<p></p> </li> 
+         <li> <p>On the <strong>Filter Data</strong> screen, make the following 2 choices:</p> 
+          <ul> 
+           <li>under <strong>Comments to Load</strong>, select <strong>Top comments only</strong>. </li> 
+           <li>under <strong>Output format</strong>, choose <strong>JSON flattened</strong>. </li> 
+          </ul> <p>Then click <strong>Save and continue</strong>.</p> 
+          <blockquote>
+           <p> <strong>Why flattened JSON?</strong> Flat JSON format is much easier for Apache Spark to process, so for this tutorial, the flattened option is the best choice. If you decide to use the Simple Data Pipe to process reddit data with something other than Spark, you probably want to choose <strong>JSON</strong> to get the output in its purest form. </p>
+          </blockquote> </li> 
+         <li>Click <strong>Skip</strong>, to bypass scheduling.<p></p> </li> 
+         <li> <p>Click <strong>Run now</strong>.</p> <p>When the data’s done loading, you see a <strong>Pipe Run complete!</strong> message.</p> </li> 
+         <li> <p>Click <strong>View details</strong>.</p> <p><img src="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/02/reddit_ama_run.png" alt="Simple Data Pipe Activity Run now"></p> </li> 
+        </ol> 
+        <h2 id="toc_5">Analyze reddit Data</h2> 
+        <h3 id="toc_6">Create new R Notebook</h3> 
+        <p>Create a notebook on IBM’s Data Science Experience (DSX):</p> 
+        <ol> 
+         <li> Sign in or create a trial account on <a href="http://datascience.ibm.com/">DSX</a>. </li> 
+         <li> Create a new project (or select an existing project). <p> On the upper right of the screen, click the + plus sign and choose <strong>Create project</strong>. </p> </li> 
+         <li> Add a new notebook (From URL) within the project. 
+          <ol type="a"> 
+           <li> Click <strong>add notebooks</strong>. </li> 
+           <li> Click <strong>From URL</strong>. </li> 
+           <li>Enter any name, and under <strong>Notebook URL</strong> enter <code>https://github.com/ibm-cds-labs/reddit-sentiment-analysis/raw/master/couchDB-R/Preview-R-couchDB.ipynb</code></li> 
+           <li>Click <strong>Create Notebook</strong></li> 
+          </ol> </li>
+         <li>Copy and enter your Cloudant credentials. <p>In a new browser tab or window, open your Bluemix dashboard and click your Cloudant service to open it. From the menu on the left, click <strong>Service Credentials</strong>. If prompted, click <strong>Add Credentials</strong>. Copy your Cloudant <code>host</code>, <code>username</code>, and <code>password</code> into the corresponding places in cell 4 of the notebook (replacing XXXX’s).</p> </li> 
+        </ol> 
+        <h3 id="toc_2">Run the code and generate reports</h3> 
+        <ol> 
+         <li> <p>Install CouchDB R package</p> <p>Run cells 1 and 2 to install the CouchDB package and library. You need to run these only once. <a href="https://cran.r-project.org/web/packages/couchDB/">Read more about the package</a>.</p> </li> 
+         <li> <p>Define a variable <em>sqlContext</em> to use existing Spark (<em>sc</em>) and SparkRSQL Context that is already initialized with IBM Analytics for Apache Spark as Service.</p> <p>In [3]: <code>sqlContext &lt;- sparkRSQL.init(sc)</code></p> </li> 
+         <li> <p>Run cell 4 to connect to Cloudant. </p> </li> 
+         <li> <p>Run cell 5 to get a list of Cloudant databases.</p> <p>In [5]: <code>couch_list_databases(myconn)</code></p> <p>Out [5]:</p> 
+          <div> 
+           <pre><code>    'pipe_db' 'reddit_sparkr_top_comments_only' </code></pre> 
+          </div> </li> 
+         <li>Then read this connection by running the next cell: <p>In [6]: <code>print(myconn)</code></p> </li> 
+        </ol> 
+        <h3 id="toc_3">Create a SparkR dataframe from a Cloudant database</h3> 
+        <p>There is no magic function that gets desired documents into a ready-to-use SparkR dataframe. Instead, the function <code>couch_fetch()</code> retrieves a document object with value based on a key. At this point in the code, I don’t have keys in hand. Thanks to the primary index <code>_all_docs</code> that comes with Cloudant databases, there’s no need to write extra code. Simply add a forward slash <code>/</code> and<br> <code>_all_docs</code> to the database name. (To learn more, read <a href="https://cloudant.com/for-developers/all_docs/">https://cloudant.com/for-developers/all_docs/</a>.)</p> 
+        <ol> 
+         <li>Use <code>_all_docs</code> to fetch all documents from the Cloudant database (mine is named <code>reddit_regularreddit_top_comments_and_replies</code>) and create a data frame by running the following command: <p>In[7]:</p> 
+          <div> 
+           <pre><code class="language-none">    results &lt;- couch_fetch(myconn, database = "reddit_regularreddit_top_comments_and_replies/_all_docs", key = NULL, myOpts = NULL)
+    results_df &lt;- data.frame(results)
+    df &lt;- createDataFrame(sqlContext, results_df)</code></pre> 
+          </div> <p><em><strong>Note:</strong> Insert your database name in this cell. You can find it in results from running <code>couch_list_databases(myconn)</code> 2 cells before:</em></p> <p><img src="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/08/db_name_sparkrr.png" alt="db name"></p> 
+          <blockquote>
+           <p> <strong>About SparkR and R Dataframes</strong></p> 
+           <p><em>“SparkR is based on Spark’s parallel DataFrame abstraction. Users can create SparkR DataFrames from “local” R data frames, or from any Spark data source such as Hive, HDFS, Parquet or JSON.”</em><br> <strong>-Spark 1.4 Announcement</strong></p> 
+           <p>You can create a SparkR dataframe from R data by calling function <code>createDataFrame()</code> or <code>as.DataFrame()</code> both will do the job. In this case, I used<br> <code>createDataFrame(sqlContext, data)</code><br> where data is R dataframe or a list, and it returns a DataFrame.</p> 
+           <p>Alternatively you can download the content of a SparkDataFrame into an R’s data.frame, by calling function<br> <code>as.data.frame()</code> (all lowercase). So,<br> <code>as.data.frame(x)</code><br> where x is DataFrame, returns a data.frame.</p> 
+           <p>Tip: Learn more about R data type by calling function<br> <code>typeof(x)</code> where <code>x</code> is a R data type, either a matrix or<br> list or vector or data.frame.</p> 
+           <p>For detailed API <a href="http://spark.apache.org/docs/latest/api/R/index.html">http://spark.apache.org/docs/latest/api/R/index.html</a> </p>
+          </blockquote> </li> 
+         <li>Print the schema that you just created by running the next cell: <p>In [8]: <code>printSchema(df)</code></p> <p>which returns:</p> 
+          <div> 
+           <pre><code class="language-none">     root
+     |-- total_rows: integer (nullable = true)
+     |-- offset: integer (nullable = true)
+     |-- rows_id: string (nullable = true)
+     |-- rows_key: string (nullable = true)
+     |-- rows_rev: string (nullable = true)
+     |-- rows_id_1: string (nullable = true)
+     |-- rows_key_1: string (nullable = true)
+     |-- rows_rev_1: string (nullable = true)
+     |-- rows_id_2: string (nullable = true)
+     |-- rows_key_2: string (nullable = true)
+     |-- rows_rev_2: string (nullable = true)
+     |-- rows_id_3: string (nullable = true)
+     |-- rows_key_3: string (nullable = true)
+     |-- rows_rev_3: string (nullable = true)</code></pre> 
+          </div> <p>The first row is the <code>_design_</code> document so ignore. All that follows is reddit data. </p> </li> 
+         <li> <p>Run the <code>typeof(results)</code> command, which returns <code>'list'</code></p> </li> 
+         <li> <p>Print the list <code>results</code> returned by <code>couch_fetch()</code>.</p> <p>In [10]: <code>print(results)</code></p> 
+          <div> 
+           <pre><code class="language-none">    $total_rows
+    [1] 4
+
+    $offset
+    [1] 0
+
+    $rows
+    $rows[[1]]
+    $rows[[1]]$id
+    [1] "_design/Top comments and replies"
+
+    $rows[[1]]$key
+    [1] "_design/Top comments and replies"
+
+    $rows[[1]]$value
+    $rows[[1]]$value$rev
+    [1] "1-edc6f6bb0062260ecf1160c81872efdd"
+
+    $rows[[2]]
+    $rows[[2]]$id
+    [1] "f4f7cfa487898608fff6eb639fe6ed26"
+
+    $rows[[2]]$key
+    [1] "f4f7cfa487898608fff6eb639fe6ed26"
+
+    $rows[[2]]$value
+    $rows[[2]]$value$rev
+    [1] "1-c0be345c89577577cdeb301328d9e4f5"
+    .....</code></pre> 
+          </div> </li> 
+         <li>Next, iterate over the list of keys returned, fetch individual documents, create a R dataframe, add each document as a row to the dataframe and create a new SparkR dataframe. <p>In [11]:</p> 
+          <div> 
+           <pre><code class="language-none">    keys_list &lt;- data.frame(results)
+    rows_df_2 &lt;- data.frame()
+    for (i in 1:(keys_list[,'total_rows'] - 1) ){
+
+        key &lt;- paste('rows.key.',i,sep="")
+        docs &lt;- couch_fetch(myconn, database = "reddit_regularreddit_top_comments_and_replies", key = keys_list[,key], myOpts = NULL)
+        rows_df &lt;- data.frame(docs)
+        rows_df_2 &lt;- rbind(rows_df_2,rows_df)
+        }
+
+    df2 &lt;- createDataFrame(sqlContext, rows_df_2)
+    printSchema(df2)
+    showDF(df2)
+</code></pre> 
+          </div> </li> 
+        </ol> 
+        <p>Output looks like</p> 
+        <a href="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/08/output_lg.png"><img src="https://developer.ibm.com/clouddataservices2/wp-content/uploads/sites/85/2016/08/output_lg-615x308.png" alt="output_lg" width="615" height="308" class="alignleft size-medium wp-image-9729" srcset="https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/08/output_lg-615x308.png 615w, https://developer.ibm.com/clouddataservices/wp-content/uploads/sites/85/2016/08/output_lg.png 916w" sizes="(max-width: 615px) 100vw, 615px"></a> 
+        <h3 id="toc_4">Analyze reddit data with SparkR SQL and Plot with R</h3> 
+        <p>Now we’ll create a bar chart showing comment count by sentiment (for comments scoring higher than 70%).</p> 
+        <p>In [12]:</p> 
+        <div> 
+         <pre><code class="language-none">    registerTempTable(df2,"reddit")
+    sentimentDistribution &lt;- list()
+    columns &lt;- colnames(df2[,9:21])
+    count &lt;- list()
+
+    for(i in 1:length(columns)){
+        query  70')
+        df3 &lt;- sql(sqlContext,query)
+        collected &lt;- collect(df3)
+        count[columns[i]] &lt;- collected$sentCount
+    }
+
+    distribution  70% in IBM Reddit AMA",col=139, ylim=c(0,130),cex.axis=0.5,cex.names=0.5,ylab="Reddit comment count")
+</code></pre> 
+        </div> 
+        <p><img src="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/08/HistogramSparkRCouchDB.png" alt="HistogramSparkRCouchDB"></p> 
+        <h3 id="toc_5">Filter reddit data with SparkR and Print report to notebook</h3> 
+        <p>You don’t need to run SQL queries to work with Spark Dataframes. Dataframes have functions like filter, select, grouping, and aggregation. <code>filter()</code> returns rows and <code>select()</code> returns columns that meet the condition passed in the input. In the following code, <code>filter()</code> returns a Dataframe containing rows that have an emotion score higher than 70%. <code>select()</code> returns <strong>author</strong> (redditor – reddit user) and <strong>text</strong> (comments by redditors) from the Dataframe returned earlier. We could use SparkR Dataframe functions <code>head()</code> and <code>showDF()</code> to show a quick data overview. But since we want a full list of comments by sentiment with that high emotional score (&gt;70%), we call R <code>print()</code> function.</p> 
+        <p>In [13]</p> 
+        <div> 
+         <pre><code class="language-none">    for(i in 1:length(columns)){
+    columnset  70') )
+    if(count(columnset) &gt; 0){
+    print('----------------------------------------------------------------')
+    print(columns[i])
+    print('----------------------------------------------------------------')
+    comments &lt;- as.data.frame(select(columnset,"author","text"))
+      for(j in 1:count(columnset)){
+            print(paste("Author: ",comments[j,1]))
+            print(paste("Comments: ",comments[j,2]))
+        }
+    }
+}
+ </code></pre> 
+        </div> 
+        <p>Results show comments grouped by sentiment. Some comments appear under multiple sentiment categories. For example, the question <code>Are you ashamed of Lotus Notes?</code> appears both under <strong>Disgust</strong> and <strong>Extraversion</strong>. You can scroll through the list.</p> 
+        <p><img src="http://developer.ibm.com/clouddataservices/wp-content/uploads/sites/47/2016/08/list_by_sent_sparkr.png" alt="CommentsBySentiment"></p> 
+        <h3 id="toc_6">Try loading a different reddit conversation</h3> 
+        <p>Launch your Simple Data Pipe app again and return to the <strong>Load reddit Data</strong> section. In step 7, swap in a different URL, run the notebook again, and check out the results.</p> 
+        <h2 id="toc_7">Conclusion</h2> 
+        <p>If you’re an R fan, you’ll appreciate that SparkR provides a handy R frontend for Spark. What’s great about moving data from JSON document to a SparkR or R dataframe, is that the data structure pretty much remains the same. That offers flexibility to write SparkR notebooks fast and makes it easy to move data in and out of SparkR and R dataframes. Both offer powerful operations that produce informative analytics with high performance. R and JSON: made for each other.</p> 
+        <p></p> 
+       </div> 
+      </article> 
+      <aside class="post-aside"> 
+       <ul> 
+        <li class="blog-category"><a href="#">Cloudant</a></li> 
+        <li class="blog-category"><a href="#">Community</a></li> 
+        <li class="blog-category"><a href="#">CouchDB</a></li> 
+        <li class="blog-category"><a href="#">Spark</a></li> 
+       </ul> 
+      </aside> 
+     </div> 
+     <div id="comments" class="pn-post-comments"> 
+      <div id="respond"> 
+       <div id="disqus_thread"></div> 
+       <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: * * */
+    var disqus_shortname = 'ibmclouddataservicesdevelopercenter';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+       <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <footer class="footer" role="contentinfo" itemscope itemtype="http://schema.org/WPFooter"> 
+    <div id="inner-footer" class="wrap cf"> 
+     <div class="footer-github"> 
+      <h1 class="resource-logo"> <a target="_blank" href="https://github.com/ibm-cds-labs"><img class="github-logo" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/images/github-logo-lt.png" alt="Github"></a> </h1> 
+      <h2>Recent Updates</h2> 
+      <ul> 
+      </ul> 
+     </div> 
+     <ul class="footer-blog"> 
+      <li class="resource">Blog</li> 
+      <li>Recent Post</li> 
+      <li><a href="https://developer.ibm.com/clouddataservices/2017/02/24/moving-to-medium/">Moving to Medium</a></li> 
+      <li>2/24/17</li> 
+      <li class="snippet"> We're now the IBM Watson Data Lab on Medium. More on what that means for… </li> 
+      <li class="snippet"> <span class="avatar"><img alt="" src="//www.ibm.com/developerworks/community/profiles/photo.do?userid=2700077V4E" srcset="//www.ibm.com/developerworks/community/profiles/photo.do?userid=2700077V4E" class="avatar avatar-96 photo" height="96" width="96"></span> <span class="name">Mike Broberg</span> </li> 
+     </ul> 
+    </div> 
+   </footer> 
+   <!-- This div is opened in header-devadv.php --> 
+  </div> 
+  <script>
+        jQuery(document).ready(function($){
+          var dcName = 'clouddataservices';
+          // $('a').each(function(){
+          //   if(this.href.match('bluemix.net')){
+          //     if(this.search){
+          //       this.href = this.href + '&cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+          //     }else{
+          //       this.href = this.href + '?cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+          //     }
+          //   }
+          // });
+
+          jQuery('a[href*="bluemix.net"]').each(function(){
+            if(this.search){
+              this.href = this.href + '&cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+            }else{
+              this.href = this.href + '?cm_sp=dw-bluemix-_-'+dcName+'-_-devcenter';
+            }
+          });
+
+        });
+      </script> 
+  <div style="display:none"> 
+   <div class="grofile-hash-map-6896a44922841807c39bc22b903c2c45"> 
+   </div> 
+   <div class="grofile-hash-map-12aeaf1b54aec9892cd05cdb37f13d62"> 
+   </div> 
+  </div> 
+  <script type="text/javascript" src="https://s0.wp.com/wp-content/js/devicepx-jetpack.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/plugins/page-links-to/js/new-tab.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/comment-reply.min.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/scripts.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/main.compiled.js"></script> 
+  <script type="text/javascript" src="https://developer.ibm.com/clouddataservices/wp-content/themes/devadvocacy/library/js/libs/slick.min.js"></script> 
+  <script type="text/javascript">
+if (typeof window._analytics === "undefined") {
+					              	window._analytics = {};
+					              }  
+					              window._analytics["segment_key"] = "HU3dbkAG5wE0F1IkRf9S1RexlAqo3jby";
+</script> 
+  <script type="text/javascript" src="//console.ng.bluemix.net/analytics/build/bluemix-analytics.min.js"></script> 
+  <script type="text/javascript" src="//dw1.s81c.com/dw/wp-includes/js/wp-embed.min.js"></script> 
+  <script type="text/javascript" src="https://stats.wp.com/e-201740.js" async defer></script> 
+  <script type="text/javascript">
+	_stq = window._stq || [];
+	_stq.push([ 'view', {v:'ext',j:'1:4.9',blog:'94266152',post:'8681',tz:'-4',srv:'developer.ibm.com'} ]);
+	_stq.push([ 'clickTrackerInit', '94266152', '8681' ]);
+</script> 
+  <script>
+      digitalData = {
+          page: {
+              category: {
+                  primaryCategory: 'Replace'              //formerly IBM.WTMCategory meta tag
+              },
+              pageInfo: {
+                  effectiveDate: 'Replace',       //formerly IBM.Effective meta tag
+                  expiryDate: 'Replace',          //formerly IBM.Expires meta tag
+                  language: 'en-US',                  //formerly DC.Language meta tag
+                  publishDate: 'Replace',         //formerly DC.Date meta tag, same as dcterms.date
+                  publisher: 'Replace',       //formerly DC.Publisher meta tag
+                  version: 'v18',                     //version part of Source meta tag (e.g. v17)
+                  ibm: {
+                      contentDelivery: 'Replace', //"delivery" portion of Source meta tag
+                      contentProducer: 'Replace', //"authoring" portion of the Source meta tag
+                      country: 'US',                  //formerly IBM.Country meta tag, same as geo.country
+                      industry: 'ZZ',                 //formerly IBM.Industry meta tag
+                      owner: 'Corporate Webmaster/New York/IBM',  //formerly Owner meta tag
+                      subject: 'Replace',             //formerly DC.Subject meta tag
+                      type: 'Replace'                 //formerly DC.Type meta tag
+                  }
+              }
+          }
+      };
+      // Page-testing specific:
+  </script> 
+  <script src="//1.www.s81c.com/common/v18/js/www.js"></script> 
+  <script type="text/javascript">
+    IBMCore.common.util.config.set({
+      "masthead":{
+        "type":"alternate",
+        "sticky": {
+            "enabled": false
+        }
+      }
+    });
+  </script> 
+  <script type="text/javascript" src="https://ibm-cds-labs.github.io/dW/js/tracker.js" siteid="cds.devcenter" trackerurl="http://simple-logging-service-ms.mybluemix.net/tracker">
+  </script>   
+  <!-- end of site. what a ride! --> 
+ </body>
+</html>

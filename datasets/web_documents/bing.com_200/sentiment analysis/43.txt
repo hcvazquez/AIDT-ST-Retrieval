@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <link href="http://fonts.googleapis.com/css?family=Noticia+Text:400,700" rel="stylesheet" type="text/css"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title> Basic Sentiment Analysis with Python | fjavieralba.com </title> 
+  <link rel="stylesheet" href="./theme/css/style.css" type="text/css"> 
+  <link rel="stylesheet" href="./theme/css/pygments.css" type="text/css"> 
+  <link rel="stylesheet" href="./theme/css/font-awesome.css" type="text/css"> 
+ </head> 
+ <body> 
+  <div class="container"> 
+   <div class="navigation"> 
+    <ul> 
+     <li><a href="./index.html">Blog</a> </li> 
+     <li><a href="./archives.html">Archive</a> </li> 
+     <li><a href="./pages/talks.html">Talks</a> </li> 
+     <li><a href="./pages/about-me.html">About</a> </li> 
+    </ul> 
+   </div> 
+   <div class="separator"></div> 
+   <div class="body"> 
+    <h1 class="title"> Basic Sentiment Analysis with Python</h1> 
+    <p class="date"> 01 nov 2012 </p> 
+    <p>[Update]: you can check out the code on <a class="reference external" href="https://github.com/fjavieralba/basic_sentiment_analysis">Github</a></p> 
+    <p>In this post I will try to give a very introductory view of some techniques that could be useful when you want to perform a basic analysis of opinions written in english.</p> 
+    <p>These techniques come 100% from experience in real-life projects. Don't expect a theoretical introduction of Sentiment Analysis and the multiple strategies out there to achieve opinion mining, this is only a practical example of applying some basic rules to extract the polarity (positive or negative) of a text.</p> 
+    <p>Let's start looking at an example opinion:</p> 
+    <blockquote> 
+     <em>"What can I say about this place. The staff of the restaurant is nice and the eggplant is not bad. Apart from that, very uninspired food, lack of atmosphere and too expensive. I am a staunch vegetarian and was sorely dissapointed with the veggie options on the menu. Will be the last time I visit, I recommend others to avoid."</em>
+    </blockquote> 
+    <p>As you can see, this is a mainly negative review about a restaurant.</p> 
+    <p><strong>General or detailed sentiment</strong></p> 
+    <p>Sometimes we only want an overall rating of the sentiment of the whole review. In other cases, we need a little more detail, and we want each negative or positive comment identified.</p> 
+    <p>This kind of detailed detection can be quite challenging. Sometimes the aspect is explicit. An example is the opinion <em>"very uninspired food"</em>, where the criticized aspect is the food. In other cases, is implicit: the sentence <em>"too expensive"</em> gives a negative opinion about the price without mentioning it.</p> 
+    <p>In this post I will focus on detecting the overall polarity of a review, leaving for later the identification of individual opinions on concrete aspects of the restaurant. To compute the polarity of a review, I'm going to use an approach based on dictionaries and some basic algorithms.</p> 
+    <p><strong>A note about the dictionaries</strong></p> 
+    <p>A dictionary is no more than a list of words that share a category. For example, you can have a dictionary for positive expressions, and another one for stop words.</p> 
+    <p>The design of the dictionaries highly depends on the concrete topic where you want to perform the opinion mining. Mining hotel opinions is quite different than mining laptops opinions. Not only the positive/negative expressions could be different but the context vocabulary is also quite distinct.</p> 
+    <div class="section" id="defining-a-structure-for-the-text"> 
+     <h2>Defining a structure for the text</h2> 
+     <p>Before writing code, there is an important decision to make. Our code will have to interact with text, splitting, tagging, and extracting information from it.</p> 
+     <p>But what should be the <em>structure</em> of our text?</p> 
+     <p>This is a key decision because it will determine our algorithms in some ways. We should decide if we want to differentiate sentences inside a a paragraph. We could define a sentence as a list of tokens. But what is a token? a string? a more complex structure? Note that we will want to assign tags to our token. Should we only allow one tag per-token or unlimited ones?</p> 
+     <p>Infinite options here. We could choose a very simple structure, for example, defining the text simply as a list of words. Or we could define a more elaborated structure carrying every possible attribute of a processed text (word lemmas, word forms, multiple taggings, inflections...)</p> 
+     <p>As usual, a compromise between these two extremes can be a good way to go.</p> 
+     <p>For the examples of this post, I'm going to use the following structure:</p> 
+     <blockquote> 
+      <ul class="simple"> 
+       <li>Each text is a list of sentences</li> 
+       <li>Each sentence is a list of tokens</li> 
+       <li>Each token is a tuple of three elements: a word form (the exact word that appeared in the text), a word lemma (a generalized version of the word), and a list of associated tags</li> 
+      </ul> 
+     </blockquote> 
+     <p>This is a structure type I've found quite useful. Is ready for some "advanced" processing (lemmatization, multiple tags) without being too complex (at least in Python).</p> 
+     <p>This is an example of a POS-tagged paragraph:</p> 
+     <div class="highlight">
+      <pre> <span class="p">[[(</span><span class="s">'All'</span><span class="p">,</span> <span class="s">'All'</span><span class="p">,</span> <span class="p">[</span><span class="s">'DT'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'that'</span><span class="p">,</span> <span class="s">'that'</span><span class="p">,</span> <span class="p">[</span><span class="s">'DT'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'is'</span><span class="p">,</span> <span class="s">'is'</span><span class="p">,</span> <span class="p">[</span><span class="s">'VBZ'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'gold'</span><span class="p">,</span> <span class="s">'gold'</span><span class="p">,</span> <span class="p">[</span><span class="s">'NN'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'does'</span><span class="p">,</span> <span class="s">'does'</span><span class="p">,</span> <span class="p">[</span><span class="s">'VBZ'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'not'</span><span class="p">,</span> <span class="s">'not'</span><span class="p">,</span> <span class="p">[</span><span class="s">'RB'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'glitter'</span><span class="p">,</span> <span class="s">'glitter'</span><span class="p">,</span> <span class="p">[</span><span class="s">'VB'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'.'</span><span class="p">,</span> <span class="s">'.'</span><span class="p">,</span> <span class="p">[</span><span class="s">'.'</span><span class="p">])],</span>
+<span class="p">[(</span><span class="s">'Not'</span><span class="p">,</span> <span class="s">'Not'</span><span class="p">,</span> <span class="p">[</span><span class="s">'RB'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'all'</span><span class="p">,</span> <span class="s">'all'</span><span class="p">,</span> <span class="p">[</span><span class="s">'DT'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'those'</span><span class="p">,</span> <span class="s">'those'</span><span class="p">,</span> <span class="p">[</span><span class="s">'DT'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'who'</span><span class="p">,</span> <span class="s">'who'</span><span class="p">,</span> <span class="p">[</span><span class="s">'WP'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'wander'</span><span class="p">,</span> <span class="s">'wander'</span><span class="p">,</span> <span class="p">[</span><span class="s">'NN'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'are'</span><span class="p">,</span> <span class="s">'are'</span><span class="p">,</span> <span class="p">[</span><span class="s">'VBP'</span><span class="p">]),</span>
+ <span class="p">(</span><span class="s">'lost'</span><span class="p">,</span> <span class="s">'lost'</span><span class="p">,</span> <span class="p">[</span><span class="s">'VBN'</span><span class="p">])]]</span>
+</pre>
+     </div> 
+    </div> 
+    <div class="section" id="prepocessing-the-text"> 
+     <h2>Prepocessing the Text</h2> 
+     <p>Once we have decided the structural shape of your processed text, we can start writing some code to read, and pre-process this text. With pre-process I mean some common first steps in NLP such as: Tokenize, Split into sentences, and POS Tag.</p> 
+     <p>I will use the NLTK library for these tasks:</p> 
+     <script src="https://gist.github.com/3968990.js?file=splitter_postagger_nltk.py">
+        </script> 
+     <p>Now, using this two simple wrapper classes, I can perform a basic text preprocessing, where the input is the text as a string and the output is a collection of sentences, each of which is again a collection of tokens.</p> 
+     <p>By the moment, our tokens are quite simple. Since we are using NLTK, and it does not lemmatize words, our forms and lemmas will be always identical. At this point of the process, the only tag associated to each word is its own POS Tag provided by NLTK.</p> 
+     <script src="https://gist.github.com/3968990.js?file=preprocessing_text.py">
+        </script> 
+    </div> 
+    <div class="section" id="defining-a-dictionary-of-positive-and-negative-expressions"> 
+     <h2>Defining a dictionary of positive and negative expressions</h2> 
+     <p>The next step is to recognize positive and negative expressions. To achieve this, I'm going to use dictionaries, i.e. simple files containing expressions that will be searched in our text.</p> 
+     <p>For example, I'm going to define two tiny dictionaries, one for positive expressions and other for negative ones:</p> 
+     <p><strong>positive.yml</strong></p> 
+     <div class="highlight">
+      <pre><span class="l-Scalar-Plain">nice</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">positive</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">awesome</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">positive</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">cool</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">positive</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">superb</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">positive</span><span class="p-Indicator">]</span>
+</pre>
+     </div> 
+     <p><strong>negative.yml</strong></p> 
+     <div class="highlight">
+      <pre><span class="l-Scalar-Plain">bad</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">negative</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">uninspired</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">negative</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">expensive</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">negative</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">dissapointed</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">negative</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">recommend others to avoid</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">negative</span><span class="p-Indicator">]</span>
+</pre>
+     </div> 
+     <p>In case you were wondering, we could have used a simpler format, or used only one file, but this dictionary format will be useful later.</p> 
+     <p>Note that these are only two example dictionaries, useless in a real life project.</p> 
+    </div> 
+    <div class="section" id="tagging-the-text-with-dictionaries"> 
+     <h2>Tagging the text with dictionaries</h2> 
+     <p>The following code defines a class that I will use to tag our pre-processed text with our just defined dictionaries.</p> 
+     <script src="https://gist.github.com/3969016.js?file=dictionary_tagger.py">
+        </script> 
+     <p>When tagging our review, the input is the previously preprocessed text, and the output is the same text, enriched with tags of type "positive" or "negative":</p> 
+     <script src="https://gist.github.com/3969016.js?file=tagging_positive_negative.py">
+        </script> 
+    </div> 
+    <div class="section" id="a-simple-sentiment-measure"> 
+     <h2>A simple sentiment measure</h2> 
+     <p>We could already perform a basic calculus of the positiveness or negativeness of a review.</p> 
+     <p>Simply counting how many positive and negative expressions we detected, could be a (very naive) sentiment measure.</p> 
+     <p>The following code snippet applies this idea:</p> 
+     <script src="https://gist.github.com/3969825.js?file=basic_sentiment_score.py">
+        </script> 
+     <script src="https://gist.github.com/3969825.js?file=example_exec_1.py">
+        </script> 
+     <p>So, our review could be considered "quite negative" since it has a score of -4</p> 
+    </div> 
+    <div class="section" id="incrementers-and-decrementers"> 
+     <h2>Incrementers and decrementers</h2> 
+     <p>The previous "sentiment score" was very basic: it only counts positive and negative expressions and makes a sum, without taking into account that maybe some expressions are more positive or more negative than others.</p> 
+     <p>A way of defining this "strength" could be using two new dictionaries. One for "incrementers" and another for "decrementers".</p> 
+     <p>Let's define two tiny examples:</p> 
+     <p><strong>inc.yml</strong></p> 
+     <div class="highlight">
+      <pre><span class="l-Scalar-Plain">too</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">inc</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">very</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">inc</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">sorely</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">inc</span><span class="p-Indicator">]</span>
+</pre>
+     </div> 
+     <p><strong>dec.yml</strong></p> 
+     <div class="highlight">
+      <pre><span class="l-Scalar-Plain">barely</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">dec</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">little</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">dec</span><span class="p-Indicator">]</span>
+</pre>
+     </div> 
+     <p>We instantiate again our tagger, telling it to use these two new dictionaries:</p> 
+     <script src="https://gist.github.com/3969016.js?file=tagging_inc_dec.py">
+        </script> 
+     <p>Now, we could improve in some way our sentiment score. The idea is that "good" has more strength than "barely good" but less than "very good".</p> 
+     <p>The following code defines the recursive function <tt class="docutils literal">sentence_score</tt> to compute the sentiment score of a sentence. The most remarkable thing about it is that it uses information about the previous token to make a decision on the score of the current token.</p> 
+     <p>This function is then used by our new <tt class="docutils literal">sentiment_score</tt> function:</p> 
+     <script src="https://gist.github.com/3969825.js?file=sentiment_score_inc_dec.py">
+        </script> 
+     <script src="https://gist.github.com/3969825.js?file=example_exec_2.py">
+        </script> 
+     <p>Notice that the review is now considered more negative, due to the appearance of expressions such as "very uninspired", "too expensive" and "sorely dissapointed".</p> 
+    </div> 
+    <div class="section" id="inverters-and-polarity-flips"> 
+     <h2>Inverters and polarity flips</h2> 
+     <p>With the approach we've been following so far, some expressions could be incorrectly tagged. For example, this part of our example review:</p> 
+     <blockquote> 
+      <em>the eggplant is not bad</em>
+     </blockquote> 
+     <p>contains the word <em>bad</em> but the sentence is a positive opinion about the eggplant.</p> 
+     <p>This is because the appearance of the negation word <em>not</em>, that flips the meaning of the negative adjective <em>bad</em>.</p> 
+     <p>We could take into account these types of polarity flips defining a dictionary of inverters:</p> 
+     <p><strong>inv.yml</strong></p> 
+     <div class="highlight">
+      <pre><span class="l-Scalar-Plain">lack of</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">inv</span><span class="p-Indicator">]</span>
+<span class="l-Scalar-Plain">not</span><span class="p-Indicator">:</span> <span class="p-Indicator">[</span><span class="nv">inv</span><span class="p-Indicator">]</span>
+</pre>
+     </div> 
+     <p>When tagging our text, we should also specify this new dictionary in the instantiation of our tagger:</p> 
+     <script src="https://gist.github.com/3969016.js?file=tagging_inverters.py">
+        </script> 
+     <p>Then, we could adapt our sentiment_score function. We want it to flip the polarity of a sentiment word when is preceded by an inverter:</p> 
+     <script src="https://gist.github.com/3969825.js?file=sentiment_score_flips.py">
+        </script> 
+     <p>Recalculating again the sentiment score:</p> 
+     <script src="https://gist.github.com/3969825.js?file=example_exec_3.py">
+        </script> 
+     <p>It's now -5.0 since "not bad" is considered positive.</p> 
+    </div> 
+    <div class="section" id="conclusion"> 
+     <h2>Conclusion</h2> 
+     <p>We have seen a little introduction to some basic techniques and algorithms that can give us an overall "score" of how positive or negative a review is.</p> 
+     <p>The steps we've followed are:</p> 
+     <blockquote> 
+      <ul class="simple"> 
+       <li>Split the text into sentences, and each sentence into tokens</li> 
+       <li>Add POS (Part Of Speech) tags to the Splitted text, using NLTK</li> 
+       <li>Enrich the POS-tagged text with our own tags using dictionaries. These tags are in a different "semantic level" than POS-tags: "positive", "negative", "inverter", "incrementer" and "decrementer"</li> 
+       <li>Implement some basic extraction rules over the tagged text, in form of python functions</li> 
+      </ul> 
+     </blockquote> 
+     <p>That could be a good starting point to someone interested in sentiment analysis, but this is only the very beginning.</p> 
+     <p>In a real-life system you should work harder, especially in the extraction-rules part (and, of course, in the dictionaries).</p> 
+     <p>The method described so far is a rule-based approach. There are other techniques to perform sentiment analysis, for example, applying machine-learning algorithms. In any case, I think that advanced rule-based or machine-learning systems are out of scope in an introductory post like this.</p> 
+     <p>Hope you enjoyed the reading!</p> 
+    </div> 
+    <div class="twitter"> 
+     <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a> 
+     <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script> 
+    </div> 
+    <p class="tags">This entry was tagged as <a href="./tag/python.html">python</a> <a href="./tag/nlp.html">nlp</a> <a href="./tag/sentiment-analysis.html">sentiment analysis</a> </p> 
+    <div id="disqus_thread"></div> 
+    <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'fjavieralba'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+    <noscript>
+     Please enable JavaScript to view the 
+     <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+    </noscript> 
+    <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a> 
+   </div> 
+   <div class="footer"> 
+    <p>© Copyright <script language="JavaScript">var date = new Date(); document.write(date.getFullYear());</script> by F. Javier Alba</p> 
+    <p> Powered by <a href="http://pypi.python.org/pypi/pelican/" target="_blank">Pelican</a>. <a href="https://github.com/fjavieralba/flasky">Theme</a> by <a href="http://fjavieralba.com">fjavieralba</a> </p> 
+    <p> </p>
+    <div class="social" style="font-size: 27px;"> 
+     <ul> 
+      <script language="JavaScript">
+          u = 'me';
+          s = 'fjavieralba.com';
+          document.write('<a href=\"mailto:' + u + '@' + s + '\" target=\"_blank\">');
+        </script> 
+      <li><i class="icon-envelope icon-large"></i> </li>  
+      <a href="http://twitter.com/fjavieralba" target="_blank"> <li> <i class="icon-twitter-sign icon-large"> </i></li> </a> 
+      <a href="http://es.linkedin.com/in/fjavieralba/en"><li><i class="icon-linkedin-sign icon-large"></i></li></a> 
+      <a href="http://github.com/fjavieralba" target="_blank"> <li> <i class="icon-github-sign icon-large"></i> </li> </a> 
+      <a href="./feeds/all.rss.xml" rel="alternate" title="Recent Blog Posts"><li> <i class="icon-rss icon-large"></i> </li></a> 
+     </ul> 
+    </div> 
+    <p></p> 
+   </div> 
+  </div> 
+  <script type="text/javascript">
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-30867493-1']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>   
+ </body>
+</html>

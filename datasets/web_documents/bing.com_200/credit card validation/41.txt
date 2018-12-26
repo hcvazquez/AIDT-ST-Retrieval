@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Credit Card validation · jsPerf</title> 
+  <link rel="apple-touch-icon" href="/public/apple-touch-icon.png"> 
+  <link rel="shortcut icon" href="/public/favicon.ico"> 
+  <link href="/credit-card-validator/7.atom" rel="alternate" type="application/atom+xml" title="Atom feed for revisions of this test case"> 
+  <link rel="stylesheet" href="/public/_css/main.src.css?1503026837606"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"> 
+  <!--[if lt IE 9]>
+      <script src="/html5.js"></script>
+    <![endif]--> 
+  <script>document.documentElement.className='js'</script> 
+ </head> 
+ <body> 
+  <article> 
+   <hgroup> 
+    <h1>Credit Card validation</h1> 
+    <h2>JavaScript performance comparison</h2> 
+   </hgroup> 
+   <p class="meta"> Revision 7 of this test case created by <time datetime="2012-03-20T11:54:02.000Z" pubdate>on 2012-3-20</time> </p> 
+   <section id="prep-code"> 
+    <h2>Preparation code </h2> 
+    <pre><code>
+      
+      <span class="sc2">&lt;<span class="kw2">script</span>&gt;</span><br>
+        Benchmark.<span class="me1">prototype</span>.<span class="me1">setup</span> <span class="sy0">=</span> <span class="kw2">function</span><span class="br0">(</span><span class="br0">)</span> <span class="br0">{</span><br>
+          <pre><code class="js">  <span class="hljs-keyword">var</span> ccNum = <span class="hljs-string">"4984421209470251"</span>;
+  
+  <span class="hljs-comment">// https://gist.github.com/2134376</span>
+  <span class="hljs-comment">// Phil Green (ShirtlessKirk)</span>
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">luhnChk</span>(<span class="hljs-params">luhn</span>) </span>{
+      <span class="hljs-keyword">var</span> len = luhn.length,
+          mul = <span class="hljs-number">0</span>,
+          prodArr = [[<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>, <span class="hljs-number">7</span>, <span class="hljs-number">8</span>, <span class="hljs-number">9</span>], [<span class="hljs-number">0</span>, <span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">6</span>, <span class="hljs-number">8</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>, <span class="hljs-number">5</span>, <span class="hljs-number">7</span>, <span class="hljs-number">9</span>]],
+          sum = <span class="hljs-number">0</span>;
+  
+      <span class="hljs-keyword">while</span> (len--) {
+          sum += prodArr[mul][<span class="hljs-built_in">parseInt</span>(luhn.charAt(len), <span class="hljs-number">10</span>)];
+          mul ^= <span class="hljs-number">1</span>;
+      }
+  
+      <span class="hljs-keyword">return</span> sum % <span class="hljs-number">10</span> === <span class="hljs-number">0</span> &amp;&amp; sum &gt; <span class="hljs-number">0</span>;
+  };
+  
+  <span class="hljs-comment">// https://github.com/PawelDecowski/jQuery-CreditCardValidator/</span>
+  <span class="hljs-comment">// Pawel Decowski</span>
+  
+      <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">is_valid_luhn</span>(<span class="hljs-params">number</span>) </span>{
+        <span class="hljs-keyword">var</span> digit, n, sum, _len, _ref;
+        sum = <span class="hljs-number">0</span>;
+        _ref = number.split(<span class="hljs-string">''</span>).reverse().join(<span class="hljs-string">''</span>);
+        <span class="hljs-keyword">for</span> (n = <span class="hljs-number">0</span>, _len = _ref.length; n &lt; _len; n++) {
+          digit = _ref[n];
+          digit = +digit;
+          <span class="hljs-keyword">if</span> (n % <span class="hljs-number">2</span>) {
+            digit *= <span class="hljs-number">2</span>;
+            <span class="hljs-keyword">if</span> (digit &lt; <span class="hljs-number">10</span>) {
+              sum += digit;
+            } <span class="hljs-keyword">else</span> {
+              sum += digit - <span class="hljs-number">9</span>;
+            }
+          } <span class="hljs-keyword">else</span> {
+            sum += digit;
+          }
+        }
+        <span class="hljs-keyword">return</span> sum % <span class="hljs-number">10</span> === <span class="hljs-number">0</span>;
+      };
+  
+  <span class="hljs-comment">// Luhn algorithm validator, by Avraham Plotnitzky. (aviplot at gmail)</span>
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">luhnCheckFast</span>(<span class="hljs-params">luhn</span>) </span>{                                  
+      <span class="hljs-keyword">var</span> ca, sum = <span class="hljs-number">0</span>, mul = <span class="hljs-number">0</span>;
+      <span class="hljs-keyword">var</span> len = luhn.length;
+      <span class="hljs-keyword">while</span> (len--)
+      {
+          ca = <span class="hljs-built_in">parseInt</span>(luhn.charAt(len),<span class="hljs-number">10</span>) &lt;&lt; mul;
+          sum += ca - (ca&gt;<span class="hljs-number">9</span>)*<span class="hljs-number">9</span>; <span class="hljs-comment">// sum += ca - (-(ca&gt;9))|9</span>
+          <span class="hljs-comment">// 1 &lt;--&gt; 0 toggle.</span>
+          mul ^= <span class="hljs-number">1</span>; <span class="hljs-comment">// mul = 1 - mul;</span>
+      };
+      <span class="hljs-keyword">return</span> (sum%<span class="hljs-number">10</span> === <span class="hljs-number">0</span>) &amp;&amp; (sum &gt; <span class="hljs-number">0</span>);
+  };
+  
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">luhnCheckFast2</span>(<span class="hljs-params">luhn</span>) </span>{
+      <span class="hljs-keyword">var</span> ca, sum = <span class="hljs-number">0</span>, mul = <span class="hljs-number">1</span>;
+      <span class="hljs-keyword">var</span> len = luhn.length;
+      <span class="hljs-keyword">while</span> (len--)
+      {
+          ca = <span class="hljs-built_in">parseInt</span>(luhn.charAt(len),<span class="hljs-number">10</span>) * mul;
+          sum += ca - (ca&gt;<span class="hljs-number">9</span>)*<span class="hljs-number">9</span>;<span class="hljs-comment">// sum += ca - (-(ca&gt;9))|9</span>
+          <span class="hljs-comment">// 1 &lt;--&gt; 2 toggle.</span>
+          mul ^= <span class="hljs-number">3</span>; <span class="hljs-comment">// (mul = 3 - mul);</span>
+      };
+      <span class="hljs-keyword">return</span> (sum%<span class="hljs-number">10</span> === <span class="hljs-number">0</span>) &amp;&amp; (sum &gt; <span class="hljs-number">0</span>);
+  };
+  
+  <span class="hljs-comment">//http://www.notesbit.com/index.php/web-mysql/web-scripts/luhn-algorithm-for-credit-card-check-using-javascript/</span>
+  
+  
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isCreditCard</span>(<span class="hljs-params">CC</span>) </span>{
+    <span class="hljs-keyword">if</span> (CC.length &gt; <span class="hljs-number">19</span>) <span class="hljs-keyword">return</span> (<span class="hljs-literal">false</span>);
+  
+    sum = <span class="hljs-number">0</span>;
+    mul = <span class="hljs-number">1</span>;
+    l = CC.length;
+    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; l; i++) {
+      digit = CC.substring(l - i - <span class="hljs-number">1</span>, l - i);
+      tproduct = <span class="hljs-built_in">parseInt</span>(digit, <span class="hljs-number">10</span>) * mul;
+      <span class="hljs-keyword">if</span> (tproduct &gt;= <span class="hljs-number">10</span>) sum += (tproduct % <span class="hljs-number">10</span>) + <span class="hljs-number">1</span>;
+      <span class="hljs-keyword">else</span> sum += tproduct;
+      <span class="hljs-keyword">if</span> (mul == <span class="hljs-number">1</span>) mul++;
+      <span class="hljs-keyword">else</span> mul--;
+    }
+    <span class="hljs-keyword">if</span> ((sum % <span class="hljs-number">10</span>) == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> (<span class="hljs-literal">true</span>);
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">return</span> (<span class="hljs-literal">false</span>);
+  }
+  
+  
+  <span class="hljs-comment">// http://imei.sms.eu.sk/</span>
+  <span class="hljs-comment">// Javascript code copyright 2009 by Fiach Reid : www.webtropy.com</span>
+  <span class="hljs-comment">// This code may be used freely, as long as this copyright notice is intact.</span>
+  
+  
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Calculate</span>(<span class="hljs-params">Luhn</span>) </span>{
+    <span class="hljs-keyword">var</span> sum = <span class="hljs-number">0</span>;
+    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; Luhn.length; i++) {
+      sum += <span class="hljs-built_in">parseInt</span>(Luhn.substring(i, i + <span class="hljs-number">1</span>));
+    }
+    <span class="hljs-keyword">var</span> delta = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Array</span>(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-number">-4</span>, <span class="hljs-number">-3</span>, <span class="hljs-number">-2</span>, <span class="hljs-number">-1</span>, <span class="hljs-number">0</span>);
+    <span class="hljs-keyword">for</span> (i = Luhn.length - <span class="hljs-number">1</span>; i &gt;= <span class="hljs-number">0</span>; i -= <span class="hljs-number">2</span>) {
+      <span class="hljs-keyword">var</span> deltaIndex = <span class="hljs-built_in">parseInt</span>(Luhn.substring(i, i + <span class="hljs-number">1</span>));
+      <span class="hljs-keyword">var</span> deltaValue = delta[deltaIndex];
+      sum += deltaValue;
+    }
+    <span class="hljs-keyword">var</span> mod10 = sum % <span class="hljs-number">10</span>;
+    mod10 = <span class="hljs-number">10</span> - mod10;
+    <span class="hljs-keyword">if</span> (mod10 == <span class="hljs-number">10</span>) {
+      mod10 = <span class="hljs-number">0</span>;
+    }
+    <span class="hljs-keyword">return</span> mod10;
+  }
+  
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Validate</span>(<span class="hljs-params">Luhn</span>) </span>{
+    <span class="hljs-keyword">var</span> LuhnDigit = <span class="hljs-built_in">parseInt</span>(Luhn.substring(Luhn.length - <span class="hljs-number">1</span>, Luhn.length));
+    <span class="hljs-keyword">var</span> LuhnLess = Luhn.substring(<span class="hljs-number">0</span>, Luhn.length - <span class="hljs-number">1</span>);
+    <span class="hljs-keyword">if</span> (Calculate(LuhnLess) == <span class="hljs-built_in">parseInt</span>(LuhnDigit)) {
+      <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  }
+  
+  
+  
+  
+  
+  
+  
+  <span class="hljs-comment">//http://www.brainjar.com/js/validation/default2.asp</span>
+  
+  
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">checkCC</span>(<span class="hljs-params">s</span>) </span>{
+  
+  
+  
+    <span class="hljs-keyword">var</span> i, n, c, r, t;
+  
+  
+  
+    <span class="hljs-comment">// First, reverse the string and remove any non-numeric characters.</span>
+  
+  
+    r = <span class="hljs-string">""</span>;
+  
+    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; s.length; i++) {
+  
+      c = <span class="hljs-built_in">parseInt</span>(s.charAt(i), <span class="hljs-number">10</span>);
+  
+      <span class="hljs-keyword">if</span> (c &gt;= <span class="hljs-number">0</span> &amp;&amp; c &lt;= <span class="hljs-number">9</span>)
+  
+      r = c + r;
+  
+    }
+  
+  
+  
+    <span class="hljs-comment">// Check for a bad string.</span>
+  
+  
+    <span class="hljs-keyword">if</span> (r.length &lt;= <span class="hljs-number">1</span>)
+  
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  
+  
+  
+    <span class="hljs-comment">// Now run through each single digit to create a new string. Even digits</span>
+    <span class="hljs-comment">// are multiplied by two, odd digits are left alone.</span>
+  
+  
+    t = <span class="hljs-string">""</span>;
+  
+    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; r.length; i++) {
+  
+      c = <span class="hljs-built_in">parseInt</span>(r.charAt(i), <span class="hljs-number">10</span>);
+  
+      <span class="hljs-keyword">if</span> (i % <span class="hljs-number">2</span> != <span class="hljs-number">0</span>)
+  
+      c *= <span class="hljs-number">2</span>;
+  
+      t = t + c;
+  
+    }
+  
+  
+  
+    <span class="hljs-comment">// Finally, add up all the single digits in this string.</span>
+  
+  
+    n = <span class="hljs-number">0</span>;
+  
+    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; t.length; i++) {
+  
+      c = <span class="hljs-built_in">parseInt</span>(t.charAt(i), <span class="hljs-number">10</span>);
+  
+      n = n + c;
+  
+    }
+  
+  
+  
+    <span class="hljs-comment">// If the resulting sum is an even multiple of ten (but not zero), the</span>
+    <span class="hljs-comment">// card number is good.</span>
+  
+  
+    <span class="hljs-keyword">if</span> (n != <span class="hljs-number">0</span> &amp;&amp; n % <span class="hljs-number">10</span> == <span class="hljs-number">0</span>)
+  
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+  
+    <span class="hljs-keyword">else</span> <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+  
+  }</code></pre>
+        <br>  <span class="br0">}</span><span class="sy0">;</span>
+
+
+      <br><span class="sc2">&lt;<span class="sy0">/</span><span class="kw2">script</span>&gt;</span>
+    </code></pre> 
+   </section> 
+   <section id="runner"> 
+    <h2>Test runner</h2> 
+    <p id="firebug"><strong>Warning! For accurate results, please disable Firebug before running the tests. <a href="/faq#firebug-warning">(Why?)</a></strong></p> 
+    <p id="java"><strong>Java applet disabled.</strong></p> 
+    <p id="status">
+     <noscript>
+      <strong>To run the tests, please <a href="http://www.enable-javascript.com/">enable JavaScript</a> and reload the page.</strong>
+     </noscript></p> 
+    <div id="controls">
+     <button id="run" type="button"></button>
+    </div> 
+    <table id="test-table"> 
+     <caption>
+      Testing in Chrome 45.0.2454 / Windows 7 0.0.0
+     </caption> 
+     <thead> 
+      <tr> 
+       <th colspan="2">Test</th> 
+       <th title="Operations per second (higher is better)">Ops/sec</th> 
+      </tr> 
+     </thead> 
+     <tbody> 
+      <tr> 
+       <th scope="row" id="title-1"> 
+        <div>
+          1. notesbit 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">isCreditCard(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-1" class="results">pending…</td> 
+      </tr> 
+      <tr> 
+       <th scope="row" id="title-2"> 
+        <div>
+          2. webtropy 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">Validate(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-2" class="results">pending…</td> 
+      </tr> 
+      <tr> 
+       <th scope="row" id="title-3"> 
+        <div>
+          3. brainjar 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">checkCC(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-3" class="results">pending…</td> 
+      </tr> 
+      <tr> 
+       <th scope="row" id="title-4"> 
+        <div>
+          4. plotnitzky 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">luhnCheckFast(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-4" class="results">pending…</td> 
+      </tr> 
+      <tr> 
+       <th scope="row" id="title-5"> 
+        <div>
+          6. decowski plugin 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">is_valid_luhn(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-5" class="results">pending…</td> 
+      </tr> 
+      <tr> 
+       <th scope="row" id="title-6"> 
+        <div>
+          5. plotnitzky variant 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">luhnCheckFast2(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-6" class="results">pending…</td> 
+      </tr> 
+      <tr> 
+       <th scope="row" id="title-7"> 
+        <div>
+          7. ShirtlessKirk 
+        </div> </th> 
+       <td class="code"> <pre><code><pre><code class="js">luhnChk(ccNum);</code></pre></code></pre> </td> 
+       <td id="results-7" class="results">pending…</td> 
+      </tr> 
+     </tbody> 
+    </table> 
+   </section> 
+   <section> 
+    <h2 id="results">Compare results of other browsers</h2> 
+    <div id="bs-results"></div> 
+   </section> 
+   <section id="revisions"> 
+    <h2>Revisions</h2> 
+    <p>You can <a href="/credit-card-validator/7/edit" rel="nofollow">edit these tests or add even more tests to this page</a> by appending <code>/edit</code> to the URL.</p> 
+    <ul> 
+     <li> <a href="/credit-card-validator">Revision 1</a>: published Leandrowd <time datetime="2011-11-29T18:29:55.000Z" pubdate> on 2011-11-29 </time> </li> 
+     <li> <a href="/credit-card-validator/2">Revision 2</a>: published <time datetime="2011-11-29T21:25:45.000Z" pubdate> on 2011-11-29 </time> </li> 
+     <li> <a href="/credit-card-validator/3">Revision 3</a>: published <time datetime="2011-11-29T21:31:01.000Z" pubdate> on 2011-11-29 </time> </li> 
+     <li> <a href="/credit-card-validator/4">Revision 4</a>: published <time datetime="2012-03-20T11:50:50.000Z" pubdate> on 2012-3-20 </time> </li> 
+     <li> <a href="/credit-card-validator/5">Revision 5</a>: published <time datetime="2012-03-20T11:51:44.000Z" pubdate> on 2012-3-20 </time> </li> 
+     <li> <a href="/credit-card-validator/6">Revision 6</a>: published <time datetime="2012-03-20T11:53:33.000Z" pubdate> on 2012-3-20 </time> </li> 
+     <li class="current"> <a href="/credit-card-validator/7">Revision 7</a>: published <time datetime="2012-03-20T11:54:02.000Z" pubdate> on 2012-3-20 </time> </li> 
+     <li> <a href="/credit-card-validator/8">Revision 8</a>: published eli <time datetime="2012-06-27T17:01:56.000Z" pubdate> on 2012-6-27 </time> </li> 
+     <li> <a href="/credit-card-validator/11">Revision 11</a>: published unkelpehr <time datetime="2014-03-13T10:39:05.000Z" pubdate> on 2014-3-13 </time> </li> 
+     <li> <a href="/credit-card-validator/12">Revision 12</a>: published <time datetime="2014-03-14T12:35:50.000Z" pubdate> on 2014-3-14 </time> </li> 
+     <li> <a href="/credit-card-validator/16">Revision 16</a>: published <time datetime="2015-02-11T12:06:33.000Z" pubdate> on 2015-2-11 </time> </li> 
+     <li> <a href="/credit-card-validator/19">Revision 19</a>: published <time datetime="2015-03-02T09:36:01.000Z" pubdate> on 2015-3-2 </time> </li> 
+     <li> <a href="/credit-card-validator/20">Revision 20</a>: published <time datetime="2015-03-23T10:21:46.000Z" pubdate> on 2015-3-23 </time> </li> 
+     <li> <a href="/credit-card-validator/21">Revision 21</a>: published <time datetime="2015-04-21T00:39:04.000Z" pubdate> on 2015-4-21 </time> </li> 
+     <li> <a href="/credit-card-validator/22">Revision 22</a>: published <time datetime="2015-05-06T00:20:26.000Z" pubdate> on 2015-5-6 </time> </li> 
+     <li> <a href="/credit-card-validator/23">Revision 23</a>: published <time datetime="2015-06-02T03:38:39.000Z" pubdate> on 2015-6-2 </time> </li> 
+     <li> <a href="/credit-card-validator/24">Revision 24</a>: published <time datetime="2015-08-06T22:38:04.000Z" pubdate> on 2015-8-6 </time> </li> 
+     <li> <a href="/credit-card-validator/26">Revision 26</a>: published andy <time datetime="2015-09-27T14:25:28.000Z" pubdate> on 2015-9-27 </time> </li> 
+     <li> <a href="/credit-card-validator/27">Revision 27</a>: published andy <time datetime="2015-09-27T14:26:08.000Z" pubdate> on 2015-9-27 </time> </li> 
+     <li> <a href="/credit-card-validator/28">Revision 28</a>: published andy <time datetime="2015-09-27T14:27:46.000Z" pubdate> on 2015-9-27 </time> </li> 
+     <li> <a href="/credit-card-validator/32">Revision 32</a>: published <time datetime="2015-09-29T18:27:48.000Z" pubdate> on 2015-9-29 </time> </li> 
+     <li> <a href="/credit-card-validator/33">Revision 33</a>: published <a href="https://github.com/tolbon" rel="nofollow">Jean Baptiste Noblot</a> <time datetime="2017-05-24T15:55:02.000Z" pubdate> on 2017-5-24 </time> </li> 
+     <li> <a href="/credit-card-validator/34">Revision 34</a>: published <a href="https://github.com/fant0m121" rel="nofollow">Maxim Terekhov</a> <time datetime="2017-07-24T12:24:55.000Z" pubdate> on 2017-7-24 </time> </li> 
+    </ul> 
+   </section> 
+   <section id="comments"> 
+    <h1>0 Comments</h1> 
+    <div id="comments-wrapper"> 
+    </div> 
+    <a class="login" href="/auth/github"><i class="fa fa-github"></i> Login with GitHub to Edit Test Cases</a> 
+   </section> 
+  </article> 
+  <footer> 
+   <ul> 
+    <li> <h4>Sponsors</h4> <p>Hosting generously provided by <a href="https://m.do.co/c/b426e15331e8">DigitalOcean</a> and <a href="https://zeit.co/">Zeit</a></p> <p><a href="/sponsor">Learn how to become a sponsor</a></p> </li> 
+    <li> <h4>Tests</h4> 
+     <ul> 
+      <li> <a href="/">Add</a> </li> 
+      <li> <a href="/browse">Latest</a> </li> 
+      <li> <a href="/popular">Popular</a> </li> 
+     </ul> </li> 
+    <li> <h4>Info</h4> 
+     <ul> 
+      <li> <a href="/faq">FAQ</a> </li> 
+      <li> <a href="/testimonials">Testimonials</a> </li> 
+      <li> <a href="/contributors">Contributors</a> </li> 
+      <li> <a href="https://benchmarkjs.com/">Benchmark.js</a> </li> 
+     </ul> </li> 
+    <li> <h4>Contact</h4> 
+     <ul> 
+      <li> <a href="https://twitter.com/jsperf">Twitter</a> </li> 
+      <li> <a href="https://github.com/jsperf/jsperf.com">GitHub</a> </li> 
+      <li> <a href="https://webchat.freenode.net/?channels=jsperf">IRC</a> </li> 
+     </ul> </li> 
+   </ul> 
+  </footer> 
+  <script src="/public/_js/test.js"></script> 
+  <script>
+          ui.browserscope.key = 'agt1YS1wcm9maWxlcnINCxIEVGVzdBimq7sPDA'
+  
+          ui.add(
+            '1. notesbit',
+            {
+              'defer': false,
+              'fn': 'isCreditCard(ccNum);'
+            }
+          );
+          ui.add(
+            '2. webtropy',
+            {
+              'defer': false,
+              'fn': 'Validate(ccNum);'
+            }
+          );
+          ui.add(
+            '3. brainjar',
+            {
+              'defer': false,
+              'fn': 'checkCC(ccNum);'
+            }
+          );
+          ui.add(
+            '4. plotnitzky',
+            {
+              'defer': false,
+              'fn': 'luhnCheckFast(ccNum);'
+            }
+          );
+          ui.add(
+            '6. decowski plugin',
+            {
+              'defer': false,
+              'fn': 'is_valid_luhn(ccNum);'
+            }
+          );
+          ui.add(
+            '5. plotnitzky variant',
+            {
+              'defer': false,
+              'fn': 'luhnCheckFast2(ccNum);'
+            }
+          );
+          ui.add(
+            '7. ShirtlessKirk',
+            {
+              'defer': false,
+              'fn': 'luhnChk(ccNum);'
+            }
+          );
+  
+          Benchmark.prototype.setup = 'var ccNum = "4984421209470251";\r\n\r\n// https://gist.github.com/2134376\r\n// Phil Green (ShirtlessKirk)\r\nfunction luhnChk(luhn) {\r\n    var len = luhn.length,\r\n        mul = 0,\r\n        prodArr = [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [0, 2, 4, 6, 8, 1, 3, 5, 7, 9]],\r\n        sum = 0;\r\n\r\n    while (len--) {\r\n        sum += prodArr[mul][parseInt(luhn.charAt(len), 10)];\r\n        mul ^= 1;\r\n    }\r\n\r\n    return sum % 10 === 0 && sum > 0;\r\n};\r\n\r\n// https://github.com/PawelDecowski/jQuery-CreditCardValidator/\r\n// Pawel Decowski\r\n\r\n    function is_valid_luhn(number) {\r\n      var digit, n, sum, _len, _ref;\r\n      sum = 0;\r\n      _ref = number.split(\'\').reverse().join(\'\');\r\n      for (n = 0, _len = _ref.length; n < _len; n++) {\r\n        digit = _ref[n];\r\n        digit = +digit;\r\n        if (n % 2) {\r\n          digit *= 2;\r\n          if (digit < 10) {\r\n            sum += digit;\r\n          } else {\r\n            sum += digit - 9;\r\n          }\r\n        } else {\r\n          sum += digit;\r\n        }\r\n      }\r\n      return sum % 10 === 0;\r\n    };\r\n\r\n// Luhn algorithm validator, by Avraham Plotnitzky. (aviplot at gmail)\r\nfunction luhnCheckFast(luhn)\r\n{                                  \r\n    var ca, sum = 0, mul = 0;\r\n    var len = luhn.length;\r\n    while (len--)\r\n    {\r\n        ca = parseInt(luhn.charAt(len),10) << mul;\r\n        sum += ca - (ca>9)*9; // sum += ca - (-(ca>9))|9\r\n        // 1 <--> 0 toggle.\r\n        mul ^= 1; // mul = 1 - mul;\r\n    };\r\n    return (sum%10 === 0) && (sum > 0);\r\n};\r\n\r\nfunction luhnCheckFast2(luhn)\r\n{\r\n    var ca, sum = 0, mul = 1;\r\n    var len = luhn.length;\r\n    while (len--)\r\n    {\r\n        ca = parseInt(luhn.charAt(len),10) * mul;\r\n        sum += ca - (ca>9)*9;// sum += ca - (-(ca>9))|9\r\n        // 1 <--> 2 toggle.\r\n        mul ^= 3; // (mul = 3 - mul);\r\n    };\r\n    return (sum%10 === 0) && (sum > 0);\r\n};\r\n\r\n//http://www.notesbit.com/index.php/web-mysql/web-scripts/luhn-algorithm-for-credit-card-check-using-javascript/\r\n\r\n\r\nfunction isCreditCard(CC) {\r\n  if (CC.length > 19) return (false);\r\n\r\n  sum = 0;\r\n  mul = 1;\r\n  l = CC.length;\r\n  for (i = 0; i < l; i++) {\r\n    digit = CC.substring(l - i - 1, l - i);\r\n    tproduct = parseInt(digit, 10) * mul;\r\n    if (tproduct >= 10) sum += (tproduct % 10) + 1;\r\n    else sum += tproduct;\r\n    if (mul == 1) mul++;\r\n    else mul--;\r\n  }\r\n  if ((sum % 10) == 0) return (true);\r\n  else return (false);\r\n}\r\n\r\n\r\n// http://imei.sms.eu.sk/\r\n// Javascript code copyright 2009 by Fiach Reid : www.webtropy.com\r\n// This code may be used freely, as long as this copyright notice is intact.\r\n\r\n\r\nfunction Calculate(Luhn) {\r\n  var sum = 0;\r\n  for (i = 0; i < Luhn.length; i++) {\r\n    sum += parseInt(Luhn.substring(i, i + 1));\r\n  }\r\n  var delta = new Array(0, 1, 2, 3, 4, -4, -3, -2, -1, 0);\r\n  for (i = Luhn.length - 1; i >= 0; i -= 2) {\r\n    var deltaIndex = parseInt(Luhn.substring(i, i + 1));\r\n    var deltaValue = delta[deltaIndex];\r\n    sum += deltaValue;\r\n  }\r\n  var mod10 = sum % 10;\r\n  mod10 = 10 - mod10;\r\n  if (mod10 == 10) {\r\n    mod10 = 0;\r\n  }\r\n  return mod10;\r\n}\r\n\r\nfunction Validate(Luhn) {\r\n  var LuhnDigit = parseInt(Luhn.substring(Luhn.length - 1, Luhn.length));\r\n  var LuhnLess = Luhn.substring(0, Luhn.length - 1);\r\n  if (Calculate(LuhnLess) == parseInt(LuhnDigit)) {\r\n    return true;\r\n  }\r\n  return false;\r\n}\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n//http://www.brainjar.com/js/validation/default2.asp\r\n\r\n\r\nfunction checkCC(s) {\r\n\r\n\r\n\r\n  var i, n, c, r, t;\r\n\r\n\r\n\r\n  // First, reverse the string and remove any non-numeric characters.\r\n\r\n\r\n  r = "";\r\n\r\n  for (i = 0; i < s.length; i++) {\r\n\r\n    c = parseInt(s.charAt(i), 10);\r\n\r\n    if (c >= 0 && c <= 9)\r\n\r\n    r = c + r;\r\n\r\n  }\r\n\r\n\r\n\r\n  // Check for a bad string.\r\n\r\n\r\n  if (r.length <= 1)\r\n\r\n  return false;\r\n\r\n\r\n\r\n  // Now run through each single digit to create a new string. Even digits\r\n  // are multiplied by two, odd digits are left alone.\r\n\r\n\r\n  t = "";\r\n\r\n  for (i = 0; i < r.length; i++) {\r\n\r\n    c = parseInt(r.charAt(i), 10);\r\n\r\n    if (i % 2 != 0)\r\n\r\n    c *= 2;\r\n\r\n    t = t + c;\r\n\r\n  }\r\n\r\n\r\n\r\n  // Finally, add up all the single digits in this string.\r\n\r\n\r\n  n = 0;\r\n\r\n  for (i = 0; i < t.length; i++) {\r\n\r\n    c = parseInt(t.charAt(i), 10);\r\n\r\n    n = n + c;\r\n\r\n  }\r\n\r\n\r\n\r\n  // If the resulting sum is an even multiple of ten (but not zero), the\r\n  // card number is good.\r\n\r\n\r\n  if (n != 0 && n % 10 == 0)\r\n\r\n  return true;\r\n\r\n  else return false;\r\n\r\n}'
+      </script> 
+  <script>
+      window._gaq=[['_setAccount','UA-6065217-40'],['_trackPageview']];
+      (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];g.src='https://ssl.google-analytics.com/ga.js';s.parentNode.insertBefore(g,s)}(document,'script'))
+    </script>   
+ </body>
+</html>

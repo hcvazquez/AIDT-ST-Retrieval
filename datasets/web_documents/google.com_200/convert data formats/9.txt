@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+ <head> 
+  <script>
+      // A lame work around for Ghost not redirecting https links
+      if (window.location.host == "skylight.ghost.io") {
+        window.location.href = window.location.href.replace(/https?:\/\/skylight\.ghost\.io/, 'http://blog.skylight.io');
+        document.write("Redirecting...");
+      }
+    </script> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Bringing Sanity to JavaScript UTC Dates with Moment.js and Ember Data</title> 
+  <meta name="description" content=""> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="shortcut icon" href="/assets/images/favicon.ico?v=b46617924a"> 
+  <link rel="stylesheet" type="text/css" href="/assets/css/screen.css?v=b46617924a"> 
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Noto+Serif:400,700,400italic|Open+Sans:700,400"> 
+  <link rel="stylesheet" href="/assets/css/highlight.css?v=b46617924a"> 
+  <script>
+      // Google Analytics
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-28329394-5', 'skylight.io');
+      ga('send', 'pageview');
+    </script> 
+  <link rel="canonical" href="http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/"> 
+  <meta name="referrer" content="no-referrer-when-downgrade"> 
+  <link rel="amphtml" href="http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/amp/"> 
+  <meta property="og:site_name" content="Inside Skylight"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Bringing Sanity to JavaScript UTC Dates with Moment.js and Ember Data"> 
+  <meta property="og:description" content="One &quot;neat&quot; (awful) feature in JavaScript is that it automatically changes dates to be in whatever timezone the user's computer is set to. This is great if you are building the online version of The Podunk Gazette and all your servers and users are in one town. Otherwise, it can"> 
+  <meta property="og:url" content="http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/"> 
+  <meta property="article:published_time" content="2014-09-25T15:52:41.000Z"> 
+  <meta property="article:modified_time" content="2014-09-25T16:06:47.000Z"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:title" content="Bringing Sanity to JavaScript UTC Dates with Moment.js and Ember Data"> 
+  <meta name="twitter:description" content="One &quot;neat&quot; (awful) feature in JavaScript is that it automatically changes dates to be in whatever timezone the user's computer is set to. This is great if you are building the online version of The Podunk Gazette and all your servers and users are in one town. Otherwise, it can"> 
+  <meta name="twitter:url" content="http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/"> 
+  <meta name="twitter:label1" content="Written by"> 
+  <meta name="twitter:data1" content="Tom Dale"> 
+  <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Inside Skylight",
+        "logo": "http://blog.skylight.io/content/images/2014/Jul/Skylight-Icon-Filled-Border.png"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Tom Dale",
+        "url": "http://blog.skylight.io/author/tom/",
+        "sameAs": []
+    },
+    "headline": "Bringing Sanity to JavaScript UTC Dates with Moment.js and Ember Data",
+    "url": "http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/",
+    "datePublished": "2014-09-25T15:52:41.000Z",
+    "dateModified": "2014-09-25T16:06:47.000Z",
+    "description": "One &quot;neat&quot; (awful) feature in JavaScript is that it automatically changes dates to be in whatever timezone the user&#x27;s computer is set to. This is great if you are building the online version of The Podunk Gazette and all your servers and users are in one town. Otherwise, it can",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "http://blog.skylight.io"
+    }
+}
+    </script> 
+  <meta name="generator" content="Ghost 0.11"> 
+  <link rel="alternate" type="application/rss+xml" title="Inside Skylight" href="http://blog.skylight.io/rss/"> 
+ </head> 
+ <body class="post-template"> 
+  <a class="get-skylight" href="https://www.skylight.io">Get Skylight</a> 
+  <main class="content" role="main"> 
+   <article class="post"> 
+    <header class="post-header"> 
+     <a class="blog-logo" href="http://blog.skylight.io"> <img src="/content/images/2014/Jul/Skylight-Icon-Filled-Border.png" alt="Blog Logo"> </a> 
+    </header> 
+    <span class="post-meta"><time datetime="2014-09-25">25 Sep 2014</time> </span> 
+    <h1 class="post-title">Bringing Sanity to JavaScript UTC Dates with Moment.js and Ember Data</h1> 
+    <section class="post-content"> 
+     <p>One "neat" (awful) feature in JavaScript is that it automatically changes dates to be in whatever timezone the user's computer is set to.</p> 
+     <p>This is great if you are building the online version of <em>The Podunk Gazette</em> and all your servers and users are in one town. Otherwise, it can introduce small inconsistencies between clients and your backend servers.</p> 
+     <p>This bit me this week when a customer reported a bug in the daily request chart on the Skylight billing page, a screenshot of which I've included here in case you aren't familiar with it.</p> 
+     <p><img src="/content/images/2014/Sep/Skylight-2014-09-23-15-22-23.jpg" alt="Daily request chart"></p> 
+     <p>"We received a spike in traffic on the 16th, but your chart shows all of the traffic on the 15th. What gives?" the customer asked.</p> 
+     <p>Good question! I went to investigate.</p> 
+     <p>Our server reports usage to the Ember app by providing three values:</p> 
+     <ol> 
+      <li>The usage period start date </li> 
+      <li>The usage period end date </li> 
+      <li>An array of request counts</li> 
+     </ol> 
+     <p><img src="/content/images/2014/Sep/Skylight-2014-09-23-15-28-34.jpg" alt="JSON payload"></p> 
+     <p>As you can see in the screenshot, our Rails server serializes dates into the <a href="http://www.iso.org/iso/home/standards/iso8601.htm">ISO 8601</a> format for consumption by JavaScript.</p> 
+     <p>One nice thing about ISO 8601 is it makes it easy to represent a datetime in UTC.</p> 
+     <p>If you're not familiar with UTC, it stands for <em>Coordinated Universal Time</em> and defines a standard for coordinating datetimes across timezones.</p> 
+     <p>Basically, just do everything in UTC everywhere, and you won't have to worry about timezones.</p> 
+     <p>(If you're now pointing out that the abbreviation for Coordinated Universal Time is CUT and not UTC, you'd be right. The English-speakers wanted CUT and the French-speakers wanted TUC, for <em>temps universel coordonné</em>. In the spirit of compromise, it now doesn't make sense in either language. Progress!)</p> 
+     <p>ISO 8601 defines a shorthand for denoting that a time is in UTC: just add a <code>Z</code> to the end. For example, if you wanted to represent 9:30am UTC in ISO 8601, it would be <code>"09:30Z"</code>.</p> 
+     <p>Additionally, JavaScript's <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date">Date</a> object supports ISO 8601 out of the box.</p> 
+     <p>Great! Back to Skylight. We can see in the screenshot that this particular billing period starts at <code>"2014-09-13T00:00:00.000Z"</code>: September 13th, 2014.</p> 
+     <p>Our entire billing system uses UTC, and we can see this date is provided in UTC because it ends in <code>Z</code>.</p> 
+     <p>Let's see what happens when we put this date into JavaScript:</p> 
+     <p><img src="/content/images/2014/Sep/Skylight-2014-09-23-15-58-32.jpg" alt="JavaScript Date WAT"></p> 
+     <p></p>
+     <center> 
+      <p></p> 
+      <blockquote> 
+       <p>WAT </p>
+      </blockquote>
+     </center>
+     <p></p>  
+     <p>JavaScript, like a well-meaning but not-very-bright puppy, has eagerly gone and done the wrong thing. We wanted to represent a specific date—September 13th—but, after adjusting to my local timezone, the date is now September 12th! All of the date-related UI will be off by one day.</p> 
+     <p>In Skylight, we use <a href="http://momentjs.com/">Moment.js</a> for all of our date parsing and formatting. Moment is a friggin' gem of a library and has made the process of writing Skylight way easier. I have no idea how people write JavaScript apps without Moment.</p> 
+     <p>Moment, wisely, inherits JavaScript's behavior out of the box:</p> 
+     <p><img src="/content/images/2014/Sep/Skylight-2014-09-23-16-06-44.jpg" alt=""></p> 
+     <p>I was starting to despair. All of our UI code uses Moment to format dates and times for human consumption, and I was not looking forward to auditing everything to make it UTC aware.</p> 
+     <p>That's when I discovered that Moment.js has <a href="http://momentjs.com/docs/#/parsing/utc/">a UTC mode</a>. Once you put a Moment date into UTC mode, all of its display functions use UTC instead of the local timezone.</p> 
+     <p><img src="/content/images/2014/Sep/Skylight-2014-09-23-16-09-13.jpg" alt=""></p> 
+     <p>Salvation was at hand. My first inclination was to go into all of the UI code (mostly Handlebars helpers and Ember components that wrap D3) and make sure we normalized all dates into UTC before drawing.</p> 
+     <p>This was going to be a lot of work, and if there's anything I hate, it's working hard. I took a step back and wondered if there was an option other than quitting my job.</p> 
+     <p>Fortunately an easier solution sprang to mind, and ultimately I think it's a better one. Why not just normalize all dates into UTC <em>at the boundary</em>, as they're received from the server?</p> 
+     <p>We are lucky enough to be using Ember Data, so this was insanely easy. Ember Data does all of the work of talking to the server, and supports the notion of <em>attribute types</em>.</p> 
+     <p>Ember Data supports several different types out of the box: numbers, dates, Booleans, and strings. But this list is easily extended with <em>transforms</em>. A transform is just an object that determines how a JSON value is deserialized into a JavaScript object, and vice versa.</p> 
+     <p>In this case, I wanted to define a transform called <code>utc</code> that created a new Moment date object in UTC mode.</p> 
+     <p>This is RIDICULOUSLY EASY in Ember Data and requires zero configuration. If you're using Ember CLI (as we are), just create a new file called <code>app/transforms/utc.js</code>. Boom, done: we now have a transform called <code>utc</code>.</p> 
+     <p>Inside <code>utc.js</code>, export a new subclass of <code>DS.Transform</code>:</p> 
+     <pre><code class="language-js">import DS from "ember-data";
+
+export default DS.Transform.extend({  
+  serialize: function(value) {
+    return value ? value.toJSON() : null;
+  },
+
+  deserialize: function(value) {
+    return moment.utc(value);
+  }
+});
+</code></pre> 
+     <p>Transforms implement two methods:</p> 
+     <ol> 
+      <li><code>serialize</code>, which takes a JavaScript object and returns the value that should be used in the JSON payload sent to the server. </li> 
+      <li><code>deserialize</code>, which takes the JSON value and returns the value you want to use in your app.</li> 
+     </ol> 
+     <p>Next, I just had to go into all of my models and change the attribute type from <code>date</code> to <code>utc</code>. For example:</p> 
+     <pre><code class="language-js">// app/models/subscription.js
+
+export default DS.Model.extend({  
+  plan: belongsTo('plan'),
+
+  features:       attr('string'),
+
+  subscribedAt:        attr('utc'),
+  unsubscribedAt:      attr('utc'),
+  currentBillingCycle: attr('utc'),
+  nextBillingCycle:    attr('utc'),
+  nextInvoiceAt:       attr('utc')
+
+  // ...
+});
+</code></pre> 
+     <p>When I reloaded the app, boom, all of the dates displayed were based on UTC time, not the fact that I happened to be in Oregon at the moment.</p> 
+     <p>In summary, tools like Moment.js and Ember Data don't just let you be a better developer. They also let you be very lazy, so you have more time to drink, which is definitely necessary if your job involves programming with dates and times.</p> 
+     <blockquote class="twitter-tweet" lang="en">
+      <p>I was in favour of space exploration until I realised what it'd mean for date time libraries</p>— Joe Wright (@joe_jag) 
+      <a href="https://twitter.com/joe_jag/status/510048646482894848">September 11, 2014</a>
+     </blockquote> 
+     <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script> 
+     <p><em> <br> NB: Kris Selden, Stefan Penner and Matthew Beale point out that Moment.js date parsing can be a slow operation. If you're loading many records, you may want to consider serializing dates as seconds since epoch, and doing the parsing at the UI layer. In our case, however, we only have a few billing-related models, so it did not become a performance bottleneck. <br> </em></p> 
+     <p>Does your Rails app feel slow but New Relic is telling you everything's fine? <a href="https://www.skylight.io">Sign up for a free 30-day trial of Skylight</a>, the better Rails profiler.</p> 
+    </section> 
+    <footer class="post-footer"> 
+     <section class="author"> 
+      <h4>Tom Dale</h4> 
+      <p></p> 
+      <ul class="author-meta clearfix"> 
+      </ul> 
+     </section> 
+     <section class="share"> 
+      <h4>Share this post</h4> 
+      <a class="icon-twitter" href="https://twitter.com/share?text=Bringing%20Sanity%20to%20JavaScript%20UTC%20Dates%20with%20Moment.js%20and%20Ember%20Data&amp;url=http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"> <span class="hidden">Twitter</span> </a> 
+      <a class="icon-facebook" href="https://www.facebook.com/sharer/sharer.php?u=http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/" onclick="window.open(this.href, 'facebook-share','width=580,height=296');return false;"> <span class="hidden">Facebook</span> </a> 
+      <a class="icon-google-plus" href="https://plus.google.com/share?url=http://blog.skylight.io/bringing-sanity-to-javascript-utc-dates-with-moment-js-and-ember-data/" onclick="window.open(this.href, 'google-plus-share', 'width=490,height=530');return false;"> <span class="hidden">Google+</span> </a> 
+     </section> 
+    </footer> 
+   </article> 
+  </main> 
+  <footer class="site-footer"> 
+   <a class="subscribe icon-feed" href="http://blog.skylight.io/rss/"><span class="tooltip">Subscribe!</span></a> 
+   <div class="inner"> 
+    <section class="copyright">
+     All content copyright 
+     <a href="http://www.tilde.io">Tilde Inc.</a> © 2017 • All rights reserved.
+    </section> 
+    <section class="poweredby">
+     Proudly published with 
+     <a class="icon-ghost" href="https://ghost.org">Ghost</a>
+    </section> 
+   </div> 
+  </footer> 
+  <!-- You can safely delete this line if your theme does not require jQuery --> 
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script> 
+  <script>
+$(function() {
+  var DirewolfTracking = (window.DirewolfTracking = window.DirewolfTracking || {});
+
+  function getQueryParam(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+    results = regex.exec(location.search);
+    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+  }
+
+  function campaignParams(suffix) {
+    var keywords = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+    var params = {};
+
+    for (var i=0, l=keywords.length; i<l; i++) {
+      var keyword = keywords[i];
+      var val = getQueryParam(keyword);
+      if (val) {
+        var key = suffix ? (keyword + " [" + suffix + "]") : keyword;
+        params[key] = val;
+      }
+    }
+
+    return params;
+  }
+
+  window.DirewolfTracking.campaignParams = campaignParams;
+
+  $(window).on("mixpanel-loaded", function(e, mixpanel) {
+    mixpanel.identify();
+    mixpanel.people.set(campaignParams('last touch'));
+    mixpanel.people.set_once(campaignParams('first touch'));
+  });
+
+  if (DirewolfTracking.mixpanel.enabled) {
+    var token = DirewolfTracking.mixpanel.token;
+    var options = {
+      cross_subdomain_cookie: DirewolfTracking.mixpanel.subdomainCookie,
+      loaded: function() {
+        setTimeout(function() {
+          $(window).trigger("mixpanel-loaded", [ mixpanel ]);
+        });
+      }
+    };
+
+    (function(f,b){if(!b.__SV){var a,e,i,g;window.mixpanel=b;b._i=[];b.init=function(a,e,d){function f(b,h){var a=h.split(".");2==a.length&&(b=b[a[0]],h=a[1]);b[h]=function(){b.push([h].concat(Array.prototype.slice.call(arguments,0)))}}var c=b;"undefined"!==typeof d?c=b[d]=[]:d="mixpanel";c.people=c.people||[];c.toString=function(b){var a="mixpanel";"mixpanel"!==d&&(a+="."+d);b||(a+=" (stub)");return a};c.people.toString=function(){return c.toString(1)+".people (stub)"};i="disable track track_pageview track_links track_forms register register_once alias unregister identify name_tag set_config people.set people.set_once people.increment people.append people.union people.track_charge people.clear_charges people.delete_user".split(" ");
+     for(g=0;g<i.length;g++)f(c,i[g]);b._i.push([a,e,d])};b.__SV=1.2;a=f.createElement("script");a.type="text/javascript";a.async=!0;a.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?MIXPANEL_CUSTOM_LIB_URL:"//cdn.mxpnl.com/libs/mixpanel-2-latest.min.js";e=f.getElementsByTagName("script")[0];e.parentNode.insertBefore(a,e)}})(document,window.mixpanel||[]);
+     mixpanel.init(token, options);
+  }
+});
+
+(function() {
+  var DirewolfTracking = (window.DirewolfTracking = window.DirewolfTracking || {});
+  var mixpanel = DirewolfTracking.mixpanel = {
+    enabled: true,
+    subdomainCookie: true,
+    token: "486f9a05b3f896743400d472f348b4be"
+  };
+
+  $(window).on("mixpanel-loaded", function(e, mixpanel) {
+    var params = DirewolfTracking.campaignParams('current');
+    params["Page"] = "Blog";
+    params["url"] = location.pathname;
+    mixpanel.track("Landed", params);
+  });
+})();
+</script> 
+  <script type="text/javascript" src="/assets/js/jquery.fitvids.js?v=b46617924a"></script> 
+  <script type="text/javascript" src="/assets/js/index.js?v=b46617924a"></script> 
+  <script type="text/javascript" src="/assets/js/highlight.pack.js?v=b46617924a"></script> 
+  <script>hljs.initHighlightingOnLoad();</script>   
+ </body>
+</html>

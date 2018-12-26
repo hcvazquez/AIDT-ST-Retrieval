@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Nick Balestra - O(nlogn) sorting algorithms in JavaScript</title> 
+  <link rel="shortcut icon" href="/assets/images/favicon.png"> 
+  <link rel="stylesheet" href="/assets/css/style.css"> 
+  <link rel="alternate" type="application/rss+xml" title="Nick Balestra" href="/feed.xml"> 
+  <link rel="stylesheet" href="/assets/css/highlight.css"> 
+ </head> 
+ <body> 
+  <nav class="main-nav"> 
+   <a href=""> <span class="arrow">?</span> Home </a> 
+   <a href="about">About </a> 
+   <a class="cta" href="feed.xml">Subscribe</a> 
+  </nav> 
+  <section id="wrapper" class=""> 
+   <article class="post"> 
+    <header> 
+     <h1>O(nlogn) sorting algorithms in JavaScript</h1> 
+     <h2 class="headline">November 26, 2015</h2> 
+    </header> 
+    <section id="post-body"> 
+     <p>If time complexity is not such a big deal when dealing with small datasets you definitely want to rely on sorting algorithms that performs much better than quadratic time as the input scale. The two most common and performant algorithms in this regards, which utilize a divide and conquer approach to achieve logarithmic time O(nlogn), are mergesort and quicksort. One difference worth noticing is stability: while mergesort is a stable sorting algorithm, quick sort isn’t.</p> 
+     <hr> 
+     <h3 id="merge-sort">Merge sort</h3> 
+     <p>The idea behind merge sort, is quite simple: recursively divide the unsorted list into two halves until you have n lists, each of length one. Then, walking the call stack binary tree backward, merge each pair of lists into a single sorted list. The whole logic of merge sort, as the name suggest, rely therefore upon the merging and sorting process. Because we start the process from single element lists, on each step the lists that we are going to merge can be safely assumed to be already sorted, making the process of merging and sorting straightforward, as it will be enough to compare the firsts elements of each list popping out the smaller one.</p> 
+     <h4 id="visualizing-the-process">Visualizing the process</h4> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// Merge sort process</span>
+
+              <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+             <span class="sr">/ </span><span class="err">\ </span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>                    <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+   <span class="sr">/ </span><span class="se">\ </span><span class="sr"> /</span>         <span class="o">\</span>
+ <span class="p">[</span><span class="mi">1</span><span class="p">]</span>          <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>         <span class="p">[</span><span class="mi">4</span><span class="p">]</span>           <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+   <span class="o">|</span>          <span class="sr">/ </span><span class="se">\ </span><span class="sr"> | /</span>     <span class="o">\</span>
+   <span class="o">|</span>      <span class="p">[</span><span class="mi">3</span><span class="p">]</span>       <span class="p">[</span><span class="mi">2</span><span class="p">]</span>       <span class="o">|</span>         <span class="p">[</span><span class="mi">6</span><span class="p">]</span>      <span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+   <span class="o">|</span>         <span class="err">\</span>     <span class="o">/</span>          <span class="o">|</span>           <span class="err">\</span>     <span class="o">/</span>
+   <span class="o">|</span>          <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>          <span class="o">|</span>            <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+    <span class="err">\</span>         <span class="o">/</span>                <span class="err">\</span>          <span class="o">/</span>
+     <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>                   <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+              <span class="err">\</span>                 <span class="o">/</span> 
+               <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span> </code></pre>
+     </figure> 
+     <p>The code could look something along the following lines:</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">mergeSort</span><span class="p">(</span><span class="nx">list</span><span class="p">)</span> <span class="p">{</span>
+  
+  <span class="kd">function</span> <span class="nx">merge</span><span class="p">(</span><span class="nx">listR</span><span class="p">,</span> <span class="nx">listL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">output</span> <span class="o">=</span> <span class="p">[];</span>
+    <span class="k">while</span> <span class="p">(</span><span class="nx">listL</span><span class="p">.</span><span class="nx">length</span> <span class="o">&amp;&amp;</span> <span class="nx">listR</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">listL</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nx">listR</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">?</span> <span class="nx">output</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">listL</span><span class="p">.</span><span class="nx">shift</span><span class="p">())</span> <span class="p">:</span> <span class="nx">output</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">listR</span><span class="p">.</span><span class="nx">shift</span><span class="p">())</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">output</span><span class="p">.</span><span class="nx">concat</span><span class="p">(</span><span class="nx">listL</span><span class="p">).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">listR</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="kd">var</span> <span class="nx">pivot</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">floor</span><span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">listL</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nx">pivot</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">listR</span> <span class="o">=</span> <span class="nx">list</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">pivot</span><span class="p">);</span>
+
+  <span class="k">return</span> <span class="nx">merge</span><span class="p">(</span><span class="nx">mergeSort</span><span class="p">(</span><span class="nx">listL</span><span class="p">),</span> <span class="nx">mergeSort</span><span class="p">(</span><span class="nx">listR</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="c1">// mergeSort([1, 3, 2, 4, 6, 5])</span>
+<span class="c1">// -&gt; [1, 2, 3, 4, 5, 6]</span>
+
+<span class="c1">// time complexity: O(nlogn)</span></code></pre>
+     </figure> 
+     <hr> 
+     <h3 id="quick-sort">Quick Sort</h3> 
+     <p>Quicksort is the sorting algorithm behind the native array sort method in javascript, although different browsers may rely on mergesort instead. The idea is to pick recursively the last element and set it as the pivot. Then sort the list by positioning all the elements with a value less then the pivot’s value on the left and the rest on the right of the pivot. At this point, the pivot can be safely assumed to be sorted with its proper final index assigned. By recursively applying the process to each side we’ll soon find ourself with n lists, each of length 1, that only need to be concatenated back together while walking backward the call stack.</p> 
+     <h4 id="visualizing-the-process-1">Visualizing the process</h4> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// Merge sort process</span>
+
+                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+                                <span class="o">|</span>
+                        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+                       <span class="sr">/ | </span><span class="err">\ </span>              <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>     <span class="p">[</span><span class="mi">5</span><span class="p">]</span>         <span class="p">[</span><span class="mi">6</span><span class="p">]</span>
+             <span class="sr">/ | | </span><span class="err">| </span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>      <span class="p">[</span><span class="mi">4</span><span class="p">]</span>          <span class="o">|</span>           <span class="o">|</span> 
+        <span class="o">|</span>           <span class="o">|</span>           <span class="o">|</span>           <span class="o">|</span>
+    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>       <span class="o">|</span>           <span class="o">|</span>           <span class="o">|</span>
+   <span class="sr">/ | </span><span class="se">\ </span><span class="sr"> | | </span><span class="err">| </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>    <span class="p">[</span><span class="mi">2</span><span class="p">]</span>    <span class="p">[</span><span class="mi">3</span><span class="p">]</span>   <span class="o">|</span>           <span class="o">|</span>           <span class="o">|</span>
+   <span class="err">\</span>    <span class="o">|</span>    <span class="sr">/ | | </span><span class="err">| </span>    <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>       <span class="o">|</span>           <span class="o">|</span>           <span class="o">|</span>
+             <span class="err">\</span>      <span class="o">|</span>           <span class="o">|</span>           <span class="o">|</span> 
+             <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>       <span class="o">|</span>           <span class="o">|</span>
+                         <span class="err">\</span>      <span class="o">|</span>          <span class="sr">/</span><span class="err"> </span>                         <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+              </code></pre>
+     </figure> 
+     <p>Again, the code could look something along the following lines:</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="kd">function</span> <span class="nx">quickSort</span><span class="p">(</span><span class="nx">list</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">.</span><span class="nx">length</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">list</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="kd">var</span> <span class="nx">pivot</span> <span class="o">=</span> <span class="nx">list</span><span class="p">[</span><span class="nx">list</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+  <span class="kd">var</span> <span class="nx">listL</span> <span class="o">=</span> <span class="p">[];</span>
+  <span class="kd">var</span> <span class="nx">listR</span> <span class="o">=</span> <span class="p">[];</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">list</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">list</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nx">pivot</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">listL</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">list</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">listR</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">list</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nx">quickSort</span><span class="p">(</span><span class="nx">listL</span><span class="p">).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">pivot</span><span class="p">).</span><span class="nx">concat</span><span class="p">(</span><span class="nx">quickSort</span><span class="p">(</span><span class="nx">listR</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="c1">// quickSort([1, 3, 2, 4, 6, 5])</span>
+<span class="c1">// -&gt; [1, 2, 3, 4, 5, 6]</span>
+
+<span class="c1">// time complexity: O(nlogn)</span></code></pre>
+     </figure> 
+     <hr> 
+     <p>####Sorting algorithms, related articles:</p> 
+     <ul> 
+      <li><a href="http://nick.balestra.ch/2015/quadratic-time-sorting-algorithms">Simple O(n^2) sorting algorithms in JavaScript</a></li> 
+      <li><a href="http://nick.balestra.ch/2015/swapping-array-elements-in-place/">JavaScript swap in-place array elements</a></li> 
+     </ul> 
+    </section> 
+   </article> 
+   <footer id="post-meta" class="clearfix"> 
+    <a href="http://twitter.com/nickbalestra"> <img class="avatar" src="/assets/images/profile.png"> 
+     <div> 
+      <span class="dark">Nick Balestra</span> 
+      <span>Software engineer</span> 
+     </div> </a> 
+    <section id="sharing"> 
+     <a class="twitter" href="https://twitter.com/intent/tweet?text=http://nick.balestra.ch/2015/logarithmic-time-sorting-algorithms/ - O(nlogn) sorting algorithms in JavaScript by @nickbalestra"><span class="icon-twitter"> Tweet</span></a> 
+     <a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span> </a> 
+    </section> 
+   </footer> 
+   <!-- Disqus comments --> 
+   <section class="disqus"> 
+    <div id="disqus_thread"></div> 
+    <script type="text/javascript">
+        var disqus_shortname = 'nickbalestra';
+        var disqus_developer = 0; // developer mode is on
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script> 
+    <noscript>
+     Please enable JavaScript to view the 
+     <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+    </noscript> 
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+   </section> 
+   <!-- Archive --> 
+   <ul id="post-list" class="archive readmore"> 
+    <h3>Read more</h3> 
+    <li> <a href="/2016/composing-observables/">Understanding the observable type pt.3
+      <aside class="dates">
+       Nov 12
+      </aside></a> </li> 
+    <li> <a href="/2016/creating-observables/">Understanding the observable type pt.2
+      <aside class="dates">
+       Nov 05
+      </aside></a> </li> 
+    <li> <a href="/2016/Understanding-the-observable-type/">Understanding the observable type
+      <aside class="dates">
+       Oct 29
+      </aside></a> </li> 
+    <li> <a href="/2016/E2-full-stack-web-development-with-elm-and-express/">E2: Elm + Express for full-stack web development
+      <aside class="dates">
+       Oct 26
+      </aside></a> </li> 
+    <li> <a href="/2016/demystifying-redux-applymiddleware/">Demystifying Redux pt2
+      <aside class="dates">
+       Sep 12
+      </aside></a> </li> 
+    <li> <a href="/2016/demystifying-redux-createstore/">Demystifying Redux pt1
+      <aside class="dates">
+       Sep 04
+      </aside></a> </li> 
+    <li> <a href="/2016/express-serve-ssr-react-app/">Express middleware serving SSR React apps
+      <aside class="dates">
+       Aug 29
+      </aside></a> </li> 
+    <li> <a href="/2016/why-i-love-JSPM/">Why I love JSPM
+      <aside class="dates">
+       Aug 25
+      </aside></a> </li> 
+    <li> <a href="/2016/npm-executables-and-how-to-run-them-locally/">Npm executables
+      <aside class="dates">
+       Aug 17
+      </aside></a> </li> 
+    <li> <a href="/2015/Functional-and-in-place-matrix-rotation/">Functional and in-place matrix rotation
+      <aside class="dates">
+       Dec 23
+      </aside></a> </li> 
+    <li> <a href="/2015/sankey-d3-faux-DOM-react/">D3 vs. React DOMination
+      <aside class="dates">
+       Dec 08
+      </aside></a> </li> 
+    <li> <a href="/2015/deep-copying-and-empty-arrays/">Deep copying Objects and Arrays
+      <aside class="dates">
+       Dec 01
+      </aside></a> </li> 
+    <li> <a href="/2015/logarithmic-time-sorting-algorithms/">O(nlogn) sorting algorithms in JavaScript
+      <aside class="dates">
+       Nov 26
+      </aside></a> </li> 
+    <li> <a href="/2015/quadratic-time-sorting-algorithms/">Simple O(n^2) sorting algorithms in JavaScript
+      <aside class="dates">
+       Nov 24
+      </aside></a> </li> 
+    <li> <a href="/2015/swapping-array-elements-in-place/">JavaScript swap in-place array elements
+      <aside class="dates">
+       Nov 22
+      </aside></a> </li> 
+    <li> <a href="/2015/up-and-running-with-jspm-for-react/">JSPM - React starter kit
+      <aside class="dates">
+       Nov 02
+      </aside></a> </li> 
+    <li> <a href="/2015/up-and-running-with-webpack-for-babel-and-react/">Webpack - React starter kit
+      <aside class="dates">
+       Nov 01
+      </aside></a> </li> 
+    <li> <a href="/2015/serving-static-files-with-node-js/">Serving Static Files with Node.js
+      <aside class="dates">
+       Oct 29
+      </aside></a> </li> 
+    <li> <a href="/2015/Installing-and-managing-Node-versions-with-n/">Installing and managing Node versions with n
+      <aside class="dates">
+       Oct 26
+      </aside></a> </li> 
+    <li> <a href="/2015/recursion-workshop/">Recursion, part 1: Linear Recursion and Iteration
+      <aside class="dates">
+       Oct 17
+      </aside></a> </li> 
+    <li> <a href="/2015/recursion-workshop-part4/">Recursion, part 4: Anatomy of a recursion
+      <aside class="dates">
+       Oct 17
+      </aside></a> </li> 
+    <li> <a href="/2015/recursion-workshop-part3/">Recursion, part 3: Tree recursion
+      <aside class="dates">
+       Oct 17
+      </aside></a> </li> 
+    <li> <a href="/2015/recursion-workshop-part2/">Recursion, part 2: Tail-recursive processes in JS
+      <aside class="dates">
+       Oct 17
+      </aside></a> </li> 
+    <li> <a href="/2015/ES6-classes-and-prototype-based-inheritance/">ES6: JS's Prototype-based inheritance and classes demystified
+      <aside class="dates">
+       Oct 15
+      </aside></a> </li> 
+    <li> <a href="/2015/depthFirst-vs-breadthFirst/">DepthFirst and breadthFirst tree walking
+      <aside class="dates">
+       Oct 10
+      </aside></a> </li> 
+    <li> <a href="/2015/ES6-Arrows-Arrays-and-Defaults/">ES6: Arrows, array-like objects and defaults
+      <aside class="dates">
+       Oct 05
+      </aside></a> </li> 
+    <li> <a href="/2015/Installing-Ruby-Gems-Without-Sudo/">Install ruby gems without sudo on OSX
+      <aside class="dates">
+       Oct 04
+      </aside></a> </li> 
+    <li> <a href="/2015/Installing-Node-Global/">Installing npm packages global on OSX
+      <aside class="dates">
+       Oct 04
+      </aside></a> </li> 
+    <li> <a href="/2015/pick-your-parsing/">Pick your parsing
+      <aside class="dates">
+       Sep 05
+      </aside></a> </li> 
+    <li> <a href="/2015/sweetjs-case-macros-for-javascript/">Case based Macros for javaScript
+      <aside class="dates">
+       Aug 29
+      </aside></a> </li> 
+    <li> <a href="/2015/hrb-sicp-studygroup/">HRB SICP Study group - Getting started with Lisp
+      <aside class="dates">
+       Aug 23
+      </aside></a> </li> 
+    <li> <a href="/2015/for-loops-the-bad-the-good-the-ugly/">For* Loops: The Bad, The Good And The Ugly
+      <aside class="dates">
+       Aug 08
+      </aside></a> </li> 
+    <li> <a href="/2015/build-a-simple-api-server-with-node/">Building a simple API server with node
+      <aside class="dates">
+       Jul 26
+      </aside></a> </li> 
+    <li> <a href="/2015/Backbone-bindings-for-firebase/">Binding Backbone models &amp; collections to Firebase
+      <aside class="dates">
+       Jul 24
+      </aside></a> </li> 
+    <li> <a href="/2015/classes-and-instantiation-patterns-in-javascript/">Classes and Instantiation Patterns in javaScript
+      <aside class="dates">
+       Jul 05
+      </aside></a> </li> 
+    <li> <a href="/2015/Prefix-tree-data-structure/">Prefix Tree Data Structure
+      <aside class="dates">
+       Jul 05
+      </aside></a> </li> 
+    <li> <a href="/2015/javascript-functional-libraries/">JS Functional Programming Libraries
+      <aside class="dates">
+       Jun 13
+      </aside></a> </li> 
+    <li> <a href="/2015/Kactus/">Kactus for Jekyll
+      <aside class="dates">
+       Jun 11
+      </aside></a> </li> 
+    <li> <a href="/2015/IIFE/">The IIFE pattern
+      <aside class="dates">
+       Jun 08
+      </aside></a> </li> 
+    <li> <a href="/2015/truthy-and-falsy/">Truthy and falsy values
+      <aside class="dates">
+       Jun 07
+      </aside></a> </li> 
+    <li> <a href="/2015/prime-algos/">Trial division, Sieve of Eratosthenes and Factorization Wheel
+      <aside class="dates">
+       May 25
+      </aside></a> </li> 
+    <li> <a href="/2015/using-every-to-return-some/">Using every() to return some()
+      <aside class="dates">
+       May 15
+      </aside></a> </li> 
+    <li> <a href="/2015/jekyll-on-github-quick-guide/">Jekyll on Github - Quick guide
+      <aside class="dates">
+       May 10
+      </aside></a> </li> 
+    <li> <a href="/2015/hackbot-a-js-robot-for-the-browser/">Hackbot - A js robot for the browser
+      <aside class="dates">
+       Jan 26
+      </aside></a> </li> 
+    <li> <a href="/2015/intro-js-onboarding-api/">Intro.js onboarding API
+      <aside class="dates">
+       Jan 25
+      </aside></a> </li> 
+    <li> <a href="/2015/javascripts-lexical-scope-hoisting-and-closures-without-mystery/">JavaScript’s lexical scope, hoisting and closures without mystery
+      <aside class="dates">
+       Jan 17
+      </aside></a> </li> 
+   </ul> 
+   <footer id="footer"> 
+    <p class="small">© Copyright 2017 Nick Balestra</p> 
+   </footer> 
+  </section> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> 
+  <script src="/assets/js/main.js"></script> 
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-62842593-1', 'auto');
+    ga('send', 'pageview');
+  </script>   
+ </body>
+</html>

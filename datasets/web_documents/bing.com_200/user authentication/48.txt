@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"> 
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags --> 
+  <meta name="description" content="FullStackMark"> 
+  <meta name="author" content="Mark Macneil"> 
+  <title>FullStack Mark  — User Authentication with Angular and ASP.NET Core</title> 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous"> 
+  <!-- Google Fonts --> 
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic"> 
+  <link rel="stylesheet" href="/css/blog.min.css?v=QIhtlOdRRGbNTlkpx3EVozYsy7QViVBZWdZEj6Re6Vw"> 
+  <!-- share this --> 
+  <script type="text/javascript" src="//platform-api.sharethis.com/js/sharethis.js#property=58c34da0a5ebfb0012b24060&amp;product=sticky-share-buttons"></script> 
+  <!-- highlight.js --> 
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/default.min.css"> 
+  <!-- Favicons --> 
+  <link rel="apple-touch-icon" href="/apple-icon.png"> 
+  <link rel="icon" href="/favicon.png"> 
+ </head> 
+ <body> 
+  <div class="blog-masthead"> 
+   <div class="container"> 
+    <nav class="nav"> 
+     <!--  <a class="nav-link" href="/">FullStackMark</a> --> 
+     <a class="navbar-brand" href="/"> <img src="/img/logo.png" alt=""> </a> 
+     <a href="/Blog" title="Home" class="nav-link">Home</a> 
+     <a href="/Auth/Login" title="Login" class="nav-link">Login</a> 
+    </nav> 
+   </div> 
+  </div> 
+  <div class="container"> 
+   <div class="row"> 
+    <div class="col-sm-8"> 
+     <div class="blog-post"> 
+      <h2 class="blog-post-title">User Authentication with Angular and ASP.NET Core</h2> 
+      <p class="blog-post-meta">May 5, 2017</p> 
+      <img src="/img/posts/10/user-authentication-with-angular-and-asp-net-core.png" class="img-fluid"> 
+      <p>User authentication is a fundamental part of any meaningful application. Unfortunately, implementing it properly can be a painful exercise that steals time and energy away from more meaningful features of our application. In this post, we'll learn step by step how to add user registration and login functionality to an Angular app powered by an ASP.NET Core backend API. Our approach will use <a href="https://jwt.io/" target="_blank">JSON Web Tokens</a> which provide a modern, industry standard method for token-based authentication in web and mobile apps.</p> 
+      <p><strong>Note</strong>, the Angular portion of this guide is based on version &gt;= 2.x.</p> 
+      <figure class="figure"> 
+       <img src="/img/posts/10/end-to-end-angular-aspnet-core-authentication.gif" class="figure-img img-fluid"> 
+       <figcaption class="figure-caption">
+        The finished product
+       </figcaption> 
+      </figure> 
+      <hr> 
+      <h2>Dev environment</h2> 
+      <ul> 
+       <li>Windows 10</li> 
+       <li>Visual Studio Code - v1.11.2</li> 
+       <li>Angular v4.0.2</li> 
+       <li>C# for Visual Studio Code extension</li> 
+       <li>SQL Server Express 2016</li> 
+       <li>.NET Core SDK v1.0.1 <code class="cmd">dotnet --version</code></li> 
+       <li>node v6.10.0 <code class="cmd">node -v</code></li> 
+       <li>npm v3.10.10 <code class="cmd">npm -v</code></li> 
+      </ul> 
+      <h2>Get the code</h2> 
+      <p>In my <a href="https://fullstackmark.com/post/9/get-started-with-angular-2-and-aspnet-core-in-visual-studio-code">last post</a> I showed how to get started with Angular and ASP.NET Core so I'm going to use the finished product of that post as the foundation for this one. If you're following along step by step you'll need to grab that code <a href="https://github.com/mmacneil/GetStartedAngularASPNetCore" target="_blank">here</a>. If you just want the code from this post, <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication" target="_blank">it's here</a>.</p> 
+      <p></p>
+      <div class="callout callout-primary text-center mobile-only"> 
+       <h5><strong>Get notified on new posts</strong></h5> 
+       <p>Straight from me, no spam, no bullshit. Frequent, helpful, email-only content.</p> 
+       <form class="form-inline subscriber-content-form" method="post"> 
+        <input type="email" name="email" class="form-control form-control-sm" placeholder="you@domain.com"> 
+        <input type="hidden" name="interests" value="Angular 2+, ASP.NET Core, Security"> 
+        <input type="hidden" name="referrer" value="https://fullstackmark.com/post/10/user-authentication-with-angular-and-asp-net-core/"> 
+        <input type="hidden" name="element" value="post-top"> 
+        <input type="hidden" name="refId" value="14"> 
+        <button type="submit" class="btn btn-primary btn-sm">Subscribe</button> 
+       </form> 
+      </div> 
+      <p></p> 
+      <h2>Plan of attack</h2> 
+      <p>Here's a summary of the steps we'll be going through in this tutorial. The first half involve building out our ASP.NET Core backend while the second half focuses on the frontend Angular app.</p> 
+      <ul> 
+       <li><a href="#install-packages">Apply required packages to our ASP.NET Core project</a></li> 
+       <li><a href="#create-data-model">Create a data model</a></li> 
+       <li>Use Entity Framework Core to <a href="#create-database-context">create a data context</a> and <a href="#create-database">sql database</a> via migrations</li> 
+       <li><a href="#create-new-users">Register new users with AccountsController</a></li> 
+       <li><a href="#implement-json-web-tokens">Implement JWT</a></li> 
+       <li><a href="#authenticate-users">Authenticate users with AuthController</a></li> 
+       <li><a href="#authorize-users">Secure a controller using claims authorization</a></li> 
+       <li><a href="#angular-app-setup">Angular app setup</a></li> 
+       <li><a href="#communicating-with-backend">Using a service to talk to the backend</a></li> 
+       <li><a href="#registration-form">Registration form</a></li> 
+       <li><a href="#login-form">Login form</a></li> 
+       <li><a href="#protected-routes">Protected routes</a></li> 
+       <li><a href="#authenticated-api-requests">Authenticated API requests</a></li> 
+      </ul> 
+      <h2><a id="install-packages"></a>Install packages</h2> 
+      <p>We're going to use the ASP.NET Core Identity provider with SQL Server to store our user account information. The identity provider is a membership system that allows us to easily add login capabilities to our ASP.NET Core app. Add the required packages from the command line within your project directory.</p> 
+      <p><strong>Protip</strong>: to save on typing each of these you can copy/paste the package list from my .csproj below into yours and run <code class="cmd">dotnet restore</code></p> 
+      <ul> 
+       <li><code class="cmd">dotnet add package Automapper</code></li> 
+       <li><code class="cmd">dotnet add package AutoMapper.Extensions.Microsoft.DependencyInjection</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.AspNetCore.Mvc</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.EntityFrameworkCore.Design</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.EntityFrameworkCore.SqlServer</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.EntityFrameworkCore.sqlserver.Design</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.EntityFrameworkCore.Tools</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.EntityFrameworkCore.Tools.DotNet</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer</code></li> 
+       <li><code class="cmd">dotnet add package FluentValidation.AspNetCore</code></li> 
+       <li><code class="cmd">dotnet add package Microsoft.IdentityModel.Tokens</code></li> 
+       <li><code class="cmd">dotnet add package System.IdentityModel.Tokens.Jwt</code></li> 
+      </ul> 
+      <p>Here's what the package list in my <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/dotnetGigs.csproj" target="_blank">csproj</a> file looks like.</p> 
+      <pre><code> &lt;ItemGroup&gt;
+    &lt;PackageReference Include="AutoMapper" Version="6.0.2" /&gt;
+    &lt;PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="2.0.1" /&gt;
+    &lt;PackageReference Include="FluentValidation.AspNetCore" Version="6.4.0" /&gt;
+    &lt;PackageReference Include="Microsoft.AspNetCore" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.AspNetCore.Mvc" Version="1.1.2" /&gt;
+    &lt;PackageReference Include="microsoft.aspnetcore.staticfiles" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.EntityFrameworkCore.sqlserver.Design" Version="1.1.1" /&gt;
+    &lt;PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="1.0.0" /&gt;
+    &lt;PackageReference Include="Microsoft.IdentityModel.Tokens" Version="5.1.3" /&gt;
+    &lt;PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.1.3" /&gt;
+    &lt;DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="1.0.0" /&gt;
+  &lt;/ItemGroup&gt;
+</code>
+</pre> 
+      <p>Note, the first time you open the project or add packages from the command line you may be prompted to restore them in the IDE so go ahead and do that when requested.</p> 
+      <img src="/img/posts/10/visual-studio-code-package-restore-prompt.png" class="img-fluid"> 
+      <h2><a id="create-data-model"></a>Creating a data model</h2> 
+      <p>We need an object to represent a user in the app. Fortunately, the ASP.NET Core Identity provider has a built-in class <code>IdentityUser</code> that we can use. This maps to the <em>AspNetUsers</em> database table and has a few expected properties out of the box like <em>Email</em>, <em>UserName</em>, <em>BirthDate</em> etc. Adding your own custom properties is very simple. We can just subclass <em>IdentityUser</em> and extend with whatever new properties we require. I'd like my app to be able to record the first and last name of a user so those are the 2 we'll add. I made a new class in the Models\Entities folder called <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Models/Entities/AppUser.cs" target="_blank">AppUser.cs</a>.</p> 
+      <pre><code class="cs">namespace DotNetGigs.Models.Entities
+{
+    // Add profile data for application users by adding properties to this class
+    public class AppUser : IdentityUser
+    {
+        // Extended Properties
+       public string FirstName { get; set; }
+       public string LastName { get; set; }       
+    }
+}
+</code>
+</pre> 
+      <p>In addition to <em>AppUser</em> containing the core user identity data, we'll add another class to represent a specific role in our app beyond just a generic user: <em>JobSeeker</em>.</p> 
+      <pre><code class="cs">namespace DotNetGigs.Models.Entities
+{
+    public class JobSeeker  
+    {
+        public int Id { get; set; }     
+        public string IdentityId { get; set; }   
+        public AppUser Identity { get; set; }  // navigation property
+        public string Location {get; set;}
+    }
+}
+</code>
+</pre> 
+      <p>This class has a reference to <em>AppUser</em> and maps to it via the <code>IdentityId</code> property. This is represented as a foreign key in the database. I find the approach of creating separate classes/tables for unique user roles better than polluting the IdentityUser table with a bunch of different columns when there is specific data required for each. If we were to add <em>Admin</em> or <em>Client</em> roles we can follow the same pattern by storing their universal profile data in IdentityUser/AspNetUsers and creating unique classes/tables for more specific stuff.</p> 
+      <h2><a id="create-database-context"></a>Creating the database context</h2> 
+      <p>The DatabaseContext is the primary class responsible for interacting with data as objects in Entity Framework Core. It manages the entity objects during run time, this includes populating objects with data from the database, change tracking, and persisting data to the database. We'll create our <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Data/ApplicationDbContext.cs" target="_blank">ApplicationDbContext</a> by deriving from <a href="https://msdn.microsoft.com/en-us/library/microsoft.aspnet.identity.entityframework.identitydbcontext(v=vs.108).aspx" target="_blank">IdentityDbContext</a> which is basically a regular DbContext that includes the identity-related entity sets.</p> 
+      <pre><code class="cs">namespace DotNetGigs.Data
+{
+ public class ApplicationDbContext : IdentityDbContext
+        <appuser>
+          { public ApplicationDbContext(DbContextOptions options) : base(options) { } public DbSet
+         <jobseeker>
+           JobSeekers { get; set; } } } 
+         </jobseeker>
+        </appuser></code>
+</pre> 
+      <p>Next step is to register <em>ApplicationDbContext</em> in the container so we can easily inject an instance into our controllers down the road.</p> 
+      <p>In <em>Startup.cs</em> I added the following to the <code class="cs">ConfigureServices</code> method.</p> 
+      <pre><code class="cs">public void ConfigureServices(IServiceCollection services)
+{
+   // Add framework services.
+   services.AddDbContext&lt;ApplicationDbContext&gt;(options =&gt; 
+   options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"),
+   b =&gt; b.MigrationsAssembly("DotNetGigs")));
+}
+</code>
+</pre> 
+      <p>The connection string is obtained from the <em>appsettings.json</em> file.</p> 
+      <h2><a id="create-database"></a>Creating the database</h2> 
+      <p>With the data model and context setup we're ready to create the actual database by using code first <a href="https://docs.microsoft.com/en-us/aspnet/core/data/ef-mvc/migrations#introduction-to-migrations" target="_blank">migrations</a>.</p> 
+      <p>We'll use the Entity Framework CLI tooling to generate and apply our migration file to create a local SQL Server database.</p> 
+      <p>From the command line in the root of the project run:</p> 
+      <pre><code class="cmd">dotnet ef migrations add initial</code></pre> 
+      <p>After the command completes you should see a new <em>Migrations</em> folder created in the project.</p> 
+      <img src="/img/posts/10/migrations-folder-in-visual-studio-code.png" class="img-fluid"> 
+      <p>In addition to the migration file, a <em>Snapshot</em> and <em>Designer</em> file are also created. They are used to store the current state of the model and get updated with each subsequent migration. They help EF figure out the changes required to keep the database in sync with the model.</p> 
+      <p>The next command applies the migration and creates the database.</p> 
+      <pre><code class="cmd">dotnet ef database update</code></pre> 
+      <p>This creates the database with the identity-related tables and one representing the <em>JobSeeker</em> entity.</p> 
+      <img src="/img/posts/10/sql-express-localdb-created-with-migrations.png" class="img-fluid"> 
+      <h2><a id="create-new-users"></a>Creating new users</h2> 
+      <p>The responsibility of creating new users will belong to an action method on the <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Controllers/AccountsController.cs" target="_blank">AccountsController</a>. It accepts a <em>RegistrationViewModel</em>, performs some validation on it and calls the <em>UserManager</em> service to create the user account in the database.</p> 
+      <pre><code class="cs">// POST api/accounts
+[HttpPost]
+public async Task&lt;IActionResult&gt; Post([FromBody]RegistrationViewModel model)
+{
+    if (!ModelState.IsValid)
+    {
+         return BadRequest(ModelState);
+    }
+
+    var userIdentity=_mapper.Map&lt;AppUser&gt;(model);
+    var result = await _userManager.CreateAsync(userIdentity, model.Password);
+
+    if (!result.Succeeded) return new BadRequestObjectResult(Errors.AddErrorsToModelState(result, ModelState));
+
+    await _appDbContext.JobSeekers.AddAsync(new JobSeeker{IdentityId=userIdentity.Id, Location=model.Location});
+    await _appDbContext.SaveChangesAsync();
+
+    return new OkResult();
+}
+</code>
+</pre> 
+      <p>It's also worth mentioning the use of <a href="http://automapper.org/" target="_blank">AutoMapper</a> here to map the <em>RegistrationViewModel</em> to an <em>AppUser</em>. Secondly, there is additional validation happening implicitly on the viewmodel thanks to <a href="https://github.com/JeremySkinner/FluentValidation" target="_blank">FluentValidation</a>. I won't go into the setup of both of these right now but if you're interested please take a closer look at the code or drop me a question in the comments. If you're new to these libraries they're both great to have in your toolbox as they can really help to keep your code clean and DRY.</p> 
+      <p>At this point, I tested the new user endpoint by running the project and using <a href="https://www.getpostman.com/" target="_blank">Postman</a> to send a request and received a <strong>200 OK</strong> success response - cool. Checking the database also confirmed a record was created in the <em>AspNetUsers</em> and <em>JobSeekers</em> tables.</p> 
+      <img src="/img/posts/10/postman-successful-api-request.png" class="img-fluid"> 
+      <p>Postman is a great tool for quickly doing manual testing of your api. Sending the same request again I get an error response from the method because the email is already in use. We'll look at proper error handling in the Angular app but for now, you can see how easy it is to quickly poke your api and ensure it responds as expected.</p> 
+      <img src="/img/posts/10/postman-duplicate-user-api-request.png" class="img-fluid"> 
+      <p>Sending an empty <code class="json">location</code> in the request body triggers the <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/ViewModels/Validations/RegistrationViewModelValidator.cs" target="_blank">fluent validation validator</a> and results in an error.</p> 
+      <img src="/img/posts/10/postman-fluent-validation-error-response.png" class="img-fluid"> 
+      <h2><a id="implement-json-web-tokens"></a>Implement JSON Web Tokens</h2> 
+      <p>The final thing our ASP.NET Core server requires is the ability to authorize users using JSON Web Tokens. In a nutshell, JWT is a method for 2 parties to securely pass tokens back and forth that contain properties known as claims about a subject. Wikipedia has a decent summary of this <a href="https://en.wikipedia.org/wiki/JSON_Web_Token" target="_blank">usage</a>. There's a bit more to claims but starting out a basic understanding of the concept is all you need.</p> 
+      <blockquote class="blockquote"> 
+       <p class="mb-0">For example, a server could generate a token that has the claim "logged in as admin" and provide that to a client. The client could then use that token to prove that it is logged in as admin.</p> 
+      </blockquote> 
+      <p>I adopted most of the steps in this section from William Hallatt's excellent guide on <a href="https://goblincoding.com/2016/07/03/issuing-and-authenticating-jwt-tokens-in-asp-net-core-webapi-part-i/" target="_blank">Issuing and authenticating JWT tokens in ASP.NET Core WebAPI</a></p> 
+      <p>Before we write any code to support JWT we need to ensure we have the required packages added to the ASP.NET Core project as mentioned at the start of the post. Make sure you have these 3 in your csproj file:</p> 
+      <ul> 
+       <li>Microsoft.AspNetCore.Authentication.JwtBearer</li> 
+       <li>Microsoft.IdentityModel.Tokens</li> 
+       <li>System.IdentityModel.Tokens.Jwt</li> 
+      </ul> 
+      <p>The first class we'll add is <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Models/JwtIssuerOptions.cs" target="_blank">JwtIssuerOptions.cs</a> which will provide the JWT claim properties for our generated tokens.</p> 
+      <pre><code class="cs">using System;
+using System.Threading.Tasks;
+using Microsoft.IdentityModel.Tokens;
+
+namespace DotNetGigs.Models 
+{
+public class JwtIssuerOptions
+{
+        /// &lt;summary&gt;
+        /// 4.1.1.  "iss" (Issuer) Claim - The "iss" (issuer) claim identifies the principal that issued the JWT.
+        /// &lt;/summary&gt;
+        public string Issuer { get; set; }
+
+        /// &lt;summary&gt;
+        /// 4.1.2.  "sub" (Subject) Claim - The "sub" (subject) claim identifies the principal that is the subject of the JWT.
+        /// &lt;/summary&gt;
+        public string Subject { get; set; }
+
+        /// &lt;summary&gt;
+        /// 4.1.3.  "aud" (Audience) Claim - The "aud" (audience) claim identifies the recipients that the JWT is intended for.
+        /// &lt;/summary&gt;
+        public string Audience { get; set; }
+
+        /// &lt;summary&gt;
+        /// 4.1.4.  "exp" (Expiration Time) Claim - The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing.
+        /// &lt;/summary&gt;
+        public DateTime Expiration =&gt; IssuedAt.Add(ValidFor);
+
+        /// &lt;summary&gt;
+        /// 4.1.5.  "nbf" (Not Before) Claim - The "nbf" (not before) claim identifies the time before which the JWT MUST NOT be accepted for processing.
+        /// &lt;/summary&gt;
+        public DateTime NotBefore { get; set; } = DateTime.UtcNow;
+
+        /// &lt;summary&gt;
+        /// 4.1.6.  "iat" (Issued At) Claim - The "iat" (issued at) claim identifies the time at which the JWT was issued.
+        /// &lt;/summary&gt;
+        public DateTime IssuedAt { get; set; } = DateTime.UtcNow;
+
+        /// &lt;summary&gt;
+        /// Set the timespan the token will be valid for (default is 5 min/300 seconds)
+        /// &lt;/summary&gt;
+        public TimeSpan ValidFor { get; set; } = TimeSpan.FromMinutes(5);    
+
+        /// &lt;summary&gt;
+        /// "jti" (JWT ID) Claim (default ID is a GUID)
+        /// &lt;/summary&gt;
+        public Func&lt;Task&lt;string&gt;&gt; JtiGenerator =&gt;
+          () =&gt; Task.FromResult(Guid.NewGuid().ToString());
+
+        /// &lt;summary&gt;
+        /// The signing key to use when generating tokens.
+        /// &lt;/summary&gt;
+        public SigningCredentials SigningCredentials { get; set; }
+    }
+}
+</code>
+</pre> 
+      <p>Next I added a related configuration section to my <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/appsettings.json" target="_blank">appsettings.json</a> config.</p> 
+      <pre><code class="json">...
+"JwtIssuerOptions": {
+    "Issuer": "dotNetGigs",
+    "Audience": "http://localhost:5000/"
+  }
+</code>
+</pre> 
+      <p>The next thing we'll do is use the built-in <a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration#using-options-and-configuration-objects">Configuration API</a> to read the <code>JwtIssuerOptions</code> settings from the config file and register them with IoC container.</p> 
+      <p>I added the following to the ConfigureServices method in <em>Startup.cs</em>.</p> 
+      <pre><code class="cs">...
+// jwt wire up
+// Get options from app settings
+var jwtAppSettingOptions = Configuration.GetSection(nameof(JwtIssuerOptions));
+
+// Configure JwtIssuerOptions
+services.Configure&lt;JwtIssuerOptions&gt;(options =&gt;
+{
+  options.Issuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)];
+  options.Audience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)];
+  options.SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
+});
+</code>
+</pre> 
+      <p>We need to add some additional code in <em>Startup.cs</em> to tell the ASP.NET Core middleware that we want to use JWT authentication on incoming requests. In the <em>Configure</em> method I added the following code:</p> 
+      <pre><code class="cs">...
+var jwtAppSettingOptions = Configuration.GetSection(nameof(JwtIssuerOptions));
+var tokenValidationParameters = new TokenValidationParameters
+{
+  ValidateIssuer = true,
+  ValidIssuer = jwtAppSettingOptions[nameof(JwtIssuerOptions.Issuer)],
+
+  ValidateAudience = true,
+  ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
+
+  ValidateIssuerSigningKey = true,
+  IssuerSigningKey = _signingKey,
+
+  RequireExpirationTime = false,
+  ValidateLifetime = false,
+  ClockSkew = TimeSpan.Zero
+};
+
+app.UseJwtBearerAuthentication(new JwtBearerOptions
+{
+  AutomaticAuthenticate = true,
+  AutomaticChallenge = true,
+  TokenValidationParameters = tokenValidationParameters
+});
+...
+</code>
+</pre> 
+      <p>The last major piece I added was the <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Auth/JwtFactory.cs">JwtFactory</a> class that will perform the task of creating encoded tokens.</p> 
+      <pre><code class="cs">public async Task&lt;string&gt; GenerateEncodedToken(string userName, ClaimsIdentity identity)
+{
+   var claims = new[]
+   {
+      new Claim(JwtRegisteredClaimNames.Sub, userName),
+      new Claim(JwtRegisteredClaimNames.Jti, await _jwtOptions.JtiGenerator()),
+      new Claim(JwtRegisteredClaimNames.Iat, ToUnixEpochDate(_jwtOptions.IssuedAt).ToString(), ClaimValueTypes.Integer64), identity.FindFirst(Helpers.Constants.Strings.JwtClaimIdentifiers.Rol),
+      identity.FindFirst(Helpers.Constants.Strings.JwtClaimIdentifiers.Id)
+   };
+
+  // Create the JWT security token and encode it.
+     var jwt = new JwtSecurityToken(
+         issuer: _jwtOptions.Issuer,
+         audience: _jwtOptions.Audience,
+         claims: claims,
+         notBefore: _jwtOptions.NotBefore,
+         expires: _jwtOptions.Expiration,
+         signingCredentials: _jwtOptions.SigningCredentials);
+
+     var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+     return encodedJwt;
+}
+</code>
+</pre> 
+      <p>The most interesting part of this class is the <em>GenerateEncodedToken</em> method which creates an encoded token containing the claims we'd like to exchange between the client and backend. Note we're using the <em>JwtIssuerOptions</em> we configured in the previous step by injecting them into the factory.</p> 
+      <h2><a id="authenticate-users"></a>Authenticating users and issuing JSON Web Tokens</h2> 
+      <p>With the JWT infrastructure in place we're ready to put it into action using the <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Controllers/AuthController.cs" target="_blank">AuthController</a>. There's a single action/route at <strong>/api/auth/login</strong> that will authenticate the given credentials using the <code>UserManager</code> api and if successful return a new security token using the <code>JwtFactory</code> that can be used for subsequent authenticated requests by the user.</p> 
+      <pre><code class="cs">// POST api/auth/login
+[HttpPost("login")]
+public async Task&lt;IActionResult&gt; Post([FromBody]CredentialsViewModel credentials)
+{
+       if (!ModelState.IsValid)
+       {
+            return BadRequest(ModelState);
+        }
+
+        var identity = await GetClaimsIdentity(credentials.UserName, credentials.Password);
+        if (identity == null)
+        {
+                return BadRequest(Errors.AddErrorToModelState("login_failure", "Invalid username or password.", ModelState));
+         }
+
+         // Serialize and return the response
+         var response = new
+          {
+                id=identity.Claims.Single(c=&gt;c.Type=="id").Value,
+                auth_token = await _jwtFactory.GenerateEncodedToken(credentials.UserName, identity),
+                expires_in = (int)_jwtOptions.ValidFor.TotalSeconds
+          };
+
+         var json = JsonConvert.SerializeObject(response, _serializerSettings);
+         return new OkObjectResult(json);
+ }
+</code>
+</pre> 
+      <p>With the action created, we can use postman once again to test our authentication endpoint and see how things look.</p> 
+      <p>I used the <em>mark@fullstackmark.com</em> account we created in the previous test and <strong>POSTed</strong> the credentials to <strong>/api/auth/login</strong> and success! - the authentication passed and the server returned a JWT token.</p> 
+      <img src="/img/posts/10/postman-successful-authentication-api-request.png" class="img-fluid"> 
+      <h2><a id="authorize-users"></a>Securing a controller with claims-based authorization</h2> 
+      <p>One of the claims we store as part of our token is <code>Rol</code> which is just a string representing a role named <em>ApiAccess</em>. This gets added in the <code>JwtFactory</code> <em>GenerateClaimsIdentity</em> helper method.</p> 
+      <pre><code class="cs">public ClaimsIdentity GenerateClaimsIdentity(string userName,string id)
+{
+  return new ClaimsIdentity(new GenericIdentity(userName, "Token"), new[]
+  {
+     new Claim(Helpers.Constants.Strings.JwtClaimIdentifiers.Id, id),
+     new Claim(Helpers.Constants.Strings.JwtClaimIdentifiers.Rol, Helpers.Constants.Strings.JwtClaims.ApiAccess)
+  });
+}
+</code>
+</pre> 
+      <p>With this role stashed in our token, we can use a <a href="https://docs.microsoft.com/en-us/aspnet/core/security/authorization/claims" target="_blank">claim based authorization check</a> to give the role access to certain controllers and actions so that only users possessing the role claim can access those resources.</p> 
+      <p>All I had to do to enable the claim check was register it in a policy in the <em>ConfigureServices</em> method in <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Startup.cs" target="_blank"> Startup.cs</a>.</p> 
+      <pre><code class="cs">...
+// api user claim policy
+services.AddAuthorization(options =&gt;
+{
+options.AddPolicy("ApiUser", policy =&gt; policy.RequireClaim(Constants.Strings.JwtClaimIdentifiers.Rol, Constants.Strings.JwtClaims.ApiAccess));
+});
+...
+</code></pre> 
+      <p>With the policy in place I created a new <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/Controllers/DashboardController.cs" target="_blank">DashboardController.cs</a> decorated with <code>[Authorize(Policy = "ApiUser")]</code> meaning that only users with the <em>ApiAccess</em> role claim as part of the <em>ApiUser</em> policy can access this controller.</p> 
+      <pre><code class="cs">[Authorize(Policy = "ApiUser")]
+[Route("api/[controller]")]
+public class DashboardController : Controller
+{       
+   public DashboardController()
+   {
+        
+   }
+
+   // GET api/dashboard/home
+   [HttpGet("home")]
+   public IActionResult GetHome()
+   {
+       return new OkObjectResult(new { Message = "This is secure data!" });
+   }
+}
+</code>
+</pre> 
+      <p>I tested once again with postman by creating a <strong>GET</strong> request to the <em>http://localhost:5000/api/dashboard/home</em> endpoint but before sending it I also included a request header containing the JWT token that was created for us in the previous user authentication test. The header key is <em>Authorization</em> and the value is in the format of <em>Bearer xxx</em> where <em>xxx</em> is the JWT. Looking at the response I get back a <strong>200 OK</strong> status and some secure data in the body.</p> 
+      <img src="/img/posts/10/postman-successful-jwt-api-request.png" class="img-fluid"> 
+      <p>We tested the happy path but what happens if a request is made with an invalid, missing or expired token? To test that I changed just a single character in the token making it invalid then sent the request again and received a <strong>401 Unauthorized</strong> code as expected - looks like JWT claims authorization is working!</p> 
+      <img src="/img/posts/10/postman-unauthorized-jwt-api-request.png" class="img-fluid"> 
+      <h2><a id="angular-app-setup"></a>Angular app setup</h2> 
+      <p>With the backend complete, we can now turn our attention to building out the Angular frontend to see how JWT authentication works in a real world app. The app has 3 major functions:</p> 
+      <ul> 
+       <li><a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/account/registration-form" target="_blank">User registration form</a></li> 
+       <li><a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/account/login-form" target="_blank">Login form</a></li> 
+       <li><a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/dashboard" target="_blank">Dashboard</a> which only authenticated users can access</li> 
+      </ul> 
+      <h3>Structuring the app with modules</h3> 
+      <p><a href="https://angular.io/docs/ts/latest/guide/ngmodule.html" target="_blank">Modules</a> have existed since AngularJS 1.x and provide an effective mechanism to group related components, directives, and services, in a way that they may be combined with other modules to assemble an application. In this project, I created two modules to house the major features.</p> 
+      <p>From within the <strong>src\app</strong> project folder on the command line I used the CLI to generate account and dashboard modules.</p> 
+      <pre><code class="cmd">ng g module account</code></pre> 
+      <pre><code class="cmd">ng g module dashboard</code></pre> 
+      <p>After running the commands, new folders representing the modules are added to the project. We'll wire up the code in these shortly but we have a few more components to add first.</p> 
+      <img src="/img/posts/10/new-angular-modules.png" class="img-fluid"> 
+      <h3>Creating a registration form component</h3> 
+      <p>Next step is to create a new form component so users can create a new account. To do that I went back to the command line and ran the following from within the <strong>src\app\account</strong> module folder.</p> 
+      <pre><code class="cmd">ng g component registration-form</code></pre> 
+      <p>A new <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/account/registration-form" target="_blank">registration-form</a> folder is generated containing associated .ts, .scss and .html files.</p> 
+      <h3>Creating additional components</h3> 
+      <p>I repeated the steps above to generate the remaining components we'll require including:</p> 
+      <ul> 
+       <li>The <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/account/login-form" target="_blank">login-form</a></li> 
+       <li>A <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/home" target="_blank">home</a> component representing the default view for the app</li> 
+       <li>A <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/tree/master/src/dotnetGigs/src/app/spinner" target="_blank">spinner</a> comonent to display while the UI is busy</li> 
+      </ul> 
+      <h2><a id="communicating-with-backend"></a>Communicating with the backend via UserService</h2> 
+      <p>The key functions for registering and authenticating users on the backend live in the <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/src/app/shared/services/user.service.ts" target="_blank">UserService</a> class.</p> 
+      <pre><code class="typescript">register(email: string, password: string, firstName: string, lastName: string,location: string): Observable&lt;UserRegistration&gt; 
+{    
+   let body = JSON.stringify({ email, password, firstName, lastName,location });
+   let headers = new Headers({ 'Content-Type': 'application/json' });
+   let options = new RequestOptions({ headers: headers });
+
+    return this.http.post(this.baseUrl + "/accounts", body, options)
+      .map(res =&gt; true)
+      .catch(this.handleError);
+}
+</code>
+</pre> 
+      <pre><code class="typescript">login(userName, password) 
+{
+ let headers = new Headers();
+ headers.append('Content-Type', 'application/json');
+
+ return this.http.post(
+      this.baseUrl + '/auth/login',
+      JSON.stringify({ userName, password }),{ headers })
+      .map(res =&gt; res.json())
+      .map(res =&gt; {
+        localStorage.setItem('auth_token', res.auth_token);
+        this.loggedIn = true;
+        this._authNavStatusSource.next(true);
+        return true;
+      })
+      .catch(this.handleError);
+}
+</code>
+</pre> 
+      <p>Note we're storing the authorization token issued by the server in the users's local storage via the <code class="typescript">localStorage.setItem('auth_token', res.auth_token)</code> call. We'll see shortly how to use this token to make authenticated requests to the backend api.</p> 
+      <h2><a id="registration-form"></a>Completing the registration form</h2> 
+      <p>With my component and service in place, I have the necessary pieces to complete the user registration feature. The major steps were to add the form markup to <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/src/app/account/registration-form/registration-form.component.html" target="_blank">registration-form.component.html</a> and add bind the submit button on the form to a method in the <em>registration-form.component.ts</em> class.</p> 
+      <pre><code class="typescript">registerUser({ value, valid }: { value: UserRegistration, valid: boolean }) {
+  this.submitted = true;
+  this.isRequesting = true;
+  this.errors='';
+  if(valid)
+  {
+     this.userService.register(value.email,value.password,value.firstName,value.lastName,value.location)
+       .finally(() =&gt; this.isRequesting = false)
+       .subscribe(result  =&gt; {if(result){
+          this.router.navigate(['/login'],{queryParams: {brandNew: true,email:value.email}});                         
+          }},
+       errors =&gt;  this.errors = errors);
+  }      
+}
+</code>
+</pre> 
+      <p>The method is pretty simple, it calls <code class="typescript">userService.register()</code> passing along the user data and handles the observable response accordingly. If the server-side validation returns an error it is displayed to the user. If the request succeeds, the user is routed to the <em>login</em> view. The <code class="typescript">isRequesting</code> property flag triggers the spinner so the UI can indicate that the app is busy while the request is in flight.</p> 
+      <img src="/img/posts/10/angular-user-registration-component.gif" class="img-fluid"> 
+      <h2><a id="login-form"></a>Completing the login form</h2> 
+      <p>The login form is nearly identical to the registration form. I added required markup to <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/src/app/account/login-form/login-form.component.html" target="_blank">login-form.component.html</a> and setup an event handler method in in the <em>login-form.component.ts</em> class.</p> 
+      <pre><code class="typescript">login({ value, valid }: { value: Credentials, valid: boolean })
+{
+    this.submitted = true;
+    this.isRequesting = true;
+    this.errors='';
+    if (valid) {
+      this.userService.login(value.email, value.password)
+        .finally(() =&gt; this.isRequesting = false)
+        .subscribe(
+        result =&gt; {         
+          if (result) {
+             this.router.navigate(['/dashboard/home']);             
+          }
+        },
+        error =&gt; this.errors = error);
+    }
+}
+</code>
+</pre> 
+      <p>The pattern here is identical, call <code class="typescript">userService.login()</code> to make a request to the server with the given user credentials and handle the response accordingly. Again, either display any errors returned by the server or route the user to the <em>Dashboard</em> component if they've authenticated successfully.</p> 
+      <img src="/img/posts/10/angular-user-authentication-component.gif" class="img-fluid"> 
+      <h2><a id="protected-routes"></a>Protected routes</h2> 
+      <p>Right now in our application, any user can navigate anywhere, let's change this by restricting access to certain areas to logged-in users only. The Angular router provides a feature specifically for this purpose in <a href="https://angular.io/docs/ts/latest/guide/router.html#!#guards" target="_blank">Navigation Guards</a>.</p> 
+      <p>A guard is simply a function added to your route configuration that returns either <code class="typescript">true</code> or <code class="typescript">false</code>.</p> 
+      <p><code class="typescript">true</code> means navigation can proceed. <code class="typescript">false</code> means navigation halts and the route is not accessed.</p> 
+      <p>Guards are registered using providers so they can be injected into your component routing modules where needed.</p> 
+      <p>In this app, I created <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/src/app/auth.guard.ts" target="_blank">auth.guard.ts</a> to protect access to the dashboard which acts as an administrative feature only logged in users can see.</p> 
+      <pre><code class="typescript">// auth.guard.ts
+import { Injectable } from '@angular/core';
+import { Router, CanActivate } from '@angular/router';
+import { UserService } from './shared/services/user.service';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  constructor(private user: UserService,private router: Router) {}
+
+  canActivate() {
+
+    if(!this.user.isLoggedIn())
+    {
+       this.router.navigate(['/account/login']);
+       return false;
+    }
+
+    return true;
+  }
+}
+</code>
+</pre> 
+      <p>The AuthGuard is simply an <code class="typescript">@Injectable()</code> class that implements <code class="typescript">CanActivate</code>. It has a single method that checks the logged in status of the user by calling the <code class="typescript">isLoggedIn()</code> method on the <em>UserService</em>.</p> 
+      <p><code class="typescript">isLoggedIn()</code> is a little naive as it simply checks for the presence of the JWT token in local storage and if it exists we assume the user is logged in by returning <code class="typescript">true</code>. If it is not found the user is redirected to the login page.</p> 
+      <pre><code class="typescript">...
+this.loggedIn = !!localStorage.getItem('auth_token')
+...
+</code></pre> 
+      <p>To implement the guard in the <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/src/app/dashboard/dashboard.routing.ts" target="_blank">dashboard routing module</a> I simply imported and updated the root <code class="typescript">dashboard</code> route with a <code class="typescript">CanActivate()</code> guard property references it.</p> 
+      <pre><code class="typescript">import { ModuleWithProviders } from '@angular/core';
+import { RouterModule }        from '@angular/router';
+
+import { RootComponent }    from './root/root.component';
+import { HomeComponent }    from './home/home.component'; 
+
+import { AuthGuard } from '../auth.guard';
+
+export const routing: ModuleWithProviders = RouterModule.forChild([
+  {
+      path: 'dashboard',
+      component: RootComponent, canActivate: [AuthGuard],
+
+      children: [      
+       { path: '', component: HomeComponent },
+       { path: 'home',  component: HomeComponent },
+      ]       
+    }  
+]);
+</code>
+</pre> 
+      <p>The <code class="typescript">dasbhoard</code> feature is now protected by the guard!</p> 
+      <h2><a id="authenticated-api-requests"></a>Making authenticated API requests</h2> 
+      <p>The last thing we need to do is pass our JWT back to the server for API calls that require authentication. This is where we'll be utilizing the authorization policy we created and applied previously to the <em>DashboardController</em> in our ASP.NET Core api.</p> 
+      <p>I created a new <a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication/blob/master/src/dotnetGigs/src/app/dashboard/services/dashboard.service.ts" target="_blank">dashboard service</a> with a single method that retrieves some data for the <strong>Home</strong> page by making an authenticated HTTP call to the backend and passing the authorization token in the request header.</p> 
+      <pre><code class="typescript">...
+getHomeDetails(): Observable&lt;HomeDetails&gt; {
+      let headers = new Headers();
+      headers.append('Content-Type', 'application/json');
+      let authToken = localStorage.getItem('auth_token');
+      headers.append('Authorization', `Bearer ${authToken}`);
+  
+    return this.http.get(this.baseUrl + "/dashboard/home",{headers})
+      .map(response =&gt; response.json())
+      .catch(this.handleError);
+  }
+</code>
+</pre> 
+      <p>The method simply retrieves the <code class="typescript">auth_token</code> from localStorage and includes it as the value for the <em>Authorization</em> header in the format <code>Bearer '{auth_token}'</code>.</p> 
+      <p>With authenticated requests in place, I ran the project again and was able to complete an end to end test by creating a new user, logging in, and navigating to a protected route in the dashboard which displayed a piece of super-secure data!</p> 
+      <img src="/img/posts/10/end-to-end-angular-aspnet-core-authentication.gif" class="img-fluid"> 
+      <h2>Wrapping up</h2> 
+      <p>I mentioned in the intro that adding authentication in most systems is often a pain and I think that's proven by the length of this post but I hope at very least I've saved you some time and effort by outlining a clear plan of the major steps required to implement token based authentication with Angular and ASP.NET Core.</p> 
+      <p>Security is a serious concern so please don't take every code sample in this tutorial verbatim and copy/paste into production-bound projects without careful review to ensure your implementation meets the standards required for securing your application.</p> 
+      <p>If you have a question or are building something cool using Angular and ASP.NET Core please let me know in the comments below.</p> 
+      <p>Thanks for reading!</p> 
+      <p><a href="https://github.com/mmacneil/AngularASPNETCoreAuthentication" target="_blank">source code</a></p> 
+      <p></p>
+      <div class="callout callout-primary text-center "> 
+       <h5><strong>Get notified on new posts</strong></h5> 
+       <p>Straight from me, no spam, no bullshit. Frequent, helpful, email-only content.</p> 
+       <form class="form-inline subscriber-content-form" method="post"> 
+        <input type="email" name="email" class="form-control form-control-sm" placeholder="you@domain.com"> 
+        <input type="hidden" name="interests" value="Angular 2+, ASP.NET Core, Security"> 
+        <input type="hidden" name="referrer" value="https://fullstackmark.com/post/10/user-authentication-with-angular-and-asp-net-core/"> 
+        <input type="hidden" name="element" value="post-bottom"> 
+        <input type="hidden" name="refId" value="15"> 
+        <button type="submit" class="btn btn-primary btn-sm">Subscribe</button> 
+       </form> 
+      </div> 
+      <p></p> 
+     </div>
+     <!-- /.blog-post --> 
+     <div id="disqus_thread"></div> 
+     <script>
+                /**
+                *  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+                *  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+                var disqus_config = function () {
+                    this.page.url = 'https://fullstackmark.com/post/10/user-authentication-with-angular-and-asp-net-core/';  // Replace PAGE_URL with your page's canonical URL variable
+                    this.page.identifier = '10'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+                };
+
+                (function () { // DON'T EDIT BELOW THIS LINE
+                    var d = document, s = d.createElement('script');
+                    s.src = '//fullstack-mark.disqus.com/embed.js';
+                    s.setAttribute('data-timestamp', +new Date());
+                    (d.head || d.body).appendChild(s);
+                })();
+            </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+     </noscript> 
+    </div> 
+    <div class="col-sm-3 offset-sm-1 blog-sidebar"> 
+     <div class="sidebar-module sidebar-module-inset"> 
+      <img src="/img/me-small.jpg" class="rounded-circle mx-auto d-block"> 
+      <p> Hi, I'm Mark Macneil — a .net guy who spends most days making software at <a href="http://www.t4g.com/">T4G</a> in friendly <a href="https://www.google.ca/maps/place/Halifax+Regional+Municipality,+NS/@44.8488669,-64.2869249,8z/data=!3m1!4b1!4m5!3m4!1s0x4b4513bbd026ebc5:0xcd90670d5a4a675b!8m2!3d44.6487635!4d-63.5752387">Halifax, NS</a> </p> 
+     </div> 
+     <div class="sidebar-module"> 
+      <h4>Elsewhere</h4> 
+      <ol class="list-unstyled"> 
+       <li><a href="https://github.com/mmacneil">GitHub</a></li> 
+       <li><a href="https://ca.linkedin.com/in/markmacneilhfx">LinkedIn</a></li> 
+       <li><a href="mailto:mark@fullstackmark.com?Subject=Hey%20there">Email</a></li> 
+      </ol> 
+     </div> 
+     <div class="sidebar-module"> 
+      <h4>Recent</h4> 
+      <ol class="list-unstyled sidebar-recent-list"> 
+       <li> <a title="Better Software Design with Clean Architecture" href="/post/11/better-software-design-with-clean-architecture"> Better Software Design wi... </a> </li> 
+       <li> <a title="User Authentication with Angular and ASP.NET Core" href="/post/10/user-authentication-with-angular-and-asp-net-core"> User Authentication with ... </a> </li> 
+       <li> <a title="Get Started with Angular 2 and ASP.NET Core in Visual Studio Code" href="/post/9/get-started-with-angular-2-and-aspnet-core-in-visual-studio-code"> Get Started with Angular ... </a> </li> 
+       <li> <a title="Beginning Test-Driven Development in .NET Core" href="/post/8/beginning-test-driven-development-in-net-core"> Beginning Test-Driven Dev... </a> </li> 
+       <li> <a title="Learning Unit Testing in ASP.NET Core" href="/post/7/learning-unit-testing-in-aspnet-core"> Learning Unit Testing in ... </a> </li> 
+       <li> <a title="Learning Dependency Injection in ASP.Net Core" href="/post/6/learning-dependency-injection-in-aspnet-core"> Learning Dependency Injec... </a> </li> 
+       <li> <a title="A Simple Vocabulary App Using ReactiveUI and Xamarin Forms" href="/post/5/a-simple-vocabulary-app-using-reactiveui-and-xamarin-forms"> A Simple Vocabulary App U... </a> </li> 
+       <li> <a title="WebSockets with ASP.NET Core and Xamarin Forms" href="/post/3/websockets-with-aspnet-core-and-xamarin-forms"> WebSockets with ASP.NET C... </a> </li> 
+       <li> <a title="How to configure a Jenkins slave to build Xamarin.iOS projects" href="/post/1/how-to-configure-a-jenkins-slave-to-build-xamarin-ios-projects"> How to configure a Jenkin... </a> </li> 
+      </ol> 
+     </div>
+     <!-- /.blog-sidebar --> 
+     <div class="sidebar-module"> 
+      <h4>Archive</h4> 
+      <ol class="list-unstyled"> 
+       <li> <a href="/archive/2017/6"> June 2017 </a> </li> 
+       <li> <a href="/archive/2017/5"> May 2017 </a> </li> 
+       <li> <a href="/archive/2017/4"> April 2017 </a> </li> 
+       <li> <a href="/archive/2017/3"> March 2017 </a> </li> 
+       <li> <a href="/archive/2017/2"> February 2017 </a> </li> 
+       <li> <a href="/archive/2017/1"> January 2017 </a> </li> 
+      </ol> 
+     </div>
+     <!-- /.blog-sidebar --> 
+    </div> 
+   </div> 
+  </div> 
+  <div id="subscriber-slideup"> 
+   <h5><strong>Get notified on new posts</strong></h5> 
+   <div id="close-button">
+    X
+   </div> 
+   <p>Straight from me, no spam, no bullshit. Frequent, helpful, email-only content.</p> 
+   <form class="form-inline" id="subscriber-slideup-form" method="post"> 
+    <input type="email" name="email" class="form-control form-control-sm" id="subscriber-email" placeholder="you@domain.com"> 
+    <input type="hidden" name="interests" value="Angular 2+, ASP.NET Core, Security"> 
+    <input type="hidden" name="referrer" value="https://fullstackmark.com/post/10/user-authentication-with-angular-and-asp-net-core/"> 
+    <input type="hidden" name="element" value="slideup"> 
+    <input type="hidden" name="refId" value="8"> 
+    <button type="submit" class="btn btn-primary btn-sm">Subscribe</button> 
+   </form> 
+  </div> 
+  <footer class="blog-footer"> 
+   <p>FullStackMark.com © 2017</p> 
+  </footer> 
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.3.min.js"></script> 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-90360757-1', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+  <script src="/scripts/post.min.js?v=nI-KqQjCirLLJ9S_JkEO8C_vfsX5tI1b7C83rtrg35Q"></script>   
+ </body>
+</html>

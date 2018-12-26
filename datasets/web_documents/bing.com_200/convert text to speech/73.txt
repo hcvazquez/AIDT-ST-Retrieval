@@ -1,0 +1,451 @@
+<html>
+ <head>
+  <title>Java Speech API Programmer's Guide: Speech Synthesis</title>
+ </head> 
+ <!--Intermediate split file from a FrameMaker file--> 
+ <body bgcolor="#FFFFFF" text="#000000" link="#990000" alink="#333399" vlink="#333399"> 
+  <!--#include virtual="/products/java-media/include/speechGlobal.html"--> 
+  <table align="center" cellspacing="20" cellpadding="6" bgcolor="#f0f0ff"> 
+   <tbody>
+    <tr> 
+     <td><code> <a href="index.html">Contents</a> </code> </td>
+     <td><code> <a href="SpeechEngine.html">Previous</a> </code> </td>
+     <td><code> &nbsp;&nbsp;<a href="Recognition.html">Next</a>&nbsp;&nbsp; </code> </td>
+    </tr>
+   </tbody>
+  </table>  
+  <blockquote> 
+   <a name="8210"></a>
+   <p align="right"> <font size="+4"> Chapter 5 </font> </p>
+   <a name="8211"></a>
+   <hr size="7" noshade>
+   <h1 align="right"><font size="+4"> Speech Synthesis: javax.speech.synthesis <br>&nbsp; </font></h1> 
+   <p><a name="8068"></a>A speech synthesizer is a speech engine that converts text to speech. The <code>javax.speech.synthesis</code> package defines the <code>Synthesizer</code> interface to support speech synthesis plus a set of supporting classes and interfaces. The basic functional capabilities of speech synthesizers, some of the uses of speech synthesis and some of the limitations of speech synthesizers are described in <a href="TechOverview.html#7975">Section 2.1</a>. </p>
+   <p><a name="11290"></a>As a type of speech engine, much of the functionality of a <code>Synthesizer</code> is inherited from the <code>Engine</code> interface in the <code>javax.speech</code> package and from other classes and interfaces in that package. The <code>javax.speech</code> package and generic speech engine functionality are described in <a href="SpeechEngine.html#">Chapter 4</a><em>. </em></p>
+   <p><a name="11244"></a>This chapter describes how to write Java applications and applets that use speech synthesis. We begin with a simple example, and then review the speech synthesis capabilities of the API in more detail. </p>
+   <ul>
+    <li><a name="11311"></a><a href="Synthesis.html#7460">"Hello World!"</a>: a simple example of speech synthesis </li>
+   </ul> 
+   <ul>
+    <li><a name="11313"></a><a href="Synthesis.html#9961">Synthesizer as an Engine</a> </li>
+   </ul> 
+   <ul>
+    <li><a name="11314"></a><a href="Synthesis.html#7530">Speaking Text</a> </li>
+   </ul> 
+   <ul>
+    <li><a name="12942"></a><a href="Synthesis.html#12362">Speech Output Queue</a> </li>
+   </ul> 
+   <ul>
+    <li><a name="12949"></a><a href="Synthesis.html#12067">Monitoring Speech Output</a> </li>
+   </ul> 
+   <ul>
+    <li><a name="11316"></a><a href="Synthesis.html#7551">Synthesizer Properties</a> </li>
+   </ul> 
+   <p>&nbsp;</p> 
+   <hr width="30%" align="center" noshade> 
+   <p>&nbsp;</p> 
+   <a name="7460"></a>
+   <h2>5.1 &nbsp; &nbsp; "Hello World!" </h2> 
+   <p><a name="8064"></a>The following code shows a simple use of speech synthesis to speak the string "Hello World". </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="8045"></a>import javax.speech.*;
+<a name="9547"></a>import javax.speech.synthesis.*;
+<a name="9549"></a>import java.util.Locale;
+<a name="8213"></a>
+<a name="9427"></a>public class HelloWorld {
+<a name="9436"></a>	public static void main(String args[]) {
+<a name="9437"></a>		try {
+<a name="11214"></a>			// Create a synthesizer for English
+<a name="9412"></a>			Synthesizer synth = Central.createSynthesizer(
+<a name="8572"></a>				new SynthesizerModeDesc(Locale.ENGLISH));
+<a name="11221"></a>
+<a name="11222"></a>			// Get it ready to speak
+<a name="8215"></a>			synth.allocate();
+<a name="11223"></a>			synth.resume();
+<a name="11215"></a>
+<a name="11216"></a>			// Speak the "Hello world" string
+<a name="7467"></a>			synth.speakPlainText("Hello, world!", null);
+<a name="11217"></a>
+<a name="11218"></a>			// Wait till speaking is done
+<a name="7468"></a>			synth.waitEngineState(Synthesizer.QUEUE_EMPTY);
+<a name="11219"></a>
+<a name="11220"></a>			// Clean up
+<a name="9443"></a>			synth.deallocate();
+<a name="9445"></a>		} catch (Exception e) {
+<a name="9446"></a>			e.printStackTrace();
+<a name="9447"></a>		}
+<a name="9448"></a>	}
+<a name="9449"></a>}
+
+
+      <hr></pre>
+    </dd>
+   </dl>
+   <p><a name="11108"></a>This example illustrates the four basic steps which all speech synthesis applications must perform. Let's examine each step in detail. </p>
+   <ul>
+    <li><a name="7471"></a><em>Create:</em> The <code>Central</code> class of <code>javax.speech</code> package is used to obtain a speech synthesizer by calling the <code>createSynthesizer</code> method. The <code>SynthesizerModeDesc </code> argument provides the information needed to locate an appropriate synthesizer. In this example a synthesizer that speaks English is requested. </li>
+   </ul> 
+   <ul>
+    <li><a name="7472"></a><em>Allocate and Resume:</em> The <code>allocate</code> and <code>resume</code> methods prepare the <code>Synthesizer </code> to produce speech by allocating all required resources and putting it in the <code>RESUMED</code> state. </li>
+   </ul> 
+   <ul>
+    <li><a name="8057"></a><em>Generate:</em> The <code>speakPlainText</code> method requests the generation of synthesized speech from a string. </li>
+   </ul> 
+   <ul>
+    <li><a name="7474"></a><em>Deallocate:</em> The <code>waitEngineState</code> method blocks the caller until the <code>Synthesizer </code> is in the <code>QUEUE_EMPTY</code> state - until it has finished speaking the text. The <code>deallocate</code> method frees the synthesizer's resources. </li>
+   </ul> 
+   <p>&nbsp;</p> 
+   <hr width="30%" align="center" noshade> 
+   <p>&nbsp;</p> 
+   <a name="9961"></a>
+   <h2>5.2 &nbsp; &nbsp; Synthesizer as an Engine </h2> 
+   <p><a name="9966"></a>The basic functionality provided by a <code>Synthesizer</code> is speaking text, management of a queue of text to be spoken and producing events as these functions proceed. The <code>Synthesizer</code> interface extends the <code>Engine</code> interface to provide this functionality. </p>
+   <p><a name="11709"></a>The following is a list of the functionality that the <code>javax.speech.synthesis</code> package inherits from the <code>javax.speech</code> package and outlines some of the ways in which that functionality is specialized. </p>
+   <ul>
+    <li><a name="11480"></a>The properties of a speech engine defined by the <code>EngineModeDesc</code> class apply to synthesizers. The <code>SynthesizerModeDesc</code> class adds information about synthesizer voices. Both <code>EngineModeDesc</code> and <code>SynthesizerModeDesc</code> are described in <a href="SpeechEngine.html#9171">Section 4.2</a>. </li>
+   </ul> 
+   <ul>
+    <li><a name="11517"></a>Synthesizers are searched, selected and created through the <code>Central</code> class in the <code>javax.speech</code> package as described in <a href="SpeechEngine.html#12411">Section 4.3</a>. That section explains default creation of a synthesizer, synthesizer selection according to defined properties, and advanced selection and creation mechanisms. </li>
+   </ul> 
+   <ul>
+    <li><a name="11552"></a>Synthesizers inherit the basic state system of an engine from the <code>Engine</code> interface. The basic engine states are <code>ALLOCATED</code>, <code>DEALLOCATED</code>, <code>ALLOCATING_RESOURCES</code> and <code>DEALLOCATING_RESOURCES</code> for allocation state, and <code>PAUSED</code> and <code>RESUMED</code> for audio output state. The <code>getEngineState</code> method and other methods are inherited for monitoring engine state. An <code>EngineEvent </code> indicates state changes. The engine state systems are described in <a href="SpeechEngine.html#12921">Section 4.4</a>. (The <code>QUEUE_EMPTY</code> and <code>QUEUE_NOT_EMPTY</code> states added by synthesizers are described in <a href="Synthesis.html#12362">Section 5.4</a>.) </li>
+   </ul> 
+   <ul>
+    <li><a name="11683"></a>Synthesizers produce all the standard engine events (see <a href="SpeechEngine.html#14106">Section 4.5</a>). The <code>javax.speech.synthesis</code> package also extends the <code>EngineListener</code> interface as <code>SynthesizerListener</code> to provide events that are specific to synthesizers. </li>
+   </ul> 
+   <ul>
+    <li><a name="11595"></a>Other engine functionality inherited as an engine includes the runtime properties (see <a href="SpeechEngine.html#16719">Section 4.6.1</a> and <a href="Synthesis.html#7551">Section 5.6</a>), audio management (see <a href="SpeechEngine.html#16984">Section 4.6.2</a>) and vocabulary management (see <a href="SpeechEngine.html#17081">Section 4.6.3</a>). </li>
+   </ul> 
+   <p>&nbsp;</p> 
+   <hr width="30%" align="center" noshade> 
+   <p>&nbsp;</p> 
+   <a name="7530"></a>
+   <h2>5.3 &nbsp; &nbsp; Speaking Text </h2> 
+   <p><a name="7667"></a>The <code>Synthesizer</code> interface provides four methods for submitting text to a speech synthesizer to be spoken. These methods differ according to the formatting of the provided text, and according to the type of object from which the text is produced. All methods share one feature; they all allow a listener to be passed that will receive notifications as output of the text proceeds. </p>
+   <p><a name="8545"></a>The simplest method - <code>speakPlainText</code> - takes text as a <code>String</code> object. This method is illustrated in the <em><a href="Synthesis.html#7460">"Hello World!"</a></em> example at the beginning of this chapter. As the method name implies, this method treats the input text as plain text without any of the formatting described below. </p>
+   <p><a name="8601"></a>The remaining three speaking methods - all named <code>speak</code> - treat the input text as being specially formatted with the Java Speech Markup Language (JSML). JSML is an application of XML (eXtensible Markup Language), a data format for structured document interchange on the internet. JSML allows application developers to annotate text with structural and presentation information to improve the speech output quality. JSML is defined in detail in a separate technical document, <em>"The Java Speech Markup Language Specification."</em> </p>
+   <p><a name="11787"></a>The three <code>speak</code> methods retrieve the JSML text from different Java objects. The three methods are: </p>
+   <dl>
+    <dd>
+     <pre><a name="11825"></a>void speak(Speakable text, SpeakableListener listener);<br>
+void speak(URL text, SpeakableListener listener);<br>
+void speak(String text, SpeakableListener listener);
+</pre>
+    </dd>
+   </dl>
+   <p><a name="11794"></a>The first version accepts an object that implements the <code>Speakable</code> interface. The <code>Speakable</code> interface is a simple interface defined in the <code>javax.speech.synthesis</code> package that contains a single method: <code>getJSMLText</code>. This method should return a <code>String</code> containing text formatted with JSML. </p>
+   <p><a name="11855"></a>Virtually any Java object can implement the <code>Speakable</code> interface by implementing the <code>getJSMLText</code> method. For example, the cells of spread-sheet, the text of an editing window, or extended AWT classes could all implement the <code>Speakable</code> interface. </p>
+   <p><a name="11878"></a>The <code>Speakable</code> interface is intended to provide the spoken version of the <code>toString</code> method of the <code>Object</code> class. That is, <code>Speakable</code> allows an object to define how it should be spoken. For example: </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="11886"></a>public class MyAWTObj extends Component implements Speakable {
+<a name="11902"></a>	...
+<a name="11934"></a>	public String getJSMLText() { 
+<a name="11908"></a>		...
+<a name="11909"></a>	}
+<a name="11943"></a>}
+<a name="11944"></a>
+<a name="11945"></a>{
+<a name="11946"></a>	MyAWTObj obj = new MyAWTObj();
+<a name="11952"></a>	synthesizer.speak(obj, null);
+<a name="11910"></a>}
+
+
+      <hr></pre>
+    </dd>
+   </dl>
+   <p><a name="11853"></a>The second variant of the <code>speak</code> method allows JSML text to be loaded from a URL to be spoken. This allows JSML text to be loaded directly from a web site and be spoken. </p>
+   <p><a name="11841"></a>The third variant of the <code>speak</code> method takes a JSML string. Its use is straight- forward. </p>
+   <p><a name="12722"></a>For each of the three <code>speak</code> methods that accept JSML formatted text, a <code>JSMLException</code> is thrown if any formatting errors are detected. Developers familiar with editing HTML documents will find that XML is strict about syntax checks. It is generally advisable to check XML documents (such as JSML) with XML tools before publishing them. </p>
+   <p><a name="13046"></a>The following sections describe the speech output onto which objects are placed with calls to the speak methods and the mechanisms for monitoring and managing that queue. </p>
+   <p>&nbsp;</p> 
+   <hr width="30%" align="center" noshade> 
+   <p>&nbsp;</p> 
+   <a name="12362"></a>
+   <h2>5.4 &nbsp; &nbsp; Speech Output Queue </h2> 
+   <p><a name="12363"></a>Each call to the <code>speak</code> and <code>speakPlainText</code> methods places an object onto the synthesizer's <em>speech output queue</em>. The speech output queue is a FIFO queue: first-in-first-out. This means that objects are spoken in the order in which they are received. </p>
+   <p><a name="12388"></a>The <em>top of queue</em> item is the head of the queue. The top of queue item is the item currently being spoken or is the item that will be spoken next when a paused synthesizer is resumed. </p>
+   <p><a name="12365"></a>The <code>Synthesizer</code> interface provides a number of methods for manipulating the output queue. The <code>enumerateQueue</code> method returns an <code>Enumeration</code> object containing a <code>SynthesizerQueueItem</code> for each object on the queue. The first object in the enumeration is the top of queue. If the queue is empty the <code>enumerateQueue</code> method returns <code>null</code>. </p>
+   <p><a name="12407"></a>Each <code>SynthesizerQueueItem</code> in the enumeration contains four properties. Each property has a accessor method: </p>
+   <ul>
+    <li><a name="12420"></a><code>getSource</code> returns the source object for the queue item. The source is the object passed to the <code>speak</code> and <code>speakPlainText</code> method: <code>a Speakable</code> object, a <code>URL</code> or a <code>String</code>. </li>
+   </ul> 
+   <ul>
+    <li><a name="12436"></a><code>getText</code> returns the text representation for the queue item. For a <code>Speakable</code> object it is the <code>String</code> returned by the <code>getJSMLText</code> method. For a <code>URL</code> it is the <code>String</code> loaded from that URL. For a string source, it is that string object. </li>
+   </ul> 
+   <ul>
+    <li><a name="12440"></a><code>isPlainText</code> allows an application to distinguish between plain text and JSML objects. If this method returns true the string returned by <code>getText</code> is plain text. </li>
+   </ul> 
+   <ul>
+    <li><a name="12444"></a><code>getSpeakableListener</code> returns the listener object to which events associated with this item will be sent. If no listener was provided in the call to <code>speak</code> and <code>speakPlainText</code> then the call returns <code>null</code>. </li>
+   </ul> 
+   <p><a name="12419"></a>The state of the queue is an explicit state of the <code>Synthesizer</code>. The <code>Synthesizer</code> interface defines a state system for <code>QUEUE_EMPTY</code> and <code>QUEUE_NOT_EMPTY</code>. Any <code>Synthesizer</code> in the <code>ALLOCATED</code> state must be in one and only one of these two states. </p>
+   <p><a name="12534"></a>The <code>QUEUE_EMPTY</code> and <code>QUEUE_NOT_EMPTY</code> states are parallel states to the <code>PAUSED </code>and <code>RESUMED</code> states. These two state systems operate independently as shown in <a href="Synthesis.html#12534">Figure 5-1</a> (an extension of <a href="SpeechEngine.html#18933">Figure 4-2</a>).<img src="Synth1.gif"> </p>
+   <p><a name="12498"></a>The <code>SynthesizerEvent</code> class extends the <code>EngineEvent</code> class with the <code>QUEUE_UPDATED</code> and <code>QUEUE_EMPTIED</code> events which indicate changes in the queue state. </p>
+   <p><a name="12664"></a>The <em><a href="Synthesis.html#7460">"Hello World!"</a></em> example shows one use of the queue status. It calls the <code>waitEngineState</code> method to test when the synthesizer returns to the <code>QUEUE_EMPTY</code> state. This test determines when the synthesizer has completed output of all objects on the speech output queue. </p>
+   <p><a name="12626"></a>The queue status and transitions in and out of the <code>ALLOCATED</code> state are linked. When a <code>Synthesizer</code> is newly <code>ALLOCATED</code> it always starts in the <code>QUEUE_EMPTY</code> state since no objects have yet been placed on the queue. Before a synthesizer is deallocated (before leaving the <code>ALLOCATED</code> state) a synthesizer must return to the <code>QUEUE_EMPTY</code> state. If the speech output queue is not empty when the <code>deallocate</code> method is called, all objects on the speech output queue are automatically cancelled by the synthesizer. By contrast, the initial and final states for <code>PAUSED</code> and <code>RESUMED</code> are not defined because the pause/resume state may be shared by multiple applications. </p>
+   <p><a name="12417"></a>The <code>Synthesizer</code> interface defines three cancel methods that allow an application to request that one or more objects be removed from the speech output queue: </p>
+   <dl>
+    <dd>
+     <pre><a name="12678"></a>void cancel();<br>
+void cancel(Object source);<br>
+void cancelAll();
+</pre>
+    </dd>
+   </dl>
+   <p><a name="12418"></a>The first of these three methods cancels the object at the top of the speech output queue. If that object is currently being spoken, the speech output is stopped and then the object is removed from the queue. The <code>SpeakableListener</code> for the item receives a <code>SPEAKABLE_CANCELLED</code> event. The <code>SynthesizerListener</code> receives a <code>QUEUE_UPDATED</code> event, unless the item was the last one on the queue in which case a <code>QUEUE_EMPTIED</code> event is issued. </p>
+   <p><a name="12398"></a>The second cancel method requires that a source object be specified. The object should be one of the items currently on the queue: a <code>Speakable</code>, a <code>URL</code>, or a <code>String</code>. The actions are much the same as for the first cancel method except that if the item is not top-of-queue, then speech output is not affected. </p>
+   <p><a name="12695"></a>The final cancel method - <code>cancelAll</code> - removes all items from the speech output queue. Each item receives a <code>SPEAKABLE_CANCELLED</code> event and the <code>SynthesizerListener</code> receives a <code>QUEUE_EMPTIED</code> event. The <code>SPEAKABLE_CANCELLED</code> events are issued to items in the order of the queue. </p>
+   <p>&nbsp;</p> 
+   <hr width="30%" align="center" noshade> 
+   <p>&nbsp;</p> 
+   <a name="12067"></a>
+   <h2>5.5 &nbsp; &nbsp; Monitoring Speech Output </h2> 
+   <p><a name="12127"></a>All the <code>speak</code> and <code>speakPlainText</code> methods accept a <code>SpeakableListener</code> as the second input parameter. To request notification of events as the speech object is spoken an application provides a non-null listener. </p>
+   <p><a name="12136"></a>Unlike a <code>SynthesizerListener</code> that receives synthesizer-level events, a <code>SpeakableListener</code> receives events associated with output of individual text objects: output of <code>Speakable</code> objects, output of URLs, output of JSML strings, or output of plain text strings. </p>
+   <p><a name="12149"></a>The mechanism for attaching a <code>SpeakableListener</code> through the <code>speak</code> and <code>speakPlainText</code> methods is slightly different from the normal attachment and removal of listeners. There are, however, <code>addSpeakableListener</code> and <code>removeSpeakableListener</code> methods on the <code>Synthesizer</code> interface. These add and remove methods allow listeners to be provided to receive notifications of events associated with <em>all</em> objects being spoken by the <code>Synthesizer</code>. </p>
+   <p><a name="12150"></a>The <code>SpeakableEvent</code> class defines eight events that indicate progress of spoken output of a text object. For each of these eight event types, there is a matching method in the <code>SpeakableListener</code> interface. For convenience, a <code>SpeakableAdapter</code> implementation of the <code>SpeakableListener</code> interface is provided with trivial (empty) implementations of all eight methods. </p>
+   <p><a name="12188"></a>The normal sequence of events as an object is spoken is as follows: </p>
+   <ul>
+    <li><a name="12070"></a><code>TOP_OF_QUEUE</code>: the object has reached to the top of the speech output queue and is the next object to be spoken. </li>
+   </ul> 
+   <ul>
+    <li><a name="12071"></a><code>SPEAKABLE_STARTED</code>: audio output has commenced for this text object. </li>
+   </ul> 
+   <ul>
+    <li><a name="12072"></a><code>WORD_STARTED</code>: audio output has reached the start of a word. The event includes information on the location of the word in the text object. This event is issued for each word in the text object. This event is often used to highlight words in a text document as they are spoken. </li>
+   </ul> 
+   <ul>
+    <li><a name="12074"></a><code>MARKER_REACHED</code>: audio output has reached the location of a <code>MARKER</code> tag explicitly embedded in the JSML text. The event includes the marker text from the tag. For container JSML elements, a <code>MARKER_REACHED</code> event is issued at both the start and end of the element. <code>MARKER_REACHED</code> events are not produced for plain text because formatting is required to add the markers. </li>
+   </ul> 
+   <ul>
+    <li><a name="12075"></a><code>SPEAKABLE_ENDED</code>: audio output has been completed and the object has been removed from the speech output queue. </li>
+   </ul> 
+   <p><a name="12076"></a>The remaining event types are modifications to the normal event sequence. </p>
+   <ul>
+    <li><a name="12232"></a><code>SPEAKABLE_PAUSED</code>: the <code>Synthesizer</code> has been paused so audio output of this object is paused. This event is only issued to the text object at the top of the speech output queue. </li>
+   </ul> 
+   <ul>
+    <li><a name="12233"></a><code>SPEAKABLE_RESUMED</code>: the <code>Synthesizer</code> has been resumed so audio output of this object has resumed. This event is only issued to the text object at the top of the speech output queue. </li>
+   </ul> 
+   <ul>
+    <li><a name="12234"></a><code>SPEAKABLE_CANCELLED</code>: the object has been removed from the speech output queue. Any or all objects in the speech output queue may be removed by one of the cancel methods (described in <a href="Synthesis.html#12362">Section 5.4</a>). </li>
+   </ul> 
+   <p><a name="12230"></a>The following is an example of the use of the <code>SpeakableListener</code> interface to monitor the progress of speech output. It shows how a training application could synchronize speech synthesis with animation. </p>
+   <p><a name="12077"></a>It places two JSML string objects onto the output queue and requests notifications to itself. The speech output will be: </p>
+   <dl>
+    <dd>
+     <pre><a name="12078"></a>"First, use the mouse to open the file menu.<br>
+  Then, select the save command."
+</pre>
+    </dd>
+   </dl>
+   <p><a name="12079"></a>At the start of the output of each string the <code>speakableStarted</code> method will be called. By checking the source of the event we determine which text is being spoken and so the appropriate animation code can be triggered. </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="12080"></a>public class TrainingApp extends SpeakableAdapter { 
+<a name="12081"></a>
+<a name="12082"></a>	String openMenuText = 
+<a name="12083"></a>				"First, use the mouse to open the file menu.";
+<a name="12350"></a>	// The EMP element indicates emphasis of a word
+<a name="12084"></a>	String selectSaveText = 
+<a name="12085"></a>				"Then, select the &lt;EMP&gt;save&lt;/EMP&gt; command.";
+<a name="12086"></a>
+<a name="12087"></a>	public void sendText(Synthesizer synth) {
+<a name="12088"></a>		// Insert the two objects into the speech queue 
+<a name="12089"></a>		// specifying self as recipient of SpeakableEvents.
+<a name="12090"></a>		synth.speak(openMenuText, this); 
+<a name="12091"></a>		synth.speak(selectSaveText, this); 
+<a name="12092"></a>	}
+<a name="12093"></a>
+<a name="12095"></a>	// Override the empty method in SpeakableAdapter
+<a name="12096"></a>	public void speakableStarted(SpeakableEvent e) { 
+<a name="12097"></a>		if (e.getSource() == openMenuText) { 
+<a name="12098"></a>			// animate the opening of the file menu 
+<a name="12099"></a>		}
+<a name="12100"></a>		else if (e.getSource() == selectSaveText) { 
+<a name="12101"></a>			// animate the selection of 'save' 
+<a name="12102"></a>		} 
+<a name="12103"></a>	}
+<a name="12104"></a>}
+
+
+      <hr></pre>
+    </dd>
+   </dl>
+   <p>&nbsp;</p> 
+   <hr width="30%" align="center" noshade> 
+   <p>&nbsp;</p> 
+   <a name="7551"></a>
+   <h2>5.6 &nbsp; &nbsp; Synthesizer Properties </h2> 
+   <p><a name="7552"></a>The <code>SynthesizerProperties</code> interface extends the <code>EngineProperties</code> interface described in <a href="SpeechEngine.html#16719">Section 4.6.1</a>. The JavaBeans property mechanisms, the asynchronous application of property changing, and the property change event notifications are all inherited engine behavior and are described in that section. </p>
+   <p><a name="12828"></a>The <code>SynthesizerProperties</code> object is obtained by calling the <code>getEngineProperties</code> method (inherited from the <code>Engine</code> interface) or the <code>getSynthesizerProperties</code> method. Both methods return the same object instance, but the latter is more convenient since it is an appropriately cast object. </p>
+   <p><a name="12816"></a>The <code>SynthesizerProperties</code> interface defines five synthesizer properties that can be modified during operation of a synthesizer to effect speech output. </p>
+   <p><a name="10208"></a>The <em>voice</em> property is used to control the speaking voice of the synthesizer. The set of voices supported by a synthesizer can be obtained by the <code>getVoices</code> method of the synthesizer's <code>SynthesizerModeDesc</code> object. Each voice is defined by a voice name, gender, age and speaking style. Selection of voices is described in more detail in <em><a href="Synthesis.html#12736">Selecting Voices</a></em>. </p>
+   <p><a name="10233"></a>The remaining four properties control <em>prosody</em>. Prosody is a set of features of speech including the pitch and intonation, rhythm and timing, stress and other characteristics which affect the style of the speech. The prosodic features controlled through the <code>SynthesizerProperties</code> interface are: </p>
+   <ul>
+    <li><a name="10094"></a><em>Volume:</em> a float value that is set on a scale from 0.0 (silence) to 1.0 (loudest). </li>
+   </ul> 
+   <ul>
+    <li><a name="10096"></a><em>Speaking rate:</em> a float value indicating the speech output rate in words per minute. Higher values indicate faster speech output. Reasonable speaking rates depend upon the synthesizer and the current voice (voices may have different natural speeds). Also, speaking rate is also dependent upon the language because of different conventions for what is a "word". For English, a typical speaking rate is around 200 words per minute. </li>
+   </ul> 
+   <ul>
+    <li><a name="10102"></a><em>Pitch:</em> the baseline pitch is a float value given in Hertz. Different voices have different natural sounding ranges of pitch. Typical male voices are between 80 and 180 Hertz. Female pitches typically vary from 150 to 300 Hertz. </li>
+   </ul> 
+   <ul>
+    <li><a name="10099"></a><em>Pitch range:</em> a float value indicating a preferred range for variation in pitch above the baseline setting. A narrow pitch range provides monotonous output while wide range provide a more lively voice. The pitch range is typically between 20% and 80% of the baseline pitch. </li>
+   </ul> 
+   <p><a name="10292"></a>The following code shows how to increase the speaking rate for a synthesizer by 30 words per minute. </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="10283"></a>float increaseSpeakingRate(Synthesizer synth) { 
+<a name="10286"></a>	SynthesizerProperties props = synth.getEngineProperties(); 
+<a name="10288"></a>	float newSpeakingRate = props.getSpeakingRate() + 30.0; 
+<a name="10289"></a>	props.setSpeakingRate(newSpeakingRate); 
+<a name="10325"></a>	return newSpeakingRate;
+<a name="10326"></a>}
+
+
+      <hr></pre>
+    </dd>
+   </dl>
+   <p><a name="10335"></a>As with all engine properties, changes to synthesizer properties are not necessarily instant. The change should take effect as soon as the synthesizer can apply it. Depending on the underlying technology, a property change may take effect immediately, or at the next phoneme, word, phrase or sentence boundary, or at the beginning of output of the next item in the synthesizer's queue. </p>
+   <p><a name="10353"></a>So that an application knows when the change has actual taken effect, the synthesizer generates a property change event for each call to a set method in the <code>SynthesizerProperties</code> interface. </p> 
+   <a name="12736"></a>
+   <h3>5.6.1 &nbsp; &nbsp; Selecting Voices </h3> 
+   <p><a name="12737"></a>Most speech synthesizers are able to produce a number of voices. In most cases voices attempt to sound natural and human, but some voices may be deliberately mechanical or robotic. </p>
+   <p><a name="12738"></a>The <code>Voice</code> class is used to encapsulate the four features that describe each voice: voice name, gender, age and speaking style. The voice name and speaking style are both <code>String</code> objects and the contents of those strings are determined by the synthesizer. Typical voice names might be "Victor", "Monica", "Ahmed", "Jose", "My Robot" or something completely different. Speaking styles might include "casual", "business", "robotic" or "happy" (or similar words in other languages) but the API does not impose any restrictions upon the speaking styles. For both voice name and speaking style, synthesizers are encouraged to use strings that are meaningful to users so that they can make sensible judgements when selecting voices. </p>
+   <p><a name="12739"></a>By contrast the gender and age are both defined by the API so that programmatic selection is possible. The gender of a voice can be <code>GENDER_FEMALE</code>, <code>GENDER_MALE</code>, <code>GENDER_NEUTRAL</code> or <code>GENDER_DONT_CARE</code>. Male and female are hopefully self-explanatory. Gender neutral is intended for voices that are not clearly male or female such as some robotic or artificial voices. The "don't care" values are used when selecting a voice and the feature is not relevant. </p>
+   <p><a name="12740"></a>The age of a voice can be <code>AGE_CHILD</code> (up to 12 years), <code>AGE_TEENAGER</code> (13-19), <code>AGE_YOUNGER_ADULT</code> (20-40), <code>AGE_MIDDLE_ADULT</code> (40-60), <code>AGE_OLDER_ADULT</code> (60+), <code>AGE_NEUTRAL</code>, and <code>AGE_DONT_CARE</code>. </p>
+   <p><a name="12741"></a>Both gender and age are OR'able values for both applications and engines. For example, an engine could specify a voice as: </p>
+   <dl>
+    <dd>
+     <pre><a name="12742"></a>Voice("name", GENDER_MALE, AGE_CHILD | AGE_TEENAGER, "style");
+</pre>
+    </dd>
+   </dl>
+   <p><a name="12743"></a>In the same way that mode descriptors are used by engines to describe themselves and by applications to select from amongst available engines, the <code>Voice</code> class is used both for description and selection. The match method of <code>Voice</code> allows an application to test whether an engine-provided voice has suitable properties. </p>
+   <p><a name="12744"></a>The following code shows the use of the match method to identify voices of a synthesizer that are either male or female voices and that are younger or middle adults (between 20 and 60). The SynthesizerModeDesc object may be one obtained through the Central class or through the getEngineModeDesc method of a created Synthesizer. </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="12745"></a>	SynthesizerModeDesc desc = ...;
+<a name="12746"></a>	Voice[] voices = desc.getVoices();
+<a name="12747"></a>
+<a name="12748"></a>	// Look for male or female voices that are young/middle adult
+<a name="12749"></a>	Voice myVoice = new Voice();
+<a name="12750"></a>	myVoice.setGender(GENDER_MALE | GENDER_FEMALE);
+<a name="12751"></a>	myVoice.setAge(AGE_YOUNGER_ADULT | AGE_MIDDLE_ADULT);
+<a name="12752"></a>
+<a name="12753"></a>	for (int i = 0; i &lt; voices.length; i++)
+<a name="12754"></a>		if (voices[i].match(myVoice))
+<a name="12755"></a>			doAction(voices[i]);
+
+
+      <hr></pre>
+    </dd>
+   </dl>
+   <p><a name="12756"></a>The <code>Voice</code> object can also be used in the selection of a speech synthesizer. The following code illustrates how to create a synthesizer with a young female Japanese voice. </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="12757"></a>	SynthesizerModeDesc required = new SynthesizerModeDesc();
+<a name="12758"></a>	Voice voice = new Voice(null, GENDER_FEMALE, 
+<a name="13072"></a>						AGE_CHILD | AGE_TEENAGER, null);
+<a name="12762"></a>
+<a name="12763"></a>	required.addVoice(voice);
+<a name="12764"></a>	required.setLocale(Locale.JAPAN);
+<a name="12765"></a>
+<a name="12766"></a>	Synthesizer synth = Central.createSynthesizer(required);
+
+
+      <hr></pre>
+    </dd>
+   </dl> 
+   <a name="10327"></a>
+   <h3>5.6.2 &nbsp; &nbsp; Property Changes in JSML </h3> 
+   <p><a name="10320"></a>In addition to control of speech output through the <code>SynthesizerProperties</code> interface, all five synthesizer properties can be controlled in JSML text provided to a synthesizer. The advantage of control through JSML text is that property changes can be finely controlled within a text document. By contrast, control of the synthesizer properties through the <code>SynthesizerProperties</code> interface is not appropriate for word-level changes but is instead useful for setting the default configuration of the synthesizer. Control of the <code>SynthesizerProperties</code> interface is often presented to the user as a graphical configuration window. </p>
+   <p><a name="10268"></a>Applications that generate JSML text should respect the default settings of the user. To do this, relative settings of parameters such as pitch and speaking rate should be used rather than absolute settings. </p>
+   <p><a name="10272"></a>For example, users with vision impairments often set the speaking rate extremely high - up to 500 words per minute - so high that most people do not understand the synthesized speech. If a document uses an absolute speaking rate change (to say 200 words per minute which is fast for most users), then the user will be frustrated. </p>
+   <p><a name="10364"></a>Changes made to the synthesizer properties through the <code>SynthesizerProperties</code> interface are persistent: they affect all succeeding speech output. Changes in JSML are explicitly localized (all property changes in JSML have both start and end tags). </p> 
+   <a name="8564"></a>
+   <h3>5.6.3 &nbsp; &nbsp; Controlling Prosody </h3> 
+   <p><a name="10376"></a>The prosody and voice properties can be used within JSML text to substantially improve the clarity and naturalness of the speech output. For example, one time to change prosodic settings is when providing new, important or detailed information. In this instance it is typical for a speaker to slow down, emphasise more words and often add extra pauses. Putting equivalent changes into synthetic speech will help a listener understand the message. </p>
+   <p><a name="10392"></a>For example, in response to the question "How many Acme shares do I have?", the answer might be "You currently have 1,500 Acme shares." The number will spoken more slowly because it is new information. To represent this in JSML text the <code>&lt;PROS&gt;</code> element is used: </p>
+   <dl>
+    <dd>
+     <pre><a name="10402"></a>You currently have &lt;PROS RATE="-20%"&gt;1500&lt;/PROS&gt; Acme shares.
+</pre>
+    </dd>
+   </dl>
+   <p><a name="10373"></a>The following example illustrates how an email message header object can implement the <code>Speakable</code> interface and generate JSML text with prosodic controls to improve understandability. </p>
+   <dl>
+    <dd>
+     <pre>
+      <hr>
+<a name="7733"></a>public class MailHeader implements Speakable { 
+<a name="7765"></a>	public String subject; 
+<a name="7767"></a>	public String sender;     // sender of the message, eg John Doe
+<a name="7769"></a>	public String date;
+<a name="7734"></a>
+<a name="10446"></a>	/** getJSMLText is the only method of Speakable */
+<a name="7779"></a>	public String getJSMLText() {
+<a name="10416"></a>		StringBuffer buf = new StringBuffer();
+<a name="10418"></a>
+<a name="10423"></a>		// Speak the sender's name slower to be clearer
+<a name="7783"></a>		buf.append("Message from " + 
+<a name="7789"></a>			"&lt;PROS RATE=-30&gt;" + sender + ",&lt;/PROS&gt;");
+<a name="10429"></a>
+<a name="10433"></a>		// Make sure the date is interpreted correctly
+<a name="10439"></a>		// But we don't need it slow - it's not so important
+<a name="7799"></a>		buf.append(" delivered " + 
+<a name="10436"></a>			"&lt;SAYAS class=\"date\"&gt;" + date + "&lt;/SAYAS&gt;");
+<a name="10437"></a>
+<a name="10438"></a>		// Subject slower too
+<a name="7811"></a>		buf.append(", with subject: " + 
+<a name="7817"></a>			"&lt;PROS RATE=-30&gt;" + subject + "&lt;/PROS&gt;");
+<a name="10442"></a>
+<a name="10443"></a>		return buf.toString();
+<a name="7819"></a>	} 
+<a name="7821"></a>}
+<a name="8490"></a>
+<a name="8483"></a>public class myMailApp { 
+<a name="7823"></a>	... 
+<a name="7825"></a>	void newMessageRecieved(MailHeader header) { 
+<a name="7829"></a>		synth.speakPlainText("You have new mail!"); 
+<a name="7833"></a>		synth.speak(header, mySpeakableListener); 
+<a name="8501"></a>	}
+<a name="7835"></a>}
+
+
+      <hr></pre>
+    </dd>
+   </dl> 
+   <hr size="7" noshade> 
+  </blockquote> 
+  <!-- This inserts footnotes-->
+  <p> </p>
+  <table align="center" cellspacing="20" cellpadding="6" bgcolor="#f0f0ff"> 
+   <tbody>
+    <tr> 
+     <td><code> <a href="index.html">Contents</a> </code> </td>
+     <td><code> <a href="SpeechEngine.html">Previous</a> </code> </td>
+     <td><code> &nbsp;&nbsp;<a href="Recognition.html">Next</a>&nbsp;&nbsp; </code> </td>
+    </tr>
+   </tbody>
+  </table>  
+  <hr width="30%" noshade align="center"> 
+  <p align="center"> <font size="-1">Java<sup><font size="-2">TM</font></sup> Speech API Programmer's Guide<br> <a href="Copyright.html">Copyright © 1997-1998</a> Sun Microsystems, Inc. All rights reserved<br> Send comments or corrections to <a href="mailto:javaspeech-comments@sun.com">javaspeech-comments@sun.com</a> </font> </p> 
+ </body>
+</html>

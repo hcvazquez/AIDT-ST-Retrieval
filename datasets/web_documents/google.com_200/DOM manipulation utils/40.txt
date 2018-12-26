@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en-US">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <meta name="ttw" content="cfanq3r"> 
+  <title>Maintainable JavaScript: Don’t modify objects you don’t own - NCZOnline</title> 
+  <link rel="stylesheet" type="text/css" href="/styles/yahoo-base.css"> 
+  <link rel="stylesheet" href="/wp-content/themes/nczonline_v2/style.css" type="text/css" media="screen"> 
+  <link rel="alternate" type="application/rss+xml" title="NCZOnline - Blog" href="http://feeds.nczonline.net/blog/"> 
+  <link rel="alternate" type="application/rss+xml" title="NCZOnline - Newsletter" href="http://feeds.nczonline.net/newsletter/"> 
+  <link rel="icon" type="image/png" href="/images/favicon.png"> 
+  <meta name="description" content=""> 
+  <script src="//load.sumome.com/" data-sumo-site-id="265a54d365fde3df2f7f9e85a21e0ce3ac04f6a10ebd6368b3aaacad644eff22" async></script> 
+ </head> 
+ <body> 
+  <div id="hd"> 
+   <div id="subhd" class="page-width content-block"> 
+    <h1><a href="/"><img src="/images/logo-medium.png" alt="NCZOnline" height="50"></a></h1> 
+    <ul role="navigation" class="clearfix"> 
+     <li class="hide-offscreen"><a href="#content">Skip to content</a></li> 
+     <li class="first"><a href="/writing/">Writing</a></li> 
+     <li><a href="/speaking/">Speaking</a></li> 
+     <!--<li><a href="/newsletter/">Newsletter</a></li>--> 
+     <li><a rel="me" href="/about/">About</a></li> 
+     <li><a href="/contact/">Contact</a></li> 
+    </ul> 
+   </div> 
+   <hr class="separator"> 
+  </div> 
+  <div id="doc"> 
+   <div id="bd" class="clearfix page-width"> 
+    <div id="content" class="yui-cssbase"> 
+     <div class="post"> 
+      <div class="post-head"> 
+       <h1>Maintainable JavaScript: Don’t modify objects you don’t own</h1> 
+       <p class="byline">Posted at March 2, 2010 by Nicholas C. Zakas</p> 
+       <p class="tags">Tags: <a href="/blog/tag/javascript" rel="tag">JavaScript</a> <a href="/blog/tag/maintainable" rel="tag">Maintainable</a> </p> 
+      </div> 
+      <div class="post-content"> 
+       <p>The first talk I gave after arriving at Yahoo! was entitled <a href="http://www.slideshare.net/nzakas/maintainable-javascript-1071179">Maintainable JavaScript</a> (<a href="http://video.yahoo.com/video/play?vid=568351">video</a>). As with most topics I write or speak about, I didn’t think it would be terribly controversial. The basis of the talk is that hacking around on your own and writing code in an enterprise environment are two different things. Web developers are truly unique in that none of us learned what we know in school; we all began as hobbyists one way or another and taught ourselves most (if not all) of what we know.</p> 
+       <h2>Professionalization</h2> 
+       <p>The professionalization of web development has been a difficult journey because of our disparate beginnings. Even those who end up at large companies such as Yahoo! inevitably began on their own, hacking around. Perhaps you were even “the web guy” at a small company and could do pretty much whatever you wanted. When the large companies started tapping this previously undiscovered resource, it brought a lot of hackers into a corporate environment where they were met with constraints. No longer a lone soldier in a small battle, all of these self-taught, self-directed individuals had to figure out how to work together as a team.</p> 
+       <p>At the time that I gave the talk (2007), web development was evolving into front-end engineering and people were having trouble with the transition. Smart folks like Nate Koechley talked about the <a href="http://www.slideshare.net/natekoechley/professional-frontend-engineering">professionalization of front-end engineering</a> (<a href="http://video.yahoo.com/watch/4671445/12486762">video</a>) and how our discipline was evolving. My talk was aimed at the same goal: helping front-end engineers adapt to JavaScript development in a team environment by making sure that their code was as maintainable as possible.</p> 
+       <h2>Why can’t I modify objects I don’t own?</h2> 
+       <p>I still gets email and comments about Maintainable JavaScript, and the most popular question is, “why can’t I modify objects I don’t own?” JavaScript is, of course, a dynamic language that allows you to add and remove objects and their members at any point in time. For many, this is precisely why they enjoy the language: there are very few constraints imposed by the language. And I was telling them not to do this. Why?</p> 
+       <h3>Dependability</h3> 
+       <p>The simple explanation is that an enterprise software product needs a consistent and dependable execution environment to be maintainable. In other languages, you consider already-existing objects as libraries for you to use in order to complete your task. In JavaScript, people saw already-existing objects as a playground in which you could do anything you wanted. My point was that you should treat the already-existing JavaScript objects as you would a library of utilities. Don’t override methods, don’t add new methods, don’t remove existing methods.</p> 
+       <p>When you’re the only one working on a project, it’s easy to get away with these types of modifications because you know them and expect them. When working with a team on a large project, making changes like this cause mass confusion and a lot of lost time. I still remember a bug that occurred while working on <a href="http://my.yahoo.com">My Yahoo!</a> because someone had overridden <code>YAHOO.util.Event.stopEvent()</code> to do something else. It took days to track this problem down because we all assumed that this method was doing exactly what it always did. Once we discovered this, we also found other bugs because the same method was being used in other places with its original intended usage…but of course, it wasn’t behaving in that way. Unraveling this was an incredible mess and I’d be very happy if no engineers ever had to go through a similar exercise.</p> 
+       <h3>Incompatible implementations</h3> 
+       <p>But developer confusion isn’t the only problem. Another peril of modifying objects that you don’t own is the possibility of naming collisions and incompatible implementations. Take a lesson from the history of the <a href="http://prototypejs.org/">Prototype</a> JavaScript library. John Resig <a href="http://ejohn.org/blog/getelementsbyclassname-pre-prototype-16/">wrote about this</a> a while ago, so I’ll just quickly summarize. Prior to version 1.6, Prototype implemented its own <code>document.getElementsByClassName()</code> method long before it was part of HTML5 and long before any browser thought about implementing it natively. In addition, Prototype also added the <code>each()</code> method to <code>Array</code> objects. Thus, users of the Prototype library began writing code such as:</p> 
+       <div class="highlight">
+        <pre><code class="language-text" data-lang="text">document.getElementsByClassName("myclass").each(doSomething);
+</code></pre>
+       </div> 
+       <p>This wasn’t a problem until the native <code>document.getElementsByClassName()</code> method was implemented. While Prototype’s version returned an instance of <code>Array</code>, the native implementation returns a <code>NodeList</code> object. Since <code>NodeList</code> doesn’t have an <code>each()</code> method, either natively or added by Prototype, the above coding pattern caused a JavaScript error when executed in browsers that had a native implementation of <code>document.getElementsByClassName()</code>. The end result is that users of Prototype had to upgrade both the library code and their own code; what a maintenance nightmare.</p> 
+       <h2>What if everyone did it?</h2> 
+       <p>Looking at a few isolated examples doesn’t really represent the enormity of the maintenance problem when you modify objects that you shouldn’t. To understand this point of view, it’s helpful to take a step back and look at <a href="http://en.wikipedia.org/wiki/Ethics">moral philosophy</a> (aka ethics). Moral philosophy is all about determining if an action is moral. There are many schools of thought on the topic, but I point towards a favorite modern philosopher, <a href="http://en.wikipedia.org/wiki/Immanuel_Kant">Immanuel Kant</a>.</p> 
+       <p>While I don’t want to get too deeply into moral philosophy and open this up for philosophical debate, Kant was famous for trying to determine “universal law” as the basis for moral action. In short, you can determine if an act is moral by asking, what would happen if everyone did it? For example, what if everyone cheated on a test? In that case, the test becomes useless, so this must not be a moral action.</p> 
+       <p>Applying this same line of reasoning to the topic at hand, what if everyone on your team started modifying objects that they didn’t own? What if I went in and made modifications to <code>document</code> and so did everyone else on my team? What if everyone on the team created their own global variables? I hope that it’s obvious just how detrimental these actions could be to a team development environment.</p> 
+       <p>Simply put: if everyone on your team modified objects that they didn’t own, you’d quickly run into naming collisions, incompatible implementations, and maintenance nightmares.</p> 
+       <p>As a side note, I find Kant’s question incredibly relevant to any system that must scale. “What if everyone did it?” can really save you some trouble when considered as part of a technical design.</p> 
+       <h2>Conclusion</h2> 
+       <p>Maintainable code is code that you don’t need to modify when the browser changes. You don’t know how browser developers will evolve existing browsers and the rate at which those evolutions will take place. The code you write needs to continue working in future browsers and with future versions of JavaScript libraries without modification, and you cannot ensure that when you’re modifying objects that you didn’t create in the first place. The only code you can be certain will remain the same is the code you write yourself.</p> 
+       <p>I can’t state this strongly enough: your code is not maintainable when it requires modifications to objects you didn’t create. Stepping down that path only leads to maintenance nightmares going forward.</p> 
+       <p>P.S. If you’re interested in learning more, check out my presentation on <a href="http://www.slideshare.net/nzakas/scalable-javascript-application-architecture">Scalable JavaScript Application Architecture</a> (<a href="http://developer.yahoo.com/yui/theater/video.php?v=zakas-architecture">video</a>).</p> 
+       <p class="disclaimer">Disclaimer: Any viewpoints and opinions expressed in this article are those of Nicholas C. Zakas and do not, in any way, reflect those of my employer, my colleagues, <a href="http://www.wrox.com/">Wrox Publishing</a>, <a href="http://www.oreilly.com/">O'Reilly Publishing</a>, or anyone else. I speak only for myself, not for them.</p> 
+       <div class="post-footer clearfix"> 
+        <div class="post-footer-posts"> 
+         <h2>Recent Posts</h2> 
+         <ul class="yui3-cssbase"> 
+          <li><a href="/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/">The ECMAScript 2016 change you probably don't know</a></li> 
+          <li><a href="/blog/2016/04/es6-module-loading-more-complicated-than-you-think/">ES6 module loading: More complicated than you think</a></li> 
+          <li><a href="/blog/2016/03/mimicking-npm-script-in-node-js/">Mimicking npm script in Node.js</a></li> 
+          <li><a href="/blog/2016/02/reflections-on-eslints-success/">Reflections on ESLint's success</a></li> 
+          <li><a href="/blog/2016/01/react-and-the-economics-of-dynamic-web-interfaces/">React and the economics of dynamic web interfaces</a></li> 
+         </ul> 
+        </div> 
+        <div class="post-footer-books"> 
+         <h2>Enjoy This Post?</h2> 
+         <p>This site is reader-supported. You can support my work in a number of ways: <a href="https://paypal.me/nczonline">leave a tip</a>, <a href="https://patreon.com/nzakas">become a patron</a>, or <a href="http://amzn.to/2pdLjNY">buy a book</a>. Your support is greatly appreciated.</p> 
+        </div> 
+       </div> 
+       <div id="disqus_thread"></div> 
+       <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'nczonline',
+        disqus_url = 'http://www.nczonline.net/blog/2010/03/02/maintainable-javascript-dont-modify-objects-you-down-own/';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+       </noscript> 
+      </div> 
+      <!--post-content--> 
+     </div> 
+     <!-- post --> 
+    </div> 
+    <div id="sidebar"> 
+     <h1 class="hide-offscreen">Additional Information</h1> 
+     <a href="https://patreon.com/nzakas"><img src="/images/patreon.png" width="200" height="88" alt="Support my work on Patron"></a> Support my work on 
+     <a href="https://patreon.com/nzakas">Patreon</a> and get free stuff! 
+     <h2>Sponsors</h2> 
+     <!-- <div class="side-sponsor"> --> 
+     <!-- </div> --> 
+     <script async type="text/javascript" src="//cdn.carbonads.com/carbon.js?zoneid=1673&amp;serve=C6AILKT&amp;placement=nczonlinenet" id="_carbonads_js"></script> 
+     <h2>My Books</h2> 
+     <ul class="books"> 
+      <li><a href="https://leanpub.com/understandinges6"><img src="/images/ues6.png" width="100" height="126" alt="Understanding ECMAScript 6"></a></li> 
+      <li><a href="http://amzn.to/1mmkyCm"><img src="/images/oopinjsns.png" width="100" height="126" alt="Principles of Object-Oriented JavaScript"></a></li> 
+      <li><a href="http://www.amazon.com/Maintainable-JavaScript-Nicholas-C-Zakas/dp/1449327680?tag=nczonline-20"><img src="/images/maintainablejs.png" width="100" height="126" alt="Maintainable JavaScript"></a></li> 
+      <li><a href="http://www.amazon.com/Professional-JavaScript-Developers-Nicholas-Zakas/dp/1118026691/ref=sr_1_13?tag=nczonline-20"><img src="/images/pro_js_3e.png" width="100" height="126" alt="Professional JavaScript for Web Developers, 3rd Edition"></a></li> 
+      <!-- <li><a href="http://www.amazon.com/gp/product/059680279X?ie=UTF8&tag=nczonline-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=059680279X"><img src="/images/hpjs.png" width="100" height="126" alt="High Performance JavaScript"/></a></li> --> 
+      <!--<li><a href="http://www.amazon.com/gp/product/0470109491?ie=UTF8&tag=nczonline-20&linkCode=as2&camp=1789&creative=390957&creativeASIN=0470109491"><img src="/images/pro_ajax_2e.png" width="100" height="126" alt="Professional Ajax, 2nd Edition" /></a></li>
+                    <li><a href="http://www.amazon.com/gp/product/0596522304?ie=UTF8&tag=nczonline-20&link_code=as3&camp=211189&creative=373489&creativeASIN=0596522304"><img src="/images/even_faster.png" width="100" height="126" alt="Even Faster Web Sites" /></a></li>-->
+     </ul> 
+     <h2>More of Me</h2> 
+     <ul> 
+      <li><a href="http://www.twitter.com/slicknet/">Twitter</a> <a href="https://twitter.com/slicknet" class="twitter-follow-button" data-show-count="false">Follow @slicknet</a> <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script></li> 
+      <li><a href="http://www.linkedin.com/in/nzakas">LinkedIn</a></li> 
+      <li><a href="http://www.github.com/nzakas/">GitHub</a></li> 
+      <li><a href="http://www.slideshare.net/nzakas/presentations/">Slideshare</a></li> 
+      <li><a href="http://amazon.com/author/nzakas/">Amazon</a></li> 
+      <li><a href="https://plus.google.com/u/3/116766524979258968594/?rel=author" rel="author">Google+</a></li> 
+     </ul> 
+     <h2>Archives</h2> 
+     <ul> 
+      <li><a href="/blog/2015/">2015</a></li> 
+      <li><a href="/blog/2014/">2014</a></li> 
+      <li><a href="/blog/2013/">2013</a></li> 
+      <li><a href="/blog/2012/">2012</a></li> 
+      <li><a href="/blog/2011/">2011</a></li> 
+      <li><a href="/blog/2010/">2010</a></li> 
+      <li><a href="/blog/2009/">2009</a></li> 
+      <li><a href="/blog/2008/">2008</a></li> 
+      <li><a href="/blog/2007/">2007</a></li> 
+      <li><a href="/blog/2006/">2006</a></li> 
+      <li><a href="/blog/2005/">2005</a></li> 
+      <li><a href="/blog/2004/">2004</a></li> 
+     </ul> 
+    </div> 
+    <!-- end #bd div --> 
+   </div> 
+   <!-- end #doc div --> 
+  </div> 
+  <div id="ft"> 
+   <hr class="separator"> 
+   <div class="page-width content-block"> 
+    <p>Copyright © 2004-2016 Nicholas C. Zakas. All Rights Reserved. All code examples on all pages, unless otherwise indicated, are <a href="/license">BSD licensed</a>. <a href="http://feeds.nczonline.net/blog/">Blog Feed</a></p> 
+   </div> 
+  </div> 
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script> 
+  <script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6849003-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>   
+ </body>
+</html>

@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <title>
+    
+      Interpreting LSI Document Similarity · Chris McCormick
+    
+  </title> 
+  <link rel="stylesheet" href="/styles.css"> 
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-precomposed.png"> 
+  <link rel="shortcut icon" href="/public/favicon.ico"> 
+  <link rel="alternate" type="application/atom+xml" title="Chris McCormick" href="/atom.xml"> 
+  <!-- Adding support for MathJax --> 
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script> 
+ </head> 
+ <body> 
+  <div class="container content"> 
+   <header class="masthead"> 
+    <h3 class="masthead-title"> <a href="/" title="Home">Chris McCormick</a> 
+     <!-- Display the About, Archive, etc. pages in the header ---> &nbsp;&nbsp;&nbsp;<small><a href="/about/">About</a></small> &nbsp;&nbsp;&nbsp;<small><a href="/tutorials/">Tutorials</a></small> &nbsp;&nbsp;&nbsp;<small><a href="/archive/">Archive</a></small> </h3> 
+    <!-- I could use this to include the tag line, but it looks cluttered...
+        <h3 class="masthead-title">
+             <small>Machine Learning Tutorials and Insights</small>
+        </h3>
+        -----> 
+   </header> 
+   <main> 
+    <article class="post"> 
+     <h1 class="post-title">Interpreting LSI Document Similarity</h1> 
+     <time datetime="2016-11-04T23:00:00-07:00" class="post-date">04 Nov 2016</time> 
+     <p>In this post I’m sharing a technique I’ve found for showing which words in a piece of text <em>contribute most</em> to its similarity with another piece of text when using Latent Semantic Indexing (LSI) to represent the two documents. This has proven valuable to me in debugging bad search results from “concept search” using LSI. You’ll find the equations for the technique as well as example Python code.</p> 
+     <h1 id="my-fun-nlp-project">My Fun NLP Project</h1> 
+     <p>I’ve been having a lot of fun playing with Latent Semantic Indexing (LSI) on a personal project. I’m working on making my personal journals, as well as some books I’ve read, searchable using LSI. That is, I can take one of my journal entries, and search for other journal entries (or even paragraphs from one of the books) that are <em>conceptually similar</em>.</p> 
+     <p>I’m basing the project on the awesome “topic modeling” package <code class="highlighter-rouge">gensim</code> in Python. I’m sharing the fundamental code for this project (just not my journals :-P) on GitHub in a project I’ve called <a href="https://github.com/chrisjmccormick/simsearch">simsearch</a>.</p> 
+     <p>It also contains a working example based on the public domain work <em>Matthew Henry’s Commentary on the Bible</em> (which comes from the early 1700s!). I’ll show you some of that example a little farther down.</p> 
+     <p>So far, though, the quality of the search results with my journals has been pretty hit-or-miss. For the really bad results, I’m left wondering, what went wrong?! Why does LSI think these two pieces of text are related? How can I interpret this match?</p> 
+     <h1 id="impact-of-each-word-on-similarity">Impact of Each Word on Similarity</h1> 
+     <p>Turns out it’s possible to look at the impact of individual words on the total LSI similarity, allowing you to interpret the results some.</p> 
+     <p>First, a little refresher on how LSI works. The first step in comparing the two pieces of text is to produce tf-idf vectors for them, which contain one element per word in the vocabulary. These tf-idf vectors are then projected down to, e.g., 100 topics with LSI. Finally, the two LSI vectors are compared using Cosine Similarity, which produces a value between 0.0 and 1.0.</p> 
+     <p><a href="http://mccormickml.com/assets/lsi/tf-idf_conversion.png"><img src="http://mccormickml.com/assets/lsi/tf-idf_conversion.png" alt="tf-idf Conversion"></a></p> 
+     <p><a href="http://mccormickml.com/assets/lsi/LSI_projection.png"><img src="http://mccormickml.com/assets/lsi/LSI_projection.png" alt="LSI Projection"></a></p> 
+     <p>Given that the tf-idf vectors contain a separate component for each word, it seemed reasonable to me to ask, “How much does each word contribute, positively or negatively, to the final similarity value?”</p> 
+     <p>At first, I made some reckless attempts at modifying the code to give me what I wanted, but it became clear that the math wasn’t right–stuff wasn’t adding up right. So I had to bite the bullet and do some actual math :).</p> 
+     <p>Originally I was hoping to calculate, for example, how the word ‘sabbath’ contributes to the total similarity, independent of which document it comes from. Turns out you can’t do exactly this, but you can do something close that I’m content with.</p> 
+     <p>Instead of asking how the word ‘sabbath’ in <em>both</em> documents contributes to the total similarity, we can instead ask, how does the word ‘sabbath’ in document 1 contribute to its similarity with document 2?</p> 
+     <p>I’ve shared the equations for this technique down in the next section. But first let’s look at the working result!</p> 
+     <h1 id="working-example">Working Example</h1> 
+     <p>In my simsearch project, I’ve included an example with Matthew Henry’s Commentary on the Bible. I take a section of the commentary on Genesis 2 which talks about the seventh day of creation, when God rested, and use this to search against the rest of the commentary. The top result is a great match–it’s commentary on Exodus 20, where God gives Moses the fourth commandment to remember the Sabbath, a day of rest. Definitely conceptually similar.</p> 
+     <p>Using the technique I worked out, you can see how each word contributes to the total similarity value of 0.954 between these two pieces of text.</p> 
+     <p>Here are the top 10 words in “document 1” (the commentary on Genesis) that contribute most to the similarity. If you add up <em>all</em> the terms, they sum to 0.954.</p> 
+     <figure class="highlight">
+      <pre><code class="language-text" data-lang="text">Total similarity: 0.954
+Breakdown by word:
+     sabbath    0.354
+         day    0.315
+      honour    0.032
+        work    0.027
+        rest    0.027
+        holy    0.024
+        week    0.015
+     blessed    0.014
+     seventh    0.013
+        days    0.012
+         ...</code></pre>
+     </figure> 
+     <p>You can do the same for “document 2” (the commentary on the Ten Commandments). Again, if you sum all terms you get the total similarity of 0.954.</p> 
+     <figure class="highlight">
+      <pre><code class="language-text" data-lang="text">Total similarity: 0.954
+Breakdown by word:
+     sabbath    0.423
+         day    0.250
+        work    0.034
+     seventh    0.032
+        rest    0.017
+        days    0.016
+     blessed    0.016
+        holy    0.010
+    blessing    0.009
+  sanctified    0.009
+         ...</code></pre>
+     </figure> 
+     <p>Note how the results are a little different taken from the perspective of document 1 vs. document 2. This is the compromise I mentioned earlier–you have to look at the two documents separately.</p> 
+     <h1 id="equation-for-the-technique">Equation for the Technique</h1> 
+     <p>First, let’s define our variables.</p> 
+     <ul> 
+      <li>\( x^{(1)} \) and \( x^{(2)} \) are the tf-idf vectors representing the two documents.</li> 
+      <li>\( z^{(1)} \) and \( z^{(2)} \) are the corresponding LSI vectors for these two documents.</li> 
+     </ul> 
+     <p>To cut down on the number of variables, let’s assume that we have a vocabulary of 5,000 words (so our tf-idf vectors are 5,000 components long), and that we are using LSI with 100 topics (so our LSI vectors are 100 components long).</p> 
+     <p>To calculate how much word \( j \) from document 1 contributes to the total similarity, we can use the following equation.</p> 
+     <script type="math/tex; mode=display">sim ( {j} ) =  \frac{  U_{*j} \cdot x_{j}^{(1)} \cdot z^{(2)}  }{  \left \| z^{(1)} \right \| \cdot \left \| z^{(2)} \right \|   }</script> 
+     <ul> 
+      <li>\( U \) is the LSI project matrix which is [100 x 5,000].</li> 
+      <li>\( U_{*j} \) is the column for the word \( j \). This is [100 x 1]</li> 
+      <li>\( x_{j}^{(1)} \) is the tf-idf value in document 1 for word \( j \).</li> 
+      <li>\( z^{(2)} \) is the [100 x 1] LSI vector for document 2.</li> 
+      <li>\( \left| z^{(1)} \right| \) and \( \left| z^{(2)} \right| \) are the magnitudes of the two LSI vectors (recall that the Cosine Similarity involves normalizing the LSI vectors–dividing them by their magnitudes).</li> 
+     </ul> 
+     <h1 id="derivation">Derivation</h1> 
+     <p>To convert the tf-idf vector into an LSI vector, we just take the product of the [100 x 5,000] LSI projection matrix \( U \) and the [5,000 x 1] tfidf vector \( x \):</p> 
+     <script type="math/tex; mode=display">z = U \cdot x</script> 
+     <p>We want to look at the individual contribution of each word to our final similarity, so let’s expand the dot-product into the element-wise equation:</p> 
+     <script type="math/tex; mode=display">z_{i} = \sum_{j=1}^{5000} U_{ij}x_{j}</script> 
+     <div class="message">
+       For all of these equations, I will use `i` to iterate over the 100 topics in the LSI vectors, and `j` to iterate over the 5,000 words in the tf-idf vectors. 
+     </div> 
+     <p>To calculate the similarity between our two documents, we compare their LSI vectors using the cosine similarity.</p> 
+     <p>The cosine similarity between the vectors is found by normalizing them and taking their dot-product:</p> 
+     <script type="math/tex; mode=display">sim_{cos}  \left ( z^{(1)},  z^{(2)} \right ) = \frac{z^{(1)}}{\left \| z^{(1)} \right \|} \cdot \frac{z^{(2)}}{\left \| z^{(2)} \right \|}</script> 
+     <p>Let’s expand that dot product to see the element-wise operations:</p> 
+     <script type="math/tex; mode=display">sim_{cos} \left ( z^{(1)},  z^{(2)} \right ) = \sum_{i=1}^{100}\left ( \frac{z_{i}^{(1)}}{\left \| z^{(1)} \right \|} \cdot \frac{z_{i}^{(2)}}{\left \| z^{(2)} \right \|} \right )</script> 
+     <p>This equation would allow us to see the similarity contribution for each of the 100 topics. However, what we really want is the similarity contribution from each <em>word</em>.</p> 
+     <p>Time to make things a little nasty. Let’s substitute in our equation for \( z_{i} \) to put this equation in terms of the original tf-idf vectors.</p> 
+     <script type="math/tex; mode=display">sim_{cos} \left ( x^{(1)},  x^{(2)} \right ) = \sum_{i=1}^{100}\left ( \frac{    \sum_{j=1}^{5000} U_{ij}x_{j}^{(1)}    }{\left \| z^{(1)} \right \|} \cdot \frac{    \sum_{j=1}^{5000} U_{ij}x_{j}^{(2)}    }{\left \| z^{(2)} \right \|} \right )</script> 
+     <p>What I originally wanted to do here was to see, for example, how the word ‘sabbath’ contributes to the total similarity, independent of which document it comes from. In order to do that, I would need to take the above equation and find a way to express it as a sum over \( j \). That way I could separate it into 5,000 terms, each term representing the similarity contribution from the corresponding word.</p> 
+     <p>Problem is, I don’t think that’s possible. You would need to consolidate those two sums over \( j \). But “product of sums” is not the same as the “sum of products”.</p> 
+     <p>There is an alternate solution, though, that seems perfectly acceptable to me. Instead of asking how the word ‘sabbath’ in <em>both</em> documents contributes to the total similarity, we can instead ask, how does the word ‘sabbath’ in document 1 contribute to its similarity with document 2?</p> 
+     <p>We’re going to take a step backwards, and remove \( x^{(2)} \) from the equation.</p> 
+     <script type="math/tex; mode=display">sim_{cos} \left ( x^{(1)},  z^{(2)} \right ) = \sum_{i=1}^{100}\left ( \frac{    \sum_{j=1}^{5000} U_{ij}x_{j}^{(1)}    }{\left \| z^{(1)} \right \|} \cdot \frac{    z_{i}^{(2)}    }{\left \| z^{(2)} \right \|} \right )</script> 
+     <p>By the distributive property, we can then move the \( z_{i}^{(2)} \) term into the sum:</p> 
+     <script type="math/tex; mode=display">sim_{cos} \left ( x^{(1)},  z^{(2)} \right ) = \sum_{i=1}^{100} \sum_{j=1}^{5000} \frac{    U_{ij}x_{j}^{(1)}z_{i}^{(2)}    }{  \left \| z^{(1)} \right \| \left \| z^{(2)} \right \|      }</script> 
+     <p>Finally, by the commutative property of addition, we’re allowed to switch the order of those two sums:</p> 
+     <script type="math/tex; mode=display">sim_{cos} \left ( x^{(1)},  z^{(2)} \right ) = \sum_{j=1}^{5000} \sum_{i=1}^{100} \frac{    U_{ij}x_{j}^{(1)}z_{i}^{(2)}    }{  \left \| z^{(1)} \right \| \left \| z^{(2)} \right \|      }</script> 
+     <p>We did it! We’ve managed to express the similarity between documents 1 and 2 as a sum of 5,000 terms. Now we can sort these terms to see which words in document 1 are contributing <em>most</em> to the total similarity.</p> 
+     <p>If you want to look at just the contribution from a specific word \( j \) from document 1:</p> 
+     <script type="math/tex; mode=display">sim ( {j} ) =  \sum_{i=1}^{100} \frac{    U_{ij}x_{j}^{(1)}z_{i}^{(2)}    }{  \left \| z^{(1)} \right \| \left \| z^{(2)} \right \|      }</script> 
+     <p>Or, in vector form:</p> 
+     <script type="math/tex; mode=display">sim ( {j} ) =  \frac{  U_{*j} \cdot x_{j}^{(1)} \cdot z^{(2)}  }{  \left \| z^{(1)} \right \| \cdot \left \| z^{(2)} \right \|   }</script> 
+     <h1 id="sample-code">Sample Code</h1> 
+     <p>You can find all of the Python code for the example I’ve discussed in my <a href="https://github.com/chrisjmccormick/simsearch">simsearch</a> project on GitHub. Follow the instructions in the README to get it going. Note that there are a few dependencies you may have to grab if you don’t already have them, such as <code class="highlighter-rouge">gensim</code> and <code class="highlighter-rouge">nltk</code>.</p> 
+     <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+     <!-- Responsive Unit - End of Post, Colorful --> 
+     <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-9176681289361741" data-ad-slot="8514028518" data-ad-format="auto"></ins> 
+     <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> 
+     <div id="disqus_thread"></div> 
+     <script>
+  
+      var disqus_config = function () {
+          this.page.url = "http://mccormickml.com/2016/11/04/interpreting-lsi-document-similarity/"
+          this.page.identifier = "/2016/11/04/interpreting-lsi-document-similarity/"
+      };
+      
+      var disqus_shortname = 'mccormickml';
+      // var disqus_developer = 1; // Comment out when the site is live
+      var disqus_title      = 'Interpreting LSI Document Similarity';
+      
+      (function() {  // DON'T EDIT BELOW THIS LINE
+          var d = document, s = d.createElement('script');
+          
+          s.src = '//' + disqus_shortname + '.disqus.com/embed.js';        
+          s.setAttribute('data-timestamp', +new Date());
+          (d.head || d.body).appendChild(s);
+      })();
+  </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+     </noscript> 
+    </article> 
+    <aside class="related"> 
+     <h3>Related posts</h3> 
+     <ul class="related-posts"> 
+      <li> <a href="/2017/09/08/knn-benchmarks-part-1/"> k-NN Benchmarks Part I - Wikipedia <small><time datetime="2017-09-08T08:00:00-07:00">08 Sep 2017</time></small> </a> </li> 
+      <li> <a href="/2017/02/22/concept-search-on-wikipedia/"> Concept Search on Wikipedia <small><time datetime="2017-02-22T07:00:00-08:00">22 Feb 2017</time></small> </a> </li> 
+      <li> <a href="/2017/02/01/getting-started-with-mlpack/"> Getting Started with mlpack <small><time datetime="2017-02-01T07:00:00-08:00">01 Feb 2017</time></small> </a> </li> 
+     </ul> 
+    </aside> 
+   </main> 
+   <footer class="footer"> 
+    <small> © <time datetime="2017-09-11T16:56:18-07:00">2017</time>. All rights reserved. </small> 
+   </footer> 
+  </div> 
+  <script>
+       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+       })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+       ga('create', 'UA-76624103-1', 'auto');
+       ga('send', 'pageview');
+     </script>   
+ </body>
+</html>

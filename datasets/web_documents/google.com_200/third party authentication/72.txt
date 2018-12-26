@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en-US" prefix="og: http://ogp.me/ns#">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://heidloff.net/xmlrpc.php"> 
+  <!--[if lt IE 9]>
+	<script src="http://heidloff.net/wp-content/themes/accesspress-lite/js/html5.min.js"></script>
+<![endif]--> 
+  <title>Authentication in Node.js Applications on Bluemix</title> 
+  <!-- This site is optimized with the Yoast SEO plugin v2.3.5 - https://yoast.com/wordpress/plugins/seo/ --> 
+  <meta name="description" content="Authentication in Node.js Applications on Bluemix"> 
+  <link rel="canonical" href="http://heidloff.net/article/authentication-node-js-bluemix"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Authentication in Node.js Applications on Bluemix"> 
+  <meta property="og:description" content="Authentication in Node.js Applications on Bluemix"> 
+  <meta property="og:url" content="http://heidloff.net/article/authentication-node-js-bluemix"> 
+  <meta property="og:site_name" content="Niklas Heidloff"> 
+  <meta property="article:section" content="Articles"> 
+  <meta property="article:published_time" content="2016-02-09T08:03:02+00:00"> 
+  <meta property="article:modified_time" content="2016-02-17T07:40:57+00:00"> 
+  <meta property="og:updated_time" content="2016-02-17T07:40:57+00:00"> 
+  <meta property="og:image" content="http://heidloff.net/wp-content/uploads/2016/02/sso-setup-3.png"> 
+  <meta property="og:image" content="http://heidloff.net/wp-content/uploads/2016/02/login-1.png"> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:description" content="Authentication in Node.js Applications on Bluemix"> 
+  <meta name="twitter:title" content="Authentication in Node.js Applications on Bluemix"> 
+  <meta name="twitter:site" content="@nheidloff"> 
+  <meta name="twitter:domain" content="Niklas Heidloff"> 
+  <meta name="twitter:image" content="http://heidloff.net/wp-content/uploads/2016/02/sso-setup-3.png"> 
+  <meta name="twitter:creator" content="@nheidloff"> 
+  <!-- / Yoast SEO plugin. --> 
+  <link rel="alternate" type="application/rss+xml" title="Niklas Heidloff » Feed" href="http://heidloff.net/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Niklas Heidloff » Comments Feed" href="http://heidloff.net/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Niklas Heidloff » Authentication in Node.js Applications on Bluemix Comments Feed" href="http://heidloff.net/article/authentication-node-js-bluemix/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"http:\/\/s.w.org\/images\/core\/emoji\/72x72\/","ext":".png","source":{"concatemoji":"http:\/\/heidloff.net\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.3.12"}};
+			!function(a,b,c){function d(a){var c=b.createElement("canvas"),d=c.getContext&&c.getContext("2d");return d&&d.fillText?(d.textBaseline="top",d.font="600 32px Arial","flag"===a?(d.fillText(String.fromCharCode(55356,56812,55356,56807),0,0),c.toDataURL().length>3e3):(d.fillText(String.fromCharCode(55357,56835),0,0),0!==d.getImageData(16,16,1,1).data[0])):!1}function e(a){var c=b.createElement("script");c.src=a,c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g;c.supports={simple:d("simple"),flag:d("flag")},c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.simple&&c.supports.flag||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="accesspresslite-google-fonts-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A400%2C400italic%2C300italic%2C300%2C600%2C600italic%7CLato%3A400%2C100%2C300%2C700&amp;ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-font-awesome-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/css/font-awesome.min.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-fancybox-css-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/css/nivo-lightbox.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-bx-slider-style-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/css/jquery.bxslider.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-woo-commerce-style-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/css/woocommerce.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-font-style-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/css/fonts.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-style-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/style.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="accesspresslite-responsive-css" href="http://heidloff.net/wp-content/themes/accesspress-lite/css/responsive.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wptt_front-css" href="http://heidloff.net/wp-content/plugins/wp-twitter-feeds/css/admin_style.min.css?ver=4.3.12" type="text/css" media="all"> 
+  <link rel="stylesheet" id="genericons-css" href="http://heidloff.net/wp-content/plugins/jetpack/_inc/genericons/genericons/genericons.css?ver=3.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="jetpack_css-css" href="http://heidloff.net/wp-content/plugins/jetpack/css/jetpack.css?ver=3.8.0" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://heidloff.net/wp-includes/js/jquery/jquery.js?ver=1.11.3"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1"></script> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://heidloff.net/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://heidloff.net/wp-includes/wlwmanifest.xml"> 
+  <meta name="generator" content="WordPress 4.3.12"> 
+  <link rel="shortlink" href="http://wp.me/p6Xe9Q-tM"> 
+  <style type="text/css">img#wpstats{display:none}</style>
+  <link rel="shortcut icon" type="image/png" href="http://heidloff.net/wp-content/uploads/2015/11/android-icon-144x144.png">
+  <style type="text/css">.site-info { 
+    visibility:hidden;
+}
+
+.sidebar {
+    max-width: 300px;
+}
+
+.syntaxhighlighter .gutter .line {
+    border-right: 3px solid #01AEFD !important;
+}</style>
+  <link rel="dns-prefetch" href="//platform.twitter.com"> 
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+  <!-- BEGIN GADWP v4.8.3 Universal Tracking - https://deconf.com/google-analytics-dashboard-wordpress/ --> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-21626700-1', 'auto');
+  ga('send', 'pageview');
+</script> 
+  <!-- END GADWP Universal Tracking --> 
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Authentication in Node.js Applications on Bluemix">
+  <meta name="twitter:site" content="@nheidloff">
+  <meta name="twitter:description" content="There are different ways how to do authentication in Node.js applications running on Bluemix, either via Bluemix services, third party offerings, open source libraries or self written code. Below is a sample that leverages the Single Sign On service and a Mongo database to store user sessions for cloud native applications. Get the code from…">
+  <meta name="twitter:image" content="http://heidloff.net/wp-content/uploads/2016/02/login-1.png">
+  <meta name="twitter:image:width" content="800">
+  <meta name="twitter:image:height" content="464">
+  <meta name="twitter:creator" content="@nheidloff"> 
+  <meta name="twitter:widgets:link-color" content="#000000">
+  <meta name="twitter:widgets:border-color" content="#000000">
+  <meta name="twitter:partner" content="tfwp">
+ </head> 
+ <body class="single single-post postid-1846 single-format-standard right-sidebar"> 
+  <div id="page" class="site"> 
+   <header id="masthead" class="site-header"> 
+    <div id="top-header"> 
+     <div class="ak-container"> 
+      <div class="site-branding"> 
+       <a href="http://heidloff.net/"> <h1 class="site-title">Niklas Heidloff</h1> 
+        <div class="tagline site-description"></div> </a> 
+      </div>
+      <!-- .site-branding --> 
+      <div class="right-header clearfix"> 
+       <div class="clearfix"></div> 
+       <div class="socials"> 
+        <a href="https://www.facebook.com/niklas.heidloff" class="facebook" title="Facebook" target="_blank"><span class="font-icon-social-facebook"></span></a> 
+        <a href="http://twitter.com/nheidloff" class="twitter" title="Twitter" target="_blank"><span class="font-icon-social-twitter"></span></a> 
+        <a href="https://www.youtube.com/user/nheidloff" class="youtube" title="Youtube" target="_blank"><span class="font-icon-social-youtube"></span></a> 
+        <a href="https://www.linkedin.com/in/niklasheidloff/" class="linkedin" title="Linkedin" target="_blank"><span class="font-icon-social-linkedin"></span></a> 
+        <a href="http://heidloff.net/feed/" class="rss" title="RSS" target="_blank"><span class="font-icon-rss"></span></a> 
+       </div> 
+       <div class="ak-search"> 
+        <form method="get" class="searchform" action="http://heidloff.net/" role="search"> 
+         <input type="text" name="s" value="" class="s" placeholder="Search..."> 
+         <button type="submit" name="submit" class="searchsubmit"><i class="fa fa-search"></i></button> 
+        </form> 
+       </div> 
+      </div>
+      <!-- .right-header --> 
+     </div>
+     <!-- .ak-container --> 
+    </div>
+    <!-- #top-header --> 
+    <nav id="site-navigation" class="main-navigation menu-left"> 
+     <div class="ak-container"> 
+      <h1 class="menu-toggle">Menu</h1> 
+      <div class="menu-articles-container">
+       <ul id="menu-articles" class="menu">
+        <li id="menu-item-77" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-77"><a href="http://heidloff.net">Home</a></li> 
+        <li id="menu-item-82" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-82"><a href="http://heidloff.net/page/archives">Archives</a></li> 
+        <li id="menu-item-78" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-78"><a href="http://twitter.com/nheidloff">Tweets</a></li> 
+        <li id="menu-item-76" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-76"><a href="http://www.slideshare.net/niklasheidloff">Slides</a></li> 
+        <li id="menu-item-79" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-79"><a href="https://www.youtube.com/nheidloff">Videos</a></li> 
+        <li id="menu-item-81" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-81"><a href="https://github.com/nheidloff?tab=repositories">Source Code</a></li> 
+       </ul>
+      </div> 
+     </div> 
+    </nav>
+    <!-- #site-navigation --> 
+   </header>
+   <!-- #masthead --> 
+   <section id="slider-banner"> 
+   </section>
+   <!-- #slider-banner --> 
+   <div id="content" class="site-content"> 
+    <div class="ak-container"> 
+     <div id="primary" class="content-area"> 
+      <main id="main" class="site-main" role="main"> 
+       <article id="post-1846" class="post-1846 post type-post status-publish format-standard hentry category-articles"> 
+        <header class="entry-header"> 
+         <h1 class="entry-title">Authentication in Node.js Applications on Bluemix</h1> 
+         <div class="entry-meta"> 
+          <span class="posted-on">Posted on <a href="http://heidloff.net/article/authentication-node-js-bluemix" rel="bookmark"><time class="entry-date published" datetime="2016-02-09T08:03:02+00:00">February 9, 2016</time><time class="updated" datetime="2016-02-17T07:40:57+00:00">February 17, 2016</time></a></span>
+          <span class="byline"> by <span class="author vcard"><a class="url fn n" href="http://heidloff.net/author/niklasheidloff/">Niklas Heidloff</a></span></span> 
+         </div>
+         <!-- .entry-meta --> 
+        </header>
+        <!-- .entry-header --> 
+        <div class="entry-content"> 
+         <p>There are different ways how to do authentication in Node.js applications running on <a href="https://bluemix.net" target="_blank">Bluemix</a>, either via Bluemix services, third party offerings, open source libraries or self written code. Below is a sample that leverages the <a href="https://www.ng.bluemix.net/docs/#services/SingleSignOn/index.html" target="_blank">Single Sign On</a> service and a Mongo database to store user sessions for cloud native applications.<span id="more-1846"></span></p> 
+         <p><a href="https://github.com/IBM-Bluemix/collaboration/tree/initialversion" target="_blank">Get the code from GitHub.</a></p> 
+         <p>The Single Sign On service supports different identity providers. For example enterprise customers typically use SAML. If customers don’t have an SAML identity provider, they can install an <a href="https://www.ng.bluemix.net/docs/services/SingleSignOn/idbr_info.html#idbr_overview" target="_blank">Identity Bridge</a> on premises which externalizes the SAML protocol to an LDAP version 3 compliant directory. In the sample below I use a cloud directory with only one test user, but the application code would be identical when using SAML.</p> 
+         <p><a href="http://heidloff.net/wp-content/uploads/2016/02/sso-setup-3.png"><img src="http://heidloff.net/wp-content/uploads/2016/02/sso-setup-3.png" alt="sso-setup-3" width="2288" height="666" class="alignnone size-full wp-image-1845"></a></p> 
+         <p>In the Node.js application <a href="http://passportjs.org/" target="_blank">passport</a> and <a href="https://www.npmjs.com/package/passport-idaas-openidconnect" target="_blank">passport-idaas-openidconnect</a> are used. passport-idaas-openidconnect is a passport authentication strategy for the IBM Bluemix Single Sign On service. Check out <a href="https://github.com/IBM-Bluemix/collaboration/blob/initialversion/server/authentication.js" target="_blank">authentication.js</a> for details.</p> 
+         <p>The sample code relies on cookies which are sent with the client requests and validated on the server. For cloud native applications the validation needs to work when multiple instances of applications are run. My colleague Tim Robinson documented in the article <a href="https://www.ibm.com/developerworks/library/wa-scale-sso-for-node-apps-trs-bluemix/" target="_blank">Scale single sign-on for your Node.js cloud apps</a> how to do this by leveraging Redis. My sample is very similar but uses Mongo instead of Redis.</p> 
+         <p>Follow the instructions in the <a href="https://github.com/IBM-Bluemix/collaboration/blob/initialversion/README.md" target="_blank">README</a> how to set up the sample application. Since as a developer I prefer to develop locally I documented how to configure the local development environment. After everything is set up correctly, you’ll be able to log on and access the user information in the server side code.</p> 
+         <p><a href="http://heidloff.net/wp-content/uploads/2016/02/login-1.png"><img src="http://heidloff.net/wp-content/uploads/2016/02/login-1.png" alt="login-1" width="800" height="464" class="alignnone size-full wp-image-1844"></a></p> 
+         <div class="sharedaddy sd-sharing-enabled">
+          <div class="robots-nocontent sd-block sd-social sd-social-official sd-sharing">
+           <h3 class="sd-title">Share this:</h3>
+           <div class="sd-content">
+            <ul>
+             <li class="share-twitter">
+              <div class="twitter_button">
+               <iframe allowtransparency="true" frameborder="0" scrolling="no" src="http://platform.twitter.com/widgets/tweet_button.html?url=http%3A%2F%2Fheidloff.net%2Farticle%2Fauthentication-node-js-bluemix&amp;counturl=http%3A%2F%2Fheidloff.net%2Farticle%2Fauthentication-node-js-bluemix&amp;count=horizontal&amp;text=Authentication%20in%20Node.js%20Applications%20on%20Bluemix%3A&amp;via=nheidloff" style="width:101px; height:20px;"></iframe>
+              </div></li>
+             <li class="share-linkedin">
+              <div class="linkedin_button">
+               <script type="in/share" data-url="http://heidloff.net/article/authentication-node-js-bluemix" data-counter="right"></script>
+              </div></li>
+             <li class="share-facebook">
+              <div class="fb-share-button" data-href="http://heidloff.net/article/authentication-node-js-bluemix" data-layout="button_count"></div></li>
+             <li class="share-google-plus-1">
+              <div class="googleplus1_button">
+               <div class="g-plus" data-action="share" data-annotation="bubble" data-href="http://heidloff.net/article/authentication-node-js-bluemix"></div>
+              </div></li>
+             <li class="share-email"><a rel="nofollow" data-shared="" class="share-email sd-button" href="http://heidloff.net/article/authentication-node-js-bluemix?share=email" target="_blank" title="Click to email this to a friend"><span>Email</span></a></li>
+             <li class="share-end"></li>
+            </ul>
+           </div>
+          </div>
+         </div> 
+        </div>
+        <!-- .entry-content --> 
+        <footer class="entry-footer"> 
+        </footer>
+        <!-- .entry-footer --> 
+       </article>
+       <!-- #post-## --> 
+       <div id="disqus_thread"> 
+       </div> 
+      </main>
+      <!-- #main --> 
+     </div>
+     <!-- #primary --> 
+     <div id="secondary-right" class="widget-area right-sidebar sidebar"> 
+      <aside id="text-4" class="widget widget_text">
+       <h3 class="widget-title">Niklas Heidloff</h3> 
+       <div class="textwidget">
+        <img src="/wp-content/uploads/2015/11/4Y7B9422-4.jpg" alt=""> Hi, my name is Niklas Heidloff. I work for IBM as a Developer Advocate. I like learning, conversational user experiences and serverless technologies. I'm a proud father of five and love BBQ.
+       </div> 
+      </aside>
+      <aside id="blog_subscription-2" class="widget jetpack_subscription_widget">
+       <h3 class="widget-title">Subscribe</h3> 
+       <form action="#" method="post" accept-charset="utf-8" id="subscribe-blog-blog_subscription-2"> 
+        <div id="subscribe-text"></div> 
+        <p id="subscribe-email"> <label id="jetpack-subscribe-label" for="subscribe-field-blog_subscription-2; ?>"> Email Address </label> <input type="email" name="email" required class="required" value="" id="subscribe-field-blog_subscription-2" placeholder="Email Address"> </p> 
+        <p id="subscribe-submit"> <input type="hidden" name="action" value="subscribe"> <input type="hidden" name="source" value="http://heidloff.net/article/authentication-node-js-bluemix"> <input type="hidden" name="sub-type" value="widget"> <input type="hidden" name="redirect_fragment" value="blog_subscription-2"> <input type="submit" value="Subscribe" name="jetpack_subscriptions_widget"> </p> 
+       </form> 
+       <script>
+			/*
+			Custom functionality for safari and IE
+			 */
+			(function( d ) {
+				// Creates placeholders for IE
+				if ( ( 'placeholder' in d.createElement( 'input' ) ) ) {
+					var label = d.getElementById( 'jetpack-subscribe-label' );
+						label.style.clip 	 = 'rect(1px, 1px, 1px, 1px)';
+						label.style.position = 'absolute';
+						label.style.height   = '1px';
+						label.style.width    = '1px';
+						label.style.overflow = 'hidden';
+				}
+
+				// Make sure the email value is filled in before allowing submit
+				var form = d.getElementById('subscribe-blog-blog_subscription-2'),
+					input = d.getElementById('subscribe-field-blog_subscription-2'),
+					handler = function( event ) {
+						if ( '' === input.value ) {
+							input.focus();
+
+							if ( event.preventDefault ){
+								event.preventDefault();
+							}
+
+							return false;
+						}
+					};
+
+				if ( window.addEventListener ) {
+					form.addEventListener( 'submit', handler, false );
+				} else {
+					form.attachEvent( 'onsubmit', handler );
+				}
+			})( document );
+			</script> 
+      </aside>
+      <aside id="text-6" class="widget widget_text">
+       <h3 class="widget-title">Latest Tweets</h3> 
+       <div class="textwidget"> 
+        <a data-chrome="nofooter noborders noheader transparent noscrollbar" class="twitter-timeline" href="https://twitter.com/nheidloff" data-widget-id="413338456887025664"> Tweets by @nheidloff </a> 
+        <script>
+						!function(d,s,id){var
+						js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
+					</script>
+       </div> 
+      </aside> 
+      <aside id="recent-posts-3" class="widget widget_recent_entries"> 
+       <h3 class="widget-title">Recent Posts</h3> 
+       <ul> 
+        <li> <a href="http://heidloff.net/article/kubernetes-helm-ibm-cloud">Deploying Apps to Kubernetes on the IBM Cloud with Helm</a> </li> 
+        <li> <a href="http://heidloff.net/article/microprofile-bluemix-kubernetes">Deploying MicroProfile based Java Applications to Bluemix</a> </li> 
+        <li> <a href="http://heidloff.net/article/microprofile-ibm-cloud-private-kubernetes">Deploying MicroProfile based Apps to IBM Cloud private</a> </li> 
+        <li> <a href="http://heidloff.net/article/watson-machine-learning-sample">Watson Machine Learning Sample for Developers</a> </li> 
+        <li> <a href="http://heidloff.net/article/pictures-hack.iaa-ibm">Some Pictures from Hack.IAA</a> </li> 
+       </ul> 
+      </aside>
+      <aside id="text-9" class="widget widget_text">
+       <h3 class="widget-title">DZone</h3> 
+       <div class="textwidget">
+        <a href="https://dzone.com/users/1394519/nheidloff.html?sort=articles"><img src="/wp-content/uploads/2015/12/22430-dzone_mvb_button1-1.jpg" alt=""></a>
+       </div> 
+      </aside>
+      <aside id="text-2" class="widget widget_text">
+       <h3 class="widget-title">Disclaimer</h3> 
+       <div class="textwidget">
+        The postings on this site are my own and don't necessarily represent my employer IBM's positions, strategies or opinions.
+       </div> 
+      </aside> 
+     </div>
+     <!-- #secondary --> 
+    </div> 
+   </div>
+   <!-- #content --> 
+   <footer id="colophon" class="site-footer" role="contentinfo"> 
+    <div id="bottom-footer"> 
+     <div class="ak-container"> 
+      <h1 class="site-info"> <a href="http://wordpress.org/">Free WordPress Theme</a> <span class="sep"> | </span> <a href="https://accesspressthemes.com/" title="AccessPress Themes" target="_blank">AccessPress Lite</a> </h1>
+      <!-- .site-info --> 
+      <div class="copyright">
+        Copyright © 2017 
+       <a href="http://heidloff.net"> Niklas Heidloff </a> 
+      </div> 
+     </div> 
+    </div> 
+   </footer>
+   <!-- #colophon --> 
+  </div>
+  <!-- #page --> 
+  <div style="display:none"> 
+  </div> 
+  <script type="text/javascript">
+		window.WPCOM_sharing_counts = {"http:\/\/heidloff.net\/article\/authentication-node-js-bluemix":1846};
+	</script> 
+  <script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-twitter' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomtwitter', 'menubar=1,resizable=1,width=600,height=350' );
+				return false;
+			});
+		});
+		</script> 
+  <script type="text/javascript">
+			jQuery( document ).ready( function() {
+			    jQuery.getScript( '//platform.linkedin.com/in.js?async=true', function success() {
+			        IN.init();
+			    });
+			});
+			jQuery( document.body ).on( 'post-load', function() {
+				if ( typeof IN != 'undefined' )
+					IN.parse();
+			});
+			</script> 
+  <script type="text/javascript">
+			var windowOpen;
+		jQuery(document).on( 'ready post-load', function(){
+			jQuery( 'a.share-facebook' ).on( 'click', function() {
+				if ( 'undefined' !== typeof windowOpen ){ // If there's another sharing window open, close it.
+					windowOpen.close();
+				}
+				windowOpen = window.open( jQuery(this).attr( 'href' ), 'wpcomfacebook', 'menubar=1,resizable=1,width=600,height=400' );
+				return false;
+			});
+		});
+		</script> 
+  <div id="fb-root"></div> 
+  <script>(function(d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = '//connect.facebook.net/en_US/sdk.js#xfbml=1&appId=249643311490&version=v2.3'; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));</script> 
+  <script>
+			jQuery( document.body ).on( 'post-load', function() {
+				if ( 'undefined' !== typeof FB ) {
+					FB.XFBML.parse();
+				}
+			} );
+			</script> 
+  <script>
+			function renderGooglePlus1() {
+				if ( 'undefined' === typeof gapi ) {
+					return;
+				}
+
+				jQuery( '.g-plus' ).each(function() {
+					var $button = jQuery( this );
+
+					if ( ! $button.data( 'gplus-rendered' ) ) {
+						gapi.plusone.render( this, {
+							href: $button.attr( 'data-href' ),
+							size: $button.attr( 'data-size' ),
+							annotation: $button.attr( 'data-annotation' )
+						});
+
+						$button.data( 'gplus-rendered', true );
+					}
+				});
+			}
+
+			(function() {
+				var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+				po.src = 'https://apis.google.com/js/plusone.js';
+				po.innerHTML = '{"parsetags": "explicit"}';
+				po.onload = renderGooglePlus1;
+				var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+			})();
+
+			jQuery( document.body ).on( 'post-load', renderGooglePlus1 );
+			</script> 
+  <div id="sharing_email" style="display: none;"> 
+   <form action="/article/authentication-node-js-bluemix" method="post"> 
+    <label for="target_email">Send to Email Address</label> 
+    <input type="email" name="target_email" id="target_email" value=""> 
+    <label for="source_name">Your Name</label> 
+    <input type="text" name="source_name" id="source_name" value=""> 
+    <label for="source_email">Your Email Address</label> 
+    <input type="email" name="source_email" id="source_email" value=""> 
+    <input type="text" id="jetpack-source_f_name" name="source_f_name" class="input" value="" size="25" autocomplete="off"> 
+    <script> document.getElementById('jetpack-source_f_name').value = ''; </script> 
+    <img style="float: right; display: none" class="loading" src="http://heidloff.net/wp-content/plugins/jetpack/modules/sharedaddy/images/loading.gif" alt="loading" width="16" height="16"> 
+    <input type="submit" value="Send Email" class="sharing_send"> 
+    <a rel="nofollow" href="#cancel" class="sharing_cancel">Cancel</a> 
+    <div class="errors errors-1" style="display: none;">
+      Post was not sent - check your email addresses! 
+    </div> 
+    <div class="errors errors-2" style="display: none;">
+      Email check failed, please try again 
+    </div> 
+    <div class="errors errors-3" style="display: none;">
+      Sorry, your blog cannot share posts by email. 
+    </div> 
+   </form> 
+  </div> 
+  <script type="text/javascript" src="http://s0.wp.com/wp-content/js/devicepx-jetpack.js?ver=201740"></script> 
+  <script type="text/javascript" src="http://s.gravatar.com/js/gprofiles.js?ver=2017Octaa"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var WPGroHo = {"my_hash":""};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/plugins/jetpack/modules/wpgroho.js?ver=4.3.12"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/themes/accesspress-lite/js/jquery.bxslider.min.js?ver=4.1"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/themes/accesspress-lite/js/nivo-lightbox.min.js?ver=2.1"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/themes/accesspress-lite/js/jquery.actual.min.js?ver=1.0.16"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/themes/accesspress-lite/js/skip-link-focus-fix.js?ver=20130115"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/themes/accesspress-lite/js/custom.js?ver=1.1"></script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-includes/js/comment-reply.min.js?ver=4.3.12"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+window.twttr=(function(w){t=w.twttr||{};t._e=[];t.ready=function(f){t._e.push(f);};return t;}(window));
+/* ]]> */
+</script> 
+  <script type="text/javascript" id="twitter-wjs" async defer src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var embedVars = {"disqusConfig":{"platform":"wordpress@4.3.12","language":""},"disqusIdentifier":"1846 http:\/\/heidloff.net\/?p=1846","disqusShortname":"heidloff","disqusTitle":"Authentication in Node.js Applications on Bluemix","disqusUrl":"http:\/\/heidloff.net\/article\/authentication-node-js-bluemix","options":{"manualSync":false},"postId":"1846"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/plugins/disqus-comment-system/media/js/disqus.js?ver=4.3.12"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var countVars = {"disqusShortname":"heidloff"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/plugins/disqus-comment-system/media/js/count.js?ver=4.3.12"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var sharing_js_options = {"lang":"en","counts":"1"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://heidloff.net/wp-content/plugins/jetpack/modules/sharedaddy/sharing.js?ver=3.8.0"></script> 
+  <script type="text/javascript" src="http://stats.wp.com/e-201740.js" async defer></script> 
+  <script type="text/javascript">
+	_stq = window._stq || [];
+	_stq.push([ 'view', {v:'ext',j:'1:3.8.0',blog:'102773794',post:'1846',tz:'0',srv:'heidloff.net'} ]);
+	_stq.push([ 'clickTrackerInit', '102773794', '1846' ]);
+</script>  
+ </body>
+</html>

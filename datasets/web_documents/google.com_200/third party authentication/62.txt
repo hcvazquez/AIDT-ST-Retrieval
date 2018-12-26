@@ -1,0 +1,311 @@
+<!doctype html>
+<!--[if lt IE 7]><html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]><html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]><html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <title>Securing API Keys in a Client Side JavaScript App - Bill Patrianakos</title> 
+  <meta name="description" content="Securing API Keys in a Client Side JavaScript App Published Sep 12th, 2013 UPDATE: This post contains decent ideas but I recommend you check out the …"> 
+  <meta name="author" content="Bill Patrianakos"> 
+  <link rel="author" href="/humans.txt"> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="canonical" href="
+		http://billpatrianakos.me
+		
+			/blog/2013/09/12/securing-api-keys-in-a-client-side-javascript-app
+		
+	"> 
+  <link rel="stylesheet" href="/stylesheets/style.css"> 
+  <link href="/atom.xml" rel="alternate" title="Bill Patrianakos" type="application/atom+xml"> 
+  <!-- Easily add additional code to the <head /> of each page --> 
+  <!-- Google web fonts --> 
+  <link href="http://fonts.googleapis.com/css?family=Lato:300,400,700,400italic|Source+Code+Pro" rel="stylesheet" type="text/css"> 
+  <!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<script src="/js/libs/respond.min.js" type="text/javascript"></script>
+	<![endif]--> 
+  <!--[if gte IE 9]>
+	<style type="text/css">
+	.gradient { filter: none; }
+	</style>
+	<![endif]--> 
+ </head> 
+ <body> 
+  <header class="container"> 
+   <section class="row"> 
+    <nav class="eight"> 
+     <h1><a href="/">Bill Patrianakos</a></h1> 
+     <ul> 
+      <li><a href="/">Articles</a></li> 
+      <li><a href="/projects">Projects</a></li> 
+      <li><a href="/blog/categories/highlights">Best of</a></li> 
+      <li><a href="/about">About</a></li> 
+      <li><a href="/blog/archives">Archive</a></li> 
+      <li><a href="/atom.xml"><i class="icon-rss icon-large"></i></a></li> 
+     </ul> 
+    </nav> 
+    <div class="four last"> 
+     <form action="/" id="cse-search-box"> 
+      <div> 
+       <input type="hidden" name="cx" value="partner-pub-7848445129120487"> 
+       <input type="hidden" name="cof" value="FORID:10"> 
+       <input type="hidden" name="ie" value="ISO-8859-1"> 
+       <input type="text" name="q" size="21"> 
+       <input type="submit" name="sa" value="Search"> 
+      </div> 
+     </form> 
+     <script type="text/javascript" src="http://www.google.com/cse/brand?form=cse-search-box&amp;lang=en"></script> 
+    </div> 
+   </section> 
+  </header> 
+  <!-- Header includes navigation --> 
+  <div id="main"> 
+   <section id="main-container" class="container"> 
+    <section class="row"> 
+     <article class="eight" role="article"> 
+      <div class="entry"> 
+       <h1 class="entry-title">Securing API Keys in a Client Side JavaScript App</h1> 
+       <p class="meta"> <time datetime="2013-09-12T12:53:00-05:00" pubdate data-updated="true"> Published Sep 12<span>th</span>, 2013 </time> </p> 
+      </div> 
+      <div class="entry-content"> 
+       <p><strong>UPDATE: This post contains <em>decent</em> ideas but I recommend you <a href="http://billpatrianakos.me/blog/2016/02/15/securing-api-keys-in-a-javascript-single-page-app/">check out the updated article here</a>. It’s more secure and easier to follow.</strong></p> 
+       <p>Lately I’ve been working a lot with client side JavaScript applications using <a href="http://angularjs.org">Angular</a> as a front-end framework. After being exposed to this way of developing web <a href="http://billpatrianakos.me/blog/2013/08/29/the-future-is-js-on-the-client-and-i-wont-be-left-behind/">I truly believe client-side apps are the future of web development</a>. There are a lot of advantages of using the single-page/client-side model for web apps but they also come with a few big problems, not least of which is security. There are surprisingly very few answers to the question of how to secure API keys in a JavaScript app. Since it’s so difficult to find an answer to this question online I decided I’d share with you how I’m securing API calls made from a client side Angular app.</p> 
+       <!-- more --> 
+       <h2>The Problem in a Nutshell</h2> 
+       <p>The basic problem posed by client-side apps written in JavaScript is that anyone can view the code, modify it, and send any data they want. If you’re running a back end API then you’ll most likely want to restrict access to it. You’ll only want authorized applications to be able to send requests and even then you’ll probably want to do things like limit the amount of requests a client can make in any given time period, control what kind of requests a client can make, and only return a subset of API data based on the permission level of the client. Normally you’d do this by requiring clients to identify themselves with some sort of username/password combo or a set of API keys before you authorize them to query the API. In order to prevent others from using keys or credentials that don’t belong to them you must require your API clients to keep their keys private. In a traditional server side application model this is no problem. You’d store the key in your app’s config file or a database with limited access and send it when authorization is required and it would be safe because no one else should have access to code on the server (unless some sort of massive fuck up takes place). With a JavaScript app all requests come from the client which is the same place where all the code is stored which means if you store your API key in a JavaScript web app you might as well just print it out in big bold letters across the homepage as the whole world now has access to it through their browser’s dev tools.</p> 
+       <p>I mentioned previously that I was rewriting <a href="https://writeapp.me">Write.app</a> in Ruby using Rails. The new Write.app project has now diverged into the Write.app core API and the core client. The core client is just like any other API client – its provides a UI to interact with the back end API and is completely disconnected from the app logic. As such I need a way to uniquely identify it and prevent others from abusing the Write.app API keys. Before explaining how I solved the problem I want to warn you about some of the insecure solutions I’ve seen people suggest on StackOverflow and other sites.</p> 
+       <h2>The Don’t List</h2> 
+       <p><strong>Don’t rely on sessions</strong> as your only security method. Session IDs can be stolen, fixated, or otherwise hijacked. If your app creates a session any time a request is made to it how are you going to identify that only an authorized client requested it and it isn’t just some guy running <code>curl -I</code> at his terminal?</p> 
+       <p><strong>Don’t use cookies</strong>. These are even worse than server-side sessions as an attacker can then read an unsuspecting user’s cookie that he or she received legitimately.</p> 
+       <p><strong>Don’t rely on custom headers</strong>. I flirted with the idea of sending a custom header on every request. The problem with this is that if you’re generating the header to be sent client-side then an attacker only needs to visit your app once to browse through the code to get it. If you use a proxy to inject a custom header in every request from the client-side to the server side you’re still generating it on every request regardless of where it originated.</p> 
+       <p><strong>Don’t trust the referrer header</strong>. First off, not every browser sends a referrer header but more importantly, they’re easily spoofed.</p> 
+       <p><strong>Don’t rely on IP addresses</strong>. Some people suggest you store a unique token on the client based on their IP address in order to identify them. In a best case scenario you may ensure requests only come from a specific IP but you end up pissing off people on mobile devices, behind proxies, or anyone using an ISP that routinely reassigns IP addresses by rejecting their requests when their IP changes. IPs can be spoofed anyway so trusting them in this case is not a good idea.</p> 
+       <p><strong>SSL is not enough</strong>. Some people thinking slapping an SSL certificate on a site automatically makes it secure and means they no longer need to worry about security. This isn’t the case. Man in the middle attacks, XSS, and CSRF attacks are all still possible when using SSL, especially during the initial handshake. Using SSL puts you pretty far ahead of the game but it’s not the end of the line.</p> 
+       <h2>The Solution</h2> 
+       <p>In the case of Write.app, much of the client is a public site so there’s only a need to authenticate the client upon certain requests. Because there’s no need to authenticate a client that’s just browsing the homepage or the features page a key is not required there. With this in mind, here’s Write.app’s solution:</p> 
+       <h3>Requesting the key</h3> 
+       <p>The first thing that happens is that the client will request a key. This will only happen on certain pages like the sign up and log in pages. The idea here is that we want to make sure that only users browsing with a known client (in this case the official website or core client as it’s called) are allowed to take actions like creating or authenticating a user.</p> 
+       <p>So when the client app requests the login page the server generates a unique token based on information sent in the request. The information used is always something the server knows, something the client knows, and something both know. So for example the server can generate a unique key based on <code>User agent + current time + secret key</code>. The server generates a hash based on this information and then stores a cookie containing only the hash on the client machine.</p> 
+       <h3>Setting permissions</h3> 
+       <p>At this point our key really isn’t a key anymore. It has been transformed into an access token. The server should then take this access token and store it for later retrieval. You can put the key in a database but since data of this type needs to be retrieved often I would suggest using a key-value store like <a href="http://redis.io">Redis</a> to cut down on database reads/writes and boost performance.</p> 
+       <p>When you store the token you should also store a separate piece of data to indicate what permissions are associated with the token. In this case our token is acting only as a way to register and authenticate users so we store it next to a value that indicates who the token belongs to (the app’s web UI) and what permissions it has (limited to create and authenticate users). We treat it just like we would any other API client that way we can capture stats and control how it is used.</p> 
+       <h3>Authorizing a request</h3> 
+       <p>When the client then makes the POST request to create a new user or log in the server will check to see if the client sent an identifying cookie along with the request. If not, we reject the request. If it does send the cookie, the server should once again generate the hash using the values used previously (these values are either already known or sent with the request anyway so we’re not really taxing the server much) compare it to the cookie being sent to us, and if the values match allow the request to proceed.</p> 
+       <h3>Cleaning house</h3> 
+       <p>Now that we’ve completed an authorized request using a valid cookie we no longer need it. Remember that because we’re using a client to access an API there really is no concept of a session on the server. Authorized clients should be able to make requests based on single use tokens, not sessions stored on the server. Instead we should be handling application state on the client which is beyond the scope of this article but is important to mention.</p> 
+       <p>When the user finishes taking any of the actions approved for our client (login or sign up) we throw away the token. Before we do, however, we need to generate a new one this time tied to a specific user with different permissions. In our API we give each user their own API key which allows them to take actions through our client app. During a signup or login action we look up the secret key from the user’s database table (or generate a new one if its a sign up action) and from then on this key will be used in conjunction with the other data we used to generate our core client token (user agent and current time in our example) to generate a new single use token each time a user logs in. This process is identical to how we manage the app’s own key.</p> 
+       <p>The difference between the core client’s API key and a user’s key is that the core client’s key changes often and has far fewer permissions than a user’s key. In fact, the core client’s key is really just a means to be able to securely retrieve a user’s key. If an attacker were to get their hands on the core client key all they could do is create new users and, potentially more dangerously, allow users to log in through a fake form. Luckily, there are more protections in place in the case of Write.app such as SSL everywhere, CSRF tokens, and more. The user’s key on the other hand gets transformed into a user token which is then tied to that specific user’s account. The token will allow the user full access to the API’s account functionality but only for that specific user. The user’s API key is never shown to them and never accessed by the client directly just like the core client’s key. This is what allows the JavaScript app to communicate with the API while still keeping its keys secret.</p> 
+       <h3>Other considerations</h3> 
+       <p>In Write.app’s case, all core client keys expire after a certain amount of time that never exceeds 24 hours. A cron job runs periodically to disable and delete keys that have expired.</p> 
+       <p>This kind of setup works for Write.app because the client itself first needs to authenticate with the server to take any action and even then does not have sufficient privileges to modify or return sensitive data. It’s essentially a read-only application that never leaks data outside of the server side API.</p> 
+       <p>These measures alone are not enough for full security however and are beefed up on the server side with other techniques to enhance security. The core client keys are still susceptible to leakage under certain conditions but the system is set up in such a way that even if an attacker were to get the keys they couldn’t do anything useful with them without significantly more time and effort. The fact that keys change automatically over time shortens the time an attacker has to find the three values used in creating the access token and then once discovered the attacker needs to be able to set up a way to get a user to hand over their username and password. An attacker could create their own account but the value of an attack on Write.app would be in exposing or modifying existing user data.</p> 
+       <p>Remember too that the site uses SSL and other measures besides just limited-time tokens to allow requests. All in all this model is actually more secure than the current server side implementation of Write.app. I’ll be writing in more detail with example code how this system works on the <a href="https://writeapp.me/writeapp">Write.app blog</a> soon.</p> 
+       <p><strong>It’s important that you know none of the methods described here are bullet proof. In reality, there is no perfect security but when dealing with JavaScript apps especially you have to be extra cautious. The techniques described here are just fine for most web applications, even those that require a high degree of security like Write.app, but if you are dealing with sensitive data like credit card numbers, medical data, or other data that can be harmful if accessed by a third party then don’t build a client-side app at all and stick to traditional apps.</strong></p> 
+       <h2>Update (10/10/2013)</h2> 
+       <p>In implementing this strategy for my own project, I realized that some of my original idea is not as good as I thought, there are areas that could cause confusion (like the values used for hashing), and much of my original idea is only applicable when you are in control of both the client code and the API. So here are some refinements to my original idea:</p> 
+       <h3>1. Clarity on Keys and Tokens</h3> 
+       <p>In the code I’m currently implementing there is the concept of secret keys and access tokens. Every user gets a secret key that is never leaked to the outside world. When the API client (our JavaScript app) first loads, it requests the API’s secret key and immediately exchanges it for a unique access token. So we need a few methods in our API that are publicly accessible like so (here’s some stripped down pseudo Ruby code):</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+</pre></td>
+            <td class="code"><pre><code class="ruby"><span class="line"><span class="c1"># Requesting the public API key</span> </span><span class="line"><span class="k">class</span> <span class="nc">Keys</span> <span class="o">&lt;</span> <span class="no">AppController</span> </span><span class="line"> <span class="k">def</span> <span class="nf">request_public_key</span> </span><span class="line"> <span class="n">appUser</span> <span class="o">=</span> <span class="no">User</span><span class="o">.</span><span class="n">find_by</span> <span class="ss">username</span><span class="p">:</span> <span class="s1">'my_apps_name'</span> <span class="c1"># The app itself has an account like any other user</span> </span><span class="line"> <span class="vi">@public_key</span> <span class="o">=</span> <span class="no">Key</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">appUser</span><span class="o">.</span><span class="n">id</span><span class="p">)</span> <span class="c1"># Find the app's key by the user id</span> </span><span class="line"> <span class="n">render</span> <span class="ss">json</span><span class="p">:</span> <span class="vi">@public_key</span><span class="o">.</span><span class="n">secret_key</span> <span class="c1"># You could send back the key's permissions and other data but here we just send the key itself</span> </span><span class="line"> <span class="k">end</span> </span><span class="line"><span class="k">end</span> </span><span class="line"> </span><span class="line"><span class="c1"># Exchange key for token (key sent via POST)</span> </span><span class="line"><span class="k">class</span> <span class="nc">Tokens</span> <span class="o">&lt;</span> <span class="no">AppController</span> </span><span class="line"> <span class="nb">require</span> <span class="s1">'openssl'</span> <span class="c1"># We need this for hashing</span> </span><span class="line"> <span class="k">def</span> <span class="nf">exchange</span> </span><span class="line"> <span class="k">if</span> <span class="no">Key</span><span class="o">.</span><span class="n">exists?</span><span class="p">(</span><span class="n">secret_key</span><span class="p">:</span> <span class="n">params</span><span class="o">[</span><span class="ss">:secret_key</span><span class="o">]</span><span class="p">)</span> </span><span class="line"> <span class="n">token</span> <span class="o">=</span> <span class="ss">OpenSSL</span><span class="p">:</span><span class="ss">:HMAC</span><span class="o">::</span><span class="n">hexdigest</span><span class="p">(</span><span class="ss">OpenSSL</span><span class="p">:</span><span class="ss">:Digest</span><span class="o">::</span><span class="no">Digest</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">'sha1'</span><span class="p">),</span> <span class="n">params</span><span class="o">[</span><span class="ss">:secret_key</span><span class="o">]</span><span class="p">,</span> <span class="s2">"</span><span class="si">#{</span><span class="n">params</span><span class="o">[</span><span class="ss">:secret_key</span><span class="o">]</span><span class="si">}#{</span><span class="n">unique_client_data</span><span class="si">}#{</span><span class="no">Time</span><span class="o">.</span><span class="n">now</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> </span><span class="line"> <span class="vi">@token_record</span> <span class="o">=</span> <span class="no">Token</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">expiration</span><span class="p">)</span> </span><span class="line"> <span class="vi">@token_record</span><span class="o">.</span><span class="n">save_to_redis</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">expiration</span><span class="p">)</span> </span><span class="line"> <span class="n">render</span> <span class="ss">json</span><span class="p">:</span> <span class="p">{</span><span class="ss">:token</span> <span class="o">=&gt;</span> <span class="n">token</span><span class="p">,</span> <span class="ss">:expiration</span> <span class="o">=&gt;</span> <span class="n">expiration</span><span class="p">}</span> </span><span class="line"> <span class="k">else</span> </span><span class="line"> <span class="n">render</span> <span class="ss">json</span><span class="p">:</span> <span class="s1">'Invalid key'</span> </span><span class="line"> <span class="k">end</span> </span><span class="line"> <span class="k">end</span> </span><span class="line"><span class="k">end</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>First off, I know that code can be more concise – that’s not the point, the point is to get the idea of what’s going on. I also know that separating these two functions and forcing the client to make two requests instead of one can be kind of stupid. I’m okay with this and here’s why – only the official Write.app client will be making two requests. Other clients will only need to call the <code>tokens/exchange</code> function because they’ll already know their API key.</p> 
+       <p>So what’s going on in that code above is that the official client requests its own API key. This is because the official client’s key will change often throughout the day. So an attacker would need to check for the existence of new keys multiple times a day at random intervals to impersonate the official client and even then the public key can only be exchanged for tokens with very limited permissions anyway. So yes, there is a window of time where a third party can impersonate Write.app but they can only create new accounts and log users into their accounts. The latter vulnerability can be quite serious however since Write.app uses SSL everywhere (with HSTS and Perfect Forward Secrecy enabled) the user should still be able to confirm the identity of the site they’re on by checking the certificate. That said, I do have a solution for that as well which is beyond the scope of this post update.</p> 
+       <p>When a user logs in using the official client app, the API first validates that the token being passed belongs to the official API client then automatically generates a new, auto-expiring, access token from the logging-in user’s API key. This key never leaves the server and the only way to access the token it creates is to actually log in as the user it’s assigned to.</p> 
+       <h3>What happened to all that hashing?</h3> 
+       <p>In the original post I mentioned that our token would hash some values and token authentication would depend on the server matching the hash sent to the data it had. I was basically describing a method to use HMAC to validate tokens. The current code is set up to support such a scheme but it currently doesn’t use it. Right now we’re just validating what’s been sent in the <code>Authorization:</code> header with what we have stored in our datastore (Write.app uses Redis because token lookups are incredibly slow when you have thousands of users making millions of requests and each one needs to match a token header to what’s stored locally).</p> 
+       <h3>What about 3rd party clients?</h3> 
+       <p>The solution I’m describing above assumes that you are in control of both the client and the API. That is to say, you have built both the API and client. If you were to build a third party app to access your Write.app account through the API you would have a very hard time. You could use the public <code>keys/request_public_key</code> and <code>tokens/exchange</code> methods to basically clone the official client but there’s more to the official client than just the JavaScript single page app. There’s SSL, proxy magic, and some other things that are implemented server-side that work alongside the <code>request_key -&gt; exchange_for_token -&gt; log_in</code> workflow secure. After the user is logged in, the official client runs purely in the client without any server-side help beyond that API actually validating tokens and returning data.</p> 
+       <p><strong>Okay, okay, so how can I build a pure JavaScript API client that’s secure, you ask?</strong></p> 
+       <p>In the case of Write.app, you absolutely can communicate securely with the API with a JavaScript client and its being built with that use-case in mind. The one caveat is that you will need just one piece of server-side code to help you out. The API can’t use the same key request mechanism for third parties that it does for the official client because <strong>a)</strong> you’d have to tell it what user’s key you want which is obviously not a good idea and <strong>b)</strong> the API returns a key that’s both temporary and has expiring privileges – there’s no way I’m going to maintain auto-regenerating keys for thousands of users.</p> 
+       <p><strong>So finally, here’s the solution to the third-party client problem:</strong></p> 
+       <p>The API consumer (Write.app’s users) have the option to generate a new API key and choose whether it is for a server-side or client-side app. If they choose a client-side app they will not get a token right away since a JavaScript app cannot keep the token a secret. Instead they’ll need to request a new access token upon the first client request and at specific intervals from their app. Yes, 3rd party clients will need to use one server-side tool for that to happen but that’s it. The rest will be completely client-side and there’s really no way to avoid the server-side stuff.</p> 
+       <p>First off, you should probably implement some sort of login wall for your app otherwise anyone could hit your app and get the token immediately then run off and wreak havoc on your Write.app account. So once you’re safely logged into your own JavaScript client, the first thing it should do is send a request to get a new access token. How will it do that? You’ll need a simple server-side script to forward your request to the API. Your client-side app will send a GET request to a script on your server. That script will then send a POST request containing your API key to the API which will then return a new token along with its expiration time to your script which should forward it on to your JS app. Now that your client-side app has the access token associated with your account you can start making requests all you like. Your client-side app should set a timer to automatically request a new access token every X minutes based on the expiration time sent back in the initial token request.</p> 
+       <h3>A final word on client-side apps using third-party APIs</h3> 
+       <p>You really shouldn’t do it if you’re requesting sensitive information. It only really works if you are the creator of both the client and the API. Otherwise you’re most likely just duplicating functionality that the official client already has. The point of giving out API keys to users in our case, is so that Write.app users can access their account data from the command line, mobile apps, or use specific functionality of the API to enhance the experience of another app. I know that sounds very Twitter-esque but it’s a good point. Your API generally shouldn’t be built for creating clones of the official client but rather as a way to use the data contained inside of it in new and different ways.</p> 
+       <p>So in the end it’s possible to secure API keys in a single page JavaScript app when you control the client and the API its accessing but things get a little sketchy once you’re trying to access a third party API with a client-side app.</p> 
+       <p>I do plan to do another write-up when the final implementation of our API authentication is complete. Hopefully this helps some people for now. If anyone has better ideas please speak up in the comments. It’s actually pretty hard to find good information about client-side API key security online.</p> 
+      </div> 
+      <p class="meta"> <em><small><span class="byline author vcard">Written by <span class="fn">Bill Patrianakos</span></span></small></em> <time datetime="2013-09-12T12:53:00-05:00" pubdate data-updated="true"> Published Sep 12<span>th</span>, 2013 </time> <span class="categories"> <a class="category" href="/blog/categories/highlights/">Highlights</a>, <a class="category" href="/blog/categories/web-development/">Web development</a> </span> </p> 
+      <div class="sharing"> 
+       <a href="//twitter.com/share" class="twitter-share-button" data-url="http://billpatrianakos.me/blog/2013/09/12/securing-api-keys-in-a-client-side-javascript-app/" data-via="billpatrianakos" data-counturl="http://billpatrianakos.me/blog/2013/09/12/securing-api-keys-in-a-client-side-javascript-app/">Tweet</a> 
+       <div class="g-plusone" data-size="small"></div> 
+       <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div> 
+      </div> 
+      <p class="meta"> <a class="basic-alignment left" href="/blog/2013/08/29/the-future-is-js-on-the-client-and-i-wont-be-left-behind/" title="Previous Post: The Future is JS on the Client and I Won't be Left Behind">« The Future is JS on the Client and I Won't be Left Behind</a> <a class="basic-alignment right" href="/blog/2013/09/25/rubys-%7C%7C-equals-or-slash-equal-explained/" title="Next Post: Ruby's ||= (OR/Equals) Explained">Ruby's ||= (OR/Equals) Explained »</a> </p> 
+      <section class="comments"> 
+       <h4>Comments</h4> 
+       <div id="disqus_thread" aria-live="polite">
+        <noscript>
+         Please enable JavaScript to view the 
+         <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript> 
+        <script type="text/javascript">
+      var disqus_shortname = 'billpatrianakos';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://billpatrianakos.me/blog/2013/09/12/securing-api-keys-in-a-client-side-javascript-app/';
+        var disqus_url = 'http://billpatrianakos.me/blog/2013/09/12/securing-api-keys-in-a-client-side-javascript-app/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script> 
+       </div> 
+      </section> 
+     </article> 
+     <aside id="sidebar" class="four last"> 
+      <section> 
+       <h3>About Bill</h3> 
+       <p> I'm a software engineer with over a decade experience designing and building web applications. I founded a <a href="https://cleverwebdesign.net">web design company</a>, am the creator of <a href="https://writeapp.me">Write.app</a> and released <a href="http://moonweather.me">MoonWeather for iOS &amp; Android</a>. These days I do consulting work and teach programming courses and workshops. </p> 
+      </section>
+      <section> 
+       <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+       <!-- BP.me Sidebar Ad --> 
+       <ins class="adsbygoogle" style="display:inline-block;width:336px;height:280px" data-ad-client="ca-pub-7848445129120487" data-ad-slot="6606997158"></ins> 
+       <script>
+	(adsbygoogle = window.adsbygoogle || []).push({});
+	</script> 
+      </section>
+      <section> 
+       <h3>Recent Posts</h3> 
+       <ul id="recent_posts"> 
+        <li class="post"> <a href="/blog/2017/08/14/training-wheels/">Training Wheels</a> </li> 
+        <li class="post"> <a href="/blog/2017/08/14/how-to-destroy-your-startup/">How to Destroy Your Startup</a> </li> 
+        <li class="post"> <a href="/blog/2017/07/14/taking-startup-advice/">Taking Startup Advice</a> </li> 
+        <li class="post"> <a href="/blog/2017/05/22/list-of-mysql-commands-mysql-cheat-sheet/">List of MySQL Commands - MySQL Cheat Sheet</a> </li> 
+        <li class="post"> <a href="/blog/2017/05/22/how-much-should-a-developer-make/">How Much Should a Developer Make?</a> </li> 
+       </ul> 
+      </section>
+      <section> 
+       <h3>Featured Projects</h3> 
+       <ul class="ads"> 
+        <li><a href="http://moonweather.me"><img src="/img/icons/mw_footer.png" alt="MoonWeather moon phase tracker and weather forecasts"></a></li> 
+        <li><a href="https://writeapp.me"><img src="/img/icons/writeapp_footer.png" alt="Free private online notebooks"></a></li> 
+        <li><a href="http://fractionless.info"><img src="/img/icons/fractionless_footer.png" alt="Web development boilerplate"></a></li> 
+       </ul> 
+      </section>
+      <section class="book-form"> 
+       <h3>Become a better developer</h3> 
+       <p> Are you currently or aspiring to be a great developer? Sign up for <strong>The Developer's Guides</strong> and get entire courses to get you up to speed with the latest web technologies and techniques in your inbox monthly for free. Learn everything from <strong><em>Node.js</em></strong> to <strong><em>Ruby, SQL, Single Page Apps, Git, cloud servers</em></strong>, and more. <em>It's free. It's monthly. It's not spam</em>. </p> 
+       <!-- Begin MailChimp Signup Form --> 
+       <div id="mc_embed_signup"> 
+        <form action="http://beasellout.us2.list-manage.com/subscribe/post?u=4ecd98fc7e012af7b8ea1c2d4&amp;id=87ef2682fc" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate> 
+         <div class="mc-field-group"> 
+          <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address"> 
+         </div> 
+         <div class="mc-field-group"> 
+          <input type="text" value="" name="FULLNAME" class="" id="mce-FULLNAME" placeholder="Your Name"> 
+         </div> 
+         <p class="poweredby"> <small><em>Powered by <a href="http://eepurl.com/WlgmT" title="MailChimp - email marketing made easy and fun">MailChimp</a></em></small> </p> 
+         <div id="mce-responses" class="clear"> 
+          <div class="response" id="mce-error-response" style="display:none"></div> 
+          <div class="response" id="mce-success-response" style="display:none"></div> 
+         </div> 
+         <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups--> 
+         <div style="position: absolute; left: -5000px;">
+          <input type="text" name="b_4ecd98fc7e012af7b8ea1c2d4_87ef2682fc" tabindex="-1" value="">
+         </div> 
+         <div class="clear">
+          <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+         </div> 
+        </form> 
+       </div> 
+       <!--End mc_embed_signup--> 
+      </section> 
+     </aside> 
+    </section> 
+   </section> 
+  </div> 
+  <footer class="container promos"> 
+   <section class="row"> 
+    <article class="twelve centered-text"> 
+     <ul> 
+      <li><a href="http://moonweather.me"><img src="/img/icons/mw_footer.png" alt="MoonWeather: moon phase tracker and weather forecasts for iOS and Android"></a></li> 
+      <li><a href="https://writeapp.me"><img src="/img/icons/writeapp_footer.png" alt="Write.app: Free private online writing"></a></li> 
+      <li><a href="http://fractionless.info"><img src="/img/icons/fractionless_footer.png" alt="Fraction.less Boilerplate: The web development framework that doesn't get in your way"></a></li> 
+     </ul> 
+    </article> 
+   </section> 
+  </footer> 
+  <footer class="container"> 
+   <section class="row"> 
+    <aside class="six"> 
+     <p> <small> Copyright © 2012 - 2017 Bill Patrianakos / Proudly powered by <a href="http://octopress.org">Octopress</a> <br> <a href="https://github.com/billpatrianakos/brite">Brite</a> Theme by Bill Patrianakos </small> </p> 
+    </aside> 
+    <aside class="six last"> 
+     <ul class="nav right"> 
+      <li><a href="/">Articles</a></li> 
+      <li><a href="/projects">Projects</a></li> 
+      <li><a href="/blog/categories/highlights">Best of</a></li> 
+      <li><a href="/about">About</a></li> 
+      <li><a href="/blog/archives">Archives</a></li> 
+      <li><a href="/atom.xml">Feed <i class="icon-rss"></i></a></li> 
+     </ul> 
+    </aside> 
+   </section> 
+  </footer> 
+  <!-- Your JavaScript should be at the bottom (with some exceptions) --> 
+  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if necessary --> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+  <script>window.jQuery || document.write('<script src="/js/libs/jquery1.9.1.min.js"><\/script>')</script> 
+  <script src="/js/plugins.js"></script> 
+  <script src="/js/scripts.js"></script> 
+  <!-- Put your Analytics Snippet here --> 
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-12031911-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>   
+ </body>
+</html>

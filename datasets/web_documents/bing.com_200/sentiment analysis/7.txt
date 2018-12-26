@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+ <!-- Beautiful Jekyll | MIT license | Copyright Dean Attali 2016 -->
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"> 
+  <title>Sentiment Analysis of The Lord Of The Rings with tidytext</title> 
+  <meta name="author" content="Jakub Glinka"> 
+  <link rel="alternate" type="application/rss+xml" title="Jakub Glinka's Blog - Understanding world through statistics" href="/feed.xml"> 
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.0/css/font-awesome.min.css"> 
+  <link rel="stylesheet" href="/css/bootstrap.min.css"> 
+  <link rel="stylesheet" href="/css/bootstrap-social.css"> 
+  <link rel="stylesheet" href="/css/main.css"> 
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic"> 
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800"> 
+  <!-- Facebook OpenGraph tags --> 
+  <meta property="og:title" content="Sentiment Analysis of The Lord Of The Rings with tidytext"> 
+  <meta property="og:description" content="You got me thinking about Watson and its unprecedented flexibility in analyzing different data sources (at least according to IBM). So how difficult it would be to analyse sentiment of one of my favorites books using R? Pretty easy actually - all thanks to new package tidytext by Julia Silge..."> 
+  <meta property="og:type" content="website"> 
+  <meta property="og:url" content="http://www.jakubglinka.com/2017-03-01-text_mining_part1/"> 
+  <link rel="canonical" href="http://www.jakubglinka.com/2017-03-01-text_mining_part1/"> 
+  <meta property="og:image" content="http://www.jakubglinka.com/img/me.jpg"> 
+  <!-- Twitter summary cards --> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:site" content="@JakubGlinka"> 
+  <meta name="twitter:creator" content="@JakubGlinka"> 
+  <meta name="twitter:title" content="Sentiment Analysis of The Lord Of The Rings with tidytext"> 
+  <meta name="twitter:description" content="You got me thinking about Watson and its unprecedented flexibility in analyzing different data sources (at least according to IBM). So how difficult it would be to analyse sentiment of one of my favorites books using R? Pretty easy actually - all thanks to new package tidytext by Julia Silge..."> 
+  <meta name="twitter:image" content="http://www.jakubglinka.com/img/me.jpg"> 
+  <!-- MathJax support! --> 
+  <!--   <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        processEscapes: true
+      }
+    });
+</script>
+
+  <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+ --> 
+ </head> 
+ <body> 
+  <nav class="navbar navbar-default navbar-fixed-top navbar-custom"> 
+   <div class="container-fluid"> 
+    <div class="navbar-header"> 
+     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#main-navbar"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+     <a class="navbar-brand" href="http://www.jakubglinka.com">Jakub Glinka's Blog</a> 
+    </div> 
+    <div class="collapse navbar-collapse" id="main-navbar"> 
+     <ul class="nav navbar-nav navbar-right"> 
+      <li> <a href="https://www.linkedin.com/in/jakub-glinka-23768453">About Me</a> </li> 
+      <li class="navlinks-container"> <a class="navlinks-parent" href="javascript:void(0)">Resources</a> 
+       <div class="navlinks-children"> 
+        <a href="https://www.r-project.org/">R Project</a> 
+        <a href="https://www.r-bloggers.com/">R Bloggers</a> 
+        <a href="http://mc-stan.org/">Stan</a> 
+       </div> </li> 
+      <li> <a href="http://feeds.feedburner.com/JakubGlinkasBlog">RSS</a> </li> 
+     </ul> 
+    </div> 
+    <div class="avatar-container"> 
+     <div class="avatar-img-border"> 
+      <a href="http://www.jakubglinka.com "> <img class="avatar-img" src="/img/me.jpg"> </a> 
+     </div> 
+    </div> 
+   </div> 
+  </nav> 
+  <!-- TODO this file has become a mess, refactor it --> 
+  <div id="header-big-imgs" data-num-img="1" data-img-src-1="/img/math.jpg"></div> 
+  <header class="header-section has-img"> 
+   <div class="big-img intro-header"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"> 
+       <div class="post-heading"> 
+        <h1>Sentiment Analysis of The Lord Of The Rings with tidytext</h1> 
+        <span class="post-meta">Posted on March 1, 2017</span> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <span class="img-desc"></span> 
+   </div> 
+   <div class="intro-header no-img"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"> 
+       <div class="post-heading"> 
+        <h1>Sentiment Analysis of The Lord Of The Rings with tidytext</h1> 
+        <span class="post-meta">Posted on March 1, 2017</span> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+  </header> 
+  <div class="container"> 
+   <div class="row"> 
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"> 
+     <article role="main" class="blog-post"> 
+      <style id="MathJax_SVG_styles">.MathJax_SVG_Display {text-align: center; margin: 1em 0em; position: relative; display: block!important; text-indent: 0; max-width: none; max-height: none; min-width: 0; min-height: 0; width: 100%}
+.MathJax_SVG .MJX-monospace {font-family: monospace}
+.MathJax_SVG .MJX-sans-serif {font-family: sans-serif}
+.MathJax_SVG {display: inline; font-style: normal; font-weight: normal; line-height: normal; font-size: 100%; font-size-adjust: none; text-indent: 0; text-align: left; text-transform: none; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; direction: ltr; max-width: none; max-height: none; min-width: 0; min-height: 0; border: 0; padding: 0; margin: 0}
+.MathJax_SVG * {transition: none; -webkit-transition: none; -moz-transition: none; -ms-transition: none; -o-transition: none}
+.mjx-svg-href {fill: blue; stroke: blue}
+.MathJax_SVG_LineBox {display: table!important}
+.MathJax_SVG_LineBox span {display: table-cell!important; width: 10000em!important; min-width: 0; max-width: none; padding: 0; border: 0; margin: 0}
+</style> 
+      <svg style="display: none;">
+       <defs id="MathJax_SVG_glyphs"></defs>
+      </svg> 
+      <p>You got me thinking about Watson and its unprecedented flexibility in analyzing different data sources (at least according to IBM). So how difficult it would be to analyse sentiment of one of my favorites books using R? Pretty easy actually - all thanks to new package <strong>tidytext</strong> by Julia Silge and David Robinson…</p> 
+      <h2 id="the-tidy-text-format">The tidy text format</h2> 
+      <p>Tidy text format is defined as a table with one-term-per-row. In short it is just tidy textual data which enables to use <strong>tidyverse</strong> tools to clean and transform data. More about conceptual underpinnings creation of tidytext package can be found in the online book:</p> 
+      <p><a href="http://tidytextmining.com/tidytext.html">http://tidytextmining.com/tidytext.html</a></p> 
+      <h2 id="parsing-data-to-the-tibble-format">Parsing data to the tibble format</h2> 
+      <p>I parsed one of the websites that offers LOTR trilogy online. After some pretty basic operations on html source I extracted full text along with chapter names and book parts and book titles:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>## # A tibble: 6 × 4
+##                        book   part               chapter
+##                       &lt;chr&gt;  &lt;chr&gt;                &lt;fctr&gt;
+## 1 1. Fellowship of the Ring Book I A Long-expected Party
+## 2 1. Fellowship of the Ring Book I A Long-expected Party
+## 3 1. Fellowship of the Ring Book I A Long-expected Party
+## 4 1. Fellowship of the Ring Book I A Long-expected Party
+## 5 1. Fellowship of the Ring Book I A Long-expected Party
+## 6 1. Fellowship of the Ring Book I A Long-expected Party
+## # ... with 1 more variables: text &lt;chr&gt;
+</code></pre> 
+      </div> 
+      <p>with field <em>text</em> simply containing lines of text from the books:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>## # A tibble: 6 × 1
+##                                                    text
+##                                                   &lt;chr&gt;
+## 1 When Mr. Bilbo Baggins of Bag End announced that h...
+## 2 celebrating his eleventy-first birthday with a par...
+## 3    there was much talk and excitement in Hobbiton....
+## 4 Bilbo was very rich and very peculiar, and had bee...
+## 5 for sixty years, ever since his remarkable disappe...
+## 6 The riches he had brought back from his travels ha...
+</code></pre> 
+      </div> 
+      <h2 id="sentiment-analysis">Sentiment analysis</h2> 
+      <p>One way to analyze the sentiment of a text is to consider the text as a combination of its individual words and the sentiment content of the whole text as the sum of the sentiment content of the individual words. Since LOTR is naturally divided into chapters we can apply sentiment analysis to them and plot their sentiment scores.</p> 
+      <p>The three general-purpose lexicons available in <strong>tidytext</strong> package are</p> 
+      <ul> 
+       <li>AFINN from Finn Årup Nielsen,</li> 
+       <li>bing from Bing Liu and collaborators, and</li> 
+       <li>nrc from Saif Mohammad and Peter Turney.</li> 
+      </ul> 
+      <p>I will use <strong>Bing</strong> lexicon which is simply a <em>tibble</em> with words and positive and negative words:</p> 
+      <div class="language-r highlighter-rouge">
+       <pre class="highlight"><code><span class="n">get_sentiments</span><span class="p">(</span><span class="s2">"bing"</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="n">head</span><span class="w"> </span></code></pre> 
+      </div> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>## # A tibble: 6 × 2
+##         word sentiment
+##        &lt;chr&gt;     &lt;chr&gt;
+## 1    2-faced  negative
+## 2    2-faces  negative
+## 3         a+  positive
+## 4   abnormal  negative
+## 5    abolish  negative
+## 6 abominable  negative
+</code></pre> 
+      </div> 
+      <p>and this is how you run sentiment analysis <em>tidytext</em> way:</p> 
+      <div class="language-r highlighter-rouge">
+       <pre class="highlight"><code><span class="n">lotr</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># split text into words </span><span class="w"> </span><span class="n">unnest_tokens</span><span class="p">(</span><span class="n">word</span><span class="p">,</span><span class="w"> </span><span class="n">text</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># remove stop words </span><span class="w"> </span><span class="n">anti_join</span><span class="p">(</span><span class="n">stop_words</span><span class="p">,</span><span class="w"> </span><span class="n">by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"word"</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># add sentiment scores to words </span><span class="w"> </span><span class="n">left_join</span><span class="p">(</span><span class="n">get_sentiments</span><span class="p">(</span><span class="s2">"bing"</span><span class="p">),</span><span class="w"> </span><span class="n">by</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"word"</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># count number of negative and positive words </span><span class="w"> </span><span class="n">count</span><span class="p">(</span><span class="n">chapter</span><span class="p">,</span><span class="w"> </span><span class="n">book</span><span class="p">,</span><span class="w"> </span><span class="n">sentiment</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="n">spread</span><span class="p">(</span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sentiment</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="n">ungroup</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># create centered score </span><span class="w"> </span><span class="n">mutate</span><span class="p">(</span><span class="n">sentiment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">positive</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">negative</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">mean</span><span class="p">(</span><span class="n">positive</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">negative</span><span class="p">))</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="n">select</span><span class="p">(</span><span class="n">book</span><span class="p">,</span><span class="w"> </span><span class="n">chapter</span><span class="p">,</span><span class="w"> </span><span class="n">sentiment</span><span class="p">)</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># reorder chapter levels </span><span class="w"> </span><span class="n">mutate</span><span class="p">(</span><span class="n">chapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">factor</span><span class="p">(</span><span class="nf">as.character</span><span class="p">(</span><span class="n">chapter</span><span class="p">),</span><span class="w"> </span><span class="n">levels</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">levels</span><span class="p">(</span><span class="n">chapter</span><span class="p">)[</span><span class="m">61</span><span class="o">:</span><span class="m">1</span><span class="p">]))</span><span class="w"> </span><span class="o">%&gt;%</span><span class="w"> </span><span class="c1"># plot </span><span class="w"> </span><span class="n">ggplot</span><span class="p">(</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">chapter</span><span class="p">,</span><span class="w"> </span><span class="n">y</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sentiment</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">geom_bar</span><span class="p">(</span><span class="n">stat</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"identity"</span><span class="p">,</span><span class="w"> </span><span class="n">aes</span><span class="p">(</span><span class="n">fill</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">book</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">theme_classic</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">theme</span><span class="p">(</span><span class="n">axis.text.x</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">element_text</span><span class="p">(</span><span class="n">angle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">90</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">coord_flip</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ylim</span><span class="p">(</span><span class="m">-250</span><span class="p">,</span><span class="w"> </span><span class="m">250</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ggtitle</span><span class="p">(</span><span class="s2">"Centered sentiment scores"</span><span class="p">,</span><span class="w"> </span><span class="n">subtitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"for LOTR chapters"</span><span class="p">)</span><span class="w"> </span></code></pre> 
+      </div> 
+      <p><img src="http://www.jakubglinka.com/img/2017-03-01-text_mining_part1-unnamed-chunk-4-1.png" alt="plot of chunk unnamed-chunk-4"></p> 
+      <p>It’s pretty neat if you ask me.</p> 
+      <hr> 
+      <p>Code for this post can be found here: <a href="https://github.com/jakubglinka/posts/tree/master/text_mining_part1">github</a></p> 
+     </article> 
+     <div class="blog-tags">
+       Tags: R 
+     </div> 
+     <!-- Check if any share-links are active --> 
+     <section id="social-share-section"> 
+      <!-- Share on Twitter --> 
+      <a href="https://twitter.com/intent/tweet?text=Sentiment+Analysis+of+The+Lord+Of+The+Rings+with+tidytext+http://www.jakubglinka.com/2017-03-01-text_mining_part1/" class="btn btn-social-icon btn-twitter" title="Share on Twitter"> <span class="fa fa-fw fa-twitter" aria-hidden="true"></span> </a> 
+      <!-- Share on Facebook --> 
+      <a href="https://www.facebook.com/sharer/sharer.php?u=http://www.jakubglinka.com/2017-03-01-text_mining_part1/" class="btn btn-social-icon btn-facebook" title="Share on Facebook"> <span class="fa fa-fw fa-facebook" aria-hidden="true"></span> </a> 
+      <!-- Share on Google Plus --> 
+      <!-- Share on LinkedIn --> 
+      <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http://www.jakubglinka.com/2017-03-01-text_mining_part1/" class="btn btn-social-icon btn-linkedin" title="Share on LinkedIn"> <span class="fa fa-fw fa-linkedin" aria-hidden="true"></span> </a> 
+     </section> 
+     <ul class="pager blog-pager"> 
+      <li class="previous"> <a href="/2017-02-21-neural_networks_part1/" data-toggle="tooltip" data-placement="top" title="Training Neural Networks with MXNet">? Previous Post</a> </li> 
+     </ul> 
+     <div class="disqus-comments"> 
+      <div class="comments"> 
+       <div id="disqus_thread"></div> 
+       <script type="text/javascript">
+	    var disqus_shortname = 'www-jakubglinka-com';
+	    /* ensure that pages with query string get the same discussion */
+            var url_parts = window.location.href.split("?");
+            var disqus_url = url_parts[0];	    
+	    (function() {
+	        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+	        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	    })();
+	</script> 
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <footer> 
+   <div class="container beautiful-jekyll-footer"> 
+    <div class="row"> 
+     <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1"> 
+      <ul class="list-inline text-center footer-links"> 
+       <li> <a href="https://github.com/jakubglinka" title="GitHub"> <span class="fa-stack fa-lg"> <i class="fa fa-circle fa-stack-2x"></i> <i class="fa fa-github fa-stack-1x fa-inverse"></i> </span> </a> </li> 
+       <li> <a href="https://twitter.com/JakubGlinka" title="Twitter"> <span class="fa-stack fa-lg"> <i class="fa fa-circle fa-stack-2x"></i> <i class="fa fa-twitter fa-stack-1x fa-inverse"></i> </span> </a> </li> 
+       <li> <a href="mailto:jgstatistics@gmail.com" title="Email me"> <span class="fa-stack fa-lg"> <i class="fa fa-circle fa-stack-2x"></i> <i class="fa fa-envelope fa-stack-1x fa-inverse"></i> </span> </a> </li> 
+       <li> <a href="https://linkedin.com/in/jakub-glinka-23768453" title="LinkedIn"> <span class="fa-stack fa-lg"> <i class="fa fa-circle fa-stack-2x"></i> <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i> </span> </a> </li> 
+      </ul> 
+      <p class="copyright text-muted"> Jakub Glinka &nbsp;•&nbsp; 2017 &nbsp;•&nbsp; <a href="http://www.jakubglinka.com">www.jakubglinka.com</a> </p> 
+      <!-- Please don't remove this, keep my open source work credited :) --> 
+      <p class="theme-by text-muted"> Theme by <a href="http://deanattali.com/beautiful-jekyll/">beautiful-jekyll</a> </p> 
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <!-- doing something a bit funky here because I want to be careful not to include JQuery twice! --> 
+  <script>
+      	if (typeof jQuery == 'undefined') {
+      	  document.write('<script src="/js/jquery-1.11.2.min.js"></scr' + 'ipt>');
+      	}
+      </script> 
+  <!-- doing something a bit funky here because I want to be careful not to include JQuery twice! --> 
+  <script src="/js/bootstrap.min.js"></script> 
+  <!-- doing something a bit funky here because I want to be careful not to include JQuery twice! --> 
+  <script src="/js/main.js"></script> 
+  <!-- Google Analytics --> 
+  <script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+		ga('create', 'UA-89656410-1', 'auto');
+		ga('send', 'pageview');
+	</script> 
+  <!-- End Google Analytics -->   
+ </body>
+</html>

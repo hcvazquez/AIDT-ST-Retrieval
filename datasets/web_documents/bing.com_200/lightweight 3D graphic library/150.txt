@@ -1,0 +1,2137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <link href="../css/programming_notes_v1.css" rel="stylesheet" type="text/css"> 
+  <script type="text/javascript" src="../scripts/programming_notes_v1.js"></script> 
+  <title>Android 3D with OpenGL ES with Nehe's Port</title> 
+  <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon">
+ </head> 
+ <body> 
+  <div id="wrap-outer"> 
+   <!-- header filled by JavaScript --> 
+   <div id="header" class="header-footer">
+    <p>&nbsp;</p>
+   </div> 
+   <div id="wrap-inner"> 
+    <div id="wrap-toc"> 
+     <h5>TABLE OF CONTENTS <a id="show-toc" href="#show-toc">(HIDE)</a></h5> 
+     <div id="toc"></div> 
+     <!-- for showing the "Table of Content" --> 
+    </div> 
+    <div id="content-header"> 
+     <h1>Android Programming</h1> 
+     <h2>3D Graphics with OpenGL ES<br> (Including Nehe's Port)</h2> 
+    </div> 
+    <div id="content-main"> 
+     <h3>Introduction</h3> 
+     <p>Read</p> 
+     <ol> 
+      <li>Android Training "Displaying Graphics with OpenGL ES" @ <a href="http://developer.android.com/training/graphics/opengl/index.html">http://developer.android.com/training/graphics/opengl/index.html</a>.</li> 
+      <li>Android API Guides "OpenGL ES" @ <a href="http://developer.android.com/guide/topics/graphics/opengl.html">http://developer.android.com/guide/topics/graphics/opengl.html</a>.</li> 
+      <li>Android Reference "Package <code>android.opengl</code>" @ <a href="http://developer.android.com/reference/android/opengl/package-summary.html">http://developer.android.com/reference/android/opengl/package-summary.html</a>.</li> 
+     </ol> 
+     <h3 id="GetStarted">Getting Started with 3D Graphics on Android</h3> 
+     <h4>OpenGL ES</h4> 
+     <p>Android supports OpenGL ES in packages <code>android.opengl</code>, <code>javax.microedition.khronos.opengles</code> and <code>javax.microedition.khronos.egl</code>.</p> 
+     <h4>GLSurfaceView</h4> 
+     <p>For 3D graphics programming, you need to program you own custom view, instead using XML-layout. Fortunately, a 3D OpenGL ES view called <code>GLSurfaceView</code> is provided, which greatly simplifies our tasks.</p> 
+     <p>I shall use the Nehe's Lessons (<a href="http://nehe.gamedev.net/">http://nehe.gamedev.net</a>) to illustrate Android 3D programming</p> 
+     <h4>Example 1: Setting up OpenGL ES using GLSurfaceView (Nehe Lesson 1: Setting Up)</h4> 
+     <p>Create an android application called "Nehe 01", with project name "<code>Nehe01</code>", package name "<code>com.test</code>". Create a blank activity called "<code>MyGLActivity</code>".</p> 
+     <p>The following program sets up the <code>GLSurfaceView</code>, and show a blank (dark green) screen.</p> 
+     <h5><span class="font-code">MyGLActivity.java</span></h5> 
+     <pre class="color-example">
+package com.test;
+   
+import android.app.Activity;
+import android.opengl.GLSurfaceView;
+import android.os.Bundle;
+<span class="color-comment">/**
+ * Our OpenGL program's main activity
+ */</span>
+public class <strong>MyGLActivity extends Activity</strong> {
+   
+   private GLSurfaceView glView;   <span class="color-comment">// Use GLSurfaceView</span>
+  
+   <span class="color-comment">// Call back when the activity is started, to initialize the view</span>
+   @Override
+   protected void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      glView = new GLSurfaceView(this);           <span class="color-comment">// Allocate a GLSurfaceView</span>
+      glView.setRenderer(new MyGLRenderer(this)); <span class="color-comment">// Use a custom renderer</span>
+      this.setContentView(glView);                <span class="color-comment">// This activity sets to GLSurfaceView</span>
+   }
+   
+   <span class="color-comment">// Call back when the activity is going into the background</span>
+   @Override
+   protected void onPause() {
+      super.onPause();
+      glView.onPause();
+   }
+   
+   <span class="color-comment">// Call back after onPause()</span>
+   @Override
+   protected void onResume() {
+      super.onResume();
+      glView.onResume();
+   }
+}</pre> 
+     <h5>Dissecting <span class="font-code">MyActivity.java</span></h5> 
+     <p>We define <code>MyActivity</code> by extending <code>Activity</code>, so as to override <code>onCreate()</code>, <code>onPause()</code> and <code>onResume()</code>. We then override <code>onCreate()</code> to allocate a <code>GLSurfaceView</code>, set the view's renderer to a custom renderer (to be defined below), and set this activity to use the view.</p> 
+     <h5><span class="font-code">MyGLRenderer.java</span></h5> 
+     <p>This is our custom OpenGL renderer class.</p> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+<span class="color-comment">/**
+ *  OpenGL Custom renderer used with GLSurfaceView 
+ */</span>
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+   Context context;   <span class="color-comment">// Application's context</span>
+   
+   <span class="color-comment">// Constructor with global application context</span>
+   public MyGLRenderer(Context context) {
+      this.context = context;
+   }
+   
+   <span class="color-comment">// Call back when the surface is first created or re-created</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  <span class="color-comment">// Set color's clear-value to black</span>
+      gl.glClearDepthf(1.0f);            <span class="color-comment">// Set depth's clear-value to farthest</span>
+      gl.glEnable(GL10.GL_DEPTH_TEST);   <span class="color-comment">// Enables depth-buffer for hidden surface removal</span>
+      gl.glDepthFunc(GL10.GL_LEQUAL);    <span class="color-comment">// The type of depth testing to do</span>
+      gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  <span class="color-comment">// nice perspective view</span>
+      gl.glShadeModel(GL10.GL_SMOOTH);   <span class="color-comment">// Enable smooth shading of color</span>
+      gl.glDisable(GL10.GL_DITHER);      <span class="color-comment">// Disable dithering for better performance</span>
+  
+      <span class="color-comment">// You OpenGL|ES initialization code here
+      // ......</span>
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      if (height == 0) height = 1;   <span class="color-comment">// To prevent divide by zero</span>
+      float aspect = (float)width / height;
+   
+      <span class="color-comment">// Set the viewport (display area) to cover the entire window</span>
+      gl.glViewport(0, 0, width, height);
+  
+      <span class="color-comment">// Setup perspective projection, with aspect ratio matches viewport</span>
+      gl.glMatrixMode(GL10.GL_PROJECTION); <span class="color-comment">// Select projection matrix</span>
+      gl.glLoadIdentity();                 <span class="color-comment">// Reset projection matrix</span>
+      <span class="color-comment">// Use perspective projection</span>
+      GLU.gluPerspective(gl, 45, aspect, 0.1f, 100.f);
+  
+      gl.glMatrixMode(GL10.GL_MODELVIEW);  <span class="color-comment">// Select model-view matrix</span>
+      gl.glLoadIdentity();                 <span class="color-comment">// Reset</span>
+  
+      <span class="color-comment">// You OpenGL|ES display re-sizing code here
+      // ......</span>
+   }
+   
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers using clear-value set earlier</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+     
+      <span class="color-comment">// You OpenGL|ES rendering code here
+      // ......</span>
+   }
+}</pre> 
+     <h5>Dissecting <span class="font-code">MyGLRenderer.java</span></h5> 
+     <p>Our custom rendering class implements interface <code>GLSurfaceView.Renderer</code>, which is responsible to make the OpenGL calls to render a frame. It declare 3 methods to be called back by the Android graphics sub-system upon specific GL events.</p> 
+     <ol> 
+      <li><span class="line-heading-code-new">onSurfaceCreated(GL10 gl, EGLConfig config)</span>: Called when the surface is first created or recreated. It can be used to perform one-time initialization tasks such as setting the clear-value for color and depth, enabling depth-test, etc.</li> 
+      <li><span class="line-heading-code-new">onSurfaceChanged(GL10 gl, int width, int height)</span>: Called when the surface is first displayed and after window's size changes. It is used to set the view port and projection mode. <br> In our OpenGL renderer, we set the Android's view port (display area) to cover the entire screen from (0,0) to (width-1, height-1): <pre class="color-example">
+gl.glViewport(0, 0, width, height);</pre> We also choose the perspective projection and set the projection volume, with aspect ratio matches the view port, as follows: <pre class="color-example">
+<span class="color-comment">// OpenGL uses two transformation matrices: projection matrix and model-view matrix
+// We select the projection matrix to setup the projection</span>
+gl.glMatrixMode(GL10.GL_PROJECTION); <span class="color-comment">// Select projection matrix</span>
+gl.glLoadIdentity();                 <span class="color-comment">// Reset projection matrix</span>
+<span class="color-comment">// Use perspective projection with the projection volume defined by
+//   fovy, aspect-ration, z-near and z-far</span>
+GLU.gluPerspective(gl, 45, aspect, 0.1f, 100.f);
+  
+<span class="color-comment">// Select the model-view matrix to manipulate objects (Deselect the projection matrix)</span>
+gl.glMatrixMode(GL10.GL_MODELVIEW);  <span class="color-comment">// Select model-view matrix</span>
+gl.glLoadIdentity();                 <span class="color-comment">// Reset</span></pre> </li> 
+      <li><span class="line-heading-code-new">onDrawFrame(GL10 gl)</span>: Called to draw the current frame. You OpenGL rendering codes here.<br> In our OpenGL renderer, We clear the color and depth buffers (using the clear-values set via <code>glClear*</code> earlier). <pre class="color-example">
+gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);</pre> </li> 
+     </ol> 
+     <p>In the <code>Activity</code> class, we construct a custom renderer, and use <code>setRenderer()</code> to set it for the view:</p> 
+     <pre class="color-example">
+glView = new GLSurfaceView(this);       <span class="color-comment">// Allocate a GLSurfaceView</span>
+glView.setRenderer(new MyGLRenderer()); <span class="color-comment">// Set the renderer for the view</span></pre> 
+     <p>Run the program. You shall see a blank screen.</p> 
+     <h4>Example 2: Drawing 2D Shapes (Nehe Lesson 2: Your First Polygon)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid02.png" width="300"> 
+     <p>Let us get started by drawing 2D polygons as illustrated (Push Ctrl-F11 to switch the emulator in landscape orientation):</p> 
+     <p>Create an android application called "Nehe 02", with project name "<code>Nehe02</code>", package name "<code>com.test</code>". Create a blank activity called "<code>MyGLActivity</code>".</p> 
+     <h5><span class="font-code">Triangle.java</span></h5> 
+     <p>We first define a class called <code>Triangle</code>.</p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+  
+<span class="color-comment">/*
+ * A triangle with 3 vertices.
+ */</span>
+public class Triangle {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+   private ByteBuffer indexBuffer;    <span class="color-comment">// Buffer for index-array</span>
+  
+   private float[] vertices = {  <span class="color-comment">// Vertices of the triangle</span>
+       0.0f,  1.0f, 0.0f, <span class="color-comment">// 0. top</span>
+      -1.0f, -1.0f, 0.0f, <span class="color-comment">// 1. left-bottom</span>
+       1.0f, -1.0f, 0.0f  <span class="color-comment">// 2. right-bottom</span>
+   };
+   private byte[] indices = { 0, 1, 2 }; <span class="color-comment">// Indices to above vertices (in CCW)</span>
+ 
+   <span class="color-comment">// Constructor - Setup the data-array buffers</span>
+   public Triangle() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. A float has 4 bytes.</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert byte buffer to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+    
+      <span class="color-comment">// Setup index-array buffer. Indices in byte.</span>
+      indexBuffer = ByteBuffer.allocateDirect(indices.length);
+      indexBuffer.put(indices);
+      indexBuffer.position(0);
+   }
+  
+   <span class="color-comment">// Render this shape</span>
+   public void draw(GL10 gl) {
+      <span class="color-comment">// Enable vertex-array and define the buffers</span>
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      
+      <span class="color-comment">// Draw the primitives via index-array</span>
+      gl.glDrawElements(GL10.GL_TRIANGLES, indices.length, GL10.GL_UNSIGNED_BYTE, indexBuffer);
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+   }
+}</pre> 
+     <h5>Dissecting <span class="font-code">Triangle.java</span></h5> 
+     <p>In OpenGL ES, you cannot define individual vertex via <code>glVertex</code> command (this command is not supported in ES due to inefficiency). Instead, you have to use a vertex array to define a group of vertices. This is done in two steps:</p> 
+     <ol> 
+      <li>We first define the (x, y, z) location of the vertices in a Java array: <pre class="color-example">
+private float[] vertices = {  <span class="color-comment">// Vertices of the triangle</span>
+    0.0f,  1.0f, 0.0f, <span class="color-comment">// 0. top</span>
+   -1.0f, -1.0f, 0.0f, <span class="color-comment">// 1. left-bottom</span>
+    1.0f, -1.0f, 0.0f  <span class="color-comment">// 2. right-bottom</span>
+};</pre></li> 
+      <li>We then allocate the vertex-array buffer, and transfer the data into the buffer. We use nio's buffer because they are placed on the native heap and are not garbage-collected. <pre class="color-example">
+private FloatBuffer vertexBuffer;
+......
+<span class="color-comment">// Allocate a raw byte buffer. A float has 4 bytes</span>
+ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+<span class="color-comment">// Need to use native byte order</span>
+vbb.order(ByteOrder.nativeOrder());
+<span class="color-comment">// Convert the byte buffer into float buffer</span>
+vertexBuffer = vbb.asFloatBuffer();
+<span class="color-comment">// Transfer the data into the buffer</span>
+vertexBuffer.put(vertices);
+<span class="color-comment">// Rewind</span>
+vertexBuffer.position(0);</pre></li> 
+     </ol> 
+     <p>To render from the vertex-array, we need to enable client-state vertex-array:</p> 
+     <pre class="color-example">
+gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);</pre> 
+     <p>We can then use method <code>glDrawArrays()</code> to render from the vertex array directly, or <code>glDrawElements()</code> to render via an index array.</p> 
+     <p>In the above example, we set up an index array, which indexes into the vertex array (and its associated color array), as follows. Take note that the vertices are arranged in counter-clockwise (CCW) manner, with normal pointing out of the screen (or positive z-direction).</p> 
+     <pre class="color-example">
+private ByteBuffer indexBuffer;
+......
+byte[] indices = { 0, 1, 2 };   <span class="color-comment">// CCW</span>
+......
+indexBuffer = ByteBuffer.allocateDirect(indices.length);  <span class="color-comment">// Allocate raw byte buffer</span>
+indexBuffer.put(indices);   <span class="color-comment">// Transfer data into buffer</span>
+indexBuffer.position(0);    <span class="color-comment">// rewind</span></pre> 
+     <p>We render the triangle in the <code>draw()</code> method, with the following steps:</p> 
+     <ol> 
+      <li>We first enable vertex-array client states. <pre class="color-example">
+gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+</pre></li> 
+      <li>We then specify the location of the buffers via: <pre class="color-example">
+gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);   
+  <span class="color-comment">// gl*Pointer(int size, int type, int stride, Buffer pointer)
+  //   size: number of coordinates per vertex (must be 2, 3, or 4).
+  //   type: data type of vertex coordinate, GL_BYTE, GL_SHORT, GL_FIXED, or GL_FLOAT
+  //   stride: the byte offset between consecutive vertices. 0 for tightly packed.</span>
+</pre></li> 
+      <li>Finally, we render the primitives using glDrawElements(), which uses the index array to reference the vertex and color arrays. <pre class="color-example">
+gl.glDrawElements(GL10.GL_TRIANGLES, numIndices, GL10.GL_UNSIGNED_BYTE, indexBuffer);
+  <span class="color-comment">// glDrawElements(int mode, int count, int type, Buffer indices)
+  //   mode: GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, or GL_TRIANGLES
+  //   count: the number of elements to be rendered.
+  //   type: data-type of indices (must be GL_UNSIGNED_BYTE or GL_UNSIGNED_SHORT).
+  //   indices: pointer to the index array.</span> 
+gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);</pre></li> 
+     </ol> 
+     <h5><span class="font-code">Square.java</span></h5> 
+     <p>Similarly, let's define a quad. Take note that OpenGL ES does not support quad as a primitive. We need to draw two triangles instead. We shall use the same color for all the vertices of the quad. The color can be set via <code>glColor</code>.</p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+<span class="color-comment">/*
+ * A square drawn in 2 triangles (using TRIANGLE_STRIP).
+ */</span>
+public class Square {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+  
+   private float[] vertices = {  <span class="color-comment">// Vertices for the square</span>
+      -1.0f, -1.0f,  0.0f,  <span class="color-comment">// 0. left-bottom</span>
+       1.0f, -1.0f,  0.0f,  <span class="color-comment">// 1. right-bottom</span>
+      -1.0f,  1.0f,  0.0f,  <span class="color-comment">// 2. left-top</span>
+       1.0f,  1.0f,  0.0f   <span class="color-comment">// 3. right-top</span>
+   };
+  
+   <span class="color-comment">// Constructor - Setup the vertex buffer</span>
+   public Square() {
+      <span class="color-comment">// Setup vertex array buffer. Vertices in float. A float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+   }
+  
+   <span class="color-comment">// Render the shape</span>
+   public void draw(GL10 gl) {
+      <span class="color-comment">// Enable vertex-array and define its buffer</span>
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      <span class="color-comment">// Draw the primitives from the vertex-array directly</span>
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, vertices.length / 3);
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+   }
+}</pre> 
+     <img class="image-float-right" src="images/MyGL_Quad.png"> 
+     <h5>Dissecting <span class="font-code">Square.java</span></h5> 
+     <p>OpenGL ES 1.0 does not support quad as primitive. We shall draw a quad using <code>TRIANGLE_STRIP</code>, composing of 2 triangles v0v1v2 and v2v1v3, in counter-clockwise orientation.</p> 
+     <p>For the triangle, we use <code>glDrawElements()</code> which uses an index array to reference the vertex and color array. For the quad, we shall use<code> glDrawArrays()</code> to directly render from the vertex-array, as follows:</p> 
+     <div class="float-clear"></div> 
+     <pre class="color-example">
+gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);           <span class="color-comment">// Enable vertex array</span>
+gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);  <span class="color-comment">// Set the location of vertex array</span>
+gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, numVertices);
+  <span class="color-comment">// glDrawArrays(int mode, int first, int count)
+  //   mode: GL_POINTS, GL_LINE_STRIP, GL_LINE_LOOP, GL_LINES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, or GL_TRIANGLES
+  //   first: the starting index in the enabled arrays.
+  //   count: the number of indices to be rendered.</span>
+gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);</pre> 
+     <h5>GL Renderer</h5> 
+     <p>Now, modify the <em>renderer</em> to draw the triangle and quad.</p> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+  
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+   
+   <strong>Triangle triangle;     <span class="color-comment">// ( NEW )</span>
+   Square quad;           <span class="color-comment">// ( NEW )</span></strong>
+   
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      <span class="color-comment"><strong>// Set up the data-array buffers for these shapes ( NEW )</strong></span><strong>
+      triangle = new Triangle();   <span class="color-comment">// ( NEW )</span>
+      quad = new Square();         <span class="color-comment">// ( NEW )</span></strong>
+   }
+
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers using clear-values set earlier </span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+  
+      <strong>gl.glLoadIdentity();                 <span class="color-comment">// Reset model-view matrix ( NEW )</span>
+      gl.glTranslatef(-1.5f, 0.0f, -6.0f); <span class="color-comment">// Translate left and into the screen ( NEW )</span>
+      triangle.draw(gl);                   <span class="color-comment">// Draw triangle ( NEW )</span>
+  
+      <span class="color-comment">// Translate right, relative to the previous translation ( NEW )</span>
+      gl.glTranslatef(3.0f, 0.0f, 0.0f);
+      quad.draw(gl);                       <span class="color-comment">// Draw quad<strong> ( NEW )</strong></span></strong>
+   }
+}</pre> 
+     <p>We run the shapes' setup codes in the renderer's constructor, as they only have to run once. We invoke the shapes' <code>draw()</code> in renderer's <code>onDrawFrame()</code> which renders the shapes upon each frame refresh.</p> 
+     <h5>GL Activity</h5> 
+     <p>There is no change to the <code>Activity</code> codes in <code>MyGLActivity</code>.</p> 
+     <h4>Example 3: Color (Nehe Lesson 3: Color)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid03.png" width="300"> 
+     <h5><span class="font-code">Triangle.java</span></h5> 
+     <p>Modify the triangle.java as follow:</p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+  
+<span class="color-comment">/*
+ * A triangle with 3 vertices. Each vertex has its own color.
+ */</span>
+public class Triangle {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+   <strong>private FloatBuffer colorBuffer;   <span class="color-comment">// Buffer for color-array (NEW)</span></strong>
+   private ByteBuffer indexBuffer;    <span class="color-comment">// Buffer for index-array</span>
+  
+   private float[] vertices = {  <span class="color-comment">// Vertices of the triangle</span>
+       0.0f,  1.0f, 0.0f, <span class="color-comment">// 0. top</span>
+      -1.0f, -1.0f, 0.0f, <span class="color-comment">// 1. left-bottom</span>
+       1.0f, -1.0f, 0.0f  <span class="color-comment">// 2. right-bottom</span>
+   };
+   private byte[] indices = { 0, 1, 2 }; <span class="color-comment">// Indices to above vertices (in CCW)</span>
+   <strong>private float[] colors = { <span class="color-comment">// Colors for the vertices (NEW)</span>
+      1.0f, 0.0f, 0.0f, 1.0f, <span class="color-comment">// Red (NEW)</span>
+      0.0f, 1.0f, 0.0f, 1.0f, <span class="color-comment">// Green (NEW)</span>
+      0.0f, 0.0f, 1.0f, 1.0f  <span class="color-comment">// Blue (NEW)</span>
+   };</strong>
+  
+   <span class="color-comment">// Constructor - Setup the data-array buffers</span>
+   public Triangle() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. A float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert byte buffer to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+   
+      <strong><span class="color-comment">// Setup color-array buffer. Colors in float. A float has 4 bytes (NEW)</span>
+      ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
+      cbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order (NEW)</span>
+      colorBuffer = cbb.asFloatBuffer();  <span class="color-comment">// Convert byte buffer to float (NEW)</span>
+      colorBuffer.put(colors);            <span class="color-comment">// Copy data into buffer (NEW)</span>
+      colorBuffer.position(0);            <span class="color-comment">// Rewind (NEW)</span></strong>
+    
+      <span class="color-comment">// Setup index-array buffer. Indices in byte.</span>
+      indexBuffer = ByteBuffer.allocateDirect(indices.length);
+      indexBuffer.put(indices);
+      indexBuffer.position(0);
+   }
+  
+   <span class="color-comment">// Render this shape</span>
+   public void draw(GL10 gl) {
+      <span class="color-comment">// Enable arrays and define the buffers</span>
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      <strong>gl.glEnableClientState(GL10.GL_COLOR_ARRAY);          <span class="color-comment">// Enable color-array (NEW)</span>
+      gl.glColorPointer(4, GL10.GL_FLOAT, 0, colorBuffer);  <span class="color-comment">// Define color-array buffer (NEW)</span></strong>
+      
+      <span class="color-comment">// Draw the primitives via index-array</span>
+      gl.glDrawElements(GL10.GL_TRIANGLES, indices.length, GL10.GL_UNSIGNED_BYTE, indexBuffer);
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      <strong>gl.glDisableClientState(GL10.GL_COLOR_ARRAY);   <span class="color-comment">// Disable color-array (NEW)</span></strong>
+   }
+}</pre> 
+     <h5>Dissecting <span class="font-code">Triangle.java</span></h5> 
+     <p>During rendering, the vertex-array will be rendered together with other attributes (such as color, texture and normal), if these attributes are enabled.</p> 
+     <p>In the above example, we define the colors of the vertices and copy them into a color-array buffer. We enable color-array client-state. The colors will be rendered together with the vertices in <code>glDrawElements()</code>.</p> 
+     <h5><code>Square.java</code></h5> 
+     <p>Modify <code>Square.java</code> as follows:</p> 
+     <pre class="color-example">
+package com.test;
+   
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+<span class="color-comment">/*
+ * A square drawn in 2 triangles (using TRIANGLE_STRIP). This square has one color.
+ */</span>
+public class Square {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+   private float[] vertices = {  <span class="color-comment">// Vertices for the square</span>
+      -1.0f, -1.0f,  0.0f,  <span class="color-comment">// 0. left-bottom</span>
+       1.0f, -1.0f,  0.0f,  <span class="color-comment">// 1. right-bottom</span>
+      -1.0f,  1.0f,  0.0f,  <span class="color-comment">// 2. left-top</span>
+       1.0f,  1.0f,  0.0f   <span class="color-comment">// 3. right-top</span>
+   };
+  
+   <span class="color-comment">// Constructor - Setup the vertex buffer</span>
+   public Square() {
+      <span class="color-comment">// Setup vertex array buffer. Vertices in float. A float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+   }
+  
+   <span class="color-comment">// Render the shape</span>
+   public void draw(GL10 gl) {
+      <span class="color-comment">// Enable vertex-array and define its buffer</span>
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      <strong>gl.glColor4f(0.5f, 0.5f, 1.0f, 1.0f);      <span class="color-comment">// Set the current color (NEW)</span></strong>
+      <span class="color-comment">// Draw the primitives from the vertex array directly</span>
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, vertices.length / 3);
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+   }
+}</pre> 
+     <h5>Dissecting <span class="font-code">Square.java</span></h5> 
+     <p>Our square has one color. That is, all vertices are rendered using the same color. Hence, there is no need to define a color-array. Instead, we added a <code>glColor*</code> command before rendering the square using <code>glDrawArrays()</code>.</p> 
+     <h5>GL Renderer and GL Activity</h5> 
+     <p>No change.</p> 
+     <h4>Example 4: Rotation (Nehe Lesson 4: Rotation)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid04.png" width="300"> 
+     <p>To rotate the shapes created in the previous example, we need to make some minor modifications to our renderer.</p> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+  
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+   
+   private Triangle triangle;
+   Square quad;
+   
+   <span class="color-comment"><strong>// Rotational angle and speed (NEW)</strong></span><strong>
+   private float angleTriangle = 0.0f; <span class="color-comment">// (NEW)</span>
+   private float angleQuad = 0.0f;     <span class="color-comment">// (NEW)</span>
+   private float speedTriangle = 0.5f; <span class="color-comment">// (NEW)</span>
+   private float speedQuad = -0.4f;    <span class="color-comment">// (NEW)</span></strong>
+   
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      <span class="color-comment">// Set up the buffers for these shapes</span>
+      triangle = new Triangle();
+      quad = new Square();
+   }
+  
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers using clear-values set earlier</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+    
+      gl.glLoadIdentity();                 <span class="color-comment">// Reset model-view matrix</span>
+      gl.glTranslatef(-1.5f, 0.0f, -6.0f); <span class="color-comment">// Translate left and into the screen</span>
+      <strong>gl.glRotatef(angleTriangle, 0.0f, 1.0f, 0.0f); <span class="color-comment">// Rotate the triangle about the y-axis (NEW)</span></strong>
+      triangle.draw(gl);                   <span class="color-comment">// Draw triangle</span>
+   
+      <strong>gl.glLoadIdentity();                 <span class="color-comment">// Reset the mode-view matrix (NEW)</span>
+      gl.glTranslatef(1.5f, 0.0f, -6.0f);  <span class="color-comment">// Translate right and into the screen (NEW)</span>
+      gl.glRotatef(angleQuad, 1.0f, 0.0f, 0.0f); <span class="color-comment">// Rotate the square about the x-axis (NEW)</span></strong>
+      quad.draw(gl);                       <span class="color-comment">// Draw quad</span>
+
+      <span class="color-comment"><strong>// Update the rotational angle after each refresh (NEW)</strong></span><strong>
+      angleTriangle += speedTriangle; <span class="color-comment">// (NEW)</span>
+      angleQuad += speedQuad;         <span class="color-comment">// (NEW)</span></strong>
+   }
+}</pre> 
+     <p>A <code>glRotate*</code> command was added to rotate the shape, with angle of rotation updated after each refresh.</p> 
+     <h4>Example 5: 3D Shapes - Rotating Color Cube and Pyramid (Nehe Lesson 5: 3D Shapes)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid05.png" width="300"> 
+     <h5><span class="font-code">Pyramid.java</span></h5> 
+     <p>Set up the color pyramid as follows:</p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+  
+public class <strong>Pyramid</strong> {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+   private FloatBuffer colorBuffer;   <span class="color-comment">// Buffer for color-array</span>
+   private ByteBuffer indexBuffer;    <span class="color-comment">// Buffer for index-array</span>
+    
+   private float[] vertices = { <span class="color-comment">// 5 vertices of the pyramid in (x,y,z)</span>
+      -1.0f, -1.0f, -1.0f,  <span class="color-comment">// 0. left-bottom-back</span>
+       1.0f, -1.0f, -1.0f,  <span class="color-comment">// 1. right-bottom-back</span>
+       1.0f, -1.0f,  1.0f,  <span class="color-comment">// 2. right-bottom-front</span>
+      -1.0f, -1.0f,  1.0f,  <span class="color-comment">// 3. left-bottom-front</span>
+       0.0f,  1.0f,  0.0f   <span class="color-comment">// 4. top</span>
+   };
+          
+   private float[] colors = {  <span class="color-comment">// Colors of the 5 vertices in RGBA</span>
+      0.0f, 0.0f, 1.0f, 1.0f,  <span class="color-comment">// 0. blue</span>
+      0.0f, 1.0f, 0.0f, 1.0f,  <span class="color-comment">// 1. green</span>
+      0.0f, 0.0f, 1.0f, 1.0f,  <span class="color-comment">// 2. blue</span>
+      0.0f, 1.0f, 0.0f, 1.0f,  <span class="color-comment">// 3. green</span>
+      1.0f, 0.0f, 0.0f, 1.0f   <span class="color-comment">// 4. red</span>
+   };
+  
+   private byte[] indices = { <span class="color-comment">// Vertex indices of the 4 Triangles</span>
+      2, 4, 3,   <span class="color-comment">// front face (CCW)</span>
+      1, 4, 2,   <span class="color-comment">// right face</span>
+      0, 4, 1,   <span class="color-comment">// back face</span>
+      4, 0, 3    <span class="color-comment">// left face</span>
+   };
+  
+   <span class="color-comment">// Constructor - Set up the buffers</span>
+   public Pyramid() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+  
+      <span class="color-comment">// Setup color-array buffer. Colors in float. An float has 4 bytes</span>
+      ByteBuffer cbb = ByteBuffer.allocateDirect(colors.length * 4);
+      cbb.order(ByteOrder.nativeOrder());
+      colorBuffer = cbb.asFloatBuffer();
+      colorBuffer.put(colors);
+      colorBuffer.position(0);
+  
+      <span class="color-comment">// Setup index-array buffer. Indices in byte.</span>
+      indexBuffer = ByteBuffer.allocateDirect(indices.length);
+      indexBuffer.put(indices);
+      indexBuffer.position(0);
+   }
+  
+   <span class="color-comment">// Draw the shape</span>
+   public void draw(GL10 gl) {
+      gl.glFrontFace(GL10.GL_CCW);  <span class="color-comment">// Front face in counter-clockwise orientation</span>
+  
+      <span class="color-comment">// Enable arrays and define their buffers</span>
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
+      gl.glColorPointer(4, GL10.GL_FLOAT, 0, colorBuffer);
+      
+      gl.glDrawElements(GL10.GL_TRIANGLES, indices.length, GL10.GL_UNSIGNED_BYTE,
+            indexBuffer);
+      
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisableClientState(GL10.GL_COLOR_ARRAY);
+   }
+}</pre> 
+     <h5><span class="font-code">Cube.java</span></h5> 
+     <p>Similarly, set up the color cube as follows:</p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+  
+public class <strong>Cube</strong> {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+   private int numFaces = 6;
+   
+   private float[][] colors = {  <span class="color-comment">// Colors of the 6 faces</span>
+      {1.0f, 0.5f, 0.0f, 1.0f},  <span class="color-comment">// 0. orange</span>
+      {1.0f, 0.0f, 1.0f, 1.0f},  <span class="color-comment">// 1. violet</span>
+      {0.0f, 1.0f, 0.0f, 1.0f},  <span class="color-comment">// 2. green</span>
+      {0.0f, 0.0f, 1.0f, 1.0f},  <span class="color-comment">// 3. blue</span>
+      {1.0f, 0.0f, 0.0f, 1.0f},  <span class="color-comment">// 4. red</span>
+      {1.0f, 1.0f, 0.0f, 1.0f}   <span class="color-comment">// 5. yellow</span>
+   };
+  
+   private float[] vertices = {  <span class="color-comment">// Vertices of the 6 faces</span>
+      <span class="color-comment">// FRONT</span>
+      -1.0f, -1.0f,  1.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+       1.0f, -1.0f,  1.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+      -1.0f,  1.0f,  1.0f,  <span class="color-comment">// 2. left-top-front</span>
+       1.0f,  1.0f,  1.0f,  <span class="color-comment">// 3. right-top-front</span>
+      <span class="color-comment">// BACK</span>
+       1.0f, -1.0f, -1.0f,  <span class="color-comment">// 6. right-bottom-back</span>
+      -1.0f, -1.0f, -1.0f,  <span class="color-comment">// 4. left-bottom-back</span>
+       1.0f,  1.0f, -1.0f,  <span class="color-comment">// 7. right-top-back</span>
+      -1.0f,  1.0f, -1.0f,  <span class="color-comment">// 5. left-top-back</span>
+      <span class="color-comment">// LEFT</span>
+      -1.0f, -1.0f, -1.0f,  <span class="color-comment">// 4. left-bottom-back</span>
+      -1.0f, -1.0f,  1.0f,  <span class="color-comment">// 0. left-bottom-front</span> 
+      -1.0f,  1.0f, -1.0f,  <span class="color-comment">// 5. left-top-back</span>
+      -1.0f,  1.0f,  1.0f,  <span class="color-comment">// 2. left-top-front</span>
+      <span class="color-comment">// RIGHT</span>
+       1.0f, -1.0f,  1.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+       1.0f, -1.0f, -1.0f,  <span class="color-comment">// 6. right-bottom-back</span>
+       1.0f,  1.0f,  1.0f,  <span class="color-comment">// 3. right-top-front</span>
+       1.0f,  1.0f, -1.0f,  <span class="color-comment">// 7. right-top-back</span>
+      <span class="color-comment">// TOP</span>
+      -1.0f,  1.0f,  1.0f,  <span class="color-comment">// 2. left-top-front</span>
+       1.0f,  1.0f,  1.0f,  <span class="color-comment">// 3. right-top-front</span>
+      -1.0f,  1.0f, -1.0f,  <span class="color-comment">// 5. left-top-back</span>
+       1.0f,  1.0f, -1.0f,  <span class="color-comment">// 7. right-top-back</span>
+      <span class="color-comment">// BOTTOM</span>
+      -1.0f, -1.0f, -1.0f,  <span class="color-comment">// 4. left-bottom-back</span>
+       1.0f, -1.0f, -1.0f,  <span class="color-comment">// 6. right-bottom-back</span>
+      -1.0f, -1.0f,  1.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+       1.0f, -1.0f,  1.0f   <span class="color-comment">// 1. right-bottom-front</span>
+   };
+        
+   <span class="color-comment">// Constructor - Set up the buffers</span>
+   public Cube() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+   }
+  
+   <span class="color-comment">// Draw the shape</span>
+   public void draw(GL10 gl) {
+      gl.glFrontFace(GL10.GL_CCW);    <span class="color-comment">// Front face in counter-clockwise orientation</span>
+      gl.glEnable(GL10.GL_CULL_FACE); <span class="color-comment">// Enable cull face</span>
+      gl.glCullFace(GL10.GL_BACK);    <span class="color-comment">// Cull the back face (don't display)</span>
+  
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+
+      <span class="color-comment">// Render all the faces</span>
+      for (int face = 0; face &lt; numFaces; face++) {
+         <span class="color-comment">// Set the color for each of the faces</span>
+         gl.glColor4f(colors[face][0], colors[face][1], colors[face][2], colors[face][3]);
+         <span class="color-comment">// Draw the primitive from the vertex-array directly</span>
+         gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, face*4, 4);
+      }
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisable(GL10.GL_CULL_FACE);
+   }
+}</pre> 
+     <img class="image-float-right" src="images/MyGL_Cube.png"> 
+     <p>The vertices of the color cube is labeled as follows.</p> 
+     <p>The vertices of all the faces are arranged in counter-clockwise orientation with normal pointing outwards in a consistent manner. This enables us to cull the back face with the following codes:</p> 
+     <div class="float-clear"></div> 
+     <pre class="color-example">
+gl.glFrontFace(GL10.GL_CCW);    <span class="color-comment">// Set the front face</span>
+gl.glEnable(GL10.GL_CULL_FACE); <span class="color-comment">// Enable cull face</span>
+gl.glCullFace(GL10.GL_BACK);    <span class="color-comment">// Cull the back face</span></pre> 
+     <h5>GL Renderer</h5> 
+     <p>The renderer is as follows:</p> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+  
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+   
+   <strong>private Pyramid pyramid;    <span class="color-comment">// (NEW)</span>
+   private Cube cube;          <span class="color-comment">// (NEW)</span></strong>
+   
+   <strong>private static float anglePyramid = 0; <span class="color-comment">// Rotational angle in degree for pyramid (NEW)</span>
+   private static float angleCube = 0;    <span class="color-comment">// Rotational angle in degree for cube (NEW)</span>
+   private static float speedPyramid = 2.0f; <span class="color-comment">// Rotational speed for pyramid (NEW)</span>
+   private static float speedCube = -1.5f;   <span class="color-comment">// Rotational speed for cube (NEW)</span></strong>
+   
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      <span class="color-comment">// Set up the buffers for these shapes</span>
+      <strong>pyramid = new Pyramid();   <span class="color-comment">// (NEW)</span>
+      cube = new Cube();         <span class="color-comment">// (NEW)</span></strong>
+   }
+  
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+    
+      <span class="color-comment">// ----- Render the Pyramid -----</span>
+      gl.glLoadIdentity();                 <span class="color-comment">// Reset the model-view matrix</span>
+      gl.glTranslatef(-1.5f, 0.0f, -6.0f); <span class="color-comment">// Translate left and into the screen</span>
+      <strong>gl.glRotatef(anglePyramid, 0.1f, 1.0f, -0.1f); <span class="color-comment">// Rotate (NEW)</span>
+      pyramid.draw(gl);                              <span class="color-comment">// Draw the pyramid (NEW)</span></strong>
+    
+      <span class="color-comment">// ----- Render the Color Cube -----</span>
+      gl.glLoadIdentity();                <span class="color-comment">// Reset the model-view matrix</span>
+      gl.glTranslatef(1.5f, 0.0f, -6.0f); <span class="color-comment">// Translate right and into the screen</span>
+      <strong>gl.glScalef(0.8f, 0.8f, 0.8f);      <span class="color-comment">// Scale down (NEW)</span>
+      gl.glRotatef(angleCube, 1.0f, 1.0f, 1.0f); <span class="color-comment">// rotate about the axis (1,1,1) (NEW)</span>
+      cube.draw(gl);                      <span class="color-comment">// Draw the cube (NEW)</span></strong>
+      
+      <span class="color-comment"><strong>// Update the rotational angle after each refresh (NEW)</strong></span><strong>
+      anglePyramid += speedPyramid;   <span class="color-comment">// (NEW)</span>
+      angleCube += speedCube;         <span class="color-comment">// (NEW)</span></strong>
+   }
+}</pre> 
+     <h5>Cube</h5> 
+     <p>There are many ways to render a cube. You could define all the vertices of the 6 faces as in the above example. You could also define one representative face, and render the face 6 times with proper translation and rotation.</p> 
+     <p>Example 1: <code>Cube1.java</code></p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+<span class="color-comment">/*
+ * Define the vertices for only one face (the front face).
+ * Render the cube by translating and rotating the face.
+ */</span>
+public class <strong>Cube1</strong> {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Buffer for vertex-array</span>
+   
+   private float[][] colors = {  <span class="color-comment">// Colors of the 6 faces</span>
+      {1.0f, 0.5f, 0.0f, 1.0f},  <span class="color-comment">// 0. orange</span>
+      {1.0f, 0.0f, 1.0f, 1.0f},  <span class="color-comment">// 1. violet</span>
+      {0.0f, 1.0f, 0.0f, 1.0f},  <span class="color-comment">// 2. green</span>
+      {0.0f, 0.0f, 1.0f, 1.0f},  <span class="color-comment">// 3. blue</span>
+      {1.0f, 0.0f, 0.0f, 1.0f},  <span class="color-comment">// 4. red</span>
+      {1.0f, 1.0f, 0.0f, 1.0f}   <span class="color-comment">// 5. yellow</span>
+   };
+  
+   private float[] vertices = {  <span class="color-comment">// Vertices for the front face</span>
+      -1.0f, -1.0f, 1.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+       1.0f, -1.0f, 1.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+      -1.0f,  1.0f, 1.0f,  <span class="color-comment">// 2. left-top-front</span>
+       1.0f,  1.0f, 1.0f   <span class="color-comment">// 3. right-top-front</span>
+   };
+   
+   <span class="color-comment">// Constructor - Set up the buffers</span>
+   public Cube1() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+   }
+  
+   <span class="color-comment">// Draw the color cube</span>
+   public void draw(GL10 gl) {
+      gl.glFrontFace(GL10.GL_CCW);    <span class="color-comment">// Front face in counter-clockwise orientation</span>
+      gl.glEnable(GL10.GL_CULL_FACE); <span class="color-comment">// Enable cull face</span>
+      gl.glCullFace(GL10.GL_BACK);    <span class="color-comment">// Cull the back face (don't display)</span>
+   
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+
+      <span class="color-comment">// Front</span>
+      gl.glColor4f(colors[0][0], colors[0][1], colors[0][2], colors[0][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      
+      <span class="color-comment">// Right - Rotate 90 degree about y-axis</span>
+      gl.glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+      gl.glColor4f(colors[1][0], colors[1][1], colors[1][2], colors[1][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+
+      <span class="color-comment">// Back - Rotate another 90 degree about y-axis</span>
+      gl.glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+      gl.glColor4f(colors[2][0], colors[2][1], colors[2][2], colors[2][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+
+      <span class="color-comment">// Left - Rotate another 90 degree about y-axis</span>
+      gl.glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+      gl.glColor4f(colors[3][0], colors[3][1], colors[3][2], colors[3][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+
+      <span class="color-comment">// Bottom - Rotate 90 degree about x-axis</span>
+      gl.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+      gl.glColor4f(colors[4][0], colors[4][1], colors[4][2], colors[4][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      
+      <span class="color-comment">// Top - Rotate another 180 degree about x-axis</span>
+      gl.glRotatef(180.0f, 1.0f, 0.0f, 0.0f);
+      gl.glColor4f(colors[5][0], colors[5][1], colors[5][2], colors[5][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisable(GL10.GL_CULL_FACE);
+   }
+}</pre> 
+     <p>Example 2: <code>Cube2.java</code></p> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+<span class="color-comment">/*
+ * Define the vertices for a representative face.
+ * Render the cube by translating and rotating the face.
+ */</span>
+public class <strong>Cube2</strong> {
+   private FloatBuffer vertexBuffer; <span class="color-comment">// Buffer for vertex-array</span>
+  
+   private float[] vertices = { <span class="color-comment">// Vertices for a face at z=0</span>
+      -1.0f, -1.0f, 0.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+       1.0f, -1.0f, 0.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+      -1.0f,  1.0f, 0.0f,  <span class="color-comment">// 2. left-top-front</span>
+       1.0f,  1.0f, 0.0f   <span class="color-comment">// 3. right-top-front</span>
+   };
+  
+   private float[][] colors = {  <span class="color-comment">// Colors of the 6 faces</span>
+      {1.0f, 0.5f, 0.0f, 1.0f},  <span class="color-comment">// 0. orange</span>
+      {1.0f, 0.0f, 1.0f, 1.0f},  <span class="color-comment">// 1. violet</span>
+      {0.0f, 1.0f, 0.0f, 1.0f},  <span class="color-comment">// 2. green</span>
+      {0.0f, 0.0f, 1.0f, 1.0f},  <span class="color-comment">// 3. blue</span>
+      {1.0f, 0.0f, 0.0f, 1.0f},  <span class="color-comment">// 4. red</span>
+      {1.0f, 1.0f, 0.0f, 1.0f}   <span class="color-comment">// 5. yellow</span>
+   };
+  
+   <span class="color-comment">// Constructor - Set up the buffers</span>
+   public Cube2() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+   }
+   
+   <span class="color-comment">// Draw the shape</span>
+   public void draw(GL10 gl) {
+      gl.glFrontFace(GL10.GL_CCW);    <span class="color-comment">// Front face in counter-clockwise orientation</span>
+      gl.glEnable(GL10.GL_CULL_FACE); <span class="color-comment">// Enable cull face</span>
+      gl.glCullFace(GL10.GL_BACK);    <span class="color-comment">// Cull the back face (don't display)</span>
+  
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      
+      <span class="color-comment">// front</span>
+      gl.glPushMatrix();
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glColor4f(colors[0][0], colors[0][1], colors[0][2], colors[0][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// left</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glColor4f(colors[1][0], colors[1][1], colors[1][2], colors[1][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// back</span>
+      gl.glPushMatrix();
+      gl.glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glColor4f(colors[2][0], colors[2][1], colors[2][2], colors[2][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// right</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glColor4f(colors[3][0], colors[3][1], colors[3][2], colors[3][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+ 
+      <span class="color-comment">// top</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glColor4f(colors[4][0], colors[4][1], colors[4][2], colors[4][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+ 
+      <span class="color-comment">// bottom</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glColor4f(colors[5][0], colors[5][1], colors[5][2], colors[5][3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisable(GL10.GL_CULL_FACE);
+   }
+}</pre> 
+     <h4>Example 6: Texture (Nehe Lesson 6: Texture)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid06.png" width="300"> 
+     <p>Let's convert our color-cube into a texture-cube.</p> 
+     <h5><span class="font-code">TextureCube.java</span></h5> 
+     <p>Let's modify our earlier <code>Cube2.java</code> to set up the texture array.</p> 
+     <pre class="color-example">
+package com.test;
+   
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.opengl.GLUtils;
+<span class="color-comment">/*
+ * A cube with texture. 
+ * Define the vertices for only one representative face.
+ * Render the cube by translating and rotating the face.
+ */</span>
+public class TextureCube {
+   private FloatBuffer vertexBuffer; <span class="color-comment">// Buffer for vertex-array</span>
+   private FloatBuffer texBuffer;    <span class="color-comment">// Buffer for texture-coords-array (NEW)</span>
+  
+   private float[] vertices = { <span class="color-comment">// Vertices for a face</span>
+      -1.0f, -1.0f, 0.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+       1.0f, -1.0f, 0.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+      -1.0f,  1.0f, 0.0f,  <span class="color-comment">// 2. left-top-front</span>
+       1.0f,  1.0f, 0.0f   <span class="color-comment">// 3. right-top-front</span>
+   };
+  
+   <strong>float[] texCoords = { <span class="color-comment">// Texture coords for the above face (NEW)</span>
+      0.0f, 1.0f,  <span class="color-comment">// A. left-bottom (NEW)</span>
+      1.0f, 1.0f,  <span class="color-comment">// B. right-bottom (NEW)</span>
+      0.0f, 0.0f,  <span class="color-comment">// C. left-top (NEW)</span>
+      1.0f, 0.0f   <span class="color-comment">// D. right-top (NEW)</span>
+   };
+   int[] textureIDs = new int[1];   <span class="color-comment">// Array for 1 texture-ID (NEW)</span></strong>
+     
+   <span class="color-comment">// Constructor - Set up the buffers</span>
+   public TextureCube() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+  
+      <strong><span class="color-comment">// Setup texture-coords-array buffer, in float. An float has 4 bytes (NEW)</span>
+      ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4);
+      tbb.order(ByteOrder.nativeOrder());
+      texBuffer = tbb.asFloatBuffer();
+      texBuffer.put(texCoords);
+      texBuffer.position(0);</strong>
+   }
+   
+   <span class="color-comment">// Draw the shape</span>
+   public void draw(GL10 gl) {
+      gl.glFrontFace(GL10.GL_CCW);    <span class="color-comment">// Front face in counter-clockwise orientation</span>
+      gl.glEnable(GL10.GL_CULL_FACE); <span class="color-comment">// Enable cull face</span>
+      gl.glCullFace(GL10.GL_BACK);    <span class="color-comment">// Cull the back face (don't display) </span>
+   
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      <strong>gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);  <span class="color-comment">// Enable texture-coords-array (NEW)</span>
+      gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, texBuffer); <span class="color-comment">// Define texture-coords buffer (NEW)</span></strong>
+      
+      <span class="color-comment">// front</span>
+      gl.glPushMatrix();
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// left</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// back</span>
+      gl.glPushMatrix();
+      gl.glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// right</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// top</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// bottom</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <strong>gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);  <span class="color-comment">// Disable texture-coords-array (NEW)</span></strong>
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisable(GL10.GL_CULL_FACE);
+   }
+  
+   <span class="color-comment"><strong>// Load an image into GL texture</strong></span><strong>
+   public void loadTexture(GL10 gl, Context context) {
+      gl.glGenTextures(1, textureIDs, 0); <span class="color-comment">// Generate texture-ID array</span>
+
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[0]);   <span class="color-comment">// Bind to texture ID</span>
+      <span class="color-comment">// Set up texture filters</span>
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+  
+      <span class="color-comment">// Construct an input stream to texture image "res\drawable\nehe.png"</span>
+      InputStream istream = context.getResources().openRawResource(R.drawable.nehe);
+      Bitmap bitmap;
+      try {
+         <span class="color-comment">// Read and decode input as bitmap</span>
+         bitmap = BitmapFactory.decodeStream(istream);
+      } finally {
+         try {
+            istream.close();
+         } catch(IOException e) { }
+      }
+  
+      <span class="color-comment">// Build Texture from loaded bitmap for the currently-bind texture ID</span>
+      GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+      bitmap.recycle();
+   }</strong>
+}</pre> 
+     <img class="image-float-right" src="images/MyGL_TextureLayout.png"> 
+     <h5>Dissecting <code>TextureCube.java</code></h5> 
+     <p>The vertices of all the 6 faces are arranged in a consistent manner (inverted-Z). Hence, we can use the same texture coordinates for all 6 face. We define the texture coords once, and put into the texture buffer 6 times. Take note that texture coordinates' origin is at the top-left corner. The coordinates are normalized to [0, 1].</p> 
+     <div class="float-clear"></div> 
+     <pre class="color-example">
+private FloatBuffer texBuffer;     <span class="color-comment">// Texture Coords Buffer</span>
+......
+float[] texCoords = {  <span class="color-comment">// Define the texture coord, applicable to all 6 faces</span>
+   <span class="color-comment">// FRONT</span>
+   0.0f, 1.0f,  <span class="color-comment">// A. left-bottom</span>
+   1.0f, 1.0f,  <span class="color-comment">// B. right-bottom</span>
+   0.0f, 0.0f,  <span class="color-comment">// C. left-top</span>
+   1.0f, 0.0f   <span class="color-comment">// D. right-top</span>
+};
+   
+<span class="color-comment">// Allocate texture buffer</span>
+ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4 * 6);
+tbb.order(ByteOrder.nativeOrder());
+texBuffer = tbb.asFloatBuffer();
+<span class="color-comment">// All the 6 faces have the same texture coords, repeat 6 times</span>
+for (int face = 0; face &lt; 6; face++) {
+   texBuffer.put(texCoords);
+}
+texBuffer.position(0);     <span class="color-comment">// Rewind</span></pre> 
+     <p>To render the texture, we simply enable client-state texture-coords-array (together with vertex-array). The vertices and texture-coords will be rendered together.</p> 
+     <pre class="color-example">
+gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, texBuffer);
+   
+for (int face = 0; face &lt; 6; face++) {
+<span class="color-comment">// Render each face in TRIANGLE_STRIP using 4 vertices</span>
+   gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, face*4, 4);
+}</pre> 
+     <p>We store the texture image "<a href="images/nehe.png">nehe.png</a>" into folder "res\drawable".</p> 
+     <p>The following steps are needed to setup texture and load an image:</p> 
+     <ol> 
+      <li>[TODO]</li> 
+     </ol> 
+     <p>Take note that we have removed all the color information.</p> 
+     <h5>GL Renderer</h5> 
+     <p>We need to modify our renderer to setup texture as follows:</p> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+
+public class MyGLRenderer implements GLSurfaceView.Renderer {
+   
+   <strong>private Context context;   <span class="color-comment">// Application context needed to read image (NEW)</span></strong>
+   private TextureCube cube;
+   private static float angleCube = 0;     <span class="color-comment">// rotational angle in degree for cube</span>
+   private static float speedCube = -1.5f; <span class="color-comment">// rotational speed for cube</span>
+   
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      this.context = context;   <span class="color-comment">// Get the application context (NEW)</span>
+      cube = new TextureCube();
+   }
+  
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // Set color's clear-value to black
+      gl.glClearDepthf(1.0f);            // Set depth's clear-value to farthest
+      gl.glEnable(GL10.GL_DEPTH_TEST);   // Enables depth-buffer for hidden surface removal
+      gl.glDepthFunc(GL10.GL_LEQUAL);    // The type of depth testing to do
+      gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  // nice perspective view
+      gl.glShadeModel(GL10.GL_SMOOTH);   // Enable smooth shading of color
+      gl.glDisable(GL10.GL_DITHER);      // Disable dithering for better performance
+  
+      <span class="color-comment"><strong>// Setup Texture, each time the surface is created (NEW)</strong></span><strong>
+      cube.loadTexture(gl, context);    <span class="color-comment">// Load image into Texture (NEW)</span>
+      gl.glEnable(GL10.GL_TEXTURE_2D);  <span class="color-comment">// Enable texture (NEW)</span></strong>
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      .......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+      
+      <span class="color-comment">// ----- Render the Cube -----</span>
+      gl.glLoadIdentity();                  <span class="color-comment">// Reset the current model-view matrix</span>
+      gl.glTranslatef(0.0f, 0.0f, -6.0f);   <span class="color-comment">// Translate into the screen</span>
+      gl.glRotatef(angleCube, 0.1f, 1.0f, 0.2f); <span class="color-comment">// Rotate</span>
+      cube.draw(gl);
+      
+      <span class="color-comment">// Update the rotational angle after each refresh.</span>
+      angleCube += speedCube;
+   }
+}</pre> 
+     <h4>Example 6a: Photo-Cube</h4> 
+     <img class="image-float-right" src="images/NeheAndroid06a.png" width="300"> 
+     <p>Let's convert the texture cube into photo cube with different images for each of the 6 faces.</p> 
+     <h5><span class="font-code">PhotoCube.java</span></h5> 
+     <pre class="color-example">
+package com.test;
+  
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.opengl.GLUtils;
+<span class="color-comment">/*
+ * A photo cube with 6 pictures (textures) on its 6 faces.
+ */</span>
+public class PhotoCube {
+   private FloatBuffer vertexBuffer;  <span class="color-comment">// Vertex Buffer</span>
+   private FloatBuffer texBuffer;     <span class="color-comment">// Texture Coords Buffer</span>
+   
+   private int numFaces = 6;
+   private int[] imageFileIDs = {  <span class="color-comment">// Image file IDs</span>
+      R.drawable.caldera,
+      R.drawable.candice,
+      R.drawable.mule,
+      R.drawable.glass,
+      R.drawable.leonardo,
+      R.drawable.tmsk
+   };
+   private int[] textureIDs = new int[numFaces];
+   private Bitmap[] bitmap = new Bitmap[numFaces];
+   private float cubeHalfSize = 1.2f;
+        
+   <span class="color-comment">// Constructor - Set up the vertex buffer</span>
+   public PhotoCube(Context context) {
+      <span class="color-comment">// Allocate vertex buffer. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(12 * 4 * numFaces);
+      vbb.order(ByteOrder.nativeOrder());
+      vertexBuffer = vbb.asFloatBuffer();
+  
+      <span class="color-comment">// Read images. Find the aspect ratio and adjust the vertices accordingly.</span>
+      for (int face = 0; face &lt; numFaces; face++) {
+         bitmap[face] = BitmapFactory.decodeStream(
+               context.getResources().openRawResource(imageFileIDs[face]));
+         int imgWidth = bitmap[face].getWidth();
+         int imgHeight = bitmap[face].getHeight();
+         float faceWidth = 2.0f;
+         float faceHeight = 2.0f;
+         <span class="color-comment">// Adjust for aspect ratio</span>
+         if (imgWidth &gt; imgHeight) {
+            faceHeight = faceHeight * imgHeight / imgWidth; 
+         } else {
+            faceWidth = faceWidth * imgWidth / imgHeight;
+         }
+         float faceLeft = -faceWidth / 2;
+         float faceRight = -faceLeft;
+         float faceTop = faceHeight / 2;
+         float faceBottom = -faceTop;
+         
+         <span class="color-comment">// Define the vertices for this face</span>
+         float[] vertices = {
+            faceLeft,  faceBottom, 0.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+            faceRight, faceBottom, 0.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+            faceLeft,  faceTop,    0.0f,  <span class="color-comment">// 2. left-top-front</span>
+            faceRight, faceTop,    0.0f,  <span class="color-comment">// 3. right-top-front</span>
+         };
+         vertexBuffer.put(vertices);  <span class="color-comment">// Populate</span>
+      }
+      vertexBuffer.position(0);    <span class="color-comment">// Rewind</span>
+  
+      <span class="color-comment">// Allocate texture buffer. An float has 4 bytes. Repeat for 6 faces.</span>
+      float[] texCoords = {
+         0.0f, 1.0f,  // A. left-bottom
+         1.0f, 1.0f,  // B. right-bottom
+         0.0f, 0.0f,  // C. left-top
+         1.0f, 0.0f   // D. right-top
+      };
+      ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4 * numFaces);
+      tbb.order(ByteOrder.nativeOrder());
+      texBuffer = tbb.asFloatBuffer();
+      for (int face = 0; face &lt; numFaces; face++) {
+         texBuffer.put(texCoords);
+      }
+      texBuffer.position(0);   <span class="color-comment">// Rewind</span>
+   }
+   
+   <span class="color-comment">// Render the shape</span>
+   public void draw(GL10 gl) {
+      gl.glFrontFace(GL10.GL_CCW);
+      
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, texBuffer);
+  
+      <span class="color-comment">// front</span>
+      gl.glPushMatrix();
+      gl.glTranslatef(0f, 0f, cubeHalfSize);
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[0]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// left</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 0f, 1f, 0f);
+      gl.glTranslatef(0f, 0f, cubeHalfSize);
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[1]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 4, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// back</span>
+      gl.glPushMatrix();
+      gl.glRotatef(180.0f, 0f, 1f, 0f);
+      gl.glTranslatef(0f, 0f, cubeHalfSize);
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[2]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 8, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// right</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 0f, 1f, 0f);
+      gl.glTranslatef(0f, 0f, cubeHalfSize);
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[3]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 12, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// top</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 1f, 0f, 0f);
+      gl.glTranslatef(0f, 0f, cubeHalfSize);
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[4]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 16, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// bottom</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 1f, 0f, 0f);
+      gl.glTranslatef(0f, 0f, cubeHalfSize);
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[5]);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 20, 4);
+      gl.glPopMatrix();
+   
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+   }
+  
+   <span class="color-comment">// Load images into 6 GL textures</span>
+   public void loadTexture(GL10 gl) {
+      gl.glGenTextures(6, textureIDs, 0); <span class="color-comment">// Generate texture-ID array for 6 IDs</span>
+  
+      <span class="color-comment">// Generate OpenGL texture images</span>
+      for (int face = 0; face &lt; numFaces; face++) {
+         gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[face]);
+         <span class="color-comment">// Build Texture from loaded bitmap for the currently-bind texture ID</span>
+         GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap[face], 0);
+         bitmap[face].recycle();
+      }
+   }
+}</pre> 
+     <h5><span class="font-code">MyGLRenderer.java</span></h5> 
+     <pre class="color-example">
+package com.test;
+   
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+   
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+   <strong>private PhotoCube cube;     <span class="color-comment">// (NEW)</span></strong>
+   private static float angleCube = 0;     <span class="color-comment">// rotational angle in degree for cube</span>
+   private static float speedCube = -1.5f; <span class="color-comment">// rotational speed for cube</span>
+   
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      <strong>cube = new PhotoCube(context);    <span class="color-comment">// (NEW)</span></strong>
+   }
+   
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  <span class="color-comment">// Set color's clear-value to black</span>
+      gl.glClearDepthf(1.0f);            <span class="color-comment">// Set depth's clear-value to farthest</span>
+      gl.glEnable(GL10.GL_DEPTH_TEST);   <span class="color-comment">// Enables depth-buffer for hidden surface removal</span>
+      gl.glDepthFunc(GL10.GL_LEQUAL);    <span class="color-comment">// The type of depth testing to do</span>
+      gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  <span class="color-comment">// nice perspective view</span>
+      gl.glShadeModel(GL10.GL_SMOOTH);   <span class="color-comment">// Enable smooth shading of color</span>
+      gl.glDisable(GL10.GL_DITHER);      <span class="color-comment">// Disable dithering for better performance</span>
+    
+      <span class="color-comment"><strong>// Setup Texture, each time the surface is created (NEW)</strong></span><strong>
+      cube.loadTexture(gl);             <span class="color-comment">// Load images into textures (NEW)</span>
+      gl.glEnable(GL10.GL_TEXTURE_2D);  <span class="color-comment">// Enable texture (NEW)</span></strong>
+   }
+  
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+  
+      <span class="color-comment">// ----- Render the Cube -----</span>
+      gl.glLoadIdentity();                  <span class="color-comment">// Reset the model-view matrix</span>
+      gl.glTranslatef(0.0f, 0.0f, -6.0f);   <span class="color-comment">// Translate into the screen</span>
+      gl.glRotatef(angleCube, 0.15f, 1.0f, 0.3f); <span class="color-comment">// Rotate</span>
+      cube.draw(gl);
+      
+      <span class="color-comment">// Update the rotational angle after each refresh.</span>
+      angleCube += speedCube;
+   }
+}</pre> 
+     <h4>Example 7a: User Inputs (Nehe Lesson 7 Part 1: Key-Controlled)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid07.png" width="300"> 
+     <p>Nehe lesson 7 is far too complex, I shall break it into 3 parts: Key-controlled, Texture Filters, and Lighting.</p> 
+     <h5><span class="font-code">TextureCube.java</span></h5> 
+     <p>No change, except using image "<a href="images/crate.png">crate.png</a>".</p> 
+     <h5><span class="font-code">MyGLRenderer.java</span></h5> 
+     <p>We modify our renderer by adding variables and transformation methods to control the cube z-position, x and y rotational angles and speeds.</p> 
+     <pre class="color-example">
+package com.test;
+   
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+   
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+    
+   private Context context;
+   private TextureCube cube;
+   <strong><span class="color-comment">// For controlling cube's z-position, x and y angles and speeds (NEW)</span>
+   float angleX = 0;   <span class="color-comment">// (NEW)</span>
+   float angleY = 0;   <span class="color-comment">// (NEW)</span>
+   float speedX = 0;   <span class="color-comment">// (NEW)</span>
+   float speedY = 0;   <span class="color-comment">// (NEW)</span>
+   float z = -6.0f;    <span class="color-comment">// (NEW)</span></strong>
+   
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      this.context = context;
+      cube = new TextureCube();
+   }
+  
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  <span class="color-comment">// Set color's clear-value to black</span>
+      gl.glClearDepthf(1.0f);            <span class="color-comment">// Set depth's clear-value to farthest</span>
+      gl.glEnable(GL10.GL_DEPTH_TEST);   <span class="color-comment">// Enables depth-buffer for hidden surface removal</span>
+      gl.glDepthFunc(GL10.GL_LEQUAL);    <span class="color-comment">// The type of depth testing to do</span>
+      gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  <span class="color-comment">// nice perspective view</span>
+      gl.glShadeModel(GL10.GL_SMOOTH);   <span class="color-comment">// Enable smooth shading of color</span>
+      gl.glDisable(GL10.GL_DITHER);      <span class="color-comment">// Disable dithering for better performance</span>
+  
+      <span class="color-comment">// Setup Texture, each time the surface is created</span>
+      cube.loadTexture(gl, context);    <span class="color-comment">// Load image into Texture</span>
+      gl.glEnable(GL10.GL_TEXTURE_2D);  <span class="color-comment">// Enable texture</span>
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+
+      <span class="color-comment">// ----- Render the Cube -----</span>
+      gl.glLoadIdentity();              <span class="color-comment">// Reset the model-view matrix</span>
+      <strong>gl.glTranslatef(0.0f, 0.0f, z);   <span class="color-comment">// Translate into the screen (NEW)</span>
+      gl.glRotatef(angleX, 1.0f, 0.0f, 0.0f); <span class="color-comment">// Rotate (NEW)</span>
+      gl.glRotatef(angleY, 0.0f, 1.0f, 0.0f); <span class="color-comment">// Rotate (NEW)</span></strong>
+      cube.draw(gl);
+      
+      <span class="color-comment"><strong>// Update the rotational angle after each refresh (NEW)</strong></span><strong>
+      angleX += speedX;  <span class="color-comment">// (NEW)</span>
+      angleY += speedY;  <span class="color-comment">// (NEW)</span></strong>
+   }
+}</pre> 
+     <h5><span class="font-code">MyGLSurfaceView.java</span></h5> 
+     <p>In order to capture the user inputs, we need to customize the <code>GLSurfaceView</code> by extending a subclass, so as to override the event handlers (such as <code>onKeyUp()</code>, <code>onTouchEvent()</code>).</p> 
+     <pre class="color-example">
+package com.test;
+   
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
+<span class="color-comment">/*
+ * Custom GL view by extending GLSurfaceView so as
+ * to override event handlers such as onKeyUp(), onTouchEvent()
+ */</span>
+public class <strong>MyGLSurfaceView extends GLSurfaceView</strong> {
+   MyGLRenderer renderer;    <span class="color-comment">// Custom GL Renderer</span>
+   
+   <span class="color-comment">// For touch event</span>
+   private final float TOUCH_SCALE_FACTOR = 180.0f / 320.0f;
+   private float previousX;
+   private float previousY;
+
+   <span class="color-comment">// Constructor - Allocate and set the renderer</span>
+   public MyGLSurfaceView(Context context) {
+      super(context);
+      renderer = new MyGLRenderer(context);
+      this.setRenderer(renderer);
+      <span class="color-comment">// Request focus, otherwise key/button won't react</span>
+      this.requestFocus();  
+      this.setFocusableInTouchMode(true);
+   }
+   
+   <span class="color-comment">// Handler for key event</span>
+   @Override
+   public boolean onKeyUp(int keyCode, KeyEvent evt) {
+      switch(keyCode) {
+         case KeyEvent.KEYCODE_DPAD_LEFT:   <span class="color-comment">// Decrease Y-rotational speed</span>
+            renderer.speedY -= 0.1f;
+            break;
+         case KeyEvent.KEYCODE_DPAD_RIGHT:  <span class="color-comment">// Increase Y-rotational speed</span>
+            renderer.speedY += 0.1f;
+            break;
+         case KeyEvent.KEYCODE_DPAD_UP:     <span class="color-comment">// Decrease X-rotational speed</span>
+            renderer.speedX -= 0.1f;
+            break;
+         case KeyEvent.KEYCODE_DPAD_DOWN:   <span class="color-comment">// Increase X-rotational speed</span> 
+            renderer.speedX += 0.1f;
+            break;
+         case KeyEvent.KEYCODE_A:           <span class="color-comment">// Zoom out (decrease z)</span>
+            renderer.z -= 0.2f;
+            break;
+         case KeyEvent.KEYCODE_Z:           <span class="color-comment">// Zoom in (increase z)</span>
+            renderer.z += 0.2f;
+            break;
+      }
+      return true;  <span class="color-comment">// Event handled</span>
+   }
+
+   <span class="color-comment">// Handler for touch event</span>
+   @Override
+   public boolean onTouchEvent(final MotionEvent evt) {
+      float currentX = evt.getX();
+      float currentY = evt.getY();
+      float deltaX, deltaY;
+      switch (evt.getAction()) {
+         case MotionEvent.ACTION_MOVE:
+            <span class="color-comment">// Modify rotational angles according to movement</span>
+            deltaX = currentX - previousX;
+            deltaY = currentY - previousY;
+            renderer.angleX += deltaY * TOUCH_SCALE_FACTOR;
+            renderer.angleY += deltaX * TOUCH_SCALE_FACTOR;
+      }
+      <span class="color-comment">// Save current x, y</span>
+      previousX = currentX;
+      previousY = currentY;
+      return true;  <span class="color-comment">// Event handled</span>
+   }
+}</pre> 
+     <p>Clearly, we use key <code>'A'</code> and <code>'Z'</code> for zoom out and zoom in. Touch events for modifying x and y rotational angles. Left, right, up and down buttons to control the x and y rotational speeds.</p> 
+     <h5><span class="font-code">MyGLActivity.java</span></h5> 
+     <p>We need to modify our GL Activity to use the custom GL View.</p> 
+     <pre class="color-example">
+package com.test;
+  
+import android.app.Activity;
+import android.opengl.GLSurfaceView;
+import android.os.Bundle;
+<span class="color-comment">/*
+ * OpenGL Main Activity.
+ */</span>
+public class MyGLActivity extends Activity {
+   <strong>private GLSurfaceView glView;  <span class="color-comment">// Use subclass of GLSurfaceView (NEW)</span></strong>
+   
+   @Override
+   protected void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      <span class="color-comment"><strong>// Allocate a custom subclass of GLSurfaceView (NEW)</strong></span><strong>
+      glView = new MyGLSurfaceView(this);
+      setContentView(glView);  <span class="color-comment">// Set View (NEW)</span></strong>
+   }
+   
+   @Override
+   protected void onPause() {
+      super.onPause();
+      glView.onPause();
+   }
+   
+   @Override
+   protected void onResume() {
+      super.onResume();
+      glView.onResume();
+   }
+}</pre> 
+     <p>You can, similarly, capture and process other events. [MORE]</p> 
+     <h4>Example 7b: Texture Filters (Nehe Lesson 7 Part 2: Texture Filter)</h4> 
+     <h5><span class="font-code">TextureCube.java</span></h5> 
+     <pre class="color-example">
+package com.test;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import javax.microedition.khronos.opengles.GL10;
+import javax.microedition.khronos.opengles.GL11;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.opengl.GLUtils;
+<span class="color-comment">/*
+ * A cube with texture.
+ * Three texture filters are to be set up. 
+ */</span>
+public class TextureCube {
+   private FloatBuffer vertexBuffer; <span class="color-comment">// Buffer for vertex-array</span>
+   private FloatBuffer texBuffer;    <span class="color-comment">// Buffer for texture-coords-array</span>
+  
+   private float[] vertices = { <span class="color-comment">// Vertices for a face</span>
+      -1.0f, -1.0f, 0.0f,  <span class="color-comment">// 0. left-bottom-front</span>
+       1.0f, -1.0f, 0.0f,  <span class="color-comment">// 1. right-bottom-front</span>
+      -1.0f,  1.0f, 0.0f,  <span class="color-comment">// 2. left-top-front</span>
+       1.0f,  1.0f, 0.0f   <span class="color-comment">// 3. right-top-front</span>
+   };
+  
+   float[] texCoords = { <span class="color-comment">// Texture coords for the above face</span>
+      0.0f, 1.0f,  <span class="color-comment">// A. left-bottom</span>
+      1.0f, 1.0f,  <span class="color-comment">// B. right-bottom</span>
+      0.0f, 0.0f,  <span class="color-comment">// C. left-top</span>
+      1.0f, 0.0f   <span class="color-comment">// D. right-top</span>
+   };
+   <strong>int[] textureIDs = new int[3];  <span class="color-comment">// Array for 3 texture-IDs (NEW)</span></strong>
+     
+   <span class="color-comment">// Constructor - Set up the buffers</span>
+   public TextureCube() {
+      <span class="color-comment">// Setup vertex-array buffer. Vertices in float. An float has 4 bytes</span>
+      ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
+      vbb.order(ByteOrder.nativeOrder()); <span class="color-comment">// Use native byte order</span>
+      vertexBuffer = vbb.asFloatBuffer(); <span class="color-comment">// Convert from byte to float</span>
+      vertexBuffer.put(vertices);         <span class="color-comment">// Copy data into buffer</span>
+      vertexBuffer.position(0);           <span class="color-comment">// Rewind</span>
+  
+      <span class="color-comment">// Setup texture-coords-array buffer, in float. An float has 4 bytes</span>
+      ByteBuffer tbb = ByteBuffer.allocateDirect(texCoords.length * 4);
+      tbb.order(ByteOrder.nativeOrder());
+      texBuffer = tbb.asFloatBuffer();
+      texBuffer.put(texCoords);
+      texBuffer.position(0);
+   }
+   
+   <span class="color-comment">// Draw the shape</span>
+   <strong>public void draw(GL10 gl, int textureFilter) {  <span class="color-comment">// Select the filter (NEW)</span></strong>
+      gl.glFrontFace(GL10.GL_CCW);    <span class="color-comment">// Front face in counter-clockwise orientation</span>
+      gl.glEnable(GL10.GL_CULL_FACE); <span class="color-comment">// Enable cull face </span>
+      gl.glCullFace(GL10.GL_BACK);    <span class="color-comment">// Cull the back face (don't display) </span>
+   
+      gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
+      gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);  <span class="color-comment">// Enable texture-coords-array</span>
+      gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, texBuffer); <span class="color-comment">// Define texture-coords buffer</span>
+
+      <span class="color-comment"><strong>// Select the texture filter to use via texture ID (NEW)</strong></span><strong>
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[textureFilter]);</strong>
+  
+      <span class="color-comment">// front</span>
+      gl.glPushMatrix();
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// left</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// back</span>
+      gl.glPushMatrix();
+      gl.glRotatef(180.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// right</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// top</span>
+      gl.glPushMatrix();
+      gl.glRotatef(270.0f, 1.0f, 0.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      <span class="color-comment">// bottom</span>
+      gl.glPushMatrix();
+      gl.glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+      gl.glTranslatef(0.0f, 0.0f, 1.0f);
+      gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+      gl.glPopMatrix();
+  
+      gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+      gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
+      gl.glDisable(GL10.GL_CULL_FACE);
+   }
+  
+   <span class="color-comment"><strong>// Load an image and create 3 textures with different filters (NEW)</strong></span>
+   public void loadTexture(GL10 gl, Context context) {
+      // Construct an input stream to texture image "res\drawable\crate.png"
+      InputStream istream = context.getResources().openRawResource(R.drawable.crate);
+      Bitmap bitmap;
+      try {
+         // Read and decode input as bitmap
+         bitmap = BitmapFactory.decodeStream(istream);
+      } finally {
+         try {
+            istream.close();
+         } catch(IOException e) { }
+      }
+
+      <strong>gl.glGenTextures(3, textureIDs, 0);  <span class="color-comment">// Generate texture-ID array for 3 textures (NEW)</span>
+
+      <span class="color-comment">// Create Nearest Filtered Texture and bind it to texture 0 (NEW)</span>
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[0]);
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_NEAREST);
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+      GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+
+      <span class="color-comment">// Create Linear Filtered Texture and bind it to texture 1 (NEW)</span>
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[1]);
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+      GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+
+      <span class="color-comment">// Create mipmapped textures and bind it to texture 2 (NEW)</span>
+      gl.glBindTexture(GL10.GL_TEXTURE_2D, textureIDs[2]);
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+      gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR_MIPMAP_NEAREST);
+      if(gl instanceof GL11) {
+         gl.glTexParameterf(GL11.GL_TEXTURE_2D, GL11.GL_GENERATE_MIPMAP, GL11.GL_TRUE);
+      }
+      GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);</strong>
+
+      bitmap.recycle();
+   }
+}</pre> 
+     <h5>Dissecting <span class="font-code">TextureCube.java</span></h5> 
+     <p>[TODO]</p> 
+     <h5><span class="font-code">MyGLRenderer.java</span></h5> 
+     <pre class="color-example">
+......
+public class MyGLRenderer implements GLSurfaceView.Renderer {
+   ......
+   <strong>int currentTextureFilter = 0;  <span class="color-comment">// Texture filter (NEW)</span></strong>
+   ......
+   
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+
+      <span class="color-comment">// ----- Render the Cube -----</span>
+      gl.glLoadIdentity();              <span class="color-comment">// Reset the current model-view matrix</span>
+      gl.glTranslatef(0.0f, 0.0f, z);   <span class="color-comment">// Translate into the screen</span>
+      gl.glRotatef(angleX, 1.0f, 0.0f, 0.0f); <span class="color-comment">// Rotate</span>
+      gl.glRotatef(angleY, 0.0f, 1.0f, 0.0f); <span class="color-comment">// Rotate</span>
+      
+      <strong>cube.draw(gl, currentTextureFilter);    <span class="color-comment">// (NEW)</span></strong>
+      
+      <span class="color-comment">// Update the rotational angle after each refresh</span>
+      angleX += speedX;
+      angleY += speedY;
+   }
+}</pre> 
+     <h5><span class="font-code">MyGLSurfaceView.java</span></h5> 
+     <pre class="color-example">
+......
+public class MyGLSurfaceView extends GLSurfaceView {
+   ......
+   <span class="color-comment">// Handler for key event</span>
+   @Override
+   public boolean onKeyUp(int keyCode, KeyEvent evt) {
+      switch(keyCode) {
+         ......
+         <strong>case KeyEvent.KEYCODE_DPAD_CENTER:  <span class="color-comment">// Select texture filter (NEW)</span>
+            renderer.currentTextureFilter = (renderer.currentTextureFilter + 1) % 3;
+            break;</strong>
+      }
+}</pre> 
+     <h4>Example 7c: Lighting (Nehe Lesson 7 Part 3: Lighting)</h4> 
+     <h5><span class="font-code">MyGLRenderer.java</span></h5> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+  
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+    
+   private Context context;
+   private TextureCube cube;
+   <span class="color-comment">// For controlling cube's z-position, x and y angles and speeds</span>
+   float angleX = 0;
+   float angleY = 0;
+   float speedX = 0;
+   float speedY = 0;
+   float z = -6.0f;
+   
+   int currentTextureFilter = 0;  <span class="color-comment">// Texture filter</span>
+
+   <span class="color-comment"><strong>// Lighting (NEW)</strong></span><strong>
+   boolean lightingEnabled = false;   <span class="color-comment">// Is lighting on? (NEW)</span>
+   private float[] lightAmbient = {0.5f, 0.5f, 0.5f, 1.0f};
+   private float[] lightDiffuse = {1.0f, 1.0f, 1.0f, 1.0f};
+   private float[] lightPosition = {0.0f, 0.0f, 2.0f, 1.0f};</strong>
+  
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      this.context = context;
+      cube = new TextureCube();
+   }
+  
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  <span class="color-comment">// Set color's clear-value to black</span>
+      gl.glClearDepthf(1.0f);            <span class="color-comment">// Set depth's clear-value to farthest</span>
+      gl.glEnable(GL10.GL_DEPTH_TEST);   <span class="color-comment">// Enables depth-buffer for hidden surface removal</span>
+      gl.glDepthFunc(GL10.GL_LEQUAL);    <span class="color-comment">// The type of depth testing to do</span>
+      gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  <span class="color-comment">// nice perspective view</span>
+      gl.glShadeModel(GL10.GL_SMOOTH);   <span class="color-comment">// Enable smooth shading of color</span>
+      gl.glDisable(GL10.GL_DITHER);      <span class="color-comment">// Disable dithering for better performance</span>
+
+      <span class="color-comment">// Setup Texture, each time the surface is created</span>
+      cube.loadTexture(gl, context);    <span class="color-comment">// Load image into Texture</span>
+      gl.glEnable(GL10.GL_TEXTURE_2D);  <span class="color-comment">// Enable texture</span>
+      
+      <span class="color-comment"><strong>// Setup lighting GL_LIGHT1 with ambient and diffuse lights (NEW)</strong></span><strong>
+      gl.glLightfv(GL10.GL_LIGHT1, GL10.GL_AMBIENT, lightAmbient, 0);
+      gl.glLightfv(GL10.GL_LIGHT1, GL10.GL_DIFFUSE, lightDiffuse, 0);
+      gl.glLightfv(GL10.GL_LIGHT1, GL10.GL_POSITION, lightPosition, 0);
+      gl.glEnable(GL10.GL_LIGHT1);   <span class="color-comment">// Enable Light 1 (NEW)</span>
+      gl.glEnable(GL10.GL_LIGHT0);   <span class="color-comment">// Enable the default Light 0 (NEW)</span></strong>
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      .......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+  
+      <span class="color-comment"><strong>// Enable lighting? (NEW)</strong></span><strong>
+      if (lightingEnabled) {
+         gl.glEnable(GL10.GL_LIGHTING);
+      } else {
+         gl.glDisable(GL10.GL_LIGHTING);
+      }</strong>
+      
+      <span class="color-comment">// ----- Render the Cube -----</span>
+      gl.glLoadIdentity();              <span class="color-comment">// Reset the model-view matrix</span>
+      gl.glTranslatef(0.0f, 0.0f, z);   <span class="color-comment">// Translate into the screen</span>
+      gl.glRotatef(angleX, 1.0f, 0.0f, 0.0f); <span class="color-comment">// Rotate</span>
+      gl.glRotatef(angleY, 0.0f, 1.0f, 0.0f); <span class="color-comment">// Rotate</span>
+      cube.draw(gl, currentTextureFilter);
+      
+      <span class="color-comment">// Update the rotational angle after each refresh</span>
+      angleX += speedX;
+      angleY += speedY;
+   }
+}</pre> 
+     <h5><span class="font-code">MyGLSurfaceView.java</span></h5> 
+     <pre class="color-example">
+......
+public class <strong>MyGLSurfaceView extends GLSurfaceView</strong> {
+   .......
+  
+   <span class="color-comment">// Handler for key event</span>
+   @Override
+   public boolean onKeyUp(int keyCode, KeyEvent evt) {
+      switch(keyCode) {
+         .......
+         <strong>case KeyEvent.KEYCODE_L:  <span class="color-comment">// Toggle lighting on/off (NEW) </span>
+            renderer.lightingEnabled = !renderer.lightingEnabled;
+            break;</strong>
+      }
+      ......
+   }
+}</pre> 
+     <h4>Example 8: Blending (Nehe Lesson 8: Blending)</h4> 
+     <img class="image-float-right" src="images/NeheAndroid08.png" width="300"> 
+     <h5><span class="font-code">TextureCube.java</span></h5> 
+     <p>Use texture image "<a href="images/glass.png">glass.png</a>". Remove the culling of back face.</p> 
+     <h5><span class="font-code">MyGLRenderer.java</span></h5> 
+     <pre class="color-example">
+package com.test;
+  
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
+import android.content.Context;
+import android.opengl.GLSurfaceView;
+import android.opengl.GLU;
+  
+public class <strong>MyGLRenderer implements GLSurfaceView.Renderer</strong> {
+   private Context context;
+   private TextureCube cube;
+   <span class="color-comment">// For controlling cube's z-position, x and y angles and speeds</span>
+   float angleX = 0;
+   float angleY = 0;
+   float speedX = 0;
+   float speedY = 0;
+   float z = -6.0f;
+   
+   int currentTextureFilter = 0;  <span class="color-comment">// Texture filter</span>
+  
+   <span class="color-comment">// Lighting</span>
+   boolean lightingEnabled = false;
+   private float[] lightAmbient = {0.5f, 0.5f, 0.5f, 1.0f};
+   private float[] lightDiffuse = {1.0f, 1.0f, 1.0f, 1.0f};
+   private float[] lightPosition = {0.0f, 0.0f, 2.0f, 1.0f};
+  
+   <span class="color-comment"><strong>// Blending (NEW)</strong></span><strong>
+   boolean blendingEnabled = false;  // Is blending on? (NEW)</strong>
+  
+   <span class="color-comment">// Constructor</span>
+   public MyGLRenderer(Context context) {
+      this.context = context;
+      cube = new TextureCube();
+   }
+  
+   <span class="color-comment">// Call back when the surface is first created or re-created.</span>
+   @Override
+   public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+      gl.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  <span class="color-comment">// Set color's clear-value to black</span>
+      gl.glClearDepthf(1.0f);            <span class="color-comment">// Set depth's clear-value to farthest</span>
+      gl.glEnable(GL10.GL_DEPTH_TEST);   <span class="color-comment">// Enables depth-buffer for hidden surface removal</span>
+      gl.glDepthFunc(GL10.GL_LEQUAL);    <span class="color-comment">// The type of depth testing to do</span>
+      gl.glHint(GL10.GL_PERSPECTIVE_CORRECTION_HINT, GL10.GL_NICEST);  <span class="color-comment">// nice perspective view</span>
+      gl.glShadeModel(GL10.GL_SMOOTH);   <span class="color-comment">// Enable smooth shading of color</span>
+      gl.glDisable(GL10.GL_DITHER);      <span class="color-comment">// Disable dithering for better performance</span>
+  
+      <span class="color-comment">// Setup Texture, each time the surface is created</span>
+      cube.loadTexture(gl, context);    <span class="color-comment">// Load image into Texture</span>
+      gl.glEnable(GL10.GL_TEXTURE_2D);  <span class="color-comment">// Enable texture</span>
+      
+      <span class="color-comment">// Setup lighting GL_LIGHT1 with ambient and diffuse lights</span>
+      gl.glLightfv(GL10.GL_LIGHT1, GL10.GL_AMBIENT, lightAmbient, 0);
+      gl.glLightfv(GL10.GL_LIGHT1, GL10.GL_DIFFUSE, lightDiffuse, 0);
+      gl.glLightfv(GL10.GL_LIGHT1, GL10.GL_POSITION, lightPosition, 0);
+      gl.glEnable(GL10.GL_LIGHT1);   <span class="color-comment">// Enable Light 1</span>
+      gl.glEnable(GL10.GL_LIGHT0);   <span class="color-comment">// Enable the default Light 0</span>
+      
+      <span class="color-comment"><strong>// Setup Blending (NEW)</strong></span><strong>
+      gl.glColor4f(1.0f, 1.0f, 1.0f, 0.5f);           <span class="color-comment">// Full brightness, 50% alpha (NEW)</span>
+      gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE); <span class="color-comment">// Select blending function (NEW)</span></strong>
+   }
+   
+   <span class="color-comment">// Call back after onSurfaceCreated() or whenever the window's size changes.</span>
+   @Override
+   public void onSurfaceChanged(GL10 gl, int width, int height) {
+      <span class="color-comment">// NO CHANGE - SKIP</span>
+      ......
+   }
+  
+   <span class="color-comment">// Call back to draw the current frame.</span>
+   @Override
+   public void onDrawFrame(GL10 gl) {
+      <span class="color-comment">// Clear color and depth buffers</span>
+      gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
+  
+      <span class="color-comment">// Enable lighting?</span>
+      if (lightingEnabled) {
+         gl.glEnable(GL10.GL_LIGHTING);
+      } else {
+         gl.glDisable(GL10.GL_LIGHTING);
+      }
+      
+      <span class="color-comment"><strong>// Blending Enabled? (NEW)</strong></span><strong>
+      if (blendingEnabled) {
+         gl.glEnable(GL10.GL_BLEND);       <span class="color-comment">// Turn blending on (NEW)</span>
+         gl.glDisable(GL10.GL_DEPTH_TEST); <span class="color-comment">// Turn depth testing off (NEW)</span>
+         
+      } else {
+         gl.glDisable(GL10.GL_BLEND);      <span class="color-comment">// Turn blending off (NEW)</span>
+         gl.glEnable(GL10.GL_DEPTH_TEST);  <span class="color-comment">// Turn depth testing on (NEW)</span>
+      }</strong>
+      
+      <span class="color-comment">// ----- Render the Cube -----</span>
+      gl.glLoadIdentity();              <span class="color-comment">// Reset the model-view matrix</span>
+      gl.glTranslatef(0.0f, 0.0f, z);   <span class="color-comment">// Translate into the screen</span>
+      gl.glRotatef(angleX, 1.0f, 0.0f, 0.0f); <span class="color-comment">// Rotate</span>
+      gl.glRotatef(angleY, 0.0f, 1.0f, 0.0f); <span class="color-comment">// Rotate</span>
+      cube.draw(gl, currentTextureFilter);
+        
+      <span class="color-comment">// Update the rotational angle after each refresh</span>
+      angleX += speedX;
+      angleY += speedY;
+   }
+}</pre> 
+     <h5><span class="font-code">MyGLSurfaceView.java</span></h5> 
+     <pre class="color-example">
+......
+public class <strong>MyGLSurfaceView extends GLSurfaceView</strong> {
+   .......
+  
+   <span class="color-comment">// Handler for key event</span>
+   @Override
+   public boolean onKeyUp(int keyCode, KeyEvent evt) {
+      switch(keyCode) {
+         .......
+         <strong>case KeyEvent.KEYCODE_B:  <span class="color-comment">// Toggle Blending on/off (NEW)</span>
+            renderer.blendingEnabled = !renderer.blendingEnabled;
+            break;</strong>
+      }
+      ......
+   }
+}</pre> 
+     <h4>Example 8a: Bouncing Ball in Cube</h4> 
+     <p>[TODO] No primitive to draw a sphere in OpenGL ES.</p> 
+     <h3 id="AndroidNehe">Android Port for Nehe's Lessons</h3> 
+     <p>I have ported some of the Nehe's lessons into Android. Refer to <a href="http://nehe.gamedev.net/">Nehe</a> for the problem descriptions.</p> 
+     <p><span class="line-heading">Setting Up:</span></p> 
+     <ul> 
+      <li>Nehe's Lesson #1: Setting up OpenGL's window. (Refer to above examples.)</li> 
+     </ul> 
+     <p><span class="line-heading"></span><span class="line-heading">OpenGL Basics:</span> I consider Lessons 2-8 as OpenGL basic lessons, that are extremely important! (Refer to above examples.)</p> 
+     <ul> 
+      <li>Nehe's Lesson #2: Your first polygon </li> 
+      <li>Nehe's Lesson #3: Adding Color</li> 
+      <li>Nehe's Lesson #4: Rotation</li> 
+      <li>Nehe's Lesson #5: 3D Shape</li> 
+      <li>Nehe's Lesson #6: Texture</li> 
+      <li>Nehe's Lesson #7: Texture Filter, Lighting, and key-controlled</li> 
+      <li>Nehe's Lesson #8: Blending</li> 
+     </ul> 
+     <p><span class="line-heading">Intermediate: </span>[TODO]</p> 
+     <p>&nbsp;</p> 
+     <p class="references">REFERENCES &amp; RESOURCES</p> 
+     <ul> 
+      <li>Introducing <code>GLSurfaceView</code> @ <a href="http://developer.android.com/resources/articles/glsurfaceview.html">http://developer.android.com/resources/articles/glsurfaceview.html</a>.</li> 
+      <li><code>GLSurfaceView</code> reference @ <a href="http://developer.android.com/reference/android/opengl/GLSurfaceView.html">http://developer.android.com/reference/android/opengl/GLSurfaceView.html</a>.</li> 
+      <li>OpenGL ES 1.1 Reference Pages @ <a href="http://www.khronos.org/opengles/sdk/1.1/docs/man/">http://www.khronos.org/opengles/sdk/1.1/docs/man</a>.</li> 
+      <li>android.opengl package API @ <a href="http://developer.android.com/reference/android/opengl/package-summary.html">http://developer.android.com/reference/android/opengl/package-summary.html</a>.</li> 
+      <li>Android's API Demos ? Graphics ? OpenGL ES.</li> 
+      <li>Nehe OpenGL Lessons @ <a href="http://nehe.gamedev.net/">http://nehe.gamedev.net</a>.</li> 
+      <li>OpenGL "Red" book, "Blue" book.</li> 
+     </ul> 
+    </div> 
+    <!-- End the content-main division --> 
+    <div id="content-footer"> 
+     <p>Latest version tested: Android SDK 2.2<br> Last modified: October 18, 2010</p> 
+    </div> 
+   </div> 
+   <!-- End the wrap-inner division --> 
+   <!-- footer filled by JavaScript --> 
+   <div id="footer" class="header-footer">
+    <p>&nbsp;</p>
+   </div> 
+  </div> 
+  <!-- End the wrap-outer division -->   
+ </body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+ <head> 
+  <title>IdentityServer3 with Custom grant flow and Windows authentication – CodePool – Programming and a bit more</title> 
+  <meta charset="utf-8"> 
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"> 
+  <meta name="description" content="What we are going to do?
+
+
+  Setup and configuration of the IdentityServer3.
+  Creating a client for the IdentityServer3 with Flows.Other and AllowedCustomGrantTypes: " windows". Setup and configuration of the WindowsAuthenticationService. Creating a custom grant validator in IdentityServer3 for windows type. console client get token from by using current Windows principal. How does this all communicate? The (in our case WPF-based desktop application) calls WindowsAuthenticationService converting his her principal to jwt token, which is trusted IdentityServer3. On next step, Client IdentityServer’s endpoint (using grant: ), including request got will then issue new with requested scopes, claims etc. What are we going achieve? This allows us authenticate users authentication. In addition, can add roles, these IdentityManager. "> 
+  <meta property="og:description" content="What we are going to do?
+
+
+  Setup and configuration of the IdentityServer3.
+  Creating a client for the IdentityServer3 with Flows.Other and AllowedCustomGrantTypes: " windows". Setup and configuration of the WindowsAuthenticationService. Creating a custom grant validator in IdentityServer3 for windows type. console client get token from by using current Windows principal. How does this all communicate? The (in our case WPF-based desktop application) calls WindowsAuthenticationService converting his her principal to jwt token, which is trusted IdentityServer3. On next step, Client IdentityServer’s endpoint (using grant: ), including request got will then issue new with requested scopes, claims etc. What are we going achieve? This allows us authenticate users authentication. In addition, can add roles, these IdentityManager. "> 
+  <meta name="author" content="CodePool"> 
+  <meta property="og:title" content="IdentityServer3 with Custom grant flow and Windows authentication"> 
+  <meta property="twitter:title" content="IdentityServer3 with Custom grant flow and Windows authentication"> 
+  <!--[if lt IE 9]>
+      <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--> 
+  <link rel="stylesheet" type="text/css" href="/style.css"> 
+  <link rel="alternate" type="application/rss+xml" title="CodePool - Programming and a bit more" href="/feed.xml"> 
+  <!-- Created with Jekyll Now - http://github.com/barryclark/jekyll-now --> 
+ </head> 
+ <body> 
+  <div class="wrapper-masthead"> 
+   <div class="container"> 
+    <header class="masthead clearfix"> 
+     <a href="/" class="site-avatar"><img src="https://avatars2.githubusercontent.com/u/11096006"></a> 
+     <div class="site-info"> 
+      <h1 class="site-name"><a href="/">CodePool</a></h1> 
+      <p class="site-description">Programming and a bit more</p> 
+     </div> 
+     <nav> 
+      <a href="/">Blog</a> 
+      <a href="/about">About</a> 
+     </nav> 
+    </header> 
+   </div> 
+  </div> 
+  <div id="main" role="main" class="container"> 
+   <article class="post"> 
+    <h1>IdentityServer3 with Custom grant flow and Windows authentication</h1> 
+    <div class="entry"> 
+     <h4 id="what-we-are-going-to-do">What we are going to do?</h4> 
+     <ol> 
+      <li>Setup and configuration of the <code class="highlighter-rouge">IdentityServer3</code>.</li> 
+      <li>Creating a client for the <code class="highlighter-rouge">IdentityServer3</code> with <code class="highlighter-rouge">Flows.Other</code> and <code class="highlighter-rouge">AllowedCustomGrantTypes: "windows"</code>.</li> 
+      <li>Setup and configuration of the <code class="highlighter-rouge">WindowsAuthenticationService</code>.</li> 
+      <li>Creating a custom grant validator in <code class="highlighter-rouge">IdentityServer3</code> for <code class="highlighter-rouge">windows</code> grant type.</li> 
+      <li>Creating a console client and get a token from <code class="highlighter-rouge">IdentityServer3</code> by using the current <code class="highlighter-rouge">Windows principal</code>.</li> 
+     </ol> 
+     <h4 id="how-does-this-all-communicate">How does this all communicate?</h4> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_1.png" alt="Communication"></p> 
+     <p>The client (in our case a WPF-based desktop application) calls <code class="highlighter-rouge">WindowsAuthenticationService</code> for converting his/her current <code class="highlighter-rouge">windows principal</code> to <code class="highlighter-rouge">jwt token</code>, which is trusted by <code class="highlighter-rouge">IdentityServer3</code>. On the next step, the <code class="highlighter-rouge">Client</code> calls the IdentityServer’s <code class="highlighter-rouge">/token</code> endpoint (using custom grant: windows ), including in the request the <code class="highlighter-rouge">jwt token</code> got from <code class="highlighter-rouge">WindowsAuthenticationService</code>. <code class="highlighter-rouge">IdentityServer3</code> will then issue a new token with requested scopes, custom claims and etc.</p> 
+     <h4 id="what-are-we-going-to-achieve">What are we going to achieve?</h4> 
+     <p>This configuration allows us to authenticate users in <code class="highlighter-rouge">IdentityServer3</code> with windows authentication. In addition, we can add roles, claims to these users by using the <a href="https://github.com/IdentityManager/IdentityManager">IdentityManager</a>.</p> 
+     <!--more--> 
+     <h3 id="1-setup-and-configuration-of-the-identityserver3">1. Setup and configuration of the <code class="highlighter-rouge">IdentityServer3</code>.</h3> 
+     <p>Create a new empty ASP.NET web project. We are going to use OWIN-based web app hosted in IIS.</p> 
+     <p>Install following packages:</p> 
+     <p><code class="highlighter-rouge">Install-Package Microsoft.Owin.Host.SystemWeb</code></p> 
+     <p><code class="highlighter-rouge">Install-Package IdentityServer3</code></p> 
+     <p>Also, add the reference to <code class="highlighter-rouge">System.IdentityModel</code> assembly for validating tokens issued from <code class="highlighter-rouge">WindowsAuthenticationService</code>.</p> 
+     <p>After that, we need a <code class="highlighter-rouge">Startup</code> class in order to configure our application and the <code class="highlighter-rouge">IdentityServer3</code>. Add <code class="highlighter-rouge">Startup.cs</code> file (Right Click On Project &gt; Add &gt; OWIN Startup Class) to configure our app to use <code class="highlighter-rouge">IdentityServer3</code>.</p> 
+     <p>I will not go deeper into the basics of the <code class="highlighter-rouge">IdentityServer3</code> configuration. You can get more information about the <code class="highlighter-rouge">IdentityServer3</code> configuring from the <a href="https://identityserver.github.io/Documentation/docsv2/configuration/overview.html">official documentation</a></p> 
+     <h2 id="please-note">Please Note</h2> 
+     <p>Don’t forget to enable SSL by selecting the project in the Solution Explorer of Visual Studio and then opening the Properties Menu (hotkey: F4). After that you also need to set the proper SSL enabled project url in the properties of your project in the “Web” tab’s ProjectURL field.</p> 
+     <h3 id="2-creating-a-client-for-the-identityserver3-with-flowsother-and-allowedcustomgranttypes-windows">2. Creating a client for the <code class="highlighter-rouge">IdentityServer3</code> with <code class="highlighter-rouge">Flows.Other</code> and <code class="highlighter-rouge">AllowedCustomGrantTypes: "windows"</code>.</h3> 
+     <p>We are going to implement a Client with <code class="highlighter-rouge">Flows.Custom</code> and <code class="highlighter-rouge">AllowedCustomGrantTypes: "windows"</code>. You can get more info regarding the Client configuration from the <a href="https://identityserver.github.io/Documentation/docsv2/configuration/clients.html">official documentation</a></p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_2.png" alt="Custom Flow and AllowedCustomGrantTypes &quot;windows&quot;"></p> 
+     <p>Because, in our case, all our users should come from windows authentication you need to disable the local login as depicted below.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_3.png" alt="Disable local login"></p> 
+     <h3 id="3-setup-and-configuration-of-the-windowsauthenticationservice">3. Setup and configuration of the <code class="highlighter-rouge">WindowsAuthenticationService</code></h3> 
+     <p>Again create a new empty ASP.NET Web project, add the <code class="highlighter-rouge">Startup.cs</code> as in the previous step and install the <code class="highlighter-rouge">Owin.Host.SystemWeb</code> NuGet for the new project.</p> 
+     <p>We’ll also need the <code class="highlighter-rouge">WindowsAuthentication</code> NuGet package for issuing the <code class="highlighter-rouge">jwt tokens</code> based on the current <code class="highlighter-rouge">windows principal</code>. You can get this package by issuing this command from the Package Manager Console fo the Visual Studio:</p> 
+     <p><code class="highlighter-rouge">Install-Package IdentityServer.WindowsAuthentication</code></p> 
+     <p>Next step is to enable windows authentication for the project.</p> 
+     <p>For IIS Express (F4 properties menu)</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_4.png" alt="IIS Express"></p> 
+     <p>For IIS (uncomment this line in web.config)</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_5.png" alt="IIS"></p> 
+     <p>Next step is to configure the <code class="highlighter-rouge">IdentityServer.WindowsAuthentication</code>. Here is an example of the configuration:</p> 
+     <p><img src="http://codepool.me/images/idnsrv_winauth_11.png" alt="WinAuth configuration"></p> 
+     <p>Please note the highlighted lines in the screenshot. You should load the same certificate that is used for the IdentityServer, and you should set <code class="highlighter-rouge">EnableOAuth2Endpoint</code> property to <code class="highlighter-rouge">true</code>, which allows us to get <code class="highlighter-rouge">jwt tokens</code> by requesting a custom grant from <code class="highlighter-rouge">WindowsAuthenticationService</code>’s <code class="highlighter-rouge">/token</code> endpoint.</p> 
+     <p>As in previous steps please don’t forget to enable the SSL in Projects’s Properties Menu (F4) and update ProjectURL in the “Web” tab of the Project properties.</p> 
+     <h3 id="4-creating-a-custom-grant-validator-in-identityserver3-for-windows-grant-type">4. Creating a custom grant validator in <code class="highlighter-rouge">IdentityServer3</code> for <code class="highlighter-rouge">windows</code> grant type</h3> 
+     <p>Now the most important part is to teach our <code class="highlighter-rouge">IdentityServer3</code> to understand the <code class="highlighter-rouge">windows</code> grant type.</p> 
+     <p>For that, we need to implement the <code class="highlighter-rouge">ICustomGrantValidator</code> interface. You can read more about the Custom Grant Validators from the <a href="https://identityserver.github.io/Documentation/docsv2/advanced/customGrantTypes.html">official documentation</a></p> 
+     <p>We must define what information must be included in the custom grant request when we are granting access to <code class="highlighter-rouge">windows</code> grant type. Primarily we need the <code class="highlighter-rouge">jwt token</code> which is issued by <code class="highlighter-rouge">WindowsAuthenticationService</code>. We will store this <code class="highlighter-rouge">jwt token</code> in the <code class="highlighter-rouge">win_token</code> property.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_6.png" alt="Getting win_token from request"></p> 
+     <p>After that, we need to validate that <code class="highlighter-rouge">win_token</code> is issued from our <code class="highlighter-rouge">WindowsAuthenticationService</code>.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_7.png" alt="Token Validation"></p> 
+     <p>Now when we have validated token next step is to get a unique identifier for our user. We’ll store it in the <code class="highlighter-rouge">NameIdentifier</code> claim.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_7.png" alt="Getting NameIdentifier token"></p> 
+     <p>Now we are all setup for authenticating the user in <code class="highlighter-rouge">IdentityServer3</code> and issue token for the client.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_8.png" alt="User Authentication"></p> 
+     <h3 id="5-creating-a-console-client-and-get-a-token-from-identityserver3-by-using-the-current-windows-principal">5. Creating a console client and get a token from <code class="highlighter-rouge">IdentityServer3</code> by using the current <code class="highlighter-rouge">Windows principal</code>.</h3> 
+     <p>Now when the all the configuration is done let’s write a simple console application that will test our configuration.Create a new <code class="highlighter-rouge">ConsoleApplication</code> and install <code class="highlighter-rouge">Thinktecture.IdentityModel.Client</code> NuGet package by using this command:</p> 
+     <p><code class="highlighter-rouge">Install-Package Thinktecture.IdentityModel.Client</code></p> 
+     <p>Now we need to connect to the <code class="highlighter-rouge">WindowsAuthenticationService</code> using Windows authentication and current principal. To achieve these we need to set the <code class="highlighter-rouge">UseDefaultCrediantals</code> flag. This will include our current windows principal in the request. As the result, we will get a <code class="highlighter-rouge">jwt token</code> that represents our current Windows principal.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_9.png" alt="Getting win token from request"></p> 
+     <p>After that, we should extract the access token from the result (<code class="highlighter-rouge">resultToken.AccessToken</code>) and place it in the <code class="highlighter-rouge">win_token</code> param when requesting a custom <code class="highlighter-rouge">windows</code> grant from <code class="highlighter-rouge">IdnetityServer3</code>.</p> 
+     <p><img src="http://arkoc.github.io/images/idnsrv_winauth_10.png" alt="Requesting custom windows grant"></p> 
+     <p>We are all Done!</p> 
+     <p>A complete working sample can be found here: <a href="https://github.com/arkoc/IdSrv3.WindowsCustomGrant.Sample">IdSrv3.WindowsCustomGrant.Sample</a>.</p> 
+     <h4 id="links">Links</h4> 
+     <p><a href="https://identityserver.github.io/Documentation/">Documentation</a></p> 
+     <p><a href="https://github.com/IdentityServer/IdentityServer3">IdentityServer3</a></p> 
+     <p><a href="https://github.com/IdentityServer/WindowsAuthentication">WindowsAuthenticationService</a></p> 
+     <p><a href="https://github.com/IdentityManager/IdentityManager">IdentityManager</a></p> 
+    </div> 
+    <div class="date">
+      Written on October 13, 2016 
+    </div> 
+    <div class="comments"> 
+     <div id="disqus_thread"></div> 
+     <script type="text/javascript">
+
+	    var disqus_shortname = 'arkoc';
+
+	    (function() {
+	        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+	        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+	        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	    })();
+
+	</script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+     </noscript> 
+    </div> 
+   </article> 
+  </div> 
+  <div class="wrapper-footer"> 
+   <div class="container"> 
+    <footer class="footer"> 
+     <a href="https://www.facebook.com/aram.ko4aryan"><i class="svg-icon facebook"></i></a> 
+     <a href="https://github.com/arkoc"><i class="svg-icon github"></i></a> 
+     <a href="https://www.linkedin.com/in/aram-kocharyan-432042b3"><i class="svg-icon linkedin"></i></a> 
+     <a href="/feed.xml"><i class="svg-icon rss"></i></a> 
+     <a href="https://www.twitter.com/aram_koch"><i class="svg-icon twitter"></i></a> 
+     <a href="http://stackoverflow.com/users/4810224/aram-kocharyan"><i class="svg-icon stackoverflow"></i></a> 
+    </footer> 
+   </div> 
+  </div> 
+  <!-- Google Analytics --> 
+  <script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+		ga('create', 'UA-77904827-1', 'auto');
+		ga('send', 'pageview', {
+		  'page': '/IdentityServer3-with-custom-grant-flow-and-windows-authentication/',
+		  'title': 'IdentityServer3 with Custom grant flow and Windows authentication'
+		});
+	</script> 
+  <!-- End Google Analytics -->   
+ </body>
+</html>

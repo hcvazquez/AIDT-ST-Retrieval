@@ -1,0 +1,1080 @@
+<!doctype html>
+<!--[if lt IE 7 ]><html class="ie6"><![endif]-->
+<!--[if IE 7 ]><html class="ie7"><![endif]-->
+<!--[if IE 8 ]><html class="ie8"><![endif]-->
+<!--[if IE 9 ]><html class="ie9"><![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!-->
+<html>
+ <!--<![endif]-->
+ <head id="ctlHeader">
+  <title>
+	SSIS authentication for SQL OLEDB Source
+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link type="image/vnd.microsoft.icon" rel="shortcut icon" href="Skins/Classic/images/fav.ico"> 
+  <style type="text/css" media="all">@import "/Resources/Signup.css?v=1";</style> 
+  <script type="text/javascript" src="/shared/jquery/jquery-1.9.1.min.js"></script> 
+  <script type="text/javascript" src="/shared/jquery/jquery-migrate-1.4.1.min.js"></script> 
+  <script type="text/javascript" src="/shared/jquery/jquery.corners.js"></script> 
+  <script type="text/javascript" src="/shared/jquery/jquery.hint.js"></script> 
+  <script type="text/javascript" src="/shared/jquery/jquery-ui-1.12.1-custom.min.js"></script> 
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8"> 
+  <link type="text/css" rel="stylesheet" href="skins/classic/styles/core.css?v=2016-2"> 
+  <link type="text/css" rel="stylesheet" href="skins/classic/styles/theme.css?v=2016-2"> 
+  <meta name="description" content="I am a little new to SSIS but have already managed to create several packages and deploy them successfully to my Production server. 
+
+However, i have only been able to successfully run my SQL OLEDB Source connection managers under Windows Authentication. 
+
+For some reason the permissions fail when i use the SQL Authentication, even though i know i am using the correct Login and Password for my Database Owner. 
+
+The way we run our packages is as follows:
+
+- Package deployed to Server (no special configuration settings so far)
+- Created Credential and Proxy user for the DB and MSDB
+- Created SQL Agent Job to run the SSIS package under the proxy
+- Created a Stored Proc to trigger the Agent Job
+- Created a web page to run the command Stored Proc
+
+Is there something i am missing with the package configuration for authenticating my OLEDB connections using SQL as opposed to">
+ </head> 
+ <body> 
+  <!--SiteTemplateBegins--> 
+  <!-- Site template header start --> 
+  <script>
+dataLayer = [];
+</script> 
+  <!-- Google Tag Manager --> 
+  <noscript>
+   <iframe src="//www.googletagmanager.com/ns.html?id=GTM-P7SP4V" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript> 
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-P7SP4V');</script> 
+  <!-- End Google Tag Manager --> 
+  <script src="/Resources/global.js?cache-buster=2"></script> 
+  <!-- Script needed in forums too --> 
+  <script src="/Resources/js/ext/jquery.colorbox-min.js"></script> 
+  <script src="/Resources/js/ssc.js?v=2"></script> 
+  <script src="/Resources/js/Controls/Briefcase.js"></script> 
+  <div id="SignupTopTextFragmentWrapper" class="text-fragment-wrapper"> 
+  </div> 
+  <div id="corner-peel"> 
+   <a href="http://sqlclone.red-gate.com/?utm_source=ssc&amp;utm_medium=pubad&amp;utm_campaign=sqlclone&amp;utm_content=corner-peel" rel="nofollow"> <img src="/Resources/Images/advertising/coner-peel-307x307_sheep.gif" alt="SQL Clone"> </a> 
+   <div id="corner-peel-behind"></div> 
+  </div> 
+  <div id="whole-site-wrapper"> 
+   <table border="0" width="100%" cellpadding="0" cellspacing="0" class="MainLayoutContainer"> 
+    <tbody>
+     <tr> 
+      <td colspan="2"> 
+       <table width="100%" cellpadding="0" cellspacing="0" class="SiteTitleBar"> 
+        <tbody>
+         <tr> 
+          <td align="left" valign="bottom"><a href="/"><img src="/Resources/Images/sqlservercentral_logo.gif" alt="SQLServerCentral logo" class="SiteLogo"></a></td> 
+          <td align="center" valign="middle" height="75"> 
+           <!-- AdSpeed.com Serving Code 7.9.5 for [Zone] SSCtop 468x60 --> <script type="text/javascript">var a=new Date();d=document;n=navigator;s=screen;var q='&tz='+a.getTimezoneOffset()/60 +'&ck='+(n.cookieEnabled?'Y':'N') +'&jv='+(n.javaEnabled()?'Y':'N') +'&scr='+s.width+'x'+s.height+'x'+s.colorDepth +'&z='+Math.random() +'&ref='+escape(d.referrer.substr(0,255)) +'&uri='+escape(d.URL.substr(0,255));document.write('<ifr'+'ame width="468" height="60" src="//g.adspeed.net/ad.php?do=html&zid=15220&wd=468&ht=60&target=_blank'+q+'" frameborder="0" scrolling="no" allowtransparency="true" hspace="0" vspace="0"></ifr'+'ame>');</script> 
+           <noscript>
+            <iframe width="468" height="60" src="//g.adspeed.net/ad.php?do=html&amp;zid=15220&amp;wd=468&amp;ht=60&amp;target=_blank" frameborder="0" scrolling="no" allowtransparency="true" hspace="0" vspace="0">&lt;a href="//g.adspeed.net/ad.php?do=clk&amp;zid=15220&amp;wd=468&amp;ht=60&amp;pair=as" target="_blank"&gt;&lt;img style="border:0px;" src="//g.adspeed.net/ad.php?do=img&amp;zid=15220&amp;wd=468&amp;ht=60&amp;pair=as" alt="i" width="468" height="60"/&gt;&lt;/a&gt;</iframe> 
+           </noscript>
+           <!-- AdSpeed.com End --> </td> 
+          <td align="right" valign="bottom"><a rel="nofollow" href="http://www.red-gate.com/about/welcomesscvisitors.htm?utm_source=ssc&amp;utm_medium=textad&amp;utm_campaign=ssclandingpage"><img src="/Resources/Images/ssc-red-gate-logo.png" alt="SQLServerCentral is supported by Redgate"></a></td> 
+         </tr> 
+        </tbody>
+       </table> </td> 
+      <td></td> 
+     </tr> 
+     <tr class="BodyRow"> 
+      <td class="TopLeft">&nbsp;</td> 
+      <td class="HeaderBar"> 
+       <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tbody>
+         <tr valign="middle"> 
+          <td> <span class="LoginControls"> <a href="/Login" class="track-clicks" data-event-category="UserControls: Log in">Log in</a> &nbsp;::&nbsp; <a href="/Register" class="track-clicks" data-event-category="UserControls: Register">Register</a> &nbsp;::&nbsp; <span class="FadedText">Not logged in</span> </span> </td> 
+          <td align="right"> 
+           <!-- Search --> 
+           <form action="/search/"> 
+            <input class="SearchBox" name="q" maxlength="1000" type="text" size="34" title="Search"> &nbsp;
+            <input class="SearchGo" type="submit" value="Go"> 
+           </form> <script type="text/javascript" language="javascript">
+                $(function() {
+                  $('input[name=q]').hint('SearchHint');
+                });
+              </script> </td> 
+         </tr> 
+        </tbody>
+       </table> </td> 
+      <td class="TopRight">&nbsp;</td> 
+     </tr> 
+    </tbody>
+   </table> 
+   <table width="100%" cellpadding="0" cellspacing="0" class="MainLayoutContainer"> 
+    <tbody>
+     <tr class="BodyRow" valign="top"> 
+      <td class="MainMenuCell"> 
+       <div class="MainMenuCellMenuItems"> 
+        <div class="MainMenu"> 
+         <ul> 
+          <li> <a class="track-clicks MenuItem " href="/" data-event-category="MainMenu: Home"> Home </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Tags" data-event-category="MainMenu: Tags"> Tags </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Articles/" data-event-category="MainMenu: Articles"> Articles </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Articles/Editorial" data-event-category="MainMenu: Editorials"> Editorials </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/stairway/" data-event-category="MainMenu: Stairways"> Stairways </a> </li> 
+          <li> <a class="track-clicks MenuItem  CurrentNode" href="/Forums" data-event-category="MainMenu: Forums"> Forums </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Scripts/" data-event-category="MainMenu: Scripts"> Scripts </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Articles/Video" data-event-category="MainMenu: Videos"> Videos </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/blogs/" data-event-category="MainMenu: Blogs"> Blogs </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Questions" data-event-category="MainMenu: QotD"> QotD </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Books/" data-event-category="MainMenu: Books"> Books </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="http://ask.sqlservercentral.com" data-event-category="MainMenu: Ask SSC"> Ask SSC </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="http://jobs.sqlservercentral.com/" data-event-category="MainMenu: SQL Jobs"> SQL Jobs </a> </li> 
+          <li> <a class="track-clicks MenuItem " href="/Authors/Articles/" data-event-category="MainMenu: Authors"> Authors </a> </li> 
+          <li> <a class="track-clicks MenuItem  Minor" href="/About/AboutUs/" data-event-category="MainMenu: About us"> About us </a> </li> 
+          <li> <a class="track-clicks MenuItem  Minor" href="/About/ContactUs/" data-event-category="MainMenu: Contact us"> Contact us </a> </li> 
+          <li> <a class="track-clicks MenuItem  Minor" href="/NewsletterArchive" data-event-category="MainMenu: Newsletters"> Newsletters </a> </li> 
+          <li> <a class="track-clicks MenuItem  Minor" href="/Contributions/Home" data-event-category="MainMenu: Write for us"> Write for us </a> </li> 
+         </ul> 
+        </div> 
+        <script type="text/javascript">
+  // This is a bit of a hack way to prevent e.g. ~/articles/editorial/ hilighting both the i.e. Editorial and Article menu items 
+  var CurrentNodes = $('.CurrentNode');
+  if (CurrentNodes.length > 1) {
+    for (var i = 0; i < CurrentNodes.length; i++) {
+      if (CurrentNodes[i].text.indexOf("Articles") != -1) {
+        $(CurrentNodes[i]).removeClass("CurrentNode");
+      }
+    }
+  }
+</script> 
+        <div id="LeftSidebarSignupWrapper" class="text-fragment-wrapper"> 
+         <div id="Left_Sidebar_Signup_2" class="Left_Sidebar_Signup"> 
+          <div class="signup-text">
+            Keep up to date - daily newsletter: 
+          </div> 
+          <div class="signup-form"> 
+           <!-- The input field has to have this class (but can also have other classes for styling),
+             for the sign up to work. --> 
+           <input class="signup-email-field" placeholder="your@email.com" type="text"> 
+           <!-- The button has to have this class (but can also have other classes for styling)
+             for the sign up to work. Also, you don't actually need to use a button. Other elements that generates click events
+             should be fine (but test them!). --> 
+           <button onclick="dataLayer.push({'event': 'Signup Form Clicked',
+										'eventInfo': {
+											'category': 'Signups',
+											'action': 'Signup Form Clicked',
+											'label': 'Left_Sidebar_Signup_2',
+											'nonInteraction': false
+										}});" type="button" class="signup-email-button">Sign up</button> 
+          </div> 
+          <script type="text/javascript">
+		dataLayer.push({'event': 'Signup Form Displayed',
+										'eventInfo': {
+											'category': 'Signups',
+											'action': 'Signup Form Served',
+											'label': 'Left_Sidebar_Signup_2',
+											'nonInteraction': true
+										}
+		});
+	</script> 
+         </div> 
+        </div> 
+       </div> 
+       <!-- Skyscraper advert --> 
+       <div align="center" style="margin-top:0.75em;">
+        <table cellpadding="0" cellspacing="0">
+         <tbody>
+          <tr>
+           <td align="left"> <a href="/Contributions/Home" border="0"><img src="/Resources/Images/Writeforus_M1.gif" alt="Write for us"></a><br><br> 
+            <div style="margin-left:5px"> 
+             <!-- AdSpeed.com Serving Code 7.9.5 for [Zone] SSCskyscraper 120x300 --> 
+             <script type="text/javascript"><!--
+var a=new Date();d=document;n=navigator;s=screen;var q='&amp;tz='+a.getTimezoneOffset()/60 +'&amp;ck='+(n.cookieEnabled?'Y':'N') +'&amp;jv='+(n.javaEnabled()?'Y':'N') +'&amp;scr='+s.width+'x'+s.height+'x'+s.colorDepth +'&amp;z='+Math.random() +'&amp;ref='+escape(d.referrer.substr(0,255)) +'&amp;uri='+escape(d.URL.substr(0,255));document.write('<ifr'+'ame width="120" height="300" src="//g.adspeed.net/ad.php?do=html&amp;zid=15491&amp;wd=120&amp;ht=300&amp;target=_top'+q+'" frameborder="0" scrolling="no"   ></ifr'+'ame>');
+//--></script> 
+             <noscript>
+              <iframe width="120" height="300" src="//g.adspeed.net/ad.php?do=html&amp;zid=15491&amp;wd=120&amp;ht=300&amp;target=_top" frameborder="0" scrolling="no">&lt;a href="//g.adspeed.net/ad.php?do=clk&amp;amp;zid=15491&amp;amp;wd=120&amp;amp;ht=300&amp;amp;pair=as" target="_top"&gt;&lt;img style="border:0px;" src="//g.adspeed.net/ad.php?do=img&amp;amp;zid=15491&amp;amp;wd=120&amp;amp;ht=300&amp;amp;pair=as" alt="i" width="120" height="300"/&gt;&lt;/a&gt;</iframe> 
+             </noscript>
+             <!-- AdSpeed.com End --> 
+            </div> </td>
+          </tr>
+         </tbody>
+        </table>
+       </div> </td> 
+      <td class="MainContentLeftPadding">&nbsp;</td> 
+      <td class="MainContentCell"> 
+       <!-- Site template header end --> 
+       <form method="post" action="./Topic672028-148-1.aspx" id="aspnetForm"> 
+        <div class="aspNetHidden"> 
+         <input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value=""> 
+         <input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value=""> 
+         <input type="hidden" name="__vsKey" id="__vsKey" value="9f0e576f-183e-4a8d-99cc-356b34041f40"> 
+         <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value=""> 
+        </div> 
+        <script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script> 
+        <script src="./globalization/en-us/strings.js?v=2016-2" type="text/javascript"></script> 
+        <script src="./js/core.js?v=2016-2" type="text/javascript"></script> 
+        <script src="./js/prettify/prettify.js?v=2016-2" type="text/javascript"></script> 
+        <script src="js/framework/compositescripts.min.js?v=2016-2" type="text/javascript"></script> 
+        <script src="https://www.sqlservercentral.com/Forums/WebServices/Users.asmx/js" type="text/javascript"></script> 
+        <script src="https://www.sqlservercentral.com/Forums/WebServices/Topics.asmx/js" type="text/javascript"></script> 
+        <script src="https://www.sqlservercentral.com/Forums/WebServices/WhosOn.asmx/js" type="text/javascript"></script> 
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ctlScriptManager', 'aspnetForm', [], [], [], 120, 'ctl00');
+//]]>
+</script> 
+        <div id="themeRoller" class="i-row"> 
+         <header> 
+          <section class="i-user-bar if-user-bar"> 
+           <div class="i-center"> 
+            <div class="i-row margin"> 
+             <div class="i-float-left"> 
+              <div class="i-mobile-bread-crumb"> 
+               <ul>
+                <li class="loading"><a href="javascript:history.back(-1);">Back</a></li>
+               </ul> 
+              </div> 
+              <a id="hypApplicationName" class="i-title" href="https://www.sqlservercentral.com/Forums/">SQLServerCentral</a> 
+             </div> 
+             <div class="i-float-right" data-mobile="true" data-tablet="true" data-desktop="false"> 
+              <ul class="if-mobile-nav"> 
+               <li> <a href="#pnlMenuAsides" class="icon" onclick="javascript:asides.show(this, if_CloneMenuForAsides());"> <span><i class="fa fa-bars"></i></span> </a> </li> 
+              </ul> 
+             </div> 
+             <div class="i-float-right" data-mobile="false" data-tablet="false" data-desktop="true"> 
+              <ul id="ctl00_ctlGuest"> 
+               <li> <a title="Register" id="ctl00_hypRegister" href="https://www.sqlservercentral.com/Forums/Register.aspx"><span><i class="fa fa-unlock i-margin-right-small"></i>Register</span></a> </li> 
+               <li> </li> 
+              </ul> 
+             </div> 
+            </div> 
+           </div> 
+          </section> 
+          <section class="i-banner"> 
+           <div class="i-center"> 
+            <div class="i-row i-spacing"> 
+             <div class="i-float-right" data-mobile="false" data-tablet="false" data-desktop="true"> 
+              <ul class="i-banner-tabs"> 
+               <li> <span title="Explore" class="i-tooltip" id="hypExploreToolTip"><span id="smExploreroot_smMenu" onclick="return iasp_OpnMnu(event, this,'pnlExporer','700px','375px');" class="i-menu-link"><a title="Explore" id="hypExplore" href="javascript:void(0);"><span class="padding"> <i class="fa fa-bars"></i> </span></a></span></span> </li> 
+              </ul> 
+             </div> 
+            </div> 
+           </div> 
+          </section> 
+         </header> 
+         <main class="i-row"> 
+          <div class="i-center"> 
+           <div class="i-break">
+            <br>
+           </div> 
+           <div class="i-bread-crumb">
+            <div class="i-bread-crumb-bg"></div> 
+            <div> 
+             <ul> 
+              <li class="first" itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a title="View Home" itemprop="url" href="https://www.sqlservercentral.com/Forums/">Home</a></li> 
+              <li class="sep">»</li> 
+              <li itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a title="View SQL Server 2005" itemprop="url" href="https://www.sqlservercentral.com/Forums/SQL-Server-2005">SQL Server 2005</a></li> 
+              <li class="sep">»</li> 
+              <li itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a title="View SQL Server 2005 Integration Services" itemprop="url" href="https://www.sqlservercentral.com/Forums/SQL-Server-2005/SQL-Server-2005-Integration-Services">SQL Server 2005 Integration Services</a></li> 
+              <li class="sep sep-last">»</li> 
+              <li class="last" itemscope itemtype="http://data-vocabulary.org/Breadcrumb"><a title="View SSIS authentication for SQL OLEDB Source" itemprop="url" href="https://www.sqlservercentral.com/Forums/672028/SSIS-authentication-for-SQL-OLEDB-Source">SSIS authentication for SQL OLEDB Source</a></li> 
+             </ul> 
+            </div> 
+           </div> 
+           <div class="i-break">
+            <br>
+           </div> 
+           <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic" class="i-row"> 
+            <div id="pnlPageHeader" class="i-row if-page-head"> 
+             <div class="i-row"> 
+              <div class="i-float-left"> 
+               <h3 class="h3">SSIS authentication for SQL OLEDB Source</h3> 
+              </div> 
+              <div class="i-float-right"> 
+               <span title="2 users are subscribed to this topic" class="i-tooltip" id="hypAddToFavoritesToolTip"><a title="2 users are subscribed to this topic" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypAddToFavoritesToolTip_hypAddToFavorites" class="i-btn i-btn-default" href="https://www.sqlservercentral.com/Forums/Subscribe0-672028.aspx?ReturnURL=/Forums/Topic672028-148-1.aspx"><span class="i-btn-bg"></span> <span class="padding"><i class="fa fa-envelope"></i></span></a></span> 
+              </div> 
+             </div> 
+             <div class="i-break">
+              <br>
+             </div> 
+            </div> 
+            <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_pnlHeader" class="i-row"> 
+             <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_pnlPagingLeft1" class="i-float-left"> 
+              <span title="Post a reply" class="i-tooltip" id="hypAddReplyToolTip1"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypAddReplyToolTip1_hypAddReply1" class="i-btn i-btn-2x i-btn-primary" href="https://www.sqlservercentral.com/Forums/Post.aspx?TopicID=672028&amp;PageIndex=1&amp;Task=PostTopicReply&amp;ParentID=672028"><span class="i-btn-bg"></span> <span data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-plus"></i></span> <span data-mobile="false" data-tablet="true">Post reply</span></a></span> 
+              <span title="25 users have liked this topic" class="i-tooltip" id="hypLikeTopicToolTip1"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypLikeTopicToolTip1_hypLikeTopic1" class="i-btn i-btn-2x i-btn-primary if-btn-like" onclick="return showPopUp(this, 'iPopUp', 700);" href="https://www.sqlservercentral.com/Forums/Dialogs/Like.aspx?PostID=672028"> <span class="i-btn-bg"></span> <span class="text" data-mobile="false" data-tablet="true">Like</span> <span class="text" data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-thumbs-up"></i></span> <span class="count">25</span> </a></span> 
+              <span title="" class="i-tooltip" id="hypAddToBriefcaseToolTip1"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypAddToBriefcaseToolTip1_hypAddToBriefcase1" class="i-btn i-btn-2x i-btn-primary add-to-briefcase" data-forum-topic-id="672028"> <span class="i-btn-bg"></span> <span class="text" data-mobile="false" data-tablet="true">Add to Briefcase</span> <span data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-suitcase"></i></span> </a></span> 
+             </div> 
+             <div class="i-float-right"> 
+             </div> 
+             <div class="i-break">
+              <br>
+             </div> 
+            </div> 
+            <div class="i-panel"> 
+             <div class="i-panel-header"> 
+              <div class="i-panel-header-bg"></div> 
+              <div class="i-panel-header-left"> 
+               <h2>SSIS authentication for SQL OLEDB Source</h2>
+               <a title="View RSS" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctl04_hypRssFeed" class="rss hide-mobile" href="https://www.sqlservercentral.com/Forums/RssFeed2.aspx?TopicId=672028"><i class="fa fa-rss"></i></a> 
+              </div>
+              <div class="i-panel-header-right"> 
+               <span id="ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPanelBarctl06root_smMenu" onclick="return iasp_OpnMnu(event, this,'ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPanelBarctl06_smMenu','200px');" class="i-menu-link i-panel-header-options" title="View"><a title="View" href="javascript:void(0);"><span class="text" data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-ellipsis-h"></i></span><span class="text" data-mobile="false">View<i class="fa fa-caret-down sm-caret"></i></span></a> </span>
+               <span id="ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPanelBarctl07root_smMenu" onclick="return iasp_OpnMnu(event, this,'ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPanelBarctl07_smMenu','200px');" class="i-menu-link i-panel-header-options" title="Options"><a title="Options" href="javascript:void(0);"><span class="text" data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-bars"></i></span><span class="text" data-mobile="false">Options<i class="fa fa-caret-down sm-caret"></i></span></a> </span> 
+              </div> 
+             </div>
+             <div class="i-panel-content-box" id="a_" style="display: block;"> 
+              <div class="i-panel-content"> 
+               <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctl10" class="i-row"> 
+                <table class="i-table if-topic"> 
+                 <tbody>
+                  <tr> 
+                   <td class="i-col-header if-post-col-left"> 
+                    <div class="i-col-header-bg"></div> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl00_lblAuthor">Author</span> </td> 
+                   <td class="i-col-header if-post-col-right"> 
+                    <div class="i-col-header-bg"></div> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl00_lblMessage">Message</span> </td> 
+                  </tr> 
+                  <tr id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_trRow1"> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_tdPostCell1" class="i-col-medium if-post-col-left" data-post-id="672028"> <span style="position: relative"> <span style="position: absolute; top: -40px;"> <a id="bm672028"></a> </span> </span> <a title="Go to bkirks profile" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypUsername" class="i-type-bold" href="https://www.sqlservercentral.com/Forums/Users/bkirk">bkirk</a> 
+                    <div class="i-float-right"> 
+                    </div> </td> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_tdPostCell2" class="i-col-medium if-post-col-right" data-post-id="672028"> 
+                    <div class="i-row"> 
+                     <div class="i-float-left"> 
+                      <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_pnlPhotoMobile" class="i-float-left i-margin-right mobile-photo"> 
+                       <div class="i-photo i-photo-medium i-margin-top-small"> 
+                        <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_ctlMobilePhoto"><img title="bkirk" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/Misc_NoPhoto.png" alt="bkirk"></span> 
+                       </div> 
+                      </div> 
+                      <div class="i-float-left"> 
+                       <div class="mobile-username"> 
+                        <a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypMobileUsername" href="https://www.sqlservercentral.com/Forums/Users/bkirk">bkirk</a>
+                        <br> 
+                       </div> 
+                       <a title="Monday, March 9, 2009 9:15 AM" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypPostedDate" class="i-type-light" href="https://www.sqlservercentral.com/Forums/FindPost672028.aspx">Posted 8 years ago</a> 
+                      </div> 
+                     </div> 
+                     <div class="i-float-right"> 
+                      <div class="i-float-left" data-mobile="false"> 
+                       <a title="672028" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypPermaLink" class="i-btn i-btn-default" onclick="return showPopUp(this, 'iPopUp', 800);" href="https://www.sqlservercentral.com/Forums/Dialogs/PostDetails.aspx?PostID=672028"><span class="i-btn-bg"></span> <span>#672028</span></a> 
+                      </div> 
+                      <div class="i-float-left"> 
+                      </div> 
+                     </div> 
+                    </div> </td> 
+                  </tr> 
+                  <tr id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_trRow2"> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_tdPostCell3" class="i-col-light if-post-col-left" style="vertical-align: top;" data-post-id="672028"> 
+                    <div class="i-row i-margin-bottom-small"> 
+                     <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_pnlPhoto" class="i-photo i-photo-large i-user-card-photo"> 
+                      <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_ctlPhoto" onmouseover="$find('ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic')._userCard.showUserCard(708820, 1, this);"><img title="bkirk" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/Misc_NoPhoto.png" alt="bkirk"></span> 
+                     </div> 
+                    </div> 
+                    <div class="i-row if-user-level"> 
+                     <span>Ten Centuries</span>
+                     <br>
+                     <div class="i-tooltip" title="Ten Centuries (1.2K reputation)"> 
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)">
+                      <img title="Ten Centuries (1.2K reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="Ten Centuries (1.2K reputation)"> 
+                     </div> 
+                    </div> <br> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_lblMemberGroup">Group: General Forum Members</span><br> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_lblPostCount">Points: 1158</span> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_lblTotalVisits">Visits: 346</span><br> </td> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_tdPostCell4" class="i-col-light if-post-col-right" style="vertical-align: top;" data-post-id="672028"> 
+                    <div class="if-post" itemprop="text">
+                      I am a little new to SSIS but have already managed to create several packages and deploy them successfully to my Production server. 
+                     <br>
+                     <br>However, i have only been able to successfully run my SQL OLEDB Source connection managers under Windows Authentication. 
+                     <br>
+                     <br>For some reason the permissions fail when i use the SQL Authentication, even though i know i am using the correct Login and Password for my Database Owner. 
+                     <br>
+                     <br>The way we run our packages is as follows:
+                     <br>
+                     <br>- Package deployed to Server (no special configuration settings so far)
+                     <br>- Created Credential and Proxy user for the DB and MSDB
+                     <br>- Created SQL Agent Job to run the SSIS package under the proxy
+                     <br>- Created a Stored Proc to trigger the Agent Job
+                     <br>- Created a web page to run the command Stored Proc
+                     <br>
+                     <br>Is there something i am missing with the package configuration for authenticating my OLEDB connections using SQL as opposed to Windows? 
+                     <br> 
+                    </div> 
+                    <div class="i-row i-margin-top"> 
+                     <span title="13 users have liked this post" class="i-tooltip" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypLikeToolTip"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypLikeToolTip_hypLike" class="i-btn i-btn-default if-btn-like-small" onclick="return showPopUp(this, 'iPopUp', 700);" href="https://www.sqlservercentral.com/Forums/Dialogs/Like.aspx?PostID=672028"> <span class="i-btn-bg"></span> <span> <i class="fa fa-thumbs-up i-margin-right-small"></i> <span class="count">13</span> </span> </a></span> 
+                    </div> </td> 
+                  </tr> 
+                  <tr id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_trRow3"> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_tdPostCell5" class="i-col-light if-post-col-left" data-post-id="672028"> <a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_lblPostLink"></a> </td> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_tdPostCell6" class="i-col-light if-post-col-right" data-post-id="672028"> 
+                    <div class="fl" style="line-height: normal;"> 
+                     <div class="i-float-left"> 
+                      <span title="Post a reply to this post" class="i-tooltip" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypAddPostReplyToolTip"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl01_hypAddPostReplyToolTip_hypAddPostReply" class="i-btn i-btn-primary" href="https://www.sqlservercentral.com/Forums/Post.aspx?ForumID=148&amp;TopicID=672028&amp;Task=PostQuotedReply&amp;ParentID=672028"><span class="i-btn-bg"></span> <span>Quote</span></a></span> 
+                     </div> 
+                     <div class="i-float-right"> 
+                     </div> 
+                    </div> </td> 
+                  </tr> 
+                  <tr id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_trRow1"> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_tdPostCell1" class="i-col-medium if-post-col-left" data-post-id="672285"> <span style="position: relative"> <span style="position: absolute; top: -40px;"> <a id="bm672285"></a> </span> </span> <a title="Go to ramnatha.reddies profile" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypUsername" class="i-type-bold" href="https://www.sqlservercentral.com/Forums/Users/ramnathareddy">ramnatha.reddy</a> 
+                    <div class="i-float-right"> 
+                    </div> </td> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_tdPostCell2" class="i-col-medium if-post-col-right" data-post-id="672285"> 
+                    <div class="i-row"> 
+                     <div class="i-float-left"> 
+                      <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_pnlPhotoMobile" class="i-float-left i-margin-right mobile-photo"> 
+                       <div class="i-photo i-photo-medium i-margin-top-small"> 
+                        <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_ctlMobilePhoto"><img title="ramnatha.reddy" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/Misc_NoPhoto.png" alt="ramnatha.reddy"></span> 
+                       </div> 
+                      </div> 
+                      <div class="i-float-left"> 
+                       <div class="mobile-username"> 
+                        <a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypMobileUsername" href="https://www.sqlservercentral.com/Forums/Users/ramnathareddy">ramnatha.reddy</a>
+                        <br> 
+                       </div> 
+                       <a title="Monday, March 9, 2009 9:51 PM" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypPostedDate" class="i-type-light" href="https://www.sqlservercentral.com/Forums/FindPost672285.aspx">Posted 8 years ago</a> 
+                      </div> 
+                     </div> 
+                     <div class="i-float-right"> 
+                      <div class="i-float-left" data-mobile="false"> 
+                       <a title="672285" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypPermaLink" class="i-btn i-btn-default" onclick="return showPopUp(this, 'iPopUp', 800);" href="https://www.sqlservercentral.com/Forums/Dialogs/PostDetails.aspx?PostID=672285"><span class="i-btn-bg"></span> <span>#672285</span></a> 
+                      </div> 
+                      <div class="i-float-left"> 
+                      </div> 
+                     </div> 
+                    </div> </td> 
+                  </tr> 
+                  <tr id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_trRow2"> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_tdPostCell3" class="i-col-light if-post-col-left" style="vertical-align: top;" data-post-id="672285"> 
+                    <div class="i-row i-margin-bottom-small"> 
+                     <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_pnlPhoto" class="i-photo i-photo-large i-user-card-photo"> 
+                      <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_ctlPhoto" onmouseover="$find('ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic')._userCard.showUserCard(503767, 1, this);"><img title="ramnatha.reddy" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/Misc_NoPhoto.png" alt="ramnatha.reddy"></span> 
+                     </div> 
+                    </div> 
+                    <div class="i-row if-user-level"> 
+                     <span>SSC-Enthusiastic</span>
+                     <br>
+                     <div class="i-tooltip" title="SSC-Enthusiastic (146 reputation)"> 
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockActive.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockDisabled.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockDisabled.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockDisabled.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockDisabled.gif" alt="SSC-Enthusiastic (146 reputation)">
+                      <img title="SSC-Enthusiastic (146 reputation)" class="pip" src="https://www.sqlservercentral.com/Forums/Skins/Classic/Images/RankImages/BlockDisabled.gif" alt="SSC-Enthusiastic (146 reputation)"> 
+                     </div> 
+                    </div> <br> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_lblMemberGroup">Group: General Forum Members</span><br> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_lblPostCount">Points: 146</span> <span id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_lblTotalVisits">Visits: 46</span><br> </td> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_tdPostCell4" class="i-col-light if-post-col-right" style="vertical-align: top;" data-post-id="672285"> 
+                    <div class="if-post" itemprop="text">
+                      I suggest to use configuration. Configure the connection string of OLEDB server and place the below string for connection string.
+                     <br>
+                     <br>Data Source=SERVERNAME\INSTANCENAME;User ID=UserID;Pwd=XXX;Initial Catalog=DATABASENAME;Provider=SQLNCLI.1;Persist Security Info=True;Auto Translate=False;
+                     <br>
+                     <br>Hope this helps. 
+                     <br> 
+                    </div> 
+                    <div class="i-row i-margin-top"> 
+                     <span title="12 users have liked this post" class="i-tooltip" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypLikeToolTip"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypLikeToolTip_hypLike" class="i-btn i-btn-default if-btn-like-small" onclick="return showPopUp(this, 'iPopUp', 700);" href="https://www.sqlservercentral.com/Forums/Dialogs/Like.aspx?PostID=672285"> <span class="i-btn-bg"></span> <span> <i class="fa fa-thumbs-up i-margin-right-small"></i> <span class="count">12</span> </span> </a></span> 
+                    </div> </td> 
+                  </tr> 
+                  <tr id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_trRow3"> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_tdPostCell5" class="i-col-light if-post-col-left" data-post-id="672285"> <a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_lblPostLink"></a> </td> 
+                   <td id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_tdPostCell6" class="i-col-light if-post-col-right" data-post-id="672285"> 
+                    <div class="fl" style="line-height: normal;"> 
+                     <div class="i-float-left"> 
+                      <span title="Post a reply to this post" class="i-tooltip" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypAddPostReplyToolTip"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlPanelBar_ctlTopicsRepeater_ctl02_hypAddPostReplyToolTip_hypAddPostReply" class="i-btn i-btn-primary" href="https://www.sqlservercentral.com/Forums/Post.aspx?ForumID=148&amp;TopicID=672028&amp;Task=PostQuotedReply&amp;ParentID=672285"><span class="i-btn-bg"></span> <span>Quote</span></a></span> 
+                     </div> 
+                     <div class="i-float-right"> 
+                     </div> 
+                    </div> </td> 
+                  </tr> 
+                 </tbody>
+                </table> 
+               </div> 
+              </div> 
+             </div>
+             <div class="i-panel-footer"> 
+              <div class="i-panel-footer-bg"></div> 
+             </div> 
+            </div> 
+            <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_pnlModerationOptions" class="if-fixed-mod-options if-fixed-mod-options-right"> 
+             <div class="i-margin-small"> 
+              <div data-mobile="false" data-tablet="false" class="checked-text"></div> 
+              <select name="ctl00$ctlContentPlaceHolder$ctl00$ctl00$ctlTopic$ctl00$ddlPostModerationTools" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ddlPostModerationTools" class="i-select"> </select> 
+              <a onclick="return(confirm(if_ModerationToolSubmit));" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_butPostModeration" class="i-btn i-btn-primary" href="javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions(&quot;ctl00$ctlContentPlaceHolder$ctl00$ctl00$ctlTopic$ctl00$butPostModeration&quot;, &quot;&quot;, true, &quot;&quot;, &quot;&quot;, false, true))"><span>Go</span></a> 
+             </div> 
+            </div> 
+            <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_pnlFooter" class="i-row"> 
+             <div class="i-break">
+              <br>
+             </div> 
+             <div id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_pnlPagingLeft2" class="i-float-left"> 
+              <span title="Post a reply" class="i-tooltip" id="hypAddReplyToolTip2"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypAddReplyToolTip2_hypAddReply2" class="i-btn i-btn-2x i-btn-primary" href="https://www.sqlservercentral.com/Forums/Post.aspx?TopicID=672028&amp;PageIndex=1&amp;Task=PostTopicReply&amp;ParentID=672028"><span class="i-btn-bg"></span> <span data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-plus"></i></span> <span data-mobile="false" data-tablet="true" data-desktop="true">Post reply</span></a></span> 
+              <span title="25 users have liked this topic" class="i-tooltip" id="hypLikeTopicToolTip2"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypLikeTopicToolTip2_hypLikeTopic2" class="i-btn i-btn-2x i-btn-primary if-btn-like" onclick="return showPopUp(this, 'iPopUp', 700);" href="https://www.sqlservercentral.com/Forums/Dialogs/Like.aspx?PostID=672028"> <span class="i-btn-bg"></span> <span class="text" data-mobile="false" data-tablet="true">Like</span> <span class="text" data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-thumbs-up"></i></span> <span class="count">25</span> </a></span> 
+              <span title="" class="i-tooltip" id="hypAddToBriefcaseToolTip2"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypAddToBriefcaseToolTip2_hypAddToBriefcase2" class="i-btn i-btn-2x i-btn-primary add-to-briefcase" data-forum-topic-id="672028"> <span class="i-btn-bg"></span> <span class="text" data-mobile="false" data-tablet="true">Add to Briefcase</span> <span data-mobile="true" data-tablet="false" data-desktop="false"><i class="fa fa-suitcase"></i></span> </a></span> 
+             </div> 
+             <div class="i-float-right"> 
+             </div> 
+            </div> 
+            <div class="i-break">
+             <br>
+            </div> 
+            <div class="i-row if-topic-share-bar"> 
+             <div class="i-float-left"> 
+              <span title="Back to top" class="i-tooltip" id="hypTopToolTip"><a id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_ctlShareBar_ctl00_hypTopToolTip_hypTop" class="i-btn i-btn-default" onclick="iasp_scrollToElement('.i-body');" href="javascript:void(0);"><span class="i-btn-bg"></span> <span><i class="fa fa-arrow-up"></i></span></a></span> 
+             </div> 
+            </div> 
+            <div class="i-break">
+             <br>
+            </div> 
+            <div class="i-menu-box if-multi-quote-box"> 
+             <div class="i-menu"> 
+              <div class="i-row menu"> 
+               <ul> 
+                <li class="title" style="line-height: normal;"> <a title="Close multi quote" id="ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic_ctl00_hypCloseMultiQuote" class="close" onclick="posty.closeMultiQuote();" href="javascript:void(0);"><span><i class="fa fa-times"></i></span></a> <span class="text"></span> </li> 
+                <li class="seperator"></li> 
+               </ul> 
+               <a href="javascript:void(0);" onclick="posty.postMultiQuote();" style="width: 100%;" class="i-btn i-btn-2x i-btn-primary i-margin-bottom-small"> <span class="i-btn-bg"></span> <span>Post quoted reply</span> </a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+           <div class="i-panel"> 
+            <div class="i-panel-header"> 
+             <div class="i-panel-header-bg"></div> 
+             <div class="i-panel-header-left"> 
+              <h2>Permissions</h2> 
+             </div>
+             <div class="i-panel-header-right"> 
+              <div class="i-panel-header-expand" title="Expand / collapse"> 
+               <i data-collapsecss="fa-minus-square-o" data-expandcss="fa-plus-square-o" class="fa fa-minus-square-o" onclick="panelBar.toggle('a_tblForumPermissions','ssc_IF_','ipne',true,'', this);"></i> 
+              </div> 
+             </div> 
+            </div>
+            <div class="i-panel-content-box" id="a_tblForumPermissions" style="display: block;"> 
+             <div class="i-panel-content"> 
+              <table id="tblForumPermissions" class="i-table"> 
+               <tbody>
+                <tr> 
+                 <td class="i-col-light"> 
+                  <table id="Table1" width="100%" cellpadding="0" cellspacing="1"> 
+                   <tbody>
+                    <tr> 
+                     <td class="SmallTxt" valign="top" width="50%"> <span id="lblPostTopics">You <strong>can't</strong> post new topics.</span><br> <span id="lblPostReplies">You <strong>can't</strong> post topic replies.</span><br> <span id="lblPostPolls">You <strong>can't</strong> post new polls.</span><br> <span id="lblPostPollReplies">You <strong>can't</strong> post replies to polls.</span><br> <span id="lblEditOwnTopics">You <strong>can't</strong> edit your own topics.</span><br> <span id="lblDeleteOwnTopics">You <strong>can't</strong> delete your own topics.</span><br> <span id="lblEditAnyTopic">You <strong>can't</strong> edit other topics.</span><br> <span id="lblDeleteAnyTopic">You <strong>can't</strong> delete other topics.</span><br> <span id="lblEditOwnPosts">You <strong>can't</strong> edit your own posts.</span><br> <span id="lblEditAnyPost">You <strong>can't</strong> edit other posts.</span><br> <span id="lblDeleteOwnPosts">You <strong>can't</strong> delete your own posts.</span><br> <span id="lblDeleteAnyPost">You <strong>can't</strong> delete other posts.</span><br> <span id="lblPostEvents">You <strong>can't</strong> post events.</span><br> <span id="lblEditOwnEvents">You <strong>can't</strong> edit your own events.</span><br> <span id="lblEditAnyEvent">You <strong>can't</strong> edit other events.</span> </td> 
+                     <td class="SmallTxt" valign="top" width="50%"> <span id="lblDeleteOwnEvents">You <strong>can't</strong> delete your own events.</span><br> <span id="lblDeleteAnyEvent">You <strong>can't</strong> delete other events.</span><br> <span id="lblAllowPMToMembers">You <strong>can't</strong> send private messages.</span><br> <span id="lblAllowEmailToMembers">You <strong>can't</strong> send emails.</span><br> <span id="lblReadForum">You <strong>can</strong> read topics.</span><br> <span id="lblAllowVoting">You <strong>can't</strong> vote in polls.</span><br> <span id="lblAllowUploads">You <strong>can't</strong> upload attachments.</span><br> <span id="lblAllowDownloads">You <strong>can</strong> download attachments.</span><br> <span id="lblAllowHTML">You <strong>can't</strong> post HTML code.</span><br> <span id="lblEditHTML">You <strong>can't</strong> edit HTML code.</span><br> <span id="lblAllowIFCode">You <strong>can't</strong> post IFCode.</span><br> <span id="lblAllowScript">You <strong>can't</strong> post JavaScript.</span><br> <span id="lblAllowEmotIcons">You <strong>can</strong> post emoticons.</span><br> <span id="lblAllowImages">You <strong>can't</strong> post or upload images.</span> </td> 
+                    </tr> 
+                   </tbody>
+                  </table> </td> 
+                </tr> 
+               </tbody>
+              </table> 
+             </div> 
+            </div>
+            <div class="i-panel-footer"> 
+             <div class="i-panel-footer-bg"></div> 
+            </div> 
+           </div> 
+           <div class="i-break">
+            <br>
+           </div> 
+          </div> 
+         </main> 
+         <footer class="i-footer">
+           Powered by 
+          <a id="ctl00_hypCopyright" class="i-link-body" href="http://www.instantasp.co.uk/">InstantForum 2016-2 Final © 2017</a>
+          <br> Execution: 0.000. 2 queries. Compression enabled. 
+         </footer> 
+         <div id="selectForumPopUp" class="i-dialog">
+          <div class="tr">
+           <div class="tl">
+            <div class="t">
+             <div class="tbg"></div>
+            </div>
+           </div>
+          </div>
+          <div class="mr">
+           <div class="ml">
+            <div class="m">
+             <div class="mbg">
+              <div class="mb"> 
+               <div class="i-row i-body i-dialog-content"> 
+                <header> 
+                 <div class="margin"> 
+                  <h5><span id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_lblHeader">Select a forum</span></h5> 
+                  <a href="javascript:void(0)" class="close"><i class="fa fa-times"></i></a> 
+                 </div> 
+                </header> 
+                <section class="i-col-light"> 
+                 <div class="i-row" style="max-height: 400px; overflow: auto;"> 
+                  <table class="i-table"> 
+                   <tbody>
+                    <tr> 
+                     <td class="i-col-light"> <span id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums" class="i-radio-button if-select-forum-list"><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_0" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3738" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_0">&nbsp;SQL Server 2016</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_1" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3739"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2016 - Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_2" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3740"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2016 - Development and T-SQL</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_3" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3410" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_3">&nbsp;SQL Server 2014</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_4" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3411"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administration - SQL Server 2014</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_5" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3412"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_5">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Development - SQL Server 2014</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_6" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3076" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_6">&nbsp;SQL Server 2012</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_7" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2799"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_7">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL 2012 - General</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_8" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3077"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_8">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2012 - T-SQL</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_9" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3848" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_9">&nbsp;SQL Server vNext</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_10" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3849"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 14 - Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_11" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3850"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_11">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 14 - Development</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_12" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="419" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_12">&nbsp;SQL Server 2008</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_13" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="391"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_13">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 - General</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_14" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="392"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_14">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; T-SQL (SS2K8)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_15" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="390"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_15">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; June 2007 CTP</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_16" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1044"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Working with Oracle</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_17" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1045"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_17">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; July CTP</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_18" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1292"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_18">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Newbies</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_19" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1526"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_19">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Security (SS2K8)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_20" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1549"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_20">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 High Availability</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_21" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1550"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_21">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_22" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2893"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_22">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Corruption (SS2K8 / SS2K8 R2)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_23" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3387"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_23">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 Performance Tuning</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_24" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2570" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_24">&nbsp;Cloud Computing</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_25" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2571"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_25">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Azure - Development</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_26" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2572"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_26">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Azure - Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_27" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3153"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_27">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Amazon AWS and other cloud vendors</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_28" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3154"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_28">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; General Cloud Computing Questions</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_29" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="416" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_29">&nbsp;Reporting Services</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_30" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="150"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_30">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_31" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="162"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_31">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2005 Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_32" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1063"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_32">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2005 Development</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_33" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1632"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_33">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2008/R2 Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_34" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1633"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_34">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2008 Development</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_35" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3538"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_35">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSRS 2012</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_36" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3539"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_36">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSRS 2014</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_37" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3806"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_37">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSRS 2016</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_38" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="407" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_38">&nbsp;Programming</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_39" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="20"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_39">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Connecting</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_40" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="23"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_40">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; General</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_41" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="22"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_41">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SMO/RMO/DMO</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_42" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="21"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_42">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; XML</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_43" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1281"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_43">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Service Broker</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_44" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1351"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_44">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Powershell</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_45" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2838"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_45">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Testing</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_46" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2998"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_46">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TFS/Data Dude/DBPro</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_47" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3586"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_47">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSDT</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_48" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3665"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_48">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Continuous Integration, Deployment, and Delivery</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_49" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3811"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_49">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; R Services and R Language</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_50" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="408" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_50">&nbsp;Data Warehousing</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_51" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="364"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_51">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Integration Services</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_52" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="363"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_52">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategies and Ideas</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_53" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="17"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_53">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Analysis Services</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_54" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="19"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_54">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Transformation Services (DTS)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_55" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2796"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_55">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Performance Point</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_56" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2797"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_56">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Mining</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_57" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3053"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_57">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PowerPivot</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_58" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3759"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_58">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; R language</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_59" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3760"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_59">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Machine Learning</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_60" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="418" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_60">&nbsp;Database Design</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_61" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="384"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_61">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Disaster Recovery</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_62" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="373"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_62">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Design Ideas and Questions</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_63" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="374"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_63">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Relational Theory</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_64" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="377"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_64">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Hardware</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_65" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1454"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_65">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Virtualization</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_66" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="410" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_66">&nbsp;SQLServerCentral.com</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_67" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="61"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_67">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Anything that is NOT about SQL!</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_68" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="160"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_68">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Contests!</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_69" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="263"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_69">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Editorials</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_70" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="83"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_70">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLServerCentral.com Announcements</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_71" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="433"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_71">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLServerCentral.com Website Issues</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_72" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="4"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_72">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Suggestions</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_73" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="454"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_73">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tag Issues with Content</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_74" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1092"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_74">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Podcast Feedback</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_75" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1084"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_75">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLServerCentral.com Test Forum</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_76" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2824"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_76">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Articles Requested</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_77" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="415" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_77">&nbsp;SQL Server 2005</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_78" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="146"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_78">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administering</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_79" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="357"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_79">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Backups</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_80" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="147"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_80">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Business Intelligence</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_81" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="386"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_81">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CLR Integration and Programming.</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_82" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="266"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_82">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Corruption</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_83" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="145"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_83">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Development</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_84" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1042"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_84">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Working with Oracle</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_85" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="323"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_85">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Compact Edition</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_86" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="149"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_86">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 General Discussion</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_87" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="359"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_87">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Security</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_88" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="361"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_88">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Strategies</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_89" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="291"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_89">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SS2K5 Replication</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_90" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="324"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_90">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Express</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_91" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="360"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_91">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Performance Tuning</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_92" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="148"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_92">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Integration Services</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_93" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="338"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_93">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; T-SQL (SS2K5)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_94" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1291"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_94">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Newbies</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_95" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="406" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_95">&nbsp;SQL Server 7,2000</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_96" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="5"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_96">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administration</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_97" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="24"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_97">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Backups</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_98" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="265"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_98">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Corruption</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_99" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="9"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_99">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; General</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_100" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="230"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_100">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Globalization</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_101" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="54"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_101">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; In The Enterprise</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_102" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1043"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_102">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Working with Oracle</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_103" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="6"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_103">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Security</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_104" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="49"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_104">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategies</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_105" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="169"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_105">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Newbies</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_106" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="48"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_106">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Service Packs</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_107" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="137"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_107">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server CE</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_108" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="65"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_108">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Performance Tuning</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_109" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="7"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_109">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Replication</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_110" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="161"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_110">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sarbanes-Oxley</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_111" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="8"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_111">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; T-SQL</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_112" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="110"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_112">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Agent</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_113" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2788" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_113">&nbsp;SQL Server and other platforms</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_114" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2789"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_114">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MySQL</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_115" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2790"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_115">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Oracle</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_116" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2791"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_116">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PostgreSQL</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_117" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2792"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_117">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DB2</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_118" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2837"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_118">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server and Sharepoint</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_119" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1436" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_119">&nbsp;Older Versions of SQL (v6.5, v6.0, v4.2)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_120" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1437"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_120">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Older Versions of SQL (v6.5, v6.0, v4.2)</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_121" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="409" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_121">&nbsp;Career</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_122" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="10"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_122">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Certification</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_123" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="334"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_123">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Employers and Employees</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_124" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="1199"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_124">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Events</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_125" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="15"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_125">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Job Postings</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_126" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="68"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_126">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Resumes and Job Hunters</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_127" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2889"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_127">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Presentations and Speaking</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_128" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="3038"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_128">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Retired Members</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_129" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="413" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_129">&nbsp;Testing Center</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_130" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="120"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_130">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Question of the Day (QOD)</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_131" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="119"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_131">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Security Skills</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_132" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="414" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_132">&nbsp;Microsoft Access</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_133" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="131"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_133">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Microsoft Access</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_134" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="644" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_134">&nbsp;Products and Books</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_135" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="417"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_135">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Third Party Products</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_136" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="394"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_136">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CA</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_137" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="349"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_137">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Extreme Technologies.</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_138" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="348"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_138">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Innovartis</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_139" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="347"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_139">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Embarcadero</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_140" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="346"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_140">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Sentry</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_141" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="345"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_141">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sonasoft</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_142" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="352"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_142">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLCentric</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_143" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="344"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_143">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Golden Gate Software</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_144" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="342"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_144">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Lumigent</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_145" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="341"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_145">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Red Gate Software</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_146" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="340"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_146">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Quest Software</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_147" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="339"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_147">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ApexSQL</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_148" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="343"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_148">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Idera</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_149" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="645"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_149">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discussions about Books</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_150" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="46"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_150">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss Programming Books </label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_151" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="44"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_151">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss XML Books </label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_152" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="43"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_152">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss T-SQL Books </label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_153" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="42"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_153">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss Data Warehousing Books </label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_154" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="41"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_154">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss DTS Books </label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_155" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="39"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_155">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss SQL Server 7.0 Books</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_156" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="40"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_156">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss SQL Server 2000 Books</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_157" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="412" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_157">&nbsp;Notification Services</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_158" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="92"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_158">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administration</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_159" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="411" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_159">&nbsp;Article Discussions</label></span><br><span class="aspNetDisabled"><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_160" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2798" disabled><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_160">&nbsp;Future Versions</label></span><br><span><input id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_161" type="radio" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$rblForums" value="2800"><label for="ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums_161">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL 12</label></span></span> </td> 
+                    </tr> 
+                   </tbody>
+                  </table> 
+                 </div> 
+                </section> 
+                <footer class="i-col-dark"> 
+                 <div class="margin"> 
+                  <input type="submit" name="ctl00$ctlSelectForumPopUp$ctl00$ctl00$butSubmit" value="Start new topic" id="ctl00_ctlSelectForumPopUp_ctl00_ctl00_butSubmit" disabled class="aspNetDisabled i-button"> 
+                 </div> 
+                </footer> 
+               </div> 
+              </div>
+             </div>
+            </div>
+           </div>
+          </div>
+          <div class="br">
+           <div class="bl">
+            <div class="b">
+             <div class="bbg"></div>
+            </div>
+           </div>
+          </div>
+         </div> 
+         <div id="iPopUp" class="i-dialog">
+          <div class="tr">
+           <div class="tl">
+            <div class="t">
+             <div class="tbg"></div>
+            </div>
+           </div>
+          </div>
+          <div class="mr">
+           <div class="ml">
+            <div class="m">
+             <div class="mbg">
+              <div class="mb"> 
+               <div class="i-loader-jumbo i-dialog-loader"> 
+                <div class="i-loader i-loader-2x"></div> 
+               </div> 
+              </div>
+             </div>
+            </div>
+           </div>
+          </div>
+          <div class="br">
+           <div class="bl">
+            <div class="b">
+             <div class="bbg"></div>
+            </div>
+           </div>
+          </div>
+         </div> 
+         <div class="i-menu-box pull-right if-search-menu" id="pnlSearch"> 
+          <div id="search_smMenu" class="i-menu"> 
+           <div id="ctl00_SearchOptions1" class="i-row"> 
+            <div id="ctl00_SearchOptions1_ctl00_ctlSearch_pnlSearch" class="i-row"> 
+             <table class="i-table i-responsive-table if-search-options"> 
+              <tbody> 
+               <tr> 
+                <td class="i-col-light"> 
+                 <div id="ctl00_SearchOptions1_ctl00_ctlSearch_tdLoader" class="i-loader-jumbo" style="display:none;"> 
+                  <div class="i-loader i-loader-2x"></div> 
+                 </div> </td> 
+               </tr> 
+              </tbody> 
+             </table> 
+            </div> 
+            <div id="ctl00_SearchOptions1_ctl00_pnlTree_smMenu" class="i-menu-box if-search-tree-menu"> 
+             <div class="i-menu"> 
+              <div class="i-margin-left-small"> 
+               <div class="menu"> 
+                <ul> 
+                 <li class="title"><span class="padding">Narrow your search by forum</span></li> 
+                 <li class="seperator"></li> 
+                </ul> 
+                <input name="ctl00$SearchOptions1$ctl00$ctlTreeView$ctl00$ctlTreeView" type="hidden" id="ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView">
+                <div id="ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView_container"> 
+                </div> 
+               </div> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="i-menu-box if-explore-menu" id="pnlExporer"> 
+          <div class="i-menu"> 
+           <div class="menu"> 
+            <div class="i-row" id="explore_smMenu"> 
+             <div class="col" id="explore1_smMenu"> 
+              <nav> 
+               <ul> 
+                <li class="title"><span class="padding">Explore</span></li> 
+                <li class="seperator"></li> 
+                <li data-mobile="true"><a title="Home" id="ctl00_hypExploreHome" href="https://www.sqlservercentral.com/Forums/Default.aspx">
+                  <div class="padding">
+                   Home
+                  </div></a></li> 
+                <li data-mobile="true"><a title="Latest" id="ctl00_hypRecentPosts2" href="https://www.sqlservercentral.com/Forums/Latest">
+                  <div class="padding">
+                   Latest
+                  </div></a></li> 
+                <li data-mobile="true"><a title="Popular" id="ctl00_hypPopularPosts2" href="https://www.sqlservercentral.com/Forums/Popular">
+                  <div class="padding">
+                   Popular
+                  </div></a></li> 
+                <li id="ctl00_liCalendar" data-mobile="true"><a title="Calendar" id="ctl00_hypCalendar" href="https://www.sqlservercentral.com/Forums/Calendar">
+                  <div class="padding">
+                   Calendar
+                  </div></a></li> 
+                <li data-mobile="true"><a title="Members" id="ctl00_hypMembers" href="https://www.sqlservercentral.com/Forums/Users">
+                  <div class="padding">
+                   Members
+                  </div></a></li> 
+                <li id="ctl00_liWhosOn" data-mobile="true"><a title="Who's on" id="ctl00_hypWhosOn" href="https://www.sqlservercentral.com/Forums/WhosOn">
+                  <div class="padding">
+                   Who's on
+                  </div></a></li> 
+                <li data-mobile="true"></li> 
+                <li data-mobile="true"><a title="Moderators" id="ctl00_hypModerators" href="https://www.sqlservercentral.com/Forums/Moderators/">
+                  <div class="padding">
+                   Moderators
+                  </div></a></li> 
+               </ul> 
+              </nav> 
+             </div> 
+             <div class="seperator"> 
+              <div class="col" id="explore2_smMenu"> 
+               <nav> 
+                <ul> 
+                 <li class="title"><span class="padding">Forums</span></li> 
+                 <li class="seperator"></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group3738.aspx"><span class="padding"><strong>&nbsp;SQL Server 2016</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3739.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2016 - Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3740.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2016 - Development and T-SQL</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group3410.aspx"><span class="padding"><strong>&nbsp;SQL Server 2014</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3411.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administration - SQL Server 2014</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3412.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Development - SQL Server 2014</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group3076.aspx"><span class="padding"><strong>&nbsp;SQL Server 2012</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2799.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL 2012 - General</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3077.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2012 - T-SQL</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group3848.aspx"><span class="padding"><strong>&nbsp;SQL Server vNext</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3849.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 14 - Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3850.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 14 - Development</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group419.aspx"><span class="padding"><strong>&nbsp;SQL Server 2008</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum391.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 - General</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum392.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; T-SQL (SS2K8)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum390.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; June 2007 CTP</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1044.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Working with Oracle</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1045.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; July CTP</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1292.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Newbies</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1526.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Security (SS2K8)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1549.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 High Availability</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1550.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2893.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Corruption (SS2K8 / SS2K8 R2)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3387.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2008 Performance Tuning</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group2570.aspx"><span class="padding"><strong>&nbsp;Cloud Computing</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2571.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Azure - Development</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2572.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Azure - Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3153.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Amazon AWS and other cloud vendors</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3154.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; General Cloud Computing Questions</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group416.aspx"><span class="padding"><strong>&nbsp;Reporting Services</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum150.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum162.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2005 Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1063.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2005 Development</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1632.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2008/R2 Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1633.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reporting Services 2008 Development</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3538.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSRS 2012</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3539.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSRS 2014</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3806.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSRS 2016</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group407.aspx"><span class="padding"><strong>&nbsp;Programming</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum20.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Connecting</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum23.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; General</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum22.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SMO/RMO/DMO</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum21.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; XML</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1281.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Service Broker</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1351.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Powershell</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2838.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Testing</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2998.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; TFS/Data Dude/DBPro</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3586.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SSDT</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3665.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Continuous Integration, Deployment, and Delivery</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3811.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; R Services and R Language</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group408.aspx"><span class="padding"><strong>&nbsp;Data Warehousing</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum364.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Integration Services</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum363.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategies and Ideas</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum17.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Analysis Services</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum19.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Transformation Services (DTS)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2796.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Performance Point</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2797.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Mining</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3053.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PowerPivot</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3759.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; R language</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3760.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Machine Learning</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group418.aspx"><span class="padding"><strong>&nbsp;Database Design</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum384.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Disaster Recovery</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum373.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Design Ideas and Questions</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum374.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Relational Theory</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum377.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Hardware</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1454.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Virtualization</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group410.aspx"><span class="padding"><strong>&nbsp;SQLServerCentral.com</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum61.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Anything that is NOT about SQL!</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum160.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Contests!</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum263.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Editorials</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum83.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLServerCentral.com Announcements</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum433.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLServerCentral.com Website Issues</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum4.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Suggestions</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum454.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Tag Issues with Content</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1092.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Podcast Feedback</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1084.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLServerCentral.com Test Forum</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2824.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Articles Requested</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group415.aspx"><span class="padding"><strong>&nbsp;SQL Server 2005</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum146.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administering</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum357.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Backups</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum147.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Business Intelligence</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum386.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CLR Integration and Programming.</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum266.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Corruption</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum145.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Development</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1042.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Working with Oracle</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum323.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Compact Edition</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum149.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 General Discussion</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum359.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Security</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum361.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Strategies</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum291.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SS2K5 Replication</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum324.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Express</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum360.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Performance Tuning</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum148.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server 2005 Integration Services</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum338.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; T-SQL (SS2K5)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1291.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Newbies</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group406.aspx"><span class="padding"><strong>&nbsp;SQL Server 7,2000</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum5.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum24.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Backups</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum265.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Data Corruption</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum9.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; General</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum230.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Globalization</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum54.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; In The Enterprise</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1043.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Working with Oracle</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum6.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Security</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum49.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Strategies</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum169.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Newbies</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum48.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Service Packs</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum137.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server CE</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum65.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Performance Tuning</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum7.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Replication</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum161.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sarbanes-Oxley</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum8.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; T-SQL</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum110.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Agent</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group2788.aspx"><span class="padding"><strong>&nbsp;SQL Server and other platforms</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2789.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MySQL</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2790.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Oracle</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2791.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PostgreSQL</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2792.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DB2</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2837.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server and Sharepoint</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group1436.aspx"><span class="padding"><strong>&nbsp;Older Versions of SQL (v6.5, v6.0, v4.2)</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1437.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Older Versions of SQL (v6.5, v6.0, v4.2)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group409.aspx"><span class="padding"><strong>&nbsp;Career</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum10.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Certification</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum334.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Employers and Employees</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum1199.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Events</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum15.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Job Postings</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum68.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Resumes and Job Hunters</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2889.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Presentations and Speaking</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum3038.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Retired Members</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group413.aspx"><span class="padding"><strong>&nbsp;Testing Center</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum120.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Question of the Day (QOD)</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum119.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Server Security Skills</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group414.aspx"><span class="padding"><strong>&nbsp;Microsoft Access</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum131.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Microsoft Access</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group644.aspx"><span class="padding"><strong>&nbsp;Products and Books</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum417.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Third Party Products</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum394.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CA</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum349.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Extreme Technologies.</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum348.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Innovartis</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum347.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Embarcadero</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum346.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL Sentry</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum345.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Sonasoft</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum352.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQLCentric</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum344.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Golden Gate Software</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum342.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Lumigent</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum341.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Red Gate Software</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum340.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Quest Software</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum339.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ApexSQL</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum343.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Idera</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum645.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discussions about Books</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum46.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss Programming Books </span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum44.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss XML Books </span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum43.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss T-SQL Books </span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum42.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss Data Warehousing Books </span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum41.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss DTS Books </span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum39.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss SQL Server 7.0 Books</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum40.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Discuss SQL Server 2000 Books</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group412.aspx"><span class="padding"><strong>&nbsp;Notification Services</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum92.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Administration</span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group411.aspx"><span class="padding"><strong>&nbsp;Article Discussions</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Group2798.aspx"><span class="padding"><strong>&nbsp;Future Versions</strong></span></a></li> 
+                 <li><a href="https://www.sqlservercentral.com/Forums/Forum2800.aspx"><span class="padding">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SQL 12</span></a></li> 
+                </ul> 
+               </nav> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+         <asides class="i-asides i-asides-right" id="pnlMenuAsides"> 
+          <header> 
+           <h2 class="title">SQLServerCentral</h2> 
+           <a href="#" class="close"><i class="fa fa-times"></i></a> 
+          </header> 
+          <section class="i-asides-body"> 
+           <nav> 
+            <ul id="clonedMenu"></ul> 
+           </nav> 
+           <hr> 
+           <div id="ctl00_pnlGuestMobileAsides" class="i-row i-margin-top i-centered"> 
+            <a title="Register" id="ctl00_hypMobileRegister" class="i-btn i-btn-2x i-btn-primary" href="https://www.sqlservercentral.com/Forums/Register.aspx"><span class="i-btn-bg"></span> <span data-icon="true">Register</span></a> 
+           </div> 
+          </section> 
+         </asides> 
+         <asides class="i-asides i-asides-right" id="pnlSearchAsides"> 
+          <header> 
+           <h2 class="title">Search</h2> 
+           <a href="#" class="close"><i class="fa fa-times"></i></a> 
+          </header> 
+          <section class="i-asides-body if-asides-search"> 
+           <div id="ctl00_SearchOptions2" class="i-row"> 
+            <div id="ctl00_SearchOptions2_ctl00_ctlSearch_pnlSearch" class="i-row"> 
+             <table class="i-table i-responsive-table if-search-options"> 
+              <tbody> 
+               <tr> 
+                <td class="i-col-light"> 
+                 <div id="ctl00_SearchOptions2_ctl00_ctlSearch_tdLoader" class="i-loader-jumbo" style="display:none;"> 
+                  <div class="i-loader i-loader-2x"></div> 
+                 </div> </td> 
+               </tr> 
+              </tbody> 
+             </table> 
+            </div> 
+            <div id="ctl00_SearchOptions2_ctl00_pnlTree_smMenu" class="i-menu-box if-search-tree-menu"> 
+             <div class="i-menu"> 
+              <div class="i-margin-left-small"> 
+               <div class="menu"> 
+                <ul> 
+                 <li class="title"><span class="padding">Narrow your search by forum</span></li> 
+                 <li class="seperator"></li> 
+                </ul> 
+                <input name="ctl00$SearchOptions2$ctl00$ctlTreeView$ctl00$ctlTreeView" type="hidden" id="ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView">
+                <div id="ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView_container"> 
+                </div> 
+               </div> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+          </section> 
+         </asides> 
+         <div id="ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPanelBarctl06_smMenu" style="display: none;" class="i-menu-box"> 
+          <div class="i-menu"> 
+           <div class="menu"> 
+            <ul> 
+             <li><a href="https://www.sqlservercentral.com/Forums/672028/SSIS-authentication-for-SQL-OLEDB-Source?DisplayMode=1" title="Unthreaded, ascending"><span class="padding"><i class="fa fa-check i-margin-right-small"></i>Unthreaded, ascending</span></a></li> 
+             <li><a href="https://www.sqlservercentral.com/Forums/672028/SSIS-authentication-for-SQL-OLEDB-Source?DisplayMode=2" title="Unthreaded, descending"><span class="padding">Unthreaded, descending</span></a></li> 
+            </ul> 
+           </div> 
+          </div> 
+         </div> 
+         <div id="ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPanelBarctl07_smMenu" style="display: none;" class="i-menu-box"> 
+          <div class="i-menu"> 
+           <div class="menu"> 
+            <ul> 
+             <li><a href="https://www.sqlservercentral.com/Forums/Subscribe0-672028.aspx?ReturnURL=/Forums/Topic672028-148-1.aspx" title="Subscribe to topic"><span class="padding">Subscribe to topic</span></a></li> 
+             <li><a href="https://www.sqlservercentral.com/Forums/PrintTopic672028.aspx" target="_blank" title="Print topic"><span class="padding">Print topic</span></a></li> 
+             <li><a href="https://www.sqlservercentral.com/Forums/RssFeed2.aspx?TopicID=672028" target="_blank" title="RSS feed"><span class="padding">RSS feed</span></a></li> 
+             <li><a href="https://www.sqlservercentral.com/Forums/SQL-Server-2005/SQL-Server-2005-Integration-Services" title="Go to topics forum"><span class="padding">Go to topics forum</span></a></li> 
+            </ul> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+        <div class="aspNetHidden"> 
+         <input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value=""> 
+         <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="0DRyNHNYmZVQgYqJ+iYgptlYMTKEXexs4c/WkcjaHHcF9T48AUPw6eSu3/hhVSK5S3l6U6IHxnPvzCK7IXyzmmxzP/oKnzXEbCpK8OZ6XmJ3gQAlnx9Y5gmHiJMkSCl4Q2n1YrRGlX7qDmN0fQ5weATZe04wKhdcF4HICkDVmZsbWusuygjD08aJ+39gfUmeIPt6Dl+5e/jpaaTZSksbHmUuW6gaL3i5cHFgsIE20DaGAdTM0J0hui8Em0tRAIJzeuWdCj6A31C8TF9GdzPvWbbtneJnievIgJ9OwAfxr2SxHOUSbPF6ikJjLFue+k6TSBSsLh1cvOAgN4GllG69S8M9nBHKrymyzhiBjaNSRMmwc+Eo2qmJ7R+eI/OX6ggF/onccQ5flkmtadedJUAdY2j/31JjM50+Wn03utthV6Nmrmbi5ybYY2tHX9hWwyahW172Y5aHN62yvKAqVX6hWTSSrLXTq/PXT6uWC6UY17l2TSMPq7dOtkL2ReXOCmW2SLnOn8LMhYs3qCPpe9JwInNfZ+O/rjiQHdXPuhuYcD2Q2GrC6G2Ej7jO6lSJuleRkdBFJ/X0v4cX6xgUeOKF+s1iiPXk9UNssqThFs2P1cI8zFfW64b1McTgOrZJxMGI9VadvHS19kJ5Od1llOHBuqCh9tUedEraLZfyLJbTtlTN6PU+E/+HONxnbSbznhVqh54cVqHTtN3oXNgpFKPxSKFGxQBa/PIoTBHjdevYR4tJ916De1mXxRrNYBETkCrox8ATwPidBTBWsqkIWXdPL9+9V95wRxqy89kfgU12XmZzOmC4gAjGjOFk12hsbmAGV47pp/B5vCEiZXmKhn7jN5dYzE4p5pIoLw3Zi9Bzn4Xa4/Xw/Uw7IG9kPY+4b4O6VdWR8TeX4+Pl9pqafKfqGZLXWVLyEHRY8sBVY2n6KqAKWFC3tvmTlbPV78UBv04xO76zqJ0yiLj6jXTtRMwncbQ2J3s+WGEEZIFFgcFtZsWuqxPXtBos3h8y0TlClwSr0gc4zNh6pHVsioCjtEfYFua+6TNcagjjUkbbYOjHxNLP17beXk8pfuO4/UqnyDIAXrhAnWjukc2Fc9ZMiQ9j1p7mE0XenAZ1x/N8XWSLTxrtRKa24t1PM5oK2eHRhBLon37veZuNFoQrdEcVf+c2SPQlDI2DKSF7llCGSUlcfbbh6wJNji4EhqrpXuZykjsx18CMdI7HW2eczNaSeeSqg5G9hhVJgNtwuHO1p2JF1XvPxrS6hOE99vZhKQTH7hMSreZ8DeWQY2SXIkc/KAAHy8HLGIyQ/jWjZya81LaOe9WCieuLTBTUh+9o4jNv808hwPexgZMDH1Gced+qtTgYc6kBPxWfws3bTQtFkCb6DqgamECuKkWv0ez4115NFEzg7xPjKjO51gNweekZMAanQnn4/Ic2/xhw8UaqYSTUSLPToCyjjYWZGusCVc7xl9n0/i3NPsqckTSpfFjNmbzymAfycfca1eBA0h1qXwEL6ly6bgBWYgNcflZMIWvAXHJzImskoDBCXivEuWXigRYjy1S+cRUhYcraa7oM/hehVM/uZ+zuzBk4ws52iKtBZS2byOfx7NlSdnfu29tx/8JD7IAtkOgfbAZMCzMxG/f8HREmqKxeDL+4bqDToN9Gfobk8F4vSezTZma6cnTOQqE9o3E93o9LiDzDHSyGvJJJUxN91h9I9LKGM7r7dJ07eaF2crcjAR+qbnuhwT53CSj2V8ZaopDYrr6R1fMfnp7SEDTtiBG+nJvYLyIq93vGZcj6b6GBs1dwntHphiODlUUrBDdUdMjqtHkcD/8XvqUPIZHz/fvOocAMF7Ai7TN4mjpIDmVmOD3efzzAXUAsax0LfxxaPg0Z2VqcvxLMcRoxToYFvqOd7a6x+kc1kpNSGjI1Y5IupKMZ/H5+UjT8yO4XkZ8qS/ZwOvjg+JK+MLU3rYoB2aNGgoqBSgIIS2baEqTX/+9v4Pz9NvEn+auG8manyg5Bgwmi9zZOyJAe/H3icPXK8lVHNI+RMEz+lbVXMHFyu7ojvqq3Mvnixpa3GvKucf+XoQUrI4tD7011tmBhSYlZ4yY5fBvX1FTC6RUa+mK5bqNlqTHFmL0ANssXZ3GQ1uUd+w0hd+kryayslZ3DIyvieWidkZwKSCvvHJjHsDc3wW4LhbC3qK+Il19/Qi1KNrm6XvXcqrmGRsU3AUA9ssjPPHdwiAj7CAggw1znucBpS+grVrqOcFC7ZbY12I64ECldP3RmRAgk1bve88lMQu1UpEA9M1taBiTgbdbAB5+1XklbeNh67SLOXuXXHxJrfA+RHkwqzMKfkpqZUGqjjc8W9EbWnbOFNJ1KCmcsMO8rOmplwmXgkbA4MSsRatVlyTsqcENPBtmR/DmjN5yQEzhcBQr4ehrGLlaV8v5sGxL4d+9RY5QGqEig7tnQN25+iqO/JuYY/IvKtp5V//GJWV0K5rbfEK0alPNLeNOy5uj5yeBXv5yIEc3cTVTS/1JNSNYto7m3+yI5GIRaruwgY83P9rqhFj0JYRR7OXioE1ZDpeEb89dqdRz+PzI1WX3mwK1NqAvP9pIdL4bwljsGQiiU09lRM5UE5oPPthzM/ZlBkqwyDZbM4yBIvSLv0Wy6cmbcqKppogBU1NV6VCzjDbcc/pOHle5OE1QzZgrM/4BiIuaXefw9Me98hSzTSjUfWyWdGQW5O9Q5a7vos8NvJ0xpqPKgwFPugTPYWcUaui+kTpGbI7s6lVNkn3nQoPL9aV82V4+0eEKM1xmaXBfROEf8xBcoL5IqyVNUshW19T+1bkW8qpT0SWKp+/bLO/Y4lnO7cMtHhTX50FmtoT426LADP0a9agr2ie5BLLVyHi921uqLg5VV6QyLXmbFyBl4/Gd8SkttmU/J1RBFLe+Nb6Ka/REoYYZIh3bgAYcAQms8s835KI7NgnpoJG5oKRhx2MaluqhgDO/how4uyEZmhPU5GUltdo82pVOedgN6X23Cb4XHiH/mEyn3P2I5wCjd1OWF1/wOCpfyZYdsd9g7r1NeokHXug/ggYLg10RF+6F3yshlNWsCnmNzILzBxSL+L79aXhIokuLUuToYror4/otKLZX5ig5KyAxhVzKcyqi1R5gNPDjjJfEAPwTg7YC4gJrqoPZTo0vpUij0TjEG9HeQZ6kNiu/iOpJ9d1V0hh+AL8KmyPo7GxAoInmNim9dZwzBMfPrBQKYZ+CzKXL50lz/D4q+QpV/MR/0Pi90TxLcqp5VRoJo5MhbgHJ7FKvBQVlBYC3zvIpeQa6jJ0pbHsY87sciyPCAi1Ax/Zh/puXq3XVup8SnxsdxQoq3r0blQkgHrUo29mt6cuP01vOdd6rBJDS4jXI8rSUNHIQJtwWEGDsG4dS6iIE0x9kDIAuzAggbzwN3LtFUf8uBqSWtRbbkmh7nKe9S3+I4ySAaROAPVIKc2NUqr+veXU5PukA3it8iDTsBjiNovzwMFL2jgEn7ih+XChNufKbj/pZkGxRAb6DvauoP1ccScWDEJWA6zO9/DcoJvqTpeTJJcSSWPibT/MsIwhrvvnbFAVBXv6MXt5vEsrt8FCe2YPjbg5Qa3+KigXxjgwADiQ3r/ea8tH4LFDRhr/SA9fPZzD6ligG2Gf/anc102CPAtE5FvtRj8lo7JPN6ec9orfcXCw=="> 
+        </div> 
+        <script type="text/javascript">
+//<![CDATA[
+; (function () { var postBackElement = null, prm = Sys.WebForms.PageRequestManager.getInstance(); if (prm) {  prm.add_initializeRequest(InitializeRequest);		prm.add_endRequest(EndRequest); } function InitializeRequest(sender, args) { 	 if (prm.get_isInAsyncPostBack()) {args.set_cancel(true);  }  postBackElement = args.get_postBackElement();	 if (postBackElement) {iasp_AjaxExtensionsInitializeRequest(postBackElement);  } }; function EndRequest (sender, args) {	 if (postBackElement) {iasp_AjaxExtensionsEndRequest(postBackElement);  } }; function AbortPostBack() {	 if (prm.get_isInAsyncPostBack()) {prm.abortPostBack();  } };}());var prm = Sys.WebForms.PageRequestManager.getInstance();prm.add_beginRequest(beginRequest);function beginRequest(){prm._scrollPosition = null;}function ctl00_SearchOptions1_toggleView(displayType) {var searchOptions = $find('ctl00_SearchOptions1');location = searchOptions.get_searchURL();}
+function ctl00_SearchOptions1_doPaging(pageIndex) {  var searchOptions = $find('ctl00_SearchOptions1');var keywords = searchOptions.get_txtKeywords();var forumIds = searchOptions.get_forumIDs();var url = searchOptions.get_searchURL();var qs = "";if (keywords != null && keywords != "") {qs += (qs != "") ? "&" : "?";qs += "Keywords=" + keywords;}if (forumIds != null && forumIds != "") {qs += (qs != "") ? "&" : "?";qs += "ForumIDs=" + forumIds;}if (keywords != "" && keywords != if_SearchKeywords) {location = url + qs;} else {searchOptions._txtKeywords.focus();}}
+function ctl00_SearchOptions2_toggleView(displayType) {var searchOptions = $find('ctl00_SearchOptions2');location = searchOptions.get_searchURL();}
+function ctl00_SearchOptions2_doPaging(pageIndex) {  var searchOptions = $find('ctl00_SearchOptions2');var keywords = searchOptions.get_txtKeywords();var forumIds = searchOptions.get_forumIDs();var url = searchOptions.get_searchURL();var qs = "";if (keywords != null && keywords != "") {qs += (qs != "") ? "&" : "?";qs += "Keywords=" + keywords;}if (forumIds != null && forumIds != "") {qs += (qs != "") ? "&" : "?";qs += "ForumIDs=" + forumIds;}if (keywords != "" && keywords != if_SearchKeywords) {location = url + qs;} else {searchOptions._txtKeywords.focus();}}
+var jsonData = '{"userLevels": {"userLevel":[{"pips":0,"threshold":0,"desc":"Forum Newbie"},{"pips":1,"threshold":10,"desc":"Grasshopper"},{"pips":1,"threshold":25,"desc":"SSC Rookie"},{"pips":2,"threshold":50,"desc":"Valued Member"},{"pips":2,"threshold":75,"desc":"SSC Journeyman"},{"pips":3,"threshold":100,"desc":"SSC-Enthusiastic"},{"pips":3,"threshold":200,"desc":"SSC Veteran"},{"pips":3,"threshold":300,"desc":"Old Hand"},{"pips":4,"threshold":400,"desc":"SSC-Addicted"},{"pips":5,"threshold":500,"desc":"Mr or Mrs. 500"},{"pips":6,"threshold":600,"desc":"SSChasing Mays"},{"pips":6,"threshold":661,"desc":"Say Hey Kid"},{"pips":7,"threshold":714,"desc":"Right there with Babe"},{"pips":7,"threshold":800,"desc":"SSC Eights!"},{"pips":8,"threshold":1000,"desc":"Ten Centuries"},{"pips":8,"threshold":1433,"desc":"Default port"},{"pips":8,"threshold":1434,"desc":"UDP Broadcaster"},{"pips":8,"threshold":1500,"desc":"SSCommitted"},{"pips":8,"threshold":2000,"desc":"SSCrazy"},{"pips":9,"threshold":3000,"desc":"Hall of Fame"},{"pips":9,"threshold":4000,"desc":"SSCarpal Tunnel"},{"pips":9,"threshold":5000,"desc":"SSCertifiable"},{"pips":10,"threshold":8000,"desc":"SSCrazy Eights"},{"pips":10,"threshold":10000,"desc":"SSChampion"},{"pips":11,"threshold":15000,"desc":"SSCoach"},{"pips":11,"threshold":20000,"desc":"SSC-Insane"},{"pips":12,"threshold":25000,"desc":"One Orange Chip"},{"pips":13,"threshold":30000,"desc":"SSC-Dedicated"},{"pips":15,"threshold":40000,"desc":"SSC-Forever"},{"pips":16,"threshold":50000,"desc":"SSC Guru"}]},"context": {"data":[{"InstallURL":"https://www.sqlservercentral.com/Forums/","InstallImageFolderURL":"https://www.sqlservercentral.com/Forums/Skins/Classic/Images/","CurrentSkin":"Skins/Classic/","CurrentDateTimeFormat":"f","CurrentTimeZoneOffSet":-7}]},"EmotIconCollection": {"EmotIcons":[{"File":"Smile.gif","Desc":"Smile","Code":":)"},{"File":"BigGrin.gif","Desc":"BigGrin","Code":":D"},{"File":"Tongue.gif","Desc":"Tongue","Code":":P"},{"File":"Wink.gif","Desc":"Wink","Code":";)"},{"File":"w00t.gif","Desc":"w00t","Code":":w00t:"},{"File":"Cool.gif","Desc":"Cool","Code":":cool:"},{"File":"Hehe.gif","Desc":"Hehe","Code":":hehe:"},{"File":"Angry.gif","Desc":"Angry","Code":":angry:"},{"File":"Crazy.gif","Desc":"Crazy","Code":":crazy:"},{"File":"Doze.gif","Desc":"Doze","Code":":doze:"},{"File":"Laugh.gif","Desc":"Laugh","Code":":laugh:"},{"File":"Rolleyes.gif","Desc":"Rolleyes","Code":":rolleyes:"},{"File":"Satisfied.gif","Desc":"Satisfied","Code":":satisfied:"},{"File":"Blink.gif","Desc":"Blink","Code":":blink:"},{"File":"Ermm.gif","Desc":"Ermm","Code":":ermm:"},{"File":"Crying.gif","Desc":"Crying","Code":":crying:"},{"File":"Pinch.gif","Desc":"Pinch","Code":":pinch:"},{"File":"Kiss.gif","Desc":"Kiss","Code":":kiss:"},{"File":"Wow.gif","Desc":"Wow","Code":":Wow:"},{"File":"Whistling.gif","Desc":"Whistling","Code":":Whistling:"},{"File":"Unsure.gif","Desc":"Unsure","Code":":unsure:"},{"File":"Sad.gif","Desc":"Sad","Code":":("},{"File":"Alien.gif","Desc":"Alien","Code":":alien:"},{"File":"Arrow.gif","Desc":"Arrow","Code":":arrow:"},{"File":"Blush.gif","Desc":"Blush","Code":":blush:"},{"File":"Discuss.gif","Desc":"Discuss","Code":":discuss:"},{"File":"Exclamation.gif","Desc":"Exclamation","Code":":exclamation:"},{"File":"ExclamationMark.gif","Desc":"Exclamation Mark","Code":":exclamationmark:"},{"File":"Sick.gif","Desc":"Sick","Code":":sick:"},{"File":"Smooooth.gif","Desc":"Smooooth","Code":":smooooth:"}]},"IFCodeCollection": {"IFCodes":[{"Tag":"[li][\\/li]","Desc":"[li][\\/li]"},{"Tag":"[ul][\\/ul]","Desc":"[ul][\\/ul]"},{"Tag":"[center][\\/center]","Desc":"Align Center"},{"Tag":"[left][\\/left]","Desc":"Align Left"},{"Tag":"[right][\\/right]","Desc":"Align Right"},{"Tag":"[b][\\/b]","Desc":"Bold"},{"Tag":"[code language=\\\"c#\\\"][\\/code]","Desc":"C# Code"},{"Tag":"[code language=\\\"css\\\"][\\/code]","Desc":"CSS Code"},{"Tag":"[email][\\/email]","Desc":"Email"},{"Tag":"[color=\\\"\\\"][\\/color]","Desc":"Font Color Tag"},{"Tag":"[size=\\\"\\\"][\\/size]","Desc":"Font Size Tag"},{"Tag":"[font=\\\"\\\"][\\/font]","Desc":"Font Tag"},{"Tag":"[h1][\\/h1]","Desc":"Header 1"},{"Tag":"[h2][\\/h2]","Desc":"Header 2"},{"Tag":"[highlight][\\/highlight]","Desc":"Highlight"},{"Tag":"[highlight=\\\"\\\"][\\/highlight]","Desc":"Highlight \u0026 Color"},{"Tag":"[hr]","Desc":"Horizontal Line"},{"Tag":"[video][\\/video]","Desc":"HTML 5 Video"},{"Tag":"[url][\\/url]","Desc":"Hyperlink"},{"Tag":"[url=][\\/url]","Desc":"Hyperlink \u0026 Description"},{"Tag":"[img][\\/img]","Desc":"Image"},{"Tag":"[i][\\/i]","Desc":"Italics"},{"Tag":"[code=\\\"other\\\"][\\/code]","Desc":"Other Code"},{"Tag":"[p][\\/p]","Desc":"Paragraph Break"},{"Tag":"[code=\\\"plain\\\"][\\/code]","Desc":"Plain (non-highlighted) code"},{"Tag":"[quote][\\/quote]","Desc":"Quoted Text"},{"Tag":"[code][\\/code]","Desc":"SQL Code"},{"Tag":"[strike][\\/strike]","Desc":"strikethrough"},{"Tag":"[sub][\\/sub]","Desc":"Subscript"},{"Tag":"[sup][\\/sup]","Desc":"Superscript"},{"Tag":"[u][\\/u]","Desc":"Underline"},{"Tag":"[code=\\\"vb\\\"][\\/code]","Desc":"VB Code"},{"Tag":"[vimeo][\\/vimeo]","Desc":"Vimeo Video"},{"Tag":"[code language=\\\"xml\\\"][\\/code]","Desc":"XML Code"},{"Tag":"[YouTube][\\/YouTube]","Desc":"YouTube"}]},"WhosOnCollection": {"TotalRecords":0,"AnonymousVisitorCount":12785,"AnonymousUsersCount":1,"SearchEngineBotCont":1803,"WhosOnCollection":{"WhosOn":[{"user_id":908760,"display_name":"LightVader","stub":"Users\\/LightVader","DateStamp":"2 minutes ago","CurrentActivity":"Reading topic","TopicID":1899032,"TopicTitle":"Code-first vs database-first, any new developments?"},{"user_id":823539,"display_name":"Mark Dalley","stub":"Users\\/Mark-Dalley","DateStamp":"3 minutes ago","CurrentActivity":"Reading forum","ForumID":392,"ForumName":"T-SQL (SS2K8)"},{"user_id":621389,"display_name":"sgmunson","stub":"Users\\/sgmunson","DateStamp":"3 minutes ago","CurrentActivity":"Reading topic","TopicID":1900263,"TopicTitle":"Current month to yesterday\\u0027s date","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Photos/21605757-2169-49b1-9d2f-2035.jpg"},{"user_id":566863,"display_name":"river1","stub":"Users\\/river1","DateStamp":"3 minutes ago","CurrentActivity":"Reading topic","TopicID":1900523,"TopicTitle":"SSIS : Convert  MM\\/DD\\/YYYY into DD\\/MM\\/YYYY"},{"user_id":373137,"display_name":"Edward Shaw","stub":"Users\\/Edward-Shaw","DateStamp":"3 minutes ago","CurrentActivity":"Reading topic","TopicID":994056,"TopicTitle":"GRANT VIEW ANY DEFINITION not Working"},{"user_id":902652,"display_name":"Eric M Russell","stub":"Users\\/Eric-M-Russell","DateStamp":"3 minutes ago","CurrentActivity":"Reading topic","TopicID":1900404,"TopicTitle":"No More Service Packs","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/1d021023-5dd4-48b1-99d0-5344.png"},{"user_id":702702,"display_name":"Steve Hall","stub":"Users\\/BrainDonor","DateStamp":"3 minutes ago","CurrentActivity":"Reading topic","TopicID":1899253,"TopicTitle":"Naming Conventions - Table and Column Names","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/457a96e1-0a06-4a32-a865-b4a3.jpg"},{"user_id":1080299,"display_name":"marcingminski","stub":"Users\\/marcingminski","DateStamp":"3 minutes ago","CurrentActivity":"Reading topic","TopicID":1125087,"TopicTitle":"Transactional Replication as a DR method - How to failover?"},{"user_id":4,"display_name":"Steve Jones","stub":"Users\\/Steve-Jones-SSC-Editor","DateStamp":"4 minutes ago","open_markup":"\u003cb\u003e","close_markup":"\u003c\\/b\u003e","CurrentActivity":"Reading topic","TopicID":1846421,"TopicTitle":"Fantasy Football 2017","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/67e96f9c-5b78-43a4-b6af-0315.jpg"},{"user_id":680097,"display_name":"prvmine","stub":"Users\\/prvmine","DateStamp":"4 minutes ago","IsAnonymous":true,"CurrentActivity":"Reading topic","TopicID":1900170,"TopicTitle":"live episode of Strictly","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/57db46a6-e3d4-4417-8f10-e0c6.png"},{"user_id":622333,"display_name":"thisisfutile","stub":"Users\\/thisisfutile","DateStamp":"5 minutes ago","CurrentActivity":"Reading topic","TopicID":1737795,"TopicTitle":"Stairway to Advanced T-SQL Level 9: Compare, Modify, Derive and Validate Date and Time Values "},{"user_id":590470,"display_name":"mbricker-600840","stub":"Users\\/mbricker-600840","DateStamp":"6 minutes ago","CurrentActivity":"Reading topic","TopicID":1741996,"TopicTitle":"Unsafe assembly \\u0027microsoft.sqlserver.integrationservices.server, version=12.0.0.0"},{"user_id":1011116,"display_name":"roryp 96873","stub":"Users\\/roryp-96873","DateStamp":"6 minutes ago","CurrentActivity":"Reading topic","TopicID":1846421,"TopicTitle":"Fantasy Football 2017"},{"user_id":1169418,"display_name":"donpelca","stub":"Users\\/donpelca","DateStamp":"6 minutes ago","CurrentActivity":"Reading topic","TopicID":262311,"TopicTitle":"Table Variable with Identity Column"},{"user_id":13533,"display_name":"Sue_H","stub":"Users\\/SueH","DateStamp":"6 minutes ago","CurrentActivity":"Sending a private message reply"},{"user_id":55080,"display_name":"rodjkidd","stub":"Users\\/rodjkidd","DateStamp":"6 minutes ago","CurrentActivity":"Reading topic","TopicID":1846421,"TopicTitle":"Fantasy Football 2017","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/152ca9ce-5769-4b4a-ae62-49ae.bmp"},{"user_id":85377,"display_name":"Jeff Moden","stub":"Users\\/Jeff-Moden","DateStamp":"7 minutes ago","CurrentActivity":"Reading topic","TopicID":1900425,"TopicTitle":"Database maintenance","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/d682d959-295a-429f-823a-98c3.gif"},{"user_id":1021874,"display_name":"NickBrewer","stub":"Users\\/NickBrewer","DateStamp":"7 minutes ago","CurrentActivity":"Reading topic","TopicID":803747,"TopicTitle":"How to  schedule SSRS Report"},{"user_id":768829,"display_name":"SQLDCH","stub":"Users\\/SQLDCH","DateStamp":"8 minutes ago","CurrentActivity":"Reading topic","TopicID":1846421,"TopicTitle":"Fantasy Football 2017","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/22218051-bcc2-4569-8a12-8551.jpg"},{"user_id":915881,"display_name":"Ryan Besko","stub":"Users\\/ryanbesko","DateStamp":"8 minutes ago","CurrentActivity":"Reading topic","TopicID":1900378,"TopicTitle":"Move From Developer Edition To Express?","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Photos/0ea378e7-46bf-4aff-bf9b-d1a4.jpg"},{"user_id":536577,"display_name":"Alvin Ramard","stub":"Users\\/Alvin-Ramard","DateStamp":"9 minutes ago","CurrentActivity":"Reading topic","TopicID":406577,"TopicTitle":"Why SQL Server is Better Than Oracle","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/aa07caf9-a640-461e-adfe-76bf.jpg"},{"user_id":385687,"display_name":"WayneS","stub":"Users\\/WayneS","DateStamp":"9 minutes ago","CurrentActivity":"Reading topic","TopicID":1900404,"TopicTitle":"No More Service Packs","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/b98388e4-4dcb-4f8e-a3eb-6276.gif"},{"user_id":80043,"display_name":"abarona","stub":"Users\\/abarona","DateStamp":"9 minutes ago","CurrentActivity":"Reading topic","TopicID":1454488,"TopicTitle":"File System Task - Copying files from Folders to multiple folder based on the first 4 digits of file name"},{"user_id":1224338,"display_name":"adisql","stub":"Users\\/adisql","DateStamp":"10 minutes ago","CurrentActivity":"Reading topic","TopicID":1900536,"TopicTitle":"Having clause"},{"user_id":1183953,"display_name":"andrew.courneya 63072","stub":"Users\\/andrewcourneya-63072","DateStamp":"11 minutes ago","CurrentActivity":"Reading topic","TopicID":1900404,"TopicTitle":"No More Service Packs"},{"user_id":1103886,"display_name":"bmg002","stub":"Users\\/bmg002","DateStamp":"11 minutes ago","CurrentActivity":"Reading topic","TopicID":1900512,"TopicTitle":"Importing a DAT file","PhotoImage":"Uploads/Photos/4e9075a4-5747-4386-ba20-d220.jpg"},{"user_id":10134,"display_name":"ScottPletcher","stub":"Users\\/ScottPletcher","DateStamp":"12 minutes ago","CurrentActivity":"Reading topic","TopicID":1900528,"TopicTitle":"select count of rows based on condition","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Photos/7710bbfa-98bc-4342-9c47-cb84.jpg"},{"user_id":504257,"display_name":"PSB","stub":"Users\\/PSB","DateStamp":"12 minutes ago","CurrentActivity":"Reading topic","TopicID":237238,"TopicTitle":"BCP error -Unable to open BCP host data-file"},{"user_id":954026,"display_name":"Darko Martinovic","stub":"Users\\/Darko-Martinovic","DateStamp":"13 minutes ago","CurrentActivity":"Reading topic","TopicID":1879616,"TopicTitle":"Practical usage of SQLCLR: Building QueryToHtml function","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Photos/12752933-91a4-429f-a163-1d26.jpg"},{"user_id":228715,"display_name":"Peddi Praveen kumar","stub":"Users\\/Peddi-Praveen-kumar","DateStamp":"14 minutes ago","CurrentActivity":"Reading topic","TopicID":1666856,"TopicTitle":"NOLOCK across linked server with join"},{"user_id":1147268,"display_name":"alicesql","stub":"Users\\/alicesql","DateStamp":"15 minutes ago","CurrentActivity":"Reading topic","TopicID":1900120,"TopicTitle":"Get-DbaPowerShell","PhotoImage":"https://www.sqlservercentral.com/forums/images/avatarpacks/avatar%20set%202/1.gif"},{"user_id":710977,"display_name":"kingpintek","stub":"Users\\/kingpintek","DateStamp":"16 minutes ago","CurrentActivity":"Reading topic","TopicID":1049183,"TopicTitle":"Communication Link failure"},{"user_id":531060,"display_name":"b.ozga","stub":"Users\\/bozga","DateStamp":"16 minutes ago","CurrentActivity":"Reading topic","TopicID":242418,"TopicTitle":"Timeout Expired - Autogrow of file cancelled or timed out"},{"user_id":1212706,"display_name":"chapwolff","stub":"Users\\/chapwolff","DateStamp":"17 minutes ago","CurrentActivity":"Viewing \\/ downloading attachment"},{"user_id":296190,"display_name":"JasonRowland","stub":"Users\\/JasonRowland","DateStamp":"17 minutes ago","CurrentActivity":"Reading topic","TopicID":1391967,"TopicTitle":"SPLIT RANGE TOOK 10 HRS to Complete"},{"user_id":1141581,"display_name":"frafic","stub":"Users\\/frafic","DateStamp":"18 minutes ago","CurrentActivity":"Viewing \\/ downloading attachment"},{"user_id":865313,"display_name":"MaPar","stub":"Users\\/MaPar","DateStamp":"18 minutes ago","CurrentActivity":"Reading topic","TopicID":1040859,"TopicTitle":"Database Design: Should we have Multiple Data files and Multiple File Groups \\u2013 SQL Server 2005"},{"user_id":988861,"display_name":"Decombobulator","stub":"Users\\/Decombobulator","DateStamp":"19 minutes ago","CurrentActivity":"Reading topic","TopicID":406577,"TopicTitle":"Why SQL Server is Better Than Oracle"},{"user_id":5203,"display_name":"aldrich","stub":"Users\\/aldrich","DateStamp":"20 minutes ago","CurrentActivity":"Reading topic","TopicID":1896818,"TopicTitle":"Add 3 blank rows\\/boxes based on first letter of last name"},{"user_id":1113265,"display_name":"LinksUp","stub":"Users\\/LinksUp","DateStamp":"21 minutes ago","CurrentActivity":"Reading topic","TopicID":1900305,"TopicTitle":"Running balance calculation","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/11ec4d65-0af9-4fa7-8f43-8bd9.png"},{"user_id":964201,"display_name":"ZZartin","stub":"Users\\/ZZartin","DateStamp":"21 minutes ago","CurrentActivity":"Viewing homepage"},{"user_id":1225669,"display_name":"dfairful","stub":"Users\\/dfairful","DateStamp":"22 minutes ago","CurrentActivity":"Reading topic","TopicID":1701128,"TopicTitle":"SQLCMD DBCC checkdb output file with date stamp"},{"user_id":1027595,"display_name":"timwell","stub":"Users\\/timwell","DateStamp":"23 minutes ago","CurrentActivity":"Reading topic","TopicID":1900404,"TopicTitle":"No More Service Packs"},{"user_id":336325,"display_name":"Santana-331285","stub":"Users\\/Santana-331285","DateStamp":"24 minutes ago","CurrentActivity":"Reading topic","TopicID":982687,"TopicTitle":"Ways to backup restore Very Large Database (VLDB)"},{"user_id":52518,"display_name":"Brent Ozar","stub":"Users\\/Brent-Ozar","DateStamp":"25 minutes ago","CurrentActivity":"Reading topic","TopicID":336210,"TopicTitle":"Cannot \\\"net start\\\" with xp_cmdshell","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/724fba77-32ac-48c6-a6b1-3279.png"},{"user_id":1236679,"display_name":"fernandor","stub":"Users\\/fernandor","DateStamp":"25 minutes ago","CurrentActivity":"Reading topic","TopicID":1900263,"TopicTitle":"Current month to yesterday\\u0027s date"},{"user_id":1190803,"display_name":"will.conklin","stub":"Users\\/willconklin","DateStamp":"25 minutes ago","CurrentActivity":"Reading topic","TopicID":475306,"TopicTitle":"Choosing between a View and Table-valued function"},{"user_id":4506,"display_name":"ogviloc","stub":"Users\\/ogviloc","DateStamp":"26 minutes ago","CurrentActivity":"Reading topic","TopicID":1465444,"TopicTitle":"Email Formatted  HTML Table with T-SQL"},{"user_id":932502,"display_name":"chgn01","stub":"Users\\/chgn01","DateStamp":"26 minutes ago","CurrentActivity":"Viewing \\/ downloading attachment","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/14a7c1fb-919b-4384-9c3d-81cf.jpg"},{"user_id":504226,"display_name":"Jay1234","stub":"Users\\/Jay1234","DateStamp":"26 minutes ago","CurrentActivity":"Reading topic","TopicID":1112961,"TopicTitle":"How to find location of backup files"},{"user_id":1234623,"display_name":"tadas 3867","stub":"Users\\/tadas-3867","DateStamp":"27 minutes ago","CurrentActivity":"Reading topic","TopicID":1900183,"TopicTitle":"select from flat file"},{"user_id":292763,"display_name":"Tonja Blackwell","stub":"Users\\/Tonja-Blackwell","DateStamp":"27 minutes ago","CurrentActivity":"Reading topic","TopicID":979722,"TopicTitle":"SSIS 2008 Expression Builder"},{"user_id":44885,"display_name":"starflyer","stub":"Users\\/starflyer","DateStamp":"28 minutes ago","CurrentActivity":"Viewing \\/ downloading attachment"},{"user_id":1093156,"display_name":"ntreelevel","stub":"Users\\/ntreelevel","DateStamp":"28 minutes ago","CurrentActivity":"Reading topic","TopicID":980679,"TopicTitle":"SQL Query based on date and time"},{"user_id":675884,"display_name":"Chris Harshman","stub":"Users\\/Chris-Harshman","DateStamp":"31 minutes ago","CurrentActivity":"Reading topic","TopicID":1900404,"TopicTitle":"No More Service Packs","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/ae58a8e4-69f7-4a41-b64e-25d2.gif"},{"user_id":947918,"display_name":"bobojanjcic","stub":"Users\\/bobojanjcic","DateStamp":"31 minutes ago","CurrentActivity":"Reading topic","TopicID":462175,"TopicTitle":"Monitoring and Recording DDL changes on SQL 2005 (NARC)"},{"user_id":170485,"display_name":"Lynn Pettis","stub":"Users\\/Lynn-Pettis","DateStamp":"32 minutes ago","CurrentActivity":"Reading topic","TopicID":1900523,"TopicTitle":"SSIS : Convert  MM\\/DD\\/YYYY into DD\\/MM\\/YYYY","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/e9d5f2b0-d2a0-4cc8-b097-7333.jpg"},{"user_id":412182,"display_name":"gilbert delarosa","stub":"Users\\/gilbert-delarosa","DateStamp":"32 minutes ago","CurrentActivity":"Reading topic","TopicID":1084072,"TopicTitle":"Running Total using Quirky Update problem storing previous row values"},{"user_id":1103660,"display_name":"SilentMike","stub":"Users\\/SilentMike","DateStamp":"32 minutes ago","CurrentActivity":"Reading topic","TopicID":1881029,"TopicTitle":"SharePoint permissions for DBA"},{"user_id":1203387,"display_name":"yamini1184","stub":"Users\\/yamini1184","DateStamp":"32 minutes ago","CurrentActivity":"Reading topic","TopicID":10826,"TopicTitle":"SQL Jobs getting Stuck"},{"user_id":1090243,"display_name":"bartedgerton","stub":"Users\\/bartedgerton","DateStamp":"32 minutes ago","CurrentActivity":"Reading topic","TopicID":1900523,"TopicTitle":"SSIS : Convert  MM\\/DD\\/YYYY into DD\\/MM\\/YYYY"},{"user_id":1175122,"display_name":"SQLNewbie_01","stub":"Users\\/SQLNewbie_01","DateStamp":"33 minutes ago","CurrentActivity":"Reading topic","TopicID":1881274,"TopicTitle":"Drop Service Master Key or Change Password?"},{"user_id":444798,"display_name":"ChrisM@Work","stub":"Users\\/ChrisMWork","DateStamp":"33 minutes ago","CurrentActivity":"Reading topic","TopicID":1900528,"TopicTitle":"select count of rows based on condition","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/cca0f7d9-2748-4e8a-9053-4e4a.GIF"},{"user_id":1142314,"display_name":"Thom A","stub":"Users\\/Thom-A","DateStamp":"33 minutes ago","CurrentActivity":"Reading topic","TopicID":1900523,"TopicTitle":"SSIS : Convert  MM\\/DD\\/YYYY into DD\\/MM\\/YYYY","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Photos/8192d003-ad92-4f79-83d6-5320.bmp"},{"user_id":651122,"display_name":"FZLRFK","stub":"Users\\/FZLRFK","DateStamp":"35 minutes ago","CurrentActivity":"Reading topic","TopicID":437722,"TopicTitle":"Difference between \\u0027hash match\\/inner join\\u0027 and \\u0027nested loops\\/inner join\\u0027 in execution query plan?"},{"user_id":135910,"display_name":"Bruce Enerson","stub":"Users\\/Bruce-Enerson","DateStamp":"35 minutes ago","CurrentActivity":"Reading topic","TopicID":1812538,"TopicTitle":"Load data using SSIS"},{"user_id":751300,"display_name":"jasona.work","stub":"Users\\/jasonawork","DateStamp":"35 minutes ago","CurrentActivity":"Reading topic","TopicID":406577,"TopicTitle":"Why SQL Server is Better Than Oracle","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/c9ee5775-bde8-484c-9c63-fb6e.png"},{"user_id":1174170,"display_name":"NRudak","stub":"Users\\/NRudak","DateStamp":"36 minutes ago","CurrentActivity":"Reading topic","TopicID":895793,"TopicTitle":"Query XML Column With Cross Apply"},{"user_id":1177905,"display_name":"ekuznetsova1308","stub":"Users\\/ekuznetsova1308","DateStamp":"36 minutes ago","CurrentActivity":"Reading topic","TopicID":1491831,"TopicTitle":"Using IIF to test for Null"},{"user_id":1200716,"display_name":"duncan.passey","stub":"Users\\/duncanpassey","DateStamp":"36 minutes ago","CurrentActivity":"Reading topic","TopicID":895462,"TopicTitle":"patindex - search for either value"},{"user_id":80036,"display_name":"Lowell","stub":"Users\\/Lowell","DateStamp":"37 minutes ago","CurrentActivity":"Viewing \\/ downloading attachment","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/2a697154-16a9-475a-bafc-19f0.png"},{"user_id":1238412,"display_name":"irina.paraschiv90","stub":"Users\\/irinaparaschiv90","DateStamp":"38 minutes ago","CurrentActivity":"Viewing homepage"},{"user_id":73726,"display_name":"jonque","stub":"Users\\/jonque","DateStamp":"39 minutes ago","CurrentActivity":"Reading topic","TopicID":1326899,"TopicTitle":"sql server database size and recovery model script."},{"user_id":1038352,"display_name":"Brad.Lunden","stub":"Users\\/BradLunden","DateStamp":"40 minutes ago","CurrentActivity":"Reading topic","TopicID":686387,"TopicTitle":"How do i grant permission to msdb.dbo.sp_send_dbmail ?"},{"user_id":496055,"display_name":"Luis Cazares","stub":"Users\\/Luis-Cazares","DateStamp":"40 minutes ago","CurrentActivity":"Reading topic","TopicID":406577,"TopicTitle":"Why SQL Server is Better Than Oracle","PhotoImage":"https://www.sqlservercentral.com/Forums/Uploads/Avatars/c8e3fe99-7886-4a62-ad0a-f7e5.jpg"},{"user_id":1131049,"display_name":"david.hopkins","stub":"Users\\/davidhopkins","DateStamp":"41 minutes ago","CurrentActivity":"Reading topic","TopicID":919407,"TopicTitle":"SQLCMD mode in a job step?"},{"user_id":212771,"display_name":"t. Bleadorn","stub":"Users\\/t-Bleadorn","DateStamp":"42 minutes ago","CurrentActivity":"Reading topic","TopicID":1900263,"TopicTitle":"Current month to yesterday\\u0027s date"}]}},"UserCollection": {"TotalRecords":0,"UserCollection":{"Users":[{"UserID":985970,"Username":"gladoung26","stub":"Users\\/gladoung26","display_name":"gladoung26","PostCount":"0","RecognitionPointsShort":"0","RecognitionPoints":"0","PrimaryRoleName":"","LastLoginDate":"-","LastLoginDateShort":"-","CreatedDate":"-","HasEmail":false,"RegisteredDays":"736K","AvgDailyPostCount":0,"IsOnline":"false","Gold":"0","Silver":"0","Bronze":"0"},{"UserID":994832,"Username":"dharlaman5","stub":"Users\\/dharlaman5","display_name":"dharlaman5","PostCount":"0","RecognitionPointsShort":"0","RecognitionPoints":"0","PrimaryRoleName":"","LastLoginDate":"-","LastLoginDateShort":"-","CreatedDate":"-","HasEmail":false,"RegisteredDays":"736K","AvgDailyPostCount":0,"IsOnline":"false","Gold":"0","Silver":"0","Bronze":"0"},{"UserID":1036968,"Username":"jaksonmical","stub":"Users\\/jaksonmical","display_name":"jaksonmical","PostCount":"0","RecognitionPointsShort":"0","RecognitionPoints":"0","PrimaryRoleName":"","LastLoginDate":"-","LastLoginDateShort":"-","CreatedDate":"-","HasEmail":false,"RegisteredDays":"736K","AvgDailyPostCount":0,"IsOnline":"false","Gold":"0","Silver":"0","Bronze":"0"},{"UserID":1224006,"Username":"BrightonLocksmith123","stub":"Users\\/BrightonLocksmith123","display_name":"BrightonLocksmith123","PostCount":"0","RecognitionPointsShort":"0","RecognitionPoints":"0","PrimaryRoleName":"","LastLoginDate":"-","LastLoginDateShort":"-","CreatedDate":"-","HasEmail":false,"RegisteredDays":"736K","AvgDailyPostCount":0,"IsOnline":"false","Gold":"0","Silver":"0","Bronze":"0"}]}},"Statistics": {"Stats":[{"total_members":"1,232,812","total_topics":"300,256","total_posts":"1,552,430","latest_member":{"display_name":"irina.paraschiv90","user_id":1238412,"stub":"Users/irinaparaschiv90","created_date_fancy":"39 minutes ago","created_date":"Tuesday, October 3, 2017 3:10 AM"}}]}}';
+$(document).ready(function () {$('.if-post').beautifyQuote(500, 'https://www.sqlservercentral.com/Forums/');});$(window).load(function () {$('.if-post').beautifyPost(500, 'https://www.sqlservercentral.com/Forums/');});//]]>
+</script> 
+        <div class="i-menu-box pull-right i-jump-to-page-menu" id="ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging1jtp">
+         <div class="i-menu">
+          <input type="text" onfocus="clearTxt(this, '1', true);" class="i-text-box" onblur="clearTxt(this, '1');" onkeydown="return catchKeyDown('butctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging1', event)" value="1" id="txtctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging1">
+          <a href="javascript:void(0);" class="i-btn i-btn-2x i-btn-primary" id="butctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging1" onclick="if_jump('txtctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging1');"><span class="i-btn-bg"></span><span>Jump to page</span></a>
+         </div>
+        </div> 
+        <script type="text/javascript">
+//<![CDATA[
+function if_jump(id) {var url = 'https://www.sqlservercentral.com/Forums/672028/SSIS-authentication-for-SQL-OLEDB-Source?PageIndex=[0]', t = iasp_FindControl(id);if (t != null) {if (IsNumeric(t.value)) {url = url.replace('[0]', t.value);var index = parseInt(t.value);if (index > 0 && index <= 1) {location = url;}} else {t.value = '1';}}};//]]>
+</script> 
+        <div class="i-menu-box pull-right i-jump-to-page-menu" id="ctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging2jtp">
+         <div class="i-menu">
+          <input type="text" onfocus="clearTxt(this, '1', true);" class="i-text-box" onblur="clearTxt(this, '1');" onkeydown="return catchKeyDown('butctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging2', event)" value="1" id="txtctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging2">
+          <a href="javascript:void(0);" class="i-btn i-btn-2x i-btn-primary" id="butctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging2" onclick="if_jump('txtctl00ctlContentPlaceHolderctl00ctl00ctlTopicctl00ctlPaging2');"><span class="i-btn-bg"></span><span>Jump to page</span></a>
+         </div>
+        </div> 
+        <script type="text/javascript">
+//<![CDATA[
+(function($) {$(document).ready(function() {var rbl = $('#ctl00_ctlSelectForumPopUp_ctl00_ctl00_rblForums');  rbl.bind('change', function() {enable($('#ctl00_ctlSelectForumPopUp_ctl00_ctl00_butSubmit'));enable($('#ctl00_ctlSelectForumPopUp_ctl00_ctl00_butSubmit_link'));});function enable(el) {el.prop('disabled', false).removeClass('aspNetDisabled').removeClass('disabled');}});})(jQuery);Sys.Application.add_init(function() {
+    $create(InstantASP.InstantForum.UI.Controls.ViewTopic, {"defaultNoOfBlocks":8,"json":jsonData,"profileURL":"Users/","topicID":672028,"userCardOptions":{emailMembers:false,enableRSS:true,enablePMs:false,enableFullName:true}}, null, null, $get("ctl00_ctlContentPlaceHolder_ctl00_ctl00_ctlTopic"));
+});
+var ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView = new InstantASPTree('ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView');var ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeViewt = new InstantASPTransition('ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView');function ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView_OnExpand(id) {var nd = ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.getNodeById(id);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.fetchContent(nd.ID);}function ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView_initialize() {ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.Icons = new Icons('https://www.sqlservercentral.com/Forums/Skins/Classic/Images/Common/TreeView/');ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.Options.Icons = false;ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.Options.Check = true;ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.Options.InputHiddenID = "ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView";ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeViewt.CollapseSlide = 1;ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeViewt.CollapseSlideDuration = 200;ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeViewt.CollapseTransitionDuration = 100;ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.setGlobalTransition(ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeViewt);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(1,0, '', '', '', '',false,false, '', '', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(2,1, 'SQL Server 2016', 'SQL Server 2016', 'https://www.sqlservercentral.com/Forums/Group3738.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3738', '3738', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(3,1, 'SQL Server 2014', 'SQL Server 2014', 'https://www.sqlservercentral.com/Forums/Group3410.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3410', '3410', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(4,1, 'SQL Server 2012', 'SQL Server 2012', 'https://www.sqlservercentral.com/Forums/Group3076.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3076', '3076', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(5,1, 'SQL Server vNext', 'SQL Server vNext', 'https://www.sqlservercentral.com/Forums/Group3848.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3848', '3848', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(6,1, 'SQL Server 2008', 'SQL Server 2008', 'https://www.sqlservercentral.com/Forums/Group419.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=419', '419', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(7,1, 'Cloud Computing', 'Cloud Computing', 'https://www.sqlservercentral.com/Forums/Group2570.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=2570', '2570', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(8,1, 'Reporting Services', 'Reporting Services', 'https://www.sqlservercentral.com/Forums/Group416.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=416', '416', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(9,1, 'Programming', 'Programming', 'https://www.sqlservercentral.com/Forums/Group407.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=407', '407', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(10,1, 'Data Warehousing', 'Data Warehousing', 'https://www.sqlservercentral.com/Forums/Group408.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=408', '408', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(11,1, 'Database Design', 'Database Design', 'https://www.sqlservercentral.com/Forums/Group418.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=418', '418', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(12,1, 'SQLServerCentral.com', 'SQLServerCentral.com', 'https://www.sqlservercentral.com/Forums/Group410.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=410', '410', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(13,1, 'SQL Server 2005', 'SQL Server 2005', 'https://www.sqlservercentral.com/Forums/Group415.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=415', '415', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(14,1, 'SQL Server 7,2000', 'SQL Server 7,2000', 'https://www.sqlservercentral.com/Forums/Group406.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=406', '406', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(15,1, 'SQL Server and other platforms', 'SQL Server and other platforms', 'https://www.sqlservercentral.com/Forums/Group2788.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=2788', '2788', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(16,1, 'Older Versions of SQL (v6.5, v6.0, v4.2)', 'Older Versions of SQL (v6.5, v6.0, v4.2)', 'https://www.sqlservercentral.com/Forums/Group1436.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=1436', '1436', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(17,1, 'Career', 'Career', 'https://www.sqlservercentral.com/Forums/Group409.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=409', '409', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(18,1, 'Testing Center', 'Testing Center', 'https://www.sqlservercentral.com/Forums/Group413.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=413', '413', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(19,1, 'Microsoft Access', 'Microsoft Access', 'https://www.sqlservercentral.com/Forums/Group414.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=414', '414', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(20,1, 'Products and Books', 'Products and Books', 'https://www.sqlservercentral.com/Forums/Group644.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=644', '644', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(21,1, 'Notification Services', 'Notification Services', 'https://www.sqlservercentral.com/Forums/Group412.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=412', '412', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(22,1, 'Article Discussions', 'Article Discussions', 'https://www.sqlservercentral.com/Forums/Group411.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=411', '411', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.add(23,1, 'Future Versions', 'Future Versions', 'https://www.sqlservercentral.com/Forums/Group2798.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=2798', '2798', '', '',0);ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.treeOnExpand = ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView_OnExpand;}ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView_initialize();ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView.render('ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView_container');Sys.Application.add_init(function() {
+    $create(InstantASP.InstantForum.UI.Controls.SearchOptions, {"displayType":3,"enableLoader":false,"enableSearchFooter":false,"enableSubHeader":false,"enableTreeView":false,"fulltextEnabled":true,"json":jsonData,"pageSize":0,"searchEventArgs":'{"SearchEventArgs": {"Args":[{"UserID":0,"ParentID":0,"PostsWith":1,"ReportedCountOperator":1,"AnswersWith":1,"SortOrder":1,"ViewType":2,"SearchUsing":1}]}}',"searchURL":"https://www.sqlservercentral.com/Forums/Search","tableCellCss":"i-col-light","treeviewID":"ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView","treeviewLayer":$get("ctl00_SearchOptions1_ctl00_pnlTree_smMenu"),"treeviewTextbox":"ctl00_SearchOptions1_ctl00_ctlTreeView_ctl00_ctlTreeView","viewType":1}, {"advancedClick":ctl00_SearchOptions1_toggleView,"searchClick":ctl00_SearchOptions1_doPaging}, null, $get("ctl00_SearchOptions1"));
+});
+var ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView = new InstantASPTree('ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView');var ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeViewt = new InstantASPTransition('ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView');function ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView_OnExpand(id) {var nd = ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.getNodeById(id);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.fetchContent(nd.ID);}function ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView_initialize() {ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.Icons = new Icons('https://www.sqlservercentral.com/Forums/Skins/Classic/Images/Common/TreeView/');ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.Options.Icons = false;ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.Options.Check = true;ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.Options.InputHiddenID = "ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView";ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeViewt.CollapseSlide = 1;ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeViewt.CollapseSlideDuration = 200;ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeViewt.CollapseTransitionDuration = 100;ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.setGlobalTransition(ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeViewt);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(1,0, '', '', '', '',false,false, '', '', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(2,1, 'SQL Server 2016', 'SQL Server 2016', 'https://www.sqlservercentral.com/Forums/Group3738.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3738', '3738', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(3,1, 'SQL Server 2014', 'SQL Server 2014', 'https://www.sqlservercentral.com/Forums/Group3410.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3410', '3410', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(4,1, 'SQL Server 2012', 'SQL Server 2012', 'https://www.sqlservercentral.com/Forums/Group3076.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3076', '3076', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(5,1, 'SQL Server vNext', 'SQL Server vNext', 'https://www.sqlservercentral.com/Forums/Group3848.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=3848', '3848', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(6,1, 'SQL Server 2008', 'SQL Server 2008', 'https://www.sqlservercentral.com/Forums/Group419.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=419', '419', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(7,1, 'Cloud Computing', 'Cloud Computing', 'https://www.sqlservercentral.com/Forums/Group2570.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=2570', '2570', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(8,1, 'Reporting Services', 'Reporting Services', 'https://www.sqlservercentral.com/Forums/Group416.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=416', '416', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(9,1, 'Programming', 'Programming', 'https://www.sqlservercentral.com/Forums/Group407.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=407', '407', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(10,1, 'Data Warehousing', 'Data Warehousing', 'https://www.sqlservercentral.com/Forums/Group408.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=408', '408', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(11,1, 'Database Design', 'Database Design', 'https://www.sqlservercentral.com/Forums/Group418.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=418', '418', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(12,1, 'SQLServerCentral.com', 'SQLServerCentral.com', 'https://www.sqlservercentral.com/Forums/Group410.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=410', '410', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(13,1, 'SQL Server 2005', 'SQL Server 2005', 'https://www.sqlservercentral.com/Forums/Group415.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=415', '415', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(14,1, 'SQL Server 7,2000', 'SQL Server 7,2000', 'https://www.sqlservercentral.com/Forums/Group406.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=406', '406', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(15,1, 'SQL Server and other platforms', 'SQL Server and other platforms', 'https://www.sqlservercentral.com/Forums/Group2788.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=2788', '2788', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(16,1, 'Older Versions of SQL (v6.5, v6.0, v4.2)', 'Older Versions of SQL (v6.5, v6.0, v4.2)', 'https://www.sqlservercentral.com/Forums/Group1436.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=1436', '1436', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(17,1, 'Career', 'Career', 'https://www.sqlservercentral.com/Forums/Group409.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=409', '409', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(18,1, 'Testing Center', 'Testing Center', 'https://www.sqlservercentral.com/Forums/Group413.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=413', '413', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(19,1, 'Microsoft Access', 'Microsoft Access', 'https://www.sqlservercentral.com/Forums/Group414.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=414', '414', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(20,1, 'Products and Books', 'Products and Books', 'https://www.sqlservercentral.com/Forums/Group644.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=644', '644', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(21,1, 'Notification Services', 'Notification Services', 'https://www.sqlservercentral.com/Forums/Group412.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=412', '412', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(22,1, 'Article Discussions', 'Article Discussions', 'https://www.sqlservercentral.com/Forums/Group411.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=411', '411', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.add(23,1, 'Future Versions', 'Future Versions', 'https://www.sqlservercentral.com/Forums/Group2798.aspx', '',false,false, 'https://www.sqlservercentral.com/Forums/AjaxFunctions.aspx?Action=SelectChildForums&SessionId=asd2vntknbul32mdwtvgvozu&ID=2798', '2798', '', '',0);ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.treeOnExpand = ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView_OnExpand;}ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView_initialize();ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView.render('ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView_container');Sys.Application.add_init(function() {
+    $create(InstantASP.InstantForum.UI.Controls.SearchOptions, {"displayType":3,"enableLoader":false,"enableSearchFooter":false,"enableSubHeader":false,"enableTreeView":false,"fulltextEnabled":true,"json":jsonData,"pageSize":0,"searchEventArgs":'{"SearchEventArgs": {"Args":[{"UserID":0,"ParentID":0,"PostsWith":1,"ReportedCountOperator":1,"AnswersWith":1,"SortOrder":1,"ViewType":2,"SearchUsing":1}]}}',"searchURL":"https://www.sqlservercentral.com/Forums/Search","tableCellCss":"i-col-light","treeviewID":"ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView","treeviewLayer":$get("ctl00_SearchOptions2_ctl00_pnlTree_smMenu"),"treeviewTextbox":"ctl00_SearchOptions2_ctl00_ctlTreeView_ctl00_ctlTreeView","viewType":1}, {"advancedClick":ctl00_SearchOptions2_toggleView,"searchClick":ctl00_SearchOptions2_doPaging}, null, $get("ctl00_SearchOptions2"));
+});
+//]]>
+</script> 
+       </form> 
+       <!-- Site template footer start --> </td> 
+      <td id="ctl00_ctl00_RightColumn" class="MainContentRightPadding">&nbsp;</td> 
+     </tr> 
+    </tbody>
+   </table> 
+   <table border="0" width="100%" cellpadding="0" cellspacing="0" class="MainLayoutContainer MainLayoutContainerBottom"> 
+    <tbody>
+     <tr class="BodyRow"> 
+      <td class="BottomLeft">&nbsp;</td> 
+      <td> 
+       <div class="Footer">
+         Copyright © 2002-2017 Redgate. All Rights Reserved. 
+        <a href="http://www.sqlservercentral.com/About/Privacy/">Privacy Policy.</a> 
+        <a href="http://www.sqlservercentral.com/About/Terms">Terms of Use.</a> 
+        <a href="mailto:abuse@sqlservercentral.com">Report Abuse.</a> 
+       </div> </td> 
+      <td class="BottomRight">&nbsp;</td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </div> 
+  <script type="text/javascript">
+	    if (typeof jQuery != 'undefined') {
+	        $('.rounded').corner();
+	    }
+	</script> 
+  <!-- Site template footer end --> 
+  <!--SiteTemplateEnds-->   
+ </body>
+</html>

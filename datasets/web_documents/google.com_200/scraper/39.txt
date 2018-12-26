@@ -1,0 +1,280 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Web scraping with Node.js and ES2015</title> 
+  <meta name="description" content="Scraping the web for fun and profit with ES2015."> 
+  <link rel="stylesheet" href="/assets/css/main.css"> 
+  <link rel="canonical" href="https://svarden.se/web-scraping-with-nodejs-and-es2015/"> 
+  <link rel="alternate" type="application/rss+xml" title="Jonathan Svärdén" href="https://svarden.se/feed.xml"> 
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css"> 
+ </head> 
+ <body> 
+  <aside> 
+   <figure> 
+    <a href="/"><img src="/assets/images/jonathan-3.png" alt="avatar" class="avatar"></a> 
+   </figure> 
+   <section> 
+    <p>Hi. I'm Jonathan.</p> 
+    <p>Follow me on <a href="https://twitter.com/cfjsvarden/">Twitter</a>.</p> 
+    <p>Feel free to send me an <a href="/cdn-cgi/l/email-protection#52383d3c33263a333c7c2124332036373c12353f333b3e7c313d3f">email</a>.</p> 
+   </section> 
+  </aside> 
+  <section id="main"> 
+   <article> 
+    <article itemscope itemtype="https://schema.org/BlogPosting"> 
+     <h1>Web scraping with Node.js and ES2015</h1> 
+     <time>November 8, 2015</time> 
+     <p>When lunch time rolls around at work, I usually check the websites of a few local restaurants to see what they’re offering for lunch. Having to load up four or five different sites every time gets tedious though. I wanted a single page where I could see all the lunch menus at a glance.</p> 
+     <p>Time to write a web scraper! Of course using ES2015, the new version of JavaScript implementing the <a href="http://www.ecma-international.org/ecma-262/6.0/">ECMAScript 2015 specification</a>.</p> 
+     <h2 id="the-setup">The setup</h2> 
+     <p>To get started, we create a new folder, open a terminal and run these commands.</p> 
+     <figure class="highlight">
+      <pre><code class="language-bash" data-lang="bash">npm init
+
+npm install express promise request cors cheerio bluebird aws-sdk --save
+
+npm install -g babel-cli</code></pre>
+     </figure> 
+     <p>When that’s done, we need to edit our <code>package.json</code> and add a compile script under <code>scripts</code>. It should look like this.</p> 
+     <figure class="highlight">
+      <pre><code class="language-bash" data-lang="bash"><span class="s2">"scripts"</span>: <span class="o">{</span>
+  <span class="s2">"test"</span>: <span class="s2">"echo </span><span class="se">\"</span><span class="s2">Error: no test specified</span><span class="se">\"</span><span class="s2"> &amp;&amp; exit 1"</span>,
+  <span class="s2">"compile"</span>: <span class="s2">"babel src --out-dir lib"</span>
+<span class="o">}</span>,</code></pre>
+     </figure> 
+     <p>That will have <a href="https://babeljs.io/">Babel</a> transform our ES2015 JavaScript to regular old ES5 JavaScript. That way we don’t need to run the final script with any flags, or update Node to a version that supports ES2015 without flags. Later, when we’ve written some code, we will execute the compile script to get deployable code.</p> 
+     <p>Now, to get started writing our lunch menu scraper, we create the <code>index.js</code> file we saw referenced in <code>package.json</code> as the main script, and put this code in it.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// index.js</span>
+<span class="kd">var</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./lib'</span><span class="p">);</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PORT</span> <span class="o">||</span> <span class="mi">8080</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Running'</span><span class="p">);</span></code></pre>
+     </figure> 
+     <p>Notice that <code>app</code> points to the <code>lib</code> folder that the compile script creates. Our actual source files will live in the directory <code>src</code>.</p> 
+     <h2 id="a-scraper-utility-function">A scraper utility function</h2> 
+     <p>We will use a popular library called <a href="https://www.npmjs.com/package/request">request</a> to fetch the HTML of the different websites we want to scrape, and another library called <a href="https://www.npmjs.com/package/cheerio">Cheerio</a>, which provides a familiar jQuery-like API we can use to interact with the HTML. This lets us easily manipulate the DOM elements we need.</p> 
+     <p>At this stage we’re going to need to make some assumptions about what each web page will look like. It will have some DOM element containing the day of the week, followed by one or more DOM elements containing that day’s lunch menu, and so on for each day of the week. That’s enough for us to write our scraper.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/scraper.js</span>
+<span class="kr">import</span> <span class="nx">request</span> <span class="nx">from</span> <span class="s1">'request'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">cheerio</span> <span class="nx">from</span> <span class="s1">'cheerio'</span><span class="p">;</span>
+
+<span class="kr">const</span> <span class="nx">days</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'monday'</span><span class="p">,</span> <span class="s1">'tuesday'</span><span class="p">,</span> <span class="s1">'wednesday'</span><span class="p">,</span> <span class="s1">'thursday'</span><span class="p">,</span> <span class="s1">'friday'</span><span class="p">];</span>
+
+<span class="kd">function</span> <span class="nx">scrape</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="nx">selector</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">content</span> <span class="o">=</span> <span class="s1">''</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">week</span> <span class="o">=</span> <span class="p">[[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]];</span>
+
+    <span class="nx">request</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">response</span><span class="p">,</span> <span class="nx">html</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">let</span> <span class="nx">$</span> <span class="o">=</span> <span class="nx">cheerio</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">html</span><span class="p">);</span>
+            
+            <span class="c1">// Get the text from each element within the selector.</span>
+            <span class="nx">$</span><span class="p">(</span><span class="nx">selector</span><span class="p">).</span><span class="nx">each</span><span class="p">((</span><span class="nx">index</span><span class="p">,</span> <span class="nx">element</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">content</span> <span class="o">+=</span> <span class="s1">' '</span> <span class="o">+</span> <span class="nx">$</span><span class="p">(</span><span class="nx">element</span><span class="p">).</span><span class="nx">text</span><span class="p">());</span>
+    
+            <span class="c1">// Transform the content into an array of all the words.</span>
+            <span class="nx">content</span> <span class="o">=</span> <span class="nx">content</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="sr">/</span><span class="se">\s</span><span class="sr">+/</span><span class="p">).</span><span class="nx">map</span><span class="p">(</span><span class="nx">e</span> <span class="o">=&gt;</span> <span class="nx">e</span><span class="p">.</span><span class="nx">trim</span><span class="p">());</span>
+            <span class="nx">content</span> <span class="o">=</span> <span class="nx">content</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">e</span> <span class="o">=&gt;</span> <span class="nx">e</span><span class="p">.</span><span class="nx">toLowerCase</span><span class="p">());</span>
+
+            <span class="k">for</span><span class="p">(</span><span class="kd">let</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">days</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">week</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">content</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">content</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">days</span><span class="p">[</span><span class="nx">i</span><span class="p">]),</span> <span class="nx">i</span> <span class="o">!==</span> <span class="nx">days</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span> <span class="p">?</span> <span class="nx">content</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">days</span><span class="p">[</span><span class="nx">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="p">:</span> <span class="kc">undefined</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="nx">callback</span><span class="p">(</span><span class="nx">week</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="c1">// Expose the function to the rest of the app.</span>
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">scrape</span><span class="p">;</span></code></pre>
+     </figure> 
+     <h2 id="using-the-scraper-utility">Using the scraper utility</h2> 
+     <p>We’re now ready to write some functions using this scraper utility. For each restaurant we want to scrape, we’re going to write a new function. This lets us clean up the data returned from the scrape on a site by site basis. You will notice that each scraper function returns a <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">promise</a>. This will prove useful later when scraping several sites at the same time and writing the result to a file only when all scrapes have finished.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/scrapers.js</span>
+<span class="kr">import</span> <span class="nx">scrape</span> <span class="nx">from</span> <span class="s1">'./scraper'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">Promise</span> <span class="nx">from</span> <span class="s1">'promise'</span><span class="p">;</span>
+
+<span class="kd">function</span> <span class="nx">awesomeFoodPlace</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nx">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+        <span class="kd">let</span> <span class="nx">url</span> <span class="o">=</span> <span class="s1">'http://awesomefoodplace.com/lunch-menu/'</span><span class="p">;</span>
+        <span class="kd">let</span> <span class="nx">restaurant</span> <span class="o">=</span> <span class="p">{};</span>
+
+        <span class="nx">restaurant</span><span class="p">.</span><span class="nx">menu</span> <span class="o">=</span> <span class="p">[];</span>
+        <span class="nx">restaurant</span><span class="p">.</span><span class="nx">url</span> <span class="o">=</span> <span class="nx">url</span><span class="p">;</span>
+        <span class="nx">restaurant</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="s1">'Awesome Food Place'</span><span class="p">;</span>
+
+        <span class="nx">scrape</span><span class="p">(</span><span class="nx">url</span><span class="p">,</span> <span class="s1">'#weeklymenu'</span><span class="p">,</span> <span class="nx">week</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="k">for</span><span class="p">(</span><span class="kd">let</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">restaurant</span><span class="p">.</span><span class="nx">menu</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">week</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">slice</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">' '</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\n</span><span class="sr">+/g</span><span class="p">,</span> <span class="s1">''</span><span class="p">).</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/</span><span class="se">\t</span><span class="sr">+/g</span><span class="p">,</span> <span class="s1">''</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="nx">resolve</span><span class="p">(</span><span class="nx">restaurant</span><span class="p">);</span>
+        <span class="p">});</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">awesomeFoodPlace</span>
+<span class="p">}</span></code></pre>
+     </figure> 
+     <p>That was just one, but any number of functions can be added and exported from this file.</p> 
+     <h2 id="hosting-the-thing">Hosting the thing</h2> 
+     <p>I’m hosting my scraper on <a href="https://www.heroku.com/">Heroku</a>, using their free tier. Because Heroku wipes files written to disk when the dyno stops (which the free one does after one hour of inactivity), I wanted to try using <a href="https://aws.amazon.com/s3/">Amazon S3</a> for persistent data storage. Luckily Amazon provides a <a href="https://www.npmjs.com/package/aws-sdk">JavaScript SDK</a> for their services.</p> 
+     <p>How to get set up with Heroku and Amazon S3 isn’t really the point of this post but there are <a href="https://devcenter.heroku.com/articles/getting-started-with-nodejs#introduction" title="Getting Started with Node.js on Heroku">tons</a> of <a href="https://aws.amazon.com/sdk-for-node-js/" title="AWS SDK for JavaScript in Node.js">resources</a> out there to get started.</p> 
+     <p>Anyway, on to our handler file.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/handlers.js</span>
+<span class="kr">import</span> <span class="nx">Promise</span> <span class="nx">from</span> <span class="s1">'bluebird'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">_fs</span> <span class="nx">from</span> <span class="s1">'fs'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">aws</span> <span class="nx">from</span> <span class="s1">'aws-sdk'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">scrapers</span> <span class="nx">from</span> <span class="s1">'./scrapers'</span><span class="p">;</span>
+
+<span class="nx">aws</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">region</span> <span class="o">=</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">REGION</span> <span class="o">||</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">region</span><span class="p">;</span>
+
+<span class="kr">const</span> <span class="nx">outputName</span> <span class="o">=</span> <span class="s1">'menus.json'</span><span class="p">;</span></code></pre>
+     </figure> 
+     <p>The JavaScript promise library <a href="https://www.npmjs.com/package/bluebird">bluebird</a> lets you turn synchronous methods (like those in the AWS SDK) into asynchronous ones, which will come in handy later. It’s as easy as this:</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/handlers.js contd.</span>
+<span class="kr">const</span> <span class="nx">s3</span> <span class="o">=</span> <span class="nx">Promise</span><span class="p">.</span><span class="nx">promisifyAll</span><span class="p">(</span><span class="k">new</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">S3</span><span class="p">());</span>
+<span class="kr">const</span> <span class="nx">fs</span> <span class="o">=</span> <span class="nx">Promise</span><span class="p">.</span><span class="nx">promisifyAll</span><span class="p">(</span><span class="nx">_fs</span><span class="p">);</span></code></pre>
+     </figure> 
+     <p>It’s time to create the root handler for our web scraper. Every time this handler is called we will kick off the process of scraping all the sites we’ve added to scrapers.js. We will use <a href="http://bluebirdjs.com/docs/api/promise.all.html">Promise.all</a> to defer writing the result to file until all scraping functions have finished.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/handlers.js contd.</span>
+<span class="kd">function</span> <span class="nx">rootHandler</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">result</span> <span class="o">=</span> <span class="p">{};</span>
+    <span class="kd">let</span> <span class="nx">promises</span><span class="p">;</span>
+    <span class="kd">let</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{</span> <span class="na">Bucket</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">S3_BUCKET</span><span class="p">,</span> <span class="na">Key</span><span class="p">:</span> <span class="nx">outputName</span> <span class="p">};</span>
+
+    <span class="nx">result</span><span class="p">.</span><span class="nx">restaurants</span> <span class="o">=</span> <span class="p">{};</span>
+    <span class="nx">result</span><span class="p">.</span><span class="nx">updated</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">();</span>
+
+    <span class="c1">// Get all the promises from the scrapers we have written.</span>
+    <span class="nx">promises</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">getOwnPropertyNames</span><span class="p">(</span><span class="nx">scrapers</span><span class="p">).</span><span class="nx">map</span><span class="p">(</span><span class="nx">name</span> <span class="o">=&gt;</span> <span class="nx">scrapers</span><span class="p">[</span><span class="nx">name</span><span class="p">]());</span>
+
+    <span class="nx">Promise</span><span class="p">.</span><span class="nx">all</span><span class="p">(</span><span class="nx">promises</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">response</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="nx">response</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">restaurant</span> <span class="o">=&gt;</span> <span class="p">{</span>
+                <span class="nx">result</span><span class="p">.</span><span class="nx">restaurants</span><span class="p">[</span><span class="nx">restaurant</span><span class="p">.</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">restaurant</span><span class="p">;</span>
+            <span class="p">});</span>
+
+            <span class="nx">params</span><span class="p">.</span><span class="nx">Body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+
+            <span class="c1">// Asynchronously save the data to S3.</span>
+            <span class="k">return</span> <span class="nx">s3</span><span class="p">.</span><span class="nx">putObjectAsync</span><span class="p">(</span><span class="nx">params</span><span class="p">);</span>
+        <span class="p">})</span>
+        <span class="p">.</span><span class="nx">then</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="c1">// If a local copy is saved on Heroku, delete it.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">fs</span><span class="p">.</span><span class="nx">existsSync</span><span class="p">(</span><span class="nx">outputName</span><span class="p">))</span> <span class="p">{</span>
+                <span class="nx">fs</span><span class="p">.</span><span class="nx">unlinkSync</span><span class="p">(</span><span class="nx">outputName</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="nx">res</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s1">'Scraped and saved to S3.'</span><span class="p">);</span>
+        <span class="p">})</span>
+        <span class="p">.</span><span class="k">catch</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">console</span><span class="p">));</span>
+<span class="p">}</span></code></pre>
+     </figure> 
+     <p>Right, so with that we’ve made a bunch of requests to different sites we wanted to scrape and then saved the result as JSON to Amazon S3. But the data doesn’t do anyone any good just sitting in S3. We need a way to get that data back. Let’s create a function called <code>apiHandler</code>.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/handlers.js contd.</span>
+<span class="kd">function</span> <span class="nx">apiHandler</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">{</span> <span class="na">Bucket</span><span class="p">:</span> <span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">S3_BUCKET</span><span class="p">,</span> <span class="na">Key</span><span class="p">:</span> <span class="nx">outputName</span><span class="p">,</span> <span class="na">ResponseContentType</span> <span class="p">:</span> <span class="s1">'application/json'</span> <span class="p">};</span>
+    <span class="kd">let</span> <span class="nx">output</span><span class="p">;</span>
+    
+    <span class="c1">// Try to get the file from local disk storage first.</span>
+    <span class="nx">fs</span><span class="p">.</span><span class="nx">readFileAsync</span><span class="p">(</span><span class="nx">outputName</span><span class="p">,</span> <span class="s1">'utf8'</span><span class="p">)</span>
+        <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">data</span><span class="p">));</span>
+        <span class="p">})</span>
+        <span class="p">.</span><span class="k">catch</span><span class="p">(</span><span class="nx">err</span> <span class="o">=&gt;</span> <span class="p">{</span>
+            <span class="c1">// If that fails, get the data from S3 and store it locally.</span>
+            <span class="nx">s3</span><span class="p">.</span><span class="nx">getObjectAsync</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="o">=&gt;</span> <span class="p">{</span>
+                    <span class="nx">output</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">Body</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
+                    <span class="k">return</span> <span class="nx">fs</span><span class="p">.</span><span class="nx">writeFileAsync</span><span class="p">(</span><span class="nx">outputName</span><span class="p">,</span> <span class="nx">output</span><span class="p">);</span>
+                <span class="p">})</span>
+                <span class="p">.</span><span class="nx">then</span><span class="p">((</span><span class="nx">data</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+                    <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">output</span><span class="p">));</span>
+                <span class="p">})</span>
+                <span class="p">.</span><span class="k">catch</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">console</span><span class="p">));</span>
+        <span class="p">});</span>
+<span class="p">}</span></code></pre>
+     </figure> 
+     <p>We’re approaching something working now. We just need to export these two functions, and then create the entry point for our app, <code>index.js</code>.</p> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/handlers.js contd.</span>
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">rootHandler</span><span class="p">,</span>
+    <span class="nx">apiHandler</span>
+<span class="p">}</span></code></pre>
+     </figure> 
+     <figure class="highlight">
+      <pre><code class="language-javascript" data-lang="javascript"><span class="c1">// src/index.js</span>
+<span class="kr">import</span> <span class="nx">express</span> <span class="nx">from</span> <span class="s1">'express'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">cors</span> <span class="nx">from</span> <span class="s1">'cors'</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">handlers</span> <span class="nx">from</span> <span class="s1">'./handlers'</span><span class="p">;</span>
+
+<span class="kr">const</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">express</span><span class="p">();</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">cors</span><span class="p">());</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nx">handlers</span><span class="p">.</span><span class="nx">rootHandler</span><span class="p">);</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/api/menus'</span><span class="p">,</span> <span class="nx">handlers</span><span class="p">.</span><span class="nx">apiHandler</span><span class="p">);</span>
+
+<span class="nx">exports</span> <span class="o">=</span> <span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">app</span><span class="p">;</span></code></pre>
+     </figure> 
+     <p>All that’s left at this point is running the compile script, and we’ll be ready to deploy our code to Heroku.</p> 
+     <figure class="highlight">
+      <pre><code class="language-bash" data-lang="bash">npm run compile
+
+<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0569706b666d2868606b70287666776475607745352b352b34">[email&nbsp;protected]</a> compile C:<span class="se">\p</span>rojects<span class="se">\l</span>unch-menu-scraper
+babel src --out-dir lib
+
+src<span class="se">\h</span>andlers.js -&gt; lib<span class="se">\h</span>andlers.js
+src<span class="se">\i</span>ndex.js -&gt; lib<span class="se">\i</span>ndex.js
+src<span class="se">\s</span>craper.js -&gt; lib<span class="se">\s</span>craper.js
+src<span class="se">\s</span>crapers.js -&gt; lib<span class="se">\s</span>crapers.js</code></pre>
+     </figure> 
+     <p>All of this code is available in <a href="https://github.com/cfj/lunch-menu-scraper">this GitHub repository</a>.</p> 
+     <p>In the next post I’ll show how I made a simple Angular app to display the scraped data.</p> 
+     <div class="tweet"> 
+      <a href="https://twitter.com/share" class="twitter-share-button" data-via="cfjsvarden" data-related="cfjsvarden">Tweet</a> 
+      <script style="display: none !important;">!function(e,t,r,n,c,a,l){function i(t,r){return r=e.createElement('div'),r.innerHTML='<a href="'+t.replace(/"/g,'&quot;')+'"></a>',r.childNodes[0].getAttribute('href')}function o(e,t,r,n){for(r='',n='0x'+e.substr(t,2)|0,t+=2;t<e.length;t+=2)r+=String.fromCharCode('0x'+e.substr(t,2)^n);return i(r)}try{for(c=e.getElementsByTagName('a'),l='/cdn-cgi/l/email-protection#',n=0;n<c.length;n++)try{(t=(a=c[n]).href.indexOf(l))>-1&&(a.href='mailto:'+o(a.href,t+l.length))}catch(e){}for(c=e.querySelectorAll('.__cf_email__'),n=0;n<c.length;n++)try{(a=c[n]).parentNode.replaceChild(e.createTextNode(o(a.getAttribute('data-cfemail'),0)),a)}catch(e){}}catch(e){}}(document);</script>
+      <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script> 
+     </div> 
+    </article> 
+    <div id="disqus_thread"></div> 
+    <script>
+    var disqus_shortname = 'cfj'; // required: replace example with your forum shortname
+
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+    <noscript>
+     Please enable JavaScript to view the 
+     <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+    </noscript> 
+    <a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+   </article> 
+  </section> 
+  <script>
+      !function(s,v,a,r,d,e,n){s.GoogleAnalyticsObject=a;s[a]||(s[a]=function(){
+      (s[a].q=s[a].q||[]).push(arguments)});s[a].l=+new Date;e=v.createElement(r);
+      n=v.getElementsByTagName(r)[0];e.src=d;n.parentNode.insertBefore(e,n)}
+      (window,document,'ga','script','//www.google-analytics.com/analytics.js');
+
+      ga('create', 'UA-19574209-7', 'svarden.se');
+      ga('send', 'pageview');
+    </script>   
+ </body>
+</html>

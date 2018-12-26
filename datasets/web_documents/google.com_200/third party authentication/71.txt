@@ -1,0 +1,912 @@
+<!doctype html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!-->
+<html class="no-js" lang="en">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Social Authentication in Node.js With Passport - Michael Herman</title> 
+  <meta name="author" content="Michael Herman"> 
+  <meta name="description" content="Let's look at how to set up Social Authentication with Passport."> 
+  <meta name="keywords" content="node, express, passport, authentication, social auth"> 
+  <!-- http://t.co/dKP3o1e --> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="canonical" href="http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-passport"> 
+  <link href="/favicon.png" rel="icon"> 
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css"> 
+  <link href="/atom.xml" rel="alternate" title="Michael Herman" type="application/atom+xml"> 
+  <script src="/javascripts/modernizr-2.0.js"></script> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script> 
+  <script src="/javascripts/octopress.js" type="text/javascript"></script> 
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts --> 
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css"> 
+  <link href="//fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css"> 
+  <link href="//fonts.googleapis.com/css?family=Fjalla+One" rel="stylesheet" type="text/css"> 
+  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"> 
+  <!-- MathJax Configuration --> 
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> 
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-37074204-1', 'auto');
+    ga('send', 'pageview');
+
+  </script> 
+ </head> 
+ <body class="collapse-sidebar sidebar-footer"> 
+  <header role="banner">
+   <hgroup> 
+    <h1><a href="/">Michael Herman</a></h1> 
+    <h2>Software Developer</h2> 
+   </hgroup> 
+  </header> 
+  <nav role="navigation">
+   <ul class="subscribe" data-subscription="rss"> 
+    <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS" target="_blank">
+      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewbox="0 0 100 100">
+       <path class="social" d="M 13.310204,73.332654 C 5.967347,73.332654 0,79.322448 0,86.621428 c 0,7.338776 5.967347,13.262246 13.310204,13.262246 7.370408,0 13.328572,-5.92245 13.328572,-13.262246 0,-7.29898 -5.958164,-13.288774 -13.328572,-13.288774 z M 0.01530612,33.978572 V 53.143878 C 12.493878,53.143878 24.229592,58.02347 33.068368,66.865306 41.894898,75.685714 46.767346,87.47449 46.767346,100 h 19.25 C 66.017346,63.592858 36.4,33.979592 0.01530612,33.978572 l 0,0 z M 0.03877552,0 V 19.17449 C 44.54796,19.17551 80.77551,55.437756 80.77551,100 H 100 C 100,44.87653 55.15102,0 0.03877552,0 z"></path>
+      </svg></a></li> 
+   </ul> 
+   <form action="http://google.com/search" method="get"> 
+    <fieldset role="search"> 
+     <input type="hidden" name="sitesearch" value="mherman.org"> 
+     <input class="search" type="text" name="q" results="0" placeholder="Search"> 
+    </fieldset> 
+   </form> 
+   <ul class="main-navigation"> 
+    <li><a href="/">Blog</a></li> 
+    <li><a href="/about">About</a></li> 
+    <li><a href="/talks">Talks</a></li> 
+   </ul> 
+  </nav> 
+  <script async type="text/javascript" src="//cdn.carbonads.com/carbon.js?zoneid=1673&amp;serve=C6AILKT&amp;placement=mhermanorg" id="_carbonads_js" media="(min-width: 768px)"></script> 
+  <div id="main"> 
+   <div id="content"> 
+    <div> 
+     <article class="hentry" role="article"> 
+      <header> 
+       <h1 class="entry-title">Social Authentication in Node.js With Passport</h1> 
+       <p class="meta"> <time class="entry-date" datetime="2015-09-26T13:37:00-06:00"><span class="date"><span class="date-month">Sep</span> <span class="date-day">26</span><span class="date-suffix">th</span>, <span class="date-year">2015</span></span> <span class="time">1:37 pm</span></time> </p> 
+      </header> 
+      <div class="entry-content">
+       <p><a href="https://github.com/jaredhanson/passport">Passport</a> is a library that provides a mechanism for easily setting up an authentication/registration system with support for <a href="https://github.com/jaredhanson/passport#strategies">several frameworks and auth providers</a>. <strong>In this tutorial, we’ll demonstrate in detail how to integrate this library into a Node.JS/Express 4 application to provide user authentication through LinkedIn, Github, and Twitter using OAuth 2.0.</strong></p> 
+       <div style="text-align:center;"> 
+        <img src="/images/passport-social-auth.png" style="max-width: 100%; border:0;" alt="passport social auth"> 
+       </div> 
+       <p>We will be using:</p> 
+       <ul> 
+        <li>NodeJS v<a href="https://nodejs.org/docs/v4.1.1/api/all.html">4.1.1</a></li> 
+        <li>ExpressJS v<a href="http://expressjs.com/4x/api.html">4.13.1</a></li> 
+        <li>Mongoose v<a href="http://mongoosejs.com/docs/guide.html">4.1.8</a></li> 
+        <li>Passport Strategies: 
+         <ul> 
+          <li>passport: v<a href="https://github.com/jaredhanson/passport">0.3.0</a></li> 
+          <li>passport-linkedin: v<a href="https://github.com/jaredhanson/passport-linkedin">1.0.0</a></li> 
+          <li>passport-github2: v<a href="https://github.com/cfsghost/passport-github">0.1.9</a></li> 
+          <li>passport-twitter: v<a href="https://github.com/jaredhanson/passport-twitter">1.0.3</a></li> 
+         </ul> </li> 
+       </ul> 
+       <blockquote>
+        <p>For all dependencies, please view the <em>package.json</em> file in the <a href="https://github.com/mjhea0/passport-social-auth">repo</a>.</p>
+       </blockquote> 
+       <h2>OAuth 2.0?</h2> 
+       <p><a href="http://oauth.net/2/">OAuth 2.0</a> is the successor of the OAuth protocol (<a href="https://en.wikipedia.org/wiki/OAuth">open standard for authorization</a>), which enables third-party applications, such as the one we’ll be building, access to an HTTP service without having to share secure credentials.</p> 
+       <h2>Project Setup</h2> 
+       <p>Let’s get started!</p> 
+       <h3>Boilerplate</h3> 
+       <p>Start by downloading the project structure from the <a href="https://github.com/mjhea0/passport-social-auth/releases/tag/v1">Github repo</a>.</p> 
+       <p>You should have:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line">??? client </span><span class="line">?&nbsp;&nbsp; ??? public </span><span class="line">?&nbsp;&nbsp; ??? css </span><span class="line">?&nbsp;&nbsp; ?&nbsp;&nbsp; ??? main.css </span><span class="line">?&nbsp;&nbsp; ??? js </span><span class="line">?&nbsp;&nbsp; ??? main.js </span><span class="line">??? package.json </span><span class="line">??? server </span><span class="line"> ??? app.js </span><span class="line"> ??? bin </span><span class="line"> ?&nbsp;&nbsp; ??? www </span><span class="line"> ??? routes </span><span class="line"> ?&nbsp;&nbsp; ??? index.js </span><span class="line"> ??? views </span><span class="line"> ??? error.html </span><span class="line"> ??? index.html </span><span class="line"> ??? layout.html </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Passport</h2> 
+       <p>Install Passport as well as the specific <a href="https://github.com/jaredhanson/passport#search-all-strategies">Passport Strategies</a>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>npm install passport@0.3.0 --save </span><span class="line"><span class="nv">$ </span>npm install passport-github2@0.1.9 passport-linkedin@1.0.0 passport-twitter@1.0.3 --save </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Create an “auth” directory in the “server” and add the following files:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line">??? auth </span><span class="line"> ??? github.js </span><span class="line"> ??? linkedin.js </span><span class="line"> ??? twitter.js </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Add the Passport dependency to <em>app.js</em>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Install the <a href="https://github.com/expressjs/session">express session</a> middleware:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>npm install express-session@1.11.3 --save </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>And add it as a dependency:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">session</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'express-session'</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Then add the required middleware:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">session</span><span class="p">({</span> </span><span class="line"> <span class="nx">secret</span><span class="o">:</span> <span class="s1">'keyboard cat'</span><span class="p">,</span> </span><span class="line"> <span class="nx">resave</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> </span><span class="line"> <span class="nx">saveUninitialized</span><span class="o">:</span> <span class="kc">true</span> </span><span class="line"><span class="p">}));</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">passport</span><span class="p">.</span><span class="nx">initialize</span><span class="p">());</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">passport</span><span class="p">.</span><span class="nx">session</span><span class="p">());</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Configuration</h3> 
+       <p>Add a <em>_config.js</em> file to the “server” and add the following:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">ids</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">github</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="nx">clientID</span><span class="o">:</span> <span class="s1">'get_your_own'</span><span class="p">,</span> </span><span class="line"> <span class="nx">clientSecret</span><span class="o">:</span> <span class="s1">'get_your_own'</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="s2">"http://127.0.0.1:3000/auth/github/callback"</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nx">linkedin</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="nx">clientID</span><span class="o">:</span> <span class="s1">'get_your_own'</span><span class="p">,</span> </span><span class="line"> <span class="nx">clientSecret</span><span class="o">:</span> <span class="s1">'get_your_own'</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="s2">"http://127.0.0.1:3000/auth/linkedin/callback"</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nx">twitter</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="nx">consumerKey</span><span class="o">:</span> <span class="s1">'get_your_own'</span><span class="p">,</span> </span><span class="line"> <span class="nx">consumerSecret</span><span class="o">:</span> <span class="s1">'get_your_own'</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="s2">"http://127.0.0.1:3000/auth/twitter/callback"</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"><span class="p">};</span> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">ids</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Make sure to add this file to your <em>.gitignore</em> since this will contain sensitive info.</p> 
+       <h3>MongoDB and Mongoose</h3> 
+       <p>Install <a href="http://mongoosejs.com/">Mongoose</a>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>npm install mongoose@4.1.8 --save </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Require the dependency in <em>app.js</em>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Then establish the connection to MongoDB within <em>app.js</em>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="c1">// *** mongoose *** //</span> </span><span class="line"><span class="nx">mongoose</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'mongodb://localhost/passport-social-auth'</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Add a Mongoose Schema to a new file called <em>user.js</em> in a new folder, within “server”, called “models”:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">Schema</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="p">;</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="c1">// create User Schema</span> </span><span class="line"><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Schema</span><span class="p">({</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span> </span><span class="line"> <span class="nx">someID</span><span class="o">:</span> <span class="nb">String</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="p">(</span><span class="s1">'users'</span><span class="p">,</span> <span class="nx">User</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Serialize and Deserialize</h3> 
+       <p>Passport needs to serialize and deserialize user instances from a session store to support login sessions. To add this funcionality, create an <em>init.js</em> file within the “auth” directory, and then add the following code:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../models/user'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> </span><span class="line"> <span class="nx">passport</span><span class="p">.</span><span class="nx">serializeUser</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">user</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="nx">passport</span><span class="p">.</span><span class="nx">deserializeUser</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">User</span><span class="p">.</span><span class="nx">findById</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">user</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">done</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="p">};</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Routes and Views</h3> 
+       <p>Before we test, add the following route-</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/login'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s1">'Go back and register!'</span><span class="p">);</span> </span><span class="line"><span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>-and update the <em>index.html</em> file:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td>
+            <td class="code"><pre><code class="html"><span class="line">{% extends 'layout.html' %} </span><span class="line"> </span><span class="line">{% block title %}{% endblock %} </span><span class="line"> </span><span class="line"> </span><span class="line">{% block content %} </span><span class="line"> </span><span class="line"> <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"container"</span><span class="nt">&gt;</span> </span><span class="line"> </span><span class="line"> <span class="nt">&lt;h1&gt;</span>{{ title }}<span class="nt">&lt;/h1&gt;</span> </span><span class="line"> <span class="nt">&lt;p&gt;</span>Welcome! Please Login.<span class="nt">&lt;/p&gt;</span> </span><span class="line"> <span class="nt">&lt;hr&gt;&lt;br&gt;</span> </span><span class="line"> <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/auth/linkedin"</span> <span class="na">class=</span><span class="s">"btn btn-default"</span><span class="nt">&gt;</span>LinkedIn<span class="nt">&lt;/a&gt;</span> </span><span class="line"> <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/auth/github"</span> <span class="na">class=</span><span class="s">"btn btn-default"</span><span class="nt">&gt;</span>Github<span class="nt">&lt;/a&gt;</span> </span><span class="line"> <span class="nt">&lt;a</span> <span class="na">href=</span><span class="s">"/auth/twitter"</span> <span class="na">class=</span><span class="s">"btn btn-default"</span><span class="nt">&gt;</span>Twitter<span class="nt">&lt;/a&gt;</span> </span><span class="line"> </span><span class="line"> <span class="nt">&lt;/div&gt;</span> </span><span class="line"> </span><span class="line">{% endblock %} </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Sanity Check</h3> 
+       <p>Test this code to make sure all is well:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>npm start </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Once done, kill the server, and then commit your code and push to Github.</p> 
+       <blockquote>
+        <p>Need the updated code? Grab it <a href="https://github.com/mjhea0/passport-social-auth/releases/tag/v2">here</a>.</p>
+       </blockquote> 
+       <h2>LinkedIn Auth</h2> 
+       <blockquote>
+        <p><a href="https://github.com/jaredhanson/passport-linkedin">https://github.com/jaredhanson/passport-linkedin</a></p>
+       </blockquote> 
+       <p>For almost all of the strategies, you will need to-</p> 
+       <ol> 
+        <li>Create an app through the auth provider</li> 
+        <li>Update the config file with the required IDs and keys as well as a callback URL</li> 
+        <li>Configure the Passport strategy</li> 
+        <li>Add the required routes</li> 
+        <li>Update the view</li> 
+       </ol> 
+       <h3>Create an App</h3> 
+       <p>Navigate to <a href="https://www.linkedin.com/developer/apps/">LinkedIn Developers</a> to register a new application. Just enter dummy info, make sure to add the callback - <a href="http://127.0.0.1:3000/auth/linkedin/callback">http://127.0.0.1:3000/auth/linkedin/callback</a> - and update the config within the app:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">linkedin</span><span class="o">:</span> <span class="p">{</span> </span><span class="line"> <span class="nx">clientID</span><span class="o">:</span> <span class="s1">'ADD YOUR ID HERE'</span><span class="p">,</span> </span><span class="line"> <span class="nx">clientSecret</span><span class="o">:</span> <span class="s1">'ADD YOUR SECRET HERE'</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="s2">"http://127.0.0.1:3000/auth/linkedin/callback"</span> </span><span class="line"><span class="p">},</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Configure Strategy</h3> 
+       <blockquote>
+        <p><a href="https://github.com/jaredhanson/passport-linkedin#usage">https://github.com/jaredhanson/passport-linkedin#usage</a></p>
+       </blockquote> 
+       <p>Add the following code to <em>linkedin.js</em>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">LinkedInStrategy</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-linkedin'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../models/user'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../_config'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">init</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./init'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="k">new</span> <span class="nx">LinkedInStrategy</span><span class="p">({</span> </span><span class="line"> <span class="nx">consumerKey</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">linkedin</span><span class="p">.</span><span class="nx">clientID</span><span class="p">,</span> </span><span class="line"> <span class="nx">consumerSecret</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">linkedin</span><span class="p">.</span><span class="nx">clientSecret</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">linkedin</span><span class="p">.</span><span class="nx">callbackURL</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="c1">// linkedin sends back the tokens and progile info</span> </span><span class="line"> <span class="kd">function</span><span class="p">(</span><span class="nx">token</span><span class="p">,</span> <span class="nx">tokenSecret</span><span class="p">,</span> <span class="nx">profile</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">searchQuery</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">displayName</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">updates</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">displayName</span><span class="p">,</span> </span><span class="line"> <span class="nx">someID</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">id</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">upsert</span><span class="o">:</span> <span class="kc">true</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="c1">// update the user if s/he exists or add a new user</span> </span><span class="line"> <span class="nx">User</span><span class="p">.</span><span class="nx">findOneAndUpdate</span><span class="p">(</span><span class="nx">searchQuery</span><span class="p">,</span> <span class="nx">updates</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">user</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"><span class="p">));</span> </span><span class="line"> </span><span class="line"><span class="c1">// serialize user into the session</span> </span><span class="line"><span class="nx">init</span><span class="p">();</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">passport</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Aside for the Passport magic, you can see that we’re either updating the user, if the user is found, or creating a new user, if a user is not found.</p> 
+       <h3>Add Routes</h3> 
+       <blockquote>
+        <p><a href="https://github.com/jaredhanson/passport-linkedin#authenticate-requests">https://github.com/jaredhanson/passport-linkedin#authenticate-requests</a></p>
+       </blockquote> 
+       <p>Update the routes with:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/auth/linkedin'</span><span class="p">,</span> <span class="nx">passportLinkedIn</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'linkedin'</span><span class="p">));</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/auth/linkedin/callback'</span><span class="p">,</span> </span><span class="line"> <span class="nx">passportLinkedIn</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'linkedin'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">failureRedirect</span><span class="o">:</span> <span class="s1">'/login'</span> <span class="p">}),</span> </span><span class="line"> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="c1">// Successful authentication</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Add in the dependency as well:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passportLinkedIn</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../auth/linkedin'</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Sanity Check</h3> 
+       <p>Test this out. <em>Be sure to use <a href="http://127.0.0.1:3000/">http://127.0.0.1:3000/</a> rather than <a href="http://localhost:3000/">http://localhost:3000/</a>.</em></p> 
+       <p>Now, let’s just duplicate that workflow for the remaining providers…</p> 
+       <h2>Github Auth</h2> 
+       <blockquote>
+        <p><a href="https://github.com/cfsghost/passport-github">https://github.com/cfsghost/passport-github</a></p>
+       </blockquote> 
+       <h3>Create an App</h3> 
+       <p>Again, create an app, adding in the correct callback URL, and add the given client ID and Secret Key to the <em>_config.js</em> file.</p> 
+       <h3>Configure Strategy</h3> 
+       <blockquote>
+        <p><a href="https://github.com/cfsghost/passport-github#configure-strategy">https://github.com/cfsghost/passport-github#configure-strategy</a></p>
+       </blockquote> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">GitHubStrategy</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-github2'</span><span class="p">).</span><span class="nx">Strategy</span><span class="p">;</span> </span><span class="line"> </span><span class="line"><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../models/user'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../_config'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">init</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./init'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="k">new</span> <span class="nx">GitHubStrategy</span><span class="p">({</span> </span><span class="line"> <span class="nx">clientID</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">github</span><span class="p">.</span><span class="nx">clientID</span><span class="p">,</span> </span><span class="line"> <span class="nx">clientSecret</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">github</span><span class="p">.</span><span class="nx">clientSecret</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">github</span><span class="p">.</span><span class="nx">callbackURL</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="kd">function</span><span class="p">(</span><span class="nx">accessToken</span><span class="p">,</span> <span class="nx">refreshToken</span><span class="p">,</span> <span class="nx">profile</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">searchQuery</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">displayName</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">updates</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">displayName</span><span class="p">,</span> </span><span class="line"> <span class="nx">someID</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">id</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">upsert</span><span class="o">:</span> <span class="kc">true</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="c1">// update the user if s/he exists or add a new user</span> </span><span class="line"> <span class="nx">User</span><span class="p">.</span><span class="nx">findOneAndUpdate</span><span class="p">(</span><span class="nx">searchQuery</span><span class="p">,</span> <span class="nx">updates</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">user</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"><span class="p">));</span> </span><span class="line"> </span><span class="line"><span class="c1">// serialize user into the session</span> </span><span class="line"><span class="nx">init</span><span class="p">();</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">passport</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Add Routes</h3> 
+       <blockquote>
+        <p><a href="https://github.com/cfsghost/passport-github#authenticate-requests">https://github.com/cfsghost/passport-github#authenticate-requests</a></p>
+       </blockquote> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passportGithub</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../auth/github'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/auth/github'</span><span class="p">,</span> <span class="nx">passportGithub</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'github'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">scope</span><span class="o">:</span> <span class="p">[</span> <span class="s1">'user:email'</span> <span class="p">]</span> <span class="p">}));</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/auth/github/callback'</span><span class="p">,</span> </span><span class="line"> <span class="nx">passportGithub</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'github'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">failureRedirect</span><span class="o">:</span> <span class="s1">'/login'</span> <span class="p">}),</span> </span><span class="line"> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="c1">// Successful authentication</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Twitter Auth</h2> 
+       <blockquote>
+        <p><a href="https://github.com/jaredhanson/passport-twitter">https://github.com/jaredhanson/passport-twitter</a></p>
+       </blockquote> 
+       <h3>Create an App</h3> 
+       <p>Create an app on the <a href="https://apps.twitter.com/">Twitter Developer page</a>, and grab the Consumer Key and Secret.</p> 
+       <h3>Configure Strategy</h3> 
+       <blockquote>
+        <p><a href="https://github.com/jaredhanson/passport-twitter#configure-strategy">https://github.com/jaredhanson/passport-twitter#configure-strategy</a></p>
+       </blockquote> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">TwitterStrategy</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-twitter'</span><span class="p">).</span><span class="nx">Strategy</span><span class="p">;</span> </span><span class="line"> </span><span class="line"><span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../models/user'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../_config'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">init</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./init'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="k">new</span> <span class="nx">TwitterStrategy</span><span class="p">({</span> </span><span class="line"> <span class="nx">consumerKey</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">twitter</span><span class="p">.</span><span class="nx">consumerKey</span><span class="p">,</span> </span><span class="line"> <span class="nx">consumerSecret</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">twitter</span><span class="p">.</span><span class="nx">consumerSecret</span><span class="p">,</span> </span><span class="line"> <span class="nx">callbackURL</span><span class="o">:</span> <span class="nx">config</span><span class="p">.</span><span class="nx">twitter</span><span class="p">.</span><span class="nx">callbackURL</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="kd">function</span><span class="p">(</span><span class="nx">accessToken</span><span class="p">,</span> <span class="nx">refreshToken</span><span class="p">,</span> <span class="nx">profile</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">searchQuery</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">displayName</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">updates</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">name</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">displayName</span><span class="p">,</span> </span><span class="line"> <span class="nx">someID</span><span class="o">:</span> <span class="nx">profile</span><span class="p">.</span><span class="nx">id</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span> </span><span class="line"> <span class="nx">upsert</span><span class="o">:</span> <span class="kc">true</span> </span><span class="line"> <span class="p">};</span> </span><span class="line"> </span><span class="line"> <span class="c1">// update the user if s/he exists or add a new user</span> </span><span class="line"> <span class="nx">User</span><span class="p">.</span><span class="nx">findOneAndUpdate</span><span class="p">(</span><span class="nx">searchQuery</span><span class="p">,</span> <span class="nx">updates</span><span class="p">,</span> <span class="nx">options</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">user</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"><span class="p">));</span> </span><span class="line"> </span><span class="line"><span class="c1">// serialize user into the session</span> </span><span class="line"><span class="nx">init</span><span class="p">();</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">passport</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Add Routes</h3> 
+       <blockquote>
+        <p><a href="https://github.com/jaredhanson/passport-twitter#authenticate-requests">https://github.com/jaredhanson/passport-twitter#authenticate-requests</a></p>
+       </blockquote> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">passportTwitter</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../auth/twitter'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/auth/twitter'</span><span class="p">,</span> <span class="nx">passportTwitter</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'twitter'</span><span class="p">));</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/auth/twitter/callback'</span><span class="p">,</span> </span><span class="line"> <span class="nx">passportTwitter</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'twitter'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">failureRedirect</span><span class="o">:</span> <span class="s1">'/login'</span> <span class="p">}),</span> </span><span class="line"> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="c1">// Successful authentication</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">(</span><span class="nx">req</span><span class="p">.</span><span class="nx">user</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Conclusion</h2> 
+       <p>Try adding some additional <a href="https://github.com/jaredhanson/passport#strategies">strategies</a>, comment below if you have questions, and grab the final code from the <a href="https://github.com/mjhea0/passport-social-auth">repo</a>.</p> 
+       <p>Thanks for reading!</p> 
+      </div> 
+      <footer> 
+       <p class="meta"> <span class="byline author vcard">Authored by <span class="fn"> Michael Herman </span></span> <time class="entry-date" datetime="2015-09-26T13:37:00-06:00"><span class="date"><span class="date-month">Sep</span> <span class="date-day">26</span><span class="date-suffix">th</span>, <span class="date-year">2015</span></span> <span class="time">1:37 pm</span></time> <span class="categories"> <a class="category" href="/blog/categories/node/">node</a> </span> </p> 
+       <div class="sharing"> 
+        <!--   
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-passport/" data-via="" data-counturl="http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-passport/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+   --> 
+        <br> 
+        <!-- AddThis Button BEGIN --> 
+        <div class="addthis_toolbox addthis_default_style addthis_32x32_style"> 
+         <a class="addthis_button_preferred_1"></a> 
+         <a class="addthis_button_preferred_2"></a> 
+         <a class="addthis_button_preferred_3"></a> 
+         <a class="addthis_button_preferred_4"></a> 
+         <a class="addthis_button_compact"></a> 
+         <a class="addthis_counter addthis_bubble_style"></a> 
+        </div> 
+        <script type="text/javascript">var addthis_config = {"data_track_addressbar":true};</script> 
+        <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-50e5f1cc35ad077d"></script> 
+        <!-- AddThis Button END --> 
+        <br> 
+       </div> 
+       <p class="meta"> <a class="basic-alignment left" href="/blog/2015/09/10/testing-node-js-with-mocha-and-chai/" title="Previous Post: Testing Node.js with Mocha and Chai">« Testing Node.js with Mocha and Chai</a> <a class="basic-alignment right" href="/blog/2015/10/22/node-postgres-sequelize/" title="Next Post: Node, Postgres, and Sequelize">Node, Postgres, and Sequelize »</a> </p> 
+      </footer> 
+     </article> 
+     <section> 
+      <h1>Comments</h1> 
+      <div id="disqus_thread" aria-live="polite">
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+      </div> 
+     </section> 
+    </div> 
+   </div> 
+  </div> 
+  <footer role="contentinfo">
+   <div> 
+    <span>Copyright © 2017 - Michael Herman</span>
+    <br> 
+    <a href="https://github.com/mjhea0"><i class="fa fa-github-square" style="font-size:2em" aria-hidden="true"></i></a> 
+    <a href="https://twitter.com/mikeherman"><i class="fa fa-twitter-square" style="font-size:2em" aria-hidden="true"></i></a> 
+    <a href="http://www.linkedin.com/pub/michael-herman/3b/a94/4"><i class="fa fa-linkedin-square" style="font-size:2em" aria-hidden="true"></i></a> 
+    <a href="http://www.youtube.com/hermanmu"><i class="fa fa-youtube-square" style="font-size:2em" aria-hidden="true"></i></a> 
+   </div> 
+  </footer> 
+  <script type="text/javascript">
+      var disqus_shortname = 'michaelherman';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-passport/';
+        var disqus_url = 'http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-passport/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script> 
+  <div id="fb-root"></div> 
+  <script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script> 
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>   
+ </body>
+</html>

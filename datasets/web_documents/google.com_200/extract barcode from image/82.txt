@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta content="IE=edge" http-equiv="X-UA-Compatible"> 
+  <meta charset="utf-8"> 
+  <meta content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" name="viewport"> 
+  <meta property="og:url" content="https://www.varvet.com/blog/android-qr-code-reader-made-easy/"> 
+  <meta property="og:type" content="company"> 
+  <meta property="og:title" content="Android QR Code Reader Made Easy"> 
+  <meta property="og:site_name" content="Varvet"> 
+  <meta property="og:description" content="Making your Android application barcode aware should be easy! Luckily it is using Google Play services and the Mobile Vision APIs. It allows you to scan barcodes (e.g. QR codes) quickly and locally (making it really fast!) with very little effort on you the developer. All the classes you need are available through the namespace com.google.android.gms.vision.barcode and this blog post will showcase through an example how to implement Google’s barcode reader.
+
+The use case we will solve is “From this activity I’d like to scan a QR code and instantly get the scanned data back to this activity”.
+"> 
+  <meta property="og:image" content="https://www.varvet.com/images/varvet-og.png"> 
+  <meta name="google-site-verification" content="jX3z26Mm9Uq1JOkzN6ViU4W8zhvGPlHPljeZV_KKP7E"> 
+  <link rel="icon" type="image/x-icon" href="/favicon.ico"> 
+  <link rel="mask-icon" href="/mask-icon.svg" color="#5e5ee2"> 
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png"> 
+  <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167x167.png"> 
+  <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png"> 
+  <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png"> 
+  <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png"> 
+  <link rel="alternate" type="application/atom+xml" title="Blog" href="/feed.xml"> 
+  <title>Android QR Code Reader Made Easy — Varvet</title> 
+  <link href="/stylesheets/site.css" rel="stylesheet"> 
+  <link type="text/css" rel="stylesheet" href="//fast.fonts.net/cssapi/c5da358e-e461-422e-ab63-5a8d9dc5633f.css"> 
+  <script src="/javascripts/vendor/jquery3.js"></script>
+  <script src="/javascripts/vendor/highlight.js"></script>
+  <script src="/javascripts/vendor/smoothscroll.js"></script>
+  <script src="/javascripts/vendor/modaal.js"></script> 
+  <script>hljs.initHighlightingOnLoad();</script> 
+  <script type="text/javascript">
+      $(document).ready(function() {
+        $(".modaal-image").modaal({
+          type: "image"
+        });
+      });
+    </script> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-79460146-1', 'auto');
+  ga('send', 'pageview');
+</script> 
+  <script type="text/javascript">
+setTimeout(function(){var a=document.createElement("script");
+var b=document.getElementsByTagName("script")[0];
+a.src=document.location.protocol+"//script.crazyegg.com/pages/scripts/0066/5520.js?"+Math.floor(new Date().getTime()/3600000);
+a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b)}, 1);
+</script> 
+ </head> 
+ <body class="blog blog_android-qr-code-reader-made-easy blog_android-qr-code-reader-made-easy_index"> 
+  <section class="gray" id="top" name="top"> 
+   <div class="wrapper"> 
+    <header> 
+     <a href="/" class="wordmark"><img src="/wordmark-red.png" alt="Varvet"></a> 
+     <nav class="nav-main"> 
+      <ul> 
+       <li class="nav-work"><a href="/work">Work</a></li> 
+       <li class="nav-about"><a href="/about">About</a></li> 
+       <li class="nav-blog"><a href="/blog">Blog</a></li> 
+       <li class="nav-contact"><a href="/contact">Contact</a></li> 
+      </ul> 
+     </nav> 
+    </header> 
+    <div class="post"> 
+     <div class="post-content"> 
+      <header class="post-header"> 
+       <aside> 
+        <div class="post-date">
+          2016.08.08 
+        </div> 
+       </aside> 
+       <div class="post-title"> 
+        <h1>Android QR Code Reader Made Easy</h1> 
+       </div> 
+      </header> 
+      <ul class="post-tags"> 
+       <li><a href="/tag/barcode">barcode</a></li> 
+       <li><a href="/tag/android">android</a></li> 
+       <li><a href="/tag/development">development</a></li> 
+      </ul> 
+      <div class="post-body"> 
+       <p>Making your Android application barcode aware should be easy! Luckily it is using Google Play services and the <a href="https://developers.google.com/vision/">Mobile Vision APIs</a>. It allows you to scan barcodes (e.g. QR codes) quickly and locally (making it really fast!) with very little effort on you the developer. All the classes you need are available through the namespace <code>com.google.android.gms.vision.barcode</code> and this blog post will showcase through an example how to implement Google’s barcode reader.</p> 
+       <p>The use case we will solve is “From this activity I’d like to scan a QR code and instantly get the scanned data back to this activity”.</p> 
+       <p></p> 
+       <h2 id="setting-up-the-project">Setting up the project</h2> 
+       <p>Just clone or download the <a href="https://github.com/varvet/BarcodeReaderSample">GIT repository</a> containing the ready-to-run project, open it in Android Studio and I will guide you through the main sections of the code.</p> 
+       <p>In Android Studio, let’s make sure we have access to the Google Play services by going to <strong>SDK Tools</strong> (Tools ? Android ? SDK Manager ? SDK Tools). If not already ticked, tick the Google Play services box and press the <strong>OK</strong> button to start the installation.</p> 
+       <p>In your <strong>build.grade (Module: App)</strong> file you will notice that the project is pre-defined with the <code>compile 'com.google.android.gms:play-services:10.2.6'</code> dependency according to:</p> 
+       <pre><code>dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+		compile 'com.android.support:appcompat-v7:25.3.1'
+	compile 'com.google.android.gms:play-services-vision:10.2.6'
+}
+</code></pre> 
+       <p>This will make the namespace available in our project.</p> 
+       <p>Further, in the manifest file, you will notice that we ask for camera permission with:</p> 
+       <pre><code>&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android"
+	package="com.varvet.barcodereadersample"&gt;
+
+	&lt;uses-permission android:name="android.permission.CAMERA" /&gt;
+	&lt;application
+		...
+</code></pre> 
+       <h2 id="the-workhorse-classes">The workhorse classes</h2> 
+       <p>The project has two sub-packages <code>barcode</code> and <code>camera</code>. The packages contain files to handle the tracking and capturing of barcodes, and previewing the camera source respectively. The classes in the packages originate from the <a href="https://github.com/googlesamples/android-vision">official Google example</a> but are modified to work in accordance to our use case.</p> 
+       <h3 id="the-barcode-package">The barcode Package</h3> 
+       <p>This package contains three classes:</p> 
+       <ul> 
+        <li><strong>BarcodeCaptureActivity</strong> - Wrapper for starting the camera source and binding that source to the barcode tracker.</li> 
+        <li><strong>BarcodeTrackerFactory</strong> and <strong>BarcodeTracker</strong> - We start a tracker factory that associates graphics to new barcodes by creating <strong>BarcodeTracker</strong>s as needed.</li> 
+       </ul> 
+       <h3 id="the-camera-package">The camera Package</h3> 
+       <p>This package contains two classes:</p> 
+       <ul> 
+        <li><strong>CameraSource</strong> - Receives and forwards frames from the camera to the detector.</li> 
+        <li><strong>CameraSourcePreview</strong> - Displays the camera frames.</li> 
+       </ul> 
+       <h3 id="wrap-it-up">Wrap it up!</h3> 
+       <p>Our <strong>MainActivity</strong> acts as a wrapper to start the barcode capturing activity and to print on screen the data contained in a given barcode. We start the <strong>BarcodeCaptureActivity</strong> from <strong>MainActivity</strong> and expect a result by:</p> 
+       <pre><code>Intent intent = new Intent(getApplicationContext(), BarcodeCaptureActivity.class);
+startActivityForResult(intent, BARCODE_READER_REQUEST_CODE);
+</code></pre> 
+       <p>…and we take care of the result in:</p> 
+       <pre><code>@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (requestCode == BARCODE_READER_REQUEST_CODE) {
+        if (resultCode == CommonStatusCodes.SUCCESS) {
+            if (data != null) {
+                Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
+                mResultTextView.setText(barcode.displayValue);
+            } else mResultTextView.setText(R.string.no_barcode_captured);
+        } else Log.e(LOG_TAG, String.format(getString(R.string.barcode_error_format),
+                CommonStatusCodes.getStatusCodeString(resultCode)));
+    } else super.onActivityResult(requestCode, resultCode, data);
+}
+</code></pre> 
+       <h2 id="test-it">Test it!</h2> 
+       <p>Now you can go to your favorite <a href="http://www.qr-code-generator.com/">qr-code generator site</a> and test your app! You should expect to see something like this:</p> 
+       <div class="image-gallery three"> 
+        <a href="/images/posts/2016-08-08-android-barcode-reader-made-easy-noBarcodeCaptured.png" rel="gallery" class="modaal-image"> <img src="/images/posts/2016-08-08-android-barcode-reader-made-easy-noBarcodeCaptured.png" alt="Figure"> </a> 
+        <a href="/images/posts/2016-08-08-android-barcode-reader-made-easy-scanningActivity.png" rel="gallery" class="modaal-image"> <img src="/images/posts/2016-08-08-android-barcode-reader-made-easy-scanningActivity.png" alt="Figure"> </a> 
+        <a href="/images/posts/2016-08-08-android-barcode-reader-made-easy-scannedBarcode.png" rel="gallery" class="modaal-image"> <img src="/images/posts/2016-08-08-android-barcode-reader-made-easy-scannedBarcode.png" alt="Figure"> </a> 
+       </div> 
+       <h2 id="conclusion">Conclusion</h2> 
+       <p>Given you have the <code>barcode</code>/<code>camera</code> classes (which you now have), the above code is all you need to care about to make your app scanning barcodes!</p> 
+       <p>We have focused on QR codes in this post but all the <a href="https://developers.google.com/vision/barcodes-overview">standard formats</a> are available to decrypt with the scanner we've implemented. If you want to change/add a different format just go to <strong>BarcodeCaptureActivity</strong> and find</p> 
+       <pre><code>BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.QR_CODE)
+</code></pre> 
+       <p>Here we use <strong>setBarcodeFormats(…)</strong> to specify our formats and you can add any variant of the <a href="https://developers.google.com/vision/barcodes-overview">supported formats</a>. For example <code>(Barcode.QR_CODE | Barcode.DATA_MATRIX)</code>, or why not <code>(Barcode.ALL_FORMATS)</code>. Keep them few and specific for fastest parsing.</p> 
+       <h2 id="learn-more">Learn More</h2> 
+       <p>Read the <a href="https://developers.google.com/vision/barcodes-overview">Mobile Vision Barcode API documentation</a>, explore <a href="https://github.com/googlesamples/android-vision">advanced examples</a> and/or drop a comment in the section below!</p> 
+      </div> 
+     </div> 
+     <div class="post-author"> 
+      <img src="/images/authors/daniell_algar.jpg" class="avatar" alt="Daniell algar"> 
+      <p><a href="https://twitter.com/daniell_algar" class="name">Daniell Algar</a></p> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="pagination"> 
+    <div class="wrapper"> 
+     <ul> 
+      <li class="prev-post"> <span class="post-date">2016.06.29</span> <a href="/blog/easy-auto-scaling-elixir-deployment-with-aws-and-travis-ci/" rel="prev" title="Previous article: Easy Elixir auto scaling deployment with AWS and Travis CI"> <h3><span>Easy Elixir auto scaling deployment with AWS and Travis CI</span></h3> </a> <p>I’m one of those developers that finds excuses for not setting up my own production environments, advocating services such as <a href="https://www.heroku.com/">Heroku</a> where...</p> </li> 
+      <li class="next-post"> <span class="post-date">2017.09.08</span> <a href="/blog/why-you-would-be-crazy-not-to-invest-in-ux/" rel="next" title="Next article: Why you would be crazy not to invest in UX design"> <h3><span>Why you would be crazy not to invest in UX design</span></h3> </a> <p>How successful your company will become depends on your ability to identify the users needs and demands, as well as how well these needs are...</p> </li> 
+     </ul> 
+    </div> 
+   </div> 
+  </section> 
+  <section class="comments red marker"> 
+   <div class="wrapper"> 
+    <div class="comments-container"> 
+     <h2>Comments</h2> 
+     <div id="disqus_thread"></div> 
+     <script>
+    // See https://disqus.com/admin/universalcode/#configuration-variables
+    var disqus_config = function () {
+        this.page.identifier = "blog-en-2016-08-08-android-qr-code-reader-made-easy";
+      this.language = "en";
+    };
+
+    (function() {
+      var d = document, s = d.createElement('script');
+      s.src = '//elabs.disqus.com/embed.js';  // IMPORTANT!
+      s.setAttribute('data-timestamp', +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+</script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+     </noscript> 
+    </div> 
+   </div> 
+  </section> 
+  <section class="footer blue" id="contact" name="contact"> 
+   <div class="wrapper"> 
+    <footer> 
+     <div class="section-header">
+      <h2>Get in touch</h2>
+     </div> 
+     <div class="contact-info"> 
+      <ul> 
+       <li>Varvet®</li> 
+       <li>Östra Hamngatan 1</li> 
+       <li>Gothenburg</li> 
+       <li>Sweden</li> 
+      </ul> 
+      <ul> 
+       <li>Varvet®</li> 
+       <li>c/o Norrsken House</li> 
+       <li>Birger Jarlsgatan 57 C</li> 
+       <li>Stockholm</li> 
+       <li>Sweden</li> 
+      </ul> 
+      <ul> 
+       <li><a href="mailto:hello@varvet.com">hello@varvet.com</a></li> 
+       <li>+46 31-309 60 00</li> 
+       <li class="social-divide"><a href="http://www.facebook.com/varvet">Facebook.com/varvet</a></li> 
+       <li><a href="http://www.twitter.com/varvet">Twitter.com/varvet</a></li> 
+       <li><a href="http://www.instagram.com/var.vet">Instagram.com/var.vet</a></li> 
+      </ul> 
+     </div> 
+     <a href="#top" class="back-to-top">Back to top</a> 
+     <div class="symbol"></div> 
+     <div class="copyright"> 
+      <p class="copy">© 2017 Varvet AB.</p> 
+      <p class="coordinates">57° 42' 35.31" N, 11° 57' 58.17" E</p> 
+     </div> 
+    </footer> 
+   </div> 
+  </section>   
+ </body>
+</html>

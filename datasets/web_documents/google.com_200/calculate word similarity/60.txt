@@ -1,0 +1,425 @@
+<!doctype html>
+<!--[if lt IE 7]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if (IE 7)&!(IEMobile)]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9 lt-ie8"><![endif]-->
+<!--[if (IE 8)&!(IEMobile)]><html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js lt-ie9"><![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en-US" prefix="og: http://ogp.me/ns#" class="no-js">
+ <!--<![endif]-->
+ <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="apple-touch-icon" href="https://www.3pillarglobal.com/wp-content/themes/base/library/images/xapple-icon-touch.png.pagespeed.ic.kg7tMm6YzC.png">
+  <link rel="icon" href="https://www.3pillarglobal.com/wp-content/themes/base/xfavicon.png.pagespeed.ic.tBHjjahxNq.png"> 
+  <!--[if IE]><link rel="shortcut icon" href="https://www.3pillarglobal.com/wp-content/themes/base/favicon.ico"> <![endif]-->
+  <meta name="msapplication-TileColor" content="#f01d4f">
+  <meta name="msapplication-TileImage" content="https://www.3pillarglobal.com/wp-content/themes/base/library/images/win8-tile-icon.png">
+  <link rel="pingback" href="https://www.3pillarglobal.com/xmlrpc.php">
+  <title>Topic Clusters with TF-IDF Vectorization using Apache Spark</title>
+  <link rel="canonical" href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Topic Clusters with TF-IDF Vectorization using Apache Spark">
+  <meta property="og:description" content="In my previous blog about building an Information Palace that clusters information automatically into different nodes, I wrote about using Apache Spark for creating the clusters from the collected information. This post outlines the core clustering approach that uses the new DataFrame API in Apache&nbsp;Spark and uses a zoomable circle packing to represent the clusters...  Read more »">
+  <meta property="og:url" content="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark">
+  <meta property="og:site_name" content="3Pillar Global">
+  <meta property="article:section" content="Blogs">
+  <meta property="article:published_time" content="2016-03-03T11:13:49-04:00">
+  <meta property="article:modified_time" content="2016-04-18T16:36:41-04:00">
+  <meta property="og:updated_time" content="2016-04-18T16:36:41-04:00">
+  <meta property="og:image" content="http://www.3pillarglobal.com/wp-content/uploads/2016/02/spark_logo_360x220.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:description" content="In my previous blog about building an Information Palace that clusters information automatically into different nodes, I wrote about using Apache Spark for creating the clusters from the collected information. This post outlines the core clustering approach that uses the new DataFrame API in Apache&nbsp;Spark and uses a zoomable circle packing to represent the clusters...  Read more »">
+  <meta name="twitter:title" content="Topic Clusters with TF-IDF Vectorization using Apache Spark">
+  <meta name="twitter:site" content="@3PillarGlobal">
+  <meta name="twitter:image" content="http://www.3pillarglobal.com/wp-content/uploads/2016/02/spark_logo_360x220.png">
+  <meta name="twitter:creator" content="@3PillarGlobal"> 
+  <script type="application/ld+json">{"@context":"http:\/\/schema.org","@type":"WebSite","@id":"#website","url":"https:\/\/www.3pillarglobal.com\/","name":"3Pillar Global","potentialAction":{"@type":"SearchAction","target":"https:\/\/www.3pillarglobal.com\/?s={search_term_string}","query-input":"required name=search_term_string"}}</script> 
+  <link rel="dns-prefetch" href="//ajax.googleapis.com">
+  <link rel="dns-prefetch" href="//s.w.org">
+  <link rel="alternate" type="application/rss+xml" title="3Pillar Global » Feed" href="https://www.3pillarglobal.com/feed">
+  <link rel="alternate" type="application/rss+xml" title="3Pillar Global » Comments Feed" href="https://www.3pillarglobal.com/comments/feed">
+  <link rel="alternate" type="application/rss+xml" title="3Pillar Global » Topic Clusters with TF-IDF Vectorization using Apache Spark Comments Feed" href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark/feed"> 
+  <script type="text/javascript">window._wpemojiSettings={"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/www.3pillarglobal.com\/wp-includes\/js\/wp-emoji-release.min.js"}};!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,56826,8203,55356,56819),0,0),c=j.toDataURL(),b===c&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55358,56794,8205,9794,65039),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55358,56794,8203,9794,65039),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);</script> 
+  <style type="text/css">img.wp-smiley,img.emoji{display:inline!important;border:none!important;box-shadow:none!important;height:1em!important;width:1em!important;margin:0 .07em!important;vertical-align:-.1em!important;background:none!important;padding:0!important}</style>
+  <style id="bcct_custom_style-css" media="all">.bctt-click-to-tweet{display:block;background:#49c5e6 none repeat scroll 0 0;position:relative;padding:30px 20px 30px 25px;margin-bottom:1em;box-shadow:7px 7px 0 0 #ebebeb;height:100%;transition:all .3s linear 0s}.bctt-click-to-tweet:hover{box-shadow:0 1px 1px 1px rgba(0,0,0,.06);transform:perspective(1px) scale3d(1.025,1.04,1.025)}.click-to-tweet{width:100%;background:#298ba4 none repeat scroll 0 0}.bctt-click-to-tweet:after{content:".";display:block;clear:both;visibility:hidden;line-height:0;height:0}.bctt-ctt-text a{padding:15px 0;margin:15px 0;position:relative;color:#fff!important;font-family:"Roboto Condensed",sans-serif;!important;font-size:1.35em;line-height:140%;font-weight:100;text-decoration:none!important;text-transform:none!important;word-wrap:break-word;border-bottom:none!important;box-shadow:none!important}.bctt-ctt-text a:hover{text-decoration:none}a.bctt-ctt-btn{opacity:.75;border-bottom:medium none;box-shadow:none;clear:both;color:#fff;display:block;float:left;font-family:Roboto,sans-serif;font-size:.95em;font-weight:400;margin:0;padding:5px 15px 15px;position:absolute;text-decoration:none;text-transform:inherit}.bctt-ctt-btn:hover{text-decoration:none;color:#fff!important;opacity:1}</style>
+  <link rel="stylesheet" id="front-css-yuzo_related_post-css" href="https://www.3pillarglobal.com/wp-content/plugins/yuzo-related-post/assets/css/A.style.css.pagespeed.cf.v9FGjJITZo.css" type="text/css" media="all">
+  <link rel="stylesheet" id="joints-stylesheet-css" href="https://www.3pillarglobal.com/wp-content/themes/base/library/css/app.min.css?1837551" type="text/css" media="all"> 
+  <!--[if lt IE 9]><link rel='stylesheet' id='joints-ie-only-css'  href='https://www.3pillarglobal.com/wp-content/themes/base/library/css/ie.min.css' type='text/css' media='' /> <![endif]--> 
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script> 
+  <script type="text/javascript">var SnazzyDataForSnazzyMaps=[];SnazzyDataForSnazzyMaps={"id":7,"name":"Icy Blue","description":"A simple light blue theme that looks great at any zoom level.","url":"https:\/\/snazzymaps.com\/style\/7\/icy-blue","imageUrl":"https:\/\/az594329.vo.msecnd.net\/assets\/7-icy-blue.png?v=20150603082651","json":"[{\"stylers\":[{\"hue\":\"#2c3e50\"},{\"saturation\":250}]},{\"featureType\":\"road\",\"elementType\":\"geometry\",\"stylers\":[{\"lightness\":50},{\"visibility\":\"simplified\"}]},{\"featureType\":\"road\",\"elementType\":\"labels\",\"stylers\":[{\"visibility\":\"off\"}]}]","views":9469,"favorites":12,"createdBy":{"name":"Sahir Memon","url":"http:\/\/trendylists.com"},"createdOn":"2013-10-24T22:54:41.913"};</script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/plugins/snazzy-maps/snazzymaps.js"></script> 
+  <link rel="https://api.w.org/" href="https://www.3pillarglobal.com/wp-json/">
+  <link rel="shortlink" href="https://goo.gl/A94YZL">
+  <link rel="alternate" type="application/json+oembed" href="https://www.3pillarglobal.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.3pillarglobal.com%2Finsights%2Ftopic-clusters-tf-idf-vectorization-using-apache-spark">
+  <link rel="alternate" type="text/xml+oembed" href="https://www.3pillarglobal.com/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fwww.3pillarglobal.com%2Finsights%2Ftopic-clusters-tf-idf-vectorization-using-apache-spark&amp;format=xml"> 
+  <script data-cfasync="false" src="//load.sumome.com/" data-sumo-platform="wordpress" data-sumo-site-id="b454882ca7ea39253ccd324be66b1bc5bb93af48b95d0df1d50a1d7ed26634e9" async></script> 
+  <link rel="stylesheet" href="https://www.3pillarglobal.com/wp-content/themes/base/A.style.css,q1506367407.pagespeed.cf.E-4uArMWes.css" type="text/css" media="screen, projection">
+  <link rel="stylesheet" type="text/css" href="https://www.3pillarglobal.com/wp-content/themes/base/library/css/A.combine.css.pagespeed.cf.Tt5fDN4FYW.css"> 
+  <script type="text/javascript">window.root='https://www.3pillarglobal.com/wp-content/themes/base/';</script> 
+  <script type="text/javascript">piAId='22482';piCId='4470';(function(){function async_load(){var s=document.createElement('script');s.type='text/javascript';s.src=('https:'==document.location.protocol?'https://pi':'http://cdn')+'.pardot.com/pd.js';var c=document.getElementsByTagName('script')[0];c.parentNode.insertBefore(s,c);}if(window.attachEvent){window.attachEvent('onload',async_load);}else{window.addEventListener('load',async_load,false);}})();</script> 
+  <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','236576873381896');fbq('track',"PageView");</script> 
+  <noscript>
+   &lt;img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=236576873381896&amp;amp;ev=PageView&amp;amp;noscript=1" data-pagespeed-url-hash="2862106147"&gt;
+  </noscript> 
+  <script>!function(e,n,u,a){e.twq||(a=e.twq=function(){a.exe?a.exe.apply(a,arguments):a.queue.push(arguments);},a.version='1',a.queue=[],t=n.createElement(u),t.async=!0,t.src='//static.ads-twitter.com/uwt.js',s=n.getElementsByTagName(u)[0],s.parentNode.insertBefore(t,s))}(window,document,'script');twq('init','nvgrg');twq('track','PageView');</script> 
+  <style>.async-hide{opacity:0!important}</style> 
+  <script>(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;})(window,document.documentElement,'async-hide','dataLayer',4000,{'GTM-T4Q3HDD':true});</script> 
+  <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-2114474-1','auto');ga('require','GTM-T4Q3HDD');</script> 
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-MVWJKX');</script> 
+  <style>.yuzo_related_post .relatedthumb{background: !important;-webkit-transition:background .2s linear;-moz-transition:background .2s linear;-o-transition:background .2s linear;transition:background .2s linear;color:!important}.yuzo_related_post .relatedthumb:hover{background:#fff!important;color:!important}.yuzo_related_post .yuzo_text,.yuzo_related_post .yuzo_views_post{color:!important}.yuzo_related_post .relatedthumb:hover .yuzo_text,.yuzo_related_post:hover .yuzo_views_post{color:!important}.yuzo_related_post .relatedthumb a{color:!important}.yuzo_related_post .relatedthumb a:hover{color:!important}.yuzo_related_post .relatedthumb:hover a{color:!important}.yuzo_related_post .relatedthumb{margin:0 0 0 0;padding:5px 5px 5px 5px}</style>
+ </head>
+ <body id="blog" class="post-template-default single single-post postid-10194 single-format-standard"> 
+  <noscript>
+   <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MVWJKX" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript> 
+  <script type="text/javascript" defer src="https://extend.vimeocdn.com/ga/34550270.js"></script> 
+  <script type="text/javascript">setTimeout(function(){var a=document.createElement("script");var b=document.getElementsByTagName("script")[0];a.src=document.location.protocol+"//script.crazyegg.com/pages/scripts/0036/2752.js?"+Math.floor(new Date().getTime()/3600000);a.async=true;a.type="text/javascript";b.parentNode.insertBefore(a,b)},1);</script> 
+  <div id="container">
+   <header class="header" role="banner">
+    <div id="inner-header" class="row">
+     <div class="medium-2 columns main-logo"> 
+      <a class="main-logo-link" href="https://www.3pillarglobal.com"><script data-pagespeed-no-defer>//<![CDATA[
+(function(){for(var g="function"==typeof Object.defineProperties?Object.defineProperty:function(b,c,a){if(a.get||a.set)throw new TypeError("ES3 does not support getters and setters.");b!=Array.prototype&&b!=Object.prototype&&(b[c]=a.value)},h="undefined"!=typeof window&&window===this?this:"undefined"!=typeof global&&null!=global?global:this,k=["String","prototype","repeat"],l=0;l<k.length-1;l++){var m=k[l];m in h||(h[m]={});h=h[m]}var n=k[k.length-1],p=h[n],q=p?p:function(b){var c;if(null==this)throw new TypeError("The 'this' value for String.prototype.repeat must not be null or undefined");c=this+"";if(0>b||1342177279<b)throw new RangeError("Invalid count value");b|=0;for(var a="";b;)if(b&1&&(a+=c),b>>>=1)c+=c;return a};q!=p&&null!=q&&g(h,n,{configurable:!0,writable:!0,value:q});var t=this;function u(b,c){var a=b.split("."),d=t;a[0]in d||!d.execScript||d.execScript("var "+a[0]);for(var e;a.length&&(e=a.shift());)a.length||void 0===c?d[e]?d=d[e]:d=d[e]={}:d[e]=c};function v(b){var c=b.length;if(0<c){for(var a=Array(c),d=0;d<c;d++)a[d]=b[d];return a}return[]};function w(b){var c=window;if(c.addEventListener)c.addEventListener("load",b,!1);else if(c.attachEvent)c.attachEvent("onload",b);else{var a=c.onload;c.onload=function(){b.call(this);a&&a.call(this)}}};var x;function y(b,c,a,d,e){this.h=b;this.j=c;this.l=a;this.f=e;this.g={height:window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight,width:window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth};this.i=d;this.b={};this.a=[];this.c={}}function z(b,c){var a,d,e=c.getAttribute("data-pagespeed-url-hash");if(a=e&&!(e in b.c))if(0>=c.offsetWidth&&0>=c.offsetHeight)a=!1;else{d=c.getBoundingClientRect();var f=document.body;a=d.top+("pageYOffset"in window?window.pageYOffset:(document.documentElement||f.parentNode||f).scrollTop);d=d.left+("pageXOffset"in window?window.pageXOffset:(document.documentElement||f.parentNode||f).scrollLeft);f=a.toString()+","+d;b.b.hasOwnProperty(f)?a=!1:(b.b[f]=!0,a=a<=b.g.height&&d<=b.g.width)}a&&(b.a.push(e),b.c[e]=!0)}y.prototype.checkImageForCriticality=function(b){b.getBoundingClientRect&&z(this,b)};u("pagespeed.CriticalImages.checkImageForCriticality",function(b){x.checkImageForCriticality(b)});u("pagespeed.CriticalImages.checkCriticalImages",function(){A(x)});function A(b){b.b={};for(var c=["IMG","INPUT"],a=[],d=0;d<c.length;++d)a=a.concat(v(document.getElementsByTagName(c[d])));if(a.length&&a[0].getBoundingClientRect){for(d=0;c=a[d];++d)z(b,c);a="oh="+b.l;b.f&&(a+="&n="+b.f);if(c=!!b.a.length)for(a+="&ci="+encodeURIComponent(b.a[0]),d=1;d<b.a.length;++d){var e=","+encodeURIComponent(b.a[d]);131072>=a.length+e.length&&(a+=e)}b.i&&(e="&rd="+encodeURIComponent(JSON.stringify(B())),131072>=a.length+e.length&&(a+=e),c=!0);C=a;if(c){d=b.h;b=b.j;var f;if(window.XMLHttpRequest)f=new XMLHttpRequest;else if(window.ActiveXObject)try{f=new ActiveXObject("Msxml2.XMLHTTP")}catch(r){try{f=new ActiveXObject("Microsoft.XMLHTTP")}catch(D){}}f&&(f.open("POST",d+(-1==d.indexOf("?")?"?":"&")+"url="+encodeURIComponent(b)),f.setRequestHeader("Content-Type","application/x-www-form-urlencoded"),f.send(a))}}}function B(){var b={},c;c=document.getElementsByTagName("IMG");if(!c.length)return{};var a=c[0];if(!("naturalWidth"in a&&"naturalHeight"in a))return{};for(var d=0;a=c[d];++d){var e=a.getAttribute("data-pagespeed-url-hash");e&&(!(e in b)&&0<a.width&&0<a.height&&0<a.naturalWidth&&0<a.naturalHeight||e in b&&a.width>=b[e].o&&a.height>=b[e].m)&&(b[e]={rw:a.width,rh:a.height,ow:a.naturalWidth,oh:a.naturalHeight})}return b}var C="";u("pagespeed.CriticalImages.getBeaconData",function(){return C});u("pagespeed.CriticalImages.Run",function(b,c,a,d,e,f){var r=new y(b,c,a,e,f);x=r;d&&w(function(){window.setTimeout(function(){A(r)},0)})});})();pagespeed.CriticalImages.Run('/mod_pagespeed_beacon','https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark','cvJMtFEIrP',true,false,'V9jH7vLmoFI');
+//]]></script><img src="https://www.3pillarglobal.com/wp-content/themes/base/library/images/x3PG_LogoColorRGB.png.pagespeed.ic.kYkl00Uznt.png" alt="3Pillar Global" title="3Pillar Global" data-pagespeed-url-hash="4243683247" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a> 
+      <a class="mail-icon-button show-for-small-only" title="Mail Us" href="/contact"><i class="entypo mail"></i></a> 
+      <a class="menu show-for-small-only" title="Menu" id="mobile-menu-btn"><i class="entypo list"></i></a>
+     </div>
+     <nav id="desktop-nav" class="medium-10 hide-for-small-only columns">
+      <ul id="menu-main-nav" class="">
+       <li id="menu-item-161" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-161"><a href="https://www.3pillarglobal.com/what-we-do">What We Do</a></li>
+       <li id="menu-item-204" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-204"><a href="https://www.3pillarglobal.com/how-we-do-it">How We Do It</a></li>
+       <li id="menu-item-163" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-163"><a href="https://www.3pillarglobal.com/who-we-do-it-for">Who We Do It For</a></li>
+       <li id="menu-item-3175" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-3175"><a href="https://www.3pillarglobal.com/insights">Insights</a></li>
+       <li id="menu-item-3122" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-3122"><a href="https://www.3pillarglobal.com/news">News</a></li>
+       <li id="menu-item-183" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-183"><a href="https://www.3pillarglobal.com/about">About</a></li>
+       <li id="menu-item-5806" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-5806"><a href="https://www.3pillarglobal.com/contact">Contact</a></li>
+       <li id="menu-item-8346" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-8346"><a href="https://www.3pillarglobal.com/about/careers">Careers</a></li>
+      </ul> 
+      <a class="nav-search-icon"><span>X</span><i class=" entypo search"></i></a>
+     </nav>
+     <nav id="mobile-nav" class="show-for-small-only">
+      <form role="search" method="get" id="searchform" action="https://www.3pillarglobal.com/"> 
+       <label class="screen-reader-text" for="s">Search for:</label> 
+       <input type="text" value="" name="s" id="s" placeholder="SEARCH"> 
+       <input type="submit" id="searchsubmit" class="button" value="Search">
+      </form>
+      <ul id="menu-mobile-nav" class="">
+       <li id="menu-item-232" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-232"><a href="https://www.3pillarglobal.com/what-we-do">What We Do</a></li>
+       <li id="menu-item-233" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-233"><a href="https://www.3pillarglobal.com/how-we-do-it">How We Do It</a></li>
+       <li id="menu-item-237" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-237"><a href="https://www.3pillarglobal.com/who-we-do-it-for">Who We Do It For</a></li>
+       <li id="menu-item-2156" class="menu-item menu-item-type-taxonomy menu-item-object-category current-post-ancestor current-menu-parent current-post-parent menu-item-2156"><a href="https://www.3pillarglobal.com/insights">Insights</a></li>
+       <li id="menu-item-3123" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-3123"><a href="https://www.3pillarglobal.com/news">News</a></li>
+       <li id="menu-item-239" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-239"><a href="https://www.3pillarglobal.com/about">About</a></li>
+       <li id="menu-item-7307" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-7307"><a href="https://www.3pillarglobal.com/contact">Contact</a></li>
+       <li id="menu-item-11523" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-11523"><a href="http://careers.3pillarglobal.com">Careers</a></li>
+      </ul>
+     </nav>
+    </div>
+   </header>
+   <div class="searchBlock">
+    <form role="search" method="get" id="searchform" action="https://www.3pillarglobal.com/"> 
+     <label class="screen-reader-text" for="s">Search for:</label> 
+     <input type="text" value="" name="s" id="s" placeholder="SEARCH"> 
+     <input type="submit" id="searchsubmit" class="button" value="Search">
+    </form>
+   </div>
+   <div class="row extramargin">
+    <p id="breadcrumbs" class="large-9  medium-9 columns"><span xmlns:v="http://rdf.data-vocabulary.org/#"><span typeof="v:Breadcrumb"><a href="https://www.3pillarglobal.com/" rel="v:url" property="v:title">Home</a> / <span rel="v:child" typeof="v:Breadcrumb"><a href="https://www.3pillarglobal.com/insights" rel="v:url" property="v:title">Insights</a> / <span rel="v:child" typeof="v:Breadcrumb"><a href="https://www.3pillarglobal.com/insights/blog-posts" rel="v:url" property="v:title">Blogs</a> / <span class="breadcrumb_last">Topic Clusters with TF-IDF Vectorization using Apache Spark</span></span></span></span></span></p>
+    <div class="row">
+     <div class="large-9  medium-10  columns ">
+      <div class="news-article">
+       <div class="row">
+        <div class="large-8 medium-8 columns">
+         <h1 class="article-title blue">Topic Clusters with TF-IDF Vectorization using Apache Spark</h1>
+        </div>
+        <div class="large-4 medium-4 columns"> 
+         <a class="mail-icon-button show-for-medium-up" href="/contact"><i class="entypo mail"></i></a>
+        </div>
+       </div>
+       <div class="featured-images"></div>
+       <div class="remove-margin">
+        <p>In my previous blog about building an <a href="http://www.3pillarglobal.com/insights/building-a-software-information-palace" target="_blank">Information Palace</a> that clusters information automatically into different nodes, I wrote about using Apache Spark for creating the clusters from the collected information.</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/02/Screenshot-2016-03-02-15.21.51.png"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/02/Screenshot-2016-03-02-15.21.51.png" alt="Screenshot 2016-03-02 15.21.51" width="477" height="469" class="aligncenter size-full wp-image-10284" srcset="https://www.3pillarglobal.com/wp-content/uploads/2016/02/xScreenshot-2016-03-02-15.21.51.png.pagespeed.ic._4tvkh-7M7.png 477w, https://www.3pillarglobal.com/wp-content/uploads/2016/02/Screenshot-2016-03-02-15.21.51-300x294.png 300w, https://www.3pillarglobal.com/wp-content/uploads/2016/02/xScreenshot-2016-03-02-15.21.51-32x32.png.pagespeed.ic.qKLZb96EUS.jpg 32w, https://www.3pillarglobal.com/wp-content/uploads/2016/02/xScreenshot-2016-03-02-15.21.51-64x64.png.pagespeed.ic.EkB7FGwNLc.jpg 64w" sizes="(max-width: 477px) 100vw, 477px" data-pagespeed-url-hash="2699026755" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <p>This post outlines the core clustering approach that uses the new <a href="http://spark.apache.org/docs/latest/sql-programming-guide.html" target="_blank">DataFrame API</a> in Apache&nbsp;Spark and uses a zoomable <a href="http://mathworld.wolfram.com/CirclePacking.html" target="_blank">circle packing</a> to represent the clusters (using the excellent <a href="http://d3js.org/" target="_blank">D3.js</a>). In addition, the common terms and the unique terms at each level of the hierarchy are shown when a cluster or a node is zoomed in. The hierarchy is defined by the overall data set, at each cluster in the data set, and at each data node in a cluster.</p>
+        <p>In addition to the traditional clustering by machine learning, I have added a “Node Size” attribute which may present a new approach to the organization and presentation of unstructured data such as news or any free text. The “Node Size” attribute is calculated from the unique terms a data node provides to the corpus in addition to the common terms, which allows it to be clustered with similar data nodes.</p>
+        <p>The thinking behind this approach is if there are some articles that have a common set of words, the one article with more unique words is likely to cover the subject in greater detail than the other ones. In addition, there is a non-deterministic limit for these unique words, beyond which the clustering algorithm will eject it from the cluster. This thinking is further validated by how typical search engines use an inverted documented index to find the most relevant documents for a given search term.</p>
+        <p><span id="docs-internal-guid-ac124060-1f75-d080-31ec-61901610ce49">For the media industry, suggesting a particular source of information over other similar sources by using the “Node Size” attribute can be a simpler alternative or even a correlating factor with user trends.<strong> I think this is particularly suitable for businesses such as law firms, healthcare, and banking where relevance must be determined from the articles or data sources themselves.</strong></span></p>
+        <p>The rest of this post outlines the implementation of the clustering approach.</p>
+        <h2>Data Set</h2>
+        <p>In order to test the effectiveness of the clustering approach, I curated data from different sources on three historical figures: Napoleon Bonaparte, Sir Winston Churchill, and Mahatma Gandhi. Each data point is represented by a file with the following format:</p>
+        <p><code><span id="docs-internal-guid-ac124060-1f76-b966-44a5-2029425a80a8">source||||content</span></code></p>
+        <ul>
+         <li><code>source:&nbsp;</code>This is the source URL for the content. For this data set it is the relative path to the file, for example data/churchill-file-1.txt.</li>
+         <li><code>delimiter:&nbsp;</code>The&nbsp;|||| is the delimiter.</li>
+         <li><code>content:&nbsp;</code>This is the extracted content from the source. This is just plain text.</li>
+        </ul>
+        <p>In this representation, I have 3 data sources for Napoleon Bonaparte, 2 for Sir Winston Churchill, and 4 for Mahatma Gandhi. The perfect clustering algorithm would create 3 clusters and put the data sources for each historical figure in its own cluster.</p>
+        <h2>Loading the Corpus</h2>
+        <p>The data set is loaded as a paired RDD with the source as the key and the content as the value. &nbsp;In Spark, an RDD (Resilient Distributed Dataset) is the primary abstraction of a collection of items. Two successive map operations are executed on the values to tokenize the content into sentences and tokenize each sentence into a flat list of words.</p>
+        <p>The first data frame is built from this RDD and it has a text label and a sequence of tokens (words). A Data Frame is analogous to an SQL table, which holds multiple columns with labels. Spark can create data frames from multiple sources such as Parquet, Hive, or a Spark RDD. Just like some operations on an RDD, data frame transformations are “lazy” – they are executed on the Spark cluster when Spark is asked to compute the result and this computation is known as a ‘fit’. A fit transforms a data frame into a model, which is used to make predictions. Multiple transformers and models can be chained together (in a directed acyclic graph) to make up a pipeline for machine learning.</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/03/topic_clusters_2.jpg"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/03/topic_clusters_2.jpg" alt="topic_clusters_2" width="720" height="300" class="alignnone size-full wp-image-10312" srcset="https://www.3pillarglobal.com/wp-content/uploads/2016/03/xtopic_clusters_2.jpg.pagespeed.ic.7x2l6C1SdL.jpg 720w, https://www.3pillarglobal.com/wp-content/uploads/2016/03/xtopic_clusters_2-300x125.jpg.pagespeed.ic.gAZgw8jZ9O.jpg 300w" sizes="(max-width: 720px) 100vw, 720px" data-pagespeed-url-hash="4287331977" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <p>The initial data frame has “label” for the source (the paired RDD key) and “tokens” for the words (the paired RDD value).</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_3.png"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_3.png" alt="topic_clusters_3" width="832" height="427" class="alignnone size-full wp-image-10202" srcset="https://www.3pillarglobal.com/wp-content/uploads/2016/02/xtopic_clusters_3.png.pagespeed.ic.ainc6Dii2O.png 832w, https://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_3-300x153.png 300w" sizes="(max-width: 832px) 100vw, 832px" data-pagespeed-url-hash="3016982743" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <h2>Data Frame Transformations</h2>
+        <p>A series of transformations are added to the pipeline to add additional columns to the data frame. The transformations can be expressed as a DAG where each node denotes the column added to the frame and a callout is the applied transformation.</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/03/topic_clusters_4.png"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/03/topic_clusters_4.png" alt="topic_clusters_4" width="720" height="540" class="alignnone size-full wp-image-10306" srcset="https://www.3pillarglobal.com/wp-content/uploads/2016/03/topic_clusters_4.png 720w, https://www.3pillarglobal.com/wp-content/uploads/2016/03/topic_clusters_4-300x225.png 300w" sizes="(max-width: 720px) 100vw, 720px" data-pagespeed-url-hash="581467227" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <p>All the transformers in the pipeline marked with a green background are known as “User Defined Transformers” (UDTs) – Spark makes it simple to use the provided transformers as well as to roll your own transformers. I will cover some of the important transformers:</p>
+        <ul>
+         <li><strong>Hashing TF:</strong>&nbsp;This transformer is provided by the Spark machine learning library and it transforms each term (word) to its hash (calculated by a hashing function). The input to this transformer is a sequence of terms and the output is a sparse vector (from the linear algorithm module). A sparse vector stores the indices with active dimensions and the values in each dimension. In this case, each index is the output of the hashing function for the term and the value at the index is the frequency of the term in the data node (document).</li>
+         <li><strong>IDF Transform:</strong>&nbsp;This Spark-supplied transformer calculates the inverse document frequency of each term. The TF-IDF score for a term that is unique in the corpus is higher than a term that is common in the corpus. Therefore, the lower dimensions of a TF-IDF vector for a document represent its share of common terms in the corpus, while the higher dimensions represent the unique terms.</li>
+         <li><strong>Term Indexer, Term Sorter:</strong>&nbsp;The Hashing TF and IDF transformers do not maintain a one-on-one mapping with a term. I did not find a built-in way to correlate a TF-IDF value with the term that produced it (backtracking). I needed this backtracking to extract the common terms and the unique terms. The term indexer accepts a sequence of terms, runs each term by the same hashing function as the Hashing TF transformer and maps out a sequence of (<code>hashed index, term</code>) tuple. &nbsp;The term sorter joins the index from this tuple to the TF-IDF vector to produce a sequence of (<code>TF-IDF score, term</code>) tuples.</li>
+         <li><strong>Common Features Extractor:</strong>&nbsp;This transformer operates on the TF-IDF vector and extracts the lower dimensions of the sparse vector to return a dense vector. This transformation is actually the link to the final clustering transformation.</li>
+        </ul>
+        <p>A Data Frame can be queried for its schema. Once the transformations have been added (not necessarily applied), you can see the schema:</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_5.png"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_5.png" alt="topic_clusters_5" width="832" height="754" class="alignnone size-full wp-image-10200" srcset="https://www.3pillarglobal.com/wp-content/uploads/2016/02/xtopic_clusters_5.png.pagespeed.ic.JzX_IK0Z0Z.png 832w, https://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_5-300x271.png 300w" sizes="(max-width: 832px) 100vw, 832px" data-pagespeed-url-hash="3605982585" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <h2>KMeans Clustering</h2>
+        <p>The Spark machine learning library has a bunch of clustering algorithms. While KMeans is probably the simplest to understand and implement, it is also quite effective and is put to use in lots of applications. KMeans is also implemented as a transformer that takes the Features column from the Data Frame and predicts the clusters in an output column which we call – wait for it – “Cluster”! Once the transformation (actually the pipeline) is applied, the new column reflects the data we were working towards:</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_6.png"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_6.png" alt="topic_clusters_6" width="832" height="390" class="alignnone size-full wp-image-10199" srcset="https://www.3pillarglobal.com/wp-content/uploads/2016/02/xtopic_clusters_6.png.pagespeed.ic.YerGZcZ9tg.png 832w, https://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_6-300x140.png 300w" sizes="(max-width: 832px) 100vw, 832px" data-pagespeed-url-hash="3900482506" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <p>&nbsp;</p>
+        <p><strong>The final visualization is available at <a href="http://atg.3pillarglobal.com/infop-static/" target="_blank">http://atg.3pillarglobal.com/infop-static/</a>.</strong></p>
+        <p>The clustering algorithm produces 3 clusters and <em>almost</em> gets it right – one data node for Mahatma Gandhi is clustered with all the Napoleonic data nodes (the irony of it!), rest of the data nodes are clustered correctly.</p>
+        <p>The KMeans clustering algorithm needs to be told the number of clusters to create. If you ask it to create too few, dissimilar items will appear in the same cluster; too many and similar items will land up in different clusters. The current implementation uses the “Rule of Thumb” to calculate the number of clusters (k):</p> 
+        <a href="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_7.png"><img src="http://www.3pillarglobal.com/wp-content/uploads/2016/02/topic_clusters_7.png" alt="topic_clusters_7" width="137" height="38" class="alignnone size-full wp-image-10198" data-pagespeed-url-hash="4194982427" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+        <p>where n is the number of documents to be clustered. In addition, the current implementation caps ‘k’ to 1000.</p>
+        <h2>Future Scope</h2>
+        <p>There are quite a few ways in which the clustering approach can be improved or augmented:</p>
+        <ul>
+         <li>For this study, I curated the data manually. In order to automate this, we will need a clever way to filter out the noise to produce meaningful tokens. While this can probably be addressed at the first level by using a series of filtering regular expressions, another way would be to work with a corpus specific stop word list.</li>
+         <li>If you look at the list of unique and common terms you will notice terms like “called” and “acted” – non-root forms of the words. We would probably get better results if the term and document frequencies are calculated on word-stems by applying a lemmatizer.</li>
+         <li>For some corpora, it might be beneficial to perform a part of speech tagging to identify interesting words.</li>
+         <li>At the moment, the number of dimensions analyzed for common and unique terms are fixed. It will be useful to treat these as dynamic variables as a function of the document sizes.</li>
+         <li>The KMeans implementation from Spark uses Euclidean distance as a distance measure between the TF-IDF vectors. I think a cosine similarity model would be a better fit for analyzing similarity between documents. I did not find a way to influence the KMeans transformer to use a cosine distance measure; a future implementation could make use of a custom transformer.</li>
+         <li>The number of clusters to create can be determined by the <a href="https://en.wikipedia.org/wiki/Determining_the_number_of_clusters_in_a_data_set" target="_blank">“Elbow Method”</a> instead of applying the rule of thumb.</li>
+        </ul>
+        <p>Apart from the core algorithm, it would be necessary to evolve this into a system which ingests data and persists the clustered models. If you think of something else, please leave a comment!</p>
+       </div>
+       <div class="addthis_inline_share_toolbox_z4cr"></div>
+       <div class="authorinfo">
+        <div class="row">
+         <div class="large-2 medium-2 columns author-circle-image"> 
+          <a href="https://www.3pillarglobal.com/author/sdey"><img alt="Sayantam Dey" src="http://www.3pillarglobal.com/wp-content/uploads/2014/08/Sayantam-Dey_avatar_1407241474-80x80.jpg" class="avatar avatar-80 photo" height="80" width="80" data-pagespeed-url-hash="1589581051" onload="pagespeed.CriticalImages.checkImageForCriticality(this);"></a>
+         </div>
+         <div class="large-10 medium-10 columns">
+          <h4 class="blue">Sayantam Dey</h4>
+          <h5>Senior Director Engineering</h5>
+          <p></p>
+          <p>Sayantam Dey is the Senior Director of Engineering at 3Pillar Global, working out of our office in Noida, India. He has been with 3Pillar for ten years, delivering enterprise products and building frameworks for accelerated software development and testing in various technologies. His current areas of interest are data analytics, messaging systems and cloud services. He has authored the ‘Spring Integration AWS’ open source project and contributes to other open source projects such as SocialAuth and SocialAuth Android.</p>
+          <p></p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <div class="comments">
+       <h5 id="comments" class="h2"><span>4</span> Responses to “Topic Clusters with TF-IDF Vectorization using Apache Spark”</h5>
+       <ol class="commentlist">
+        <li class="comment even thread-even depth-1 panel">
+         <div id="comment-92630" class="clearfix">
+          <header class="comment-author"> 
+           <cite class="fn"><a href="http://www.thinkittraining.in/ccna-training" rel="external nofollow" class="url">Ridhima</a></cite> on 
+           <time datetime="2016-03-8"><a href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark#comment-92630"> March 8th, 2016 - 10:25am </a></time>
+          </header>
+          <div class="comment_content clearfix">
+           <p>Thanks for the informative article. This is one of the best resources I have found in quite some time. Nicely written and great info. I really cannot thank you enough for sharing.<br> Regards,<br> Ridhima</p>
+           <p><a href="http://www.thinkittraining.in/ccna-training" rel="nofollow"> CCNA Training in Chennai </a></p>
+          </div> 
+          <a rel="nofollow" class="comment-reply-link" href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark?replytocom=92630#respond" onclick="return addComment.moveForm( &quot;comment-92630&quot;, &quot;92630&quot;, &quot;respond&quot;, &quot;10194&quot; )" aria-label="Reply to Ridhima">Reply</a>
+         </div></li>
+        <li class="comment odd alt thread-odd thread-alt depth-1 panel">
+         <div id="comment-100360" class="clearfix">
+          <header class="comment-author"> 
+           <cite class="fn"><a href="http://www.peridotsystems.in" rel="external nofollow" class="url">Aamala</a></cite> on 
+           <time datetime="2016-03-19"><a href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark#comment-100360"> March 19th, 2016 - 10:20am </a></time>
+          </header>
+          <div class="comment_content clearfix">
+           <p>I feel happy about and I love learning more about this topic. keep sharing your information regularly for my future reference. This content creates a new hope and inspiration with in me. Thanks for sharing article like this. The way you have stated everything above is quite awesome. Keep blogging like this. Thanks.</p>
+           <p><a href="http://www.peridotsystems.in/reviews-and-testimonials.php" rel="nofollow"> Peridot Systems Chennai Reviews </a></p>
+          </div> 
+          <a rel="nofollow" class="comment-reply-link" href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark?replytocom=100360#respond" onclick="return addComment.moveForm( &quot;comment-100360&quot;, &quot;100360&quot;, &quot;respond&quot;, &quot;10194&quot; )" aria-label="Reply to Aamala">Reply</a>
+         </div></li>
+        <li class="comment even thread-even depth-1 panel">
+         <div id="comment-119765" class="clearfix">
+          <header class="comment-author"> 
+           <cite class="fn"><a href="http://www.proclaimsystems.com" rel="external nofollow" class="url">Carl</a></cite> on 
+           <time datetime="2016-08-28"><a href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark#comment-119765"> August 28th, 2016 - 1:30pm </a></time>
+          </header>
+          <div class="comment_content clearfix">
+           <p>Hi Sayantam,</p>
+           <p>thanks so much for the article! I learned a lot..</p>
+           <p>two questions:</p>
+           <p>1) Doesn’t the existing KMeans within Spark use Euclidian distance? Not the greatest for comparing Sparse vectors like those produced with documents of words, right? is that why you used extractor to “extracts the lower dimensions of the sparse vector to return a dense vector.”?</p>
+           <p>Or, could you have used spherical k-means, with a cosine similarity of the raw sparse vectors (no need to reduce dimensions)? Any idea if the clusters would come out better, worse, or same?</p>
+           <p>2) Any chance we can see some of the source code? a few of the descriptions, though incredibly well written, are a little opaque, and seeing code would help an aweful lot. Thanks</p>
+          </div> 
+          <a rel="nofollow" class="comment-reply-link" href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark?replytocom=119765#respond" onclick="return addComment.moveForm( &quot;comment-119765&quot;, &quot;119765&quot;, &quot;respond&quot;, &quot;10194&quot; )" aria-label="Reply to Carl">Reply</a>
+         </div></li>
+        <li class="comment odd alt thread-odd thread-alt depth-1 panel">
+         <div id="comment-123074" class="clearfix">
+          <header class="comment-author"> 
+           <cite class="fn">Nassir</cite> on 
+           <time datetime="2017-05-10"><a href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark#comment-123074"> May 10th, 2017 - 10:25am </a></time>
+          </header>
+          <div class="comment_content clearfix">
+           <p>Hi would you be able to help me with some code examples?</p>
+           <p>I am trying to cluster 20NewsGroup documents in pyspark. However, after forming tfidf matrix and running kmeans, all the documents get clustered in one cluster.</p>
+           <p>I have done the same pipeline in python using sklearn and the clustering works fine. But in pyspark it does not.</p>
+           <p>Could you help me on this as I have followed all pyspark documentation, but get error result.</p>
+          </div> 
+          <a rel="nofollow" class="comment-reply-link" href="https://www.3pillarglobal.com/insights/topic-clusters-tf-idf-vectorization-using-apache-spark?replytocom=123074#respond" onclick="return addComment.moveForm( &quot;comment-123074&quot;, &quot;123074&quot;, &quot;respond&quot;, &quot;10194&quot; )" aria-label="Reply to Nassir">Reply</a>
+         </div></li>
+       </ol>
+       <section id="respond" class="respond-form">
+        <h5 id="comment-form-title" class="h2">Leave a Reply</h5>
+        <div id="cancel-comment-reply">
+         <p class="small"><a rel="nofollow" id="cancel-comment-reply-link" href="/insights/topic-clusters-tf-idf-vectorization-using-apache-spark#respond" style="display:none;">Click here to cancel reply.</a></p>
+        </div>
+        <form action="https://www.3pillarglobal.com/wp-comments-post.php" method="post" id="commentform">
+         <ul id="comment-form-elements" class="clearfix">
+          <li> <label for="author">Name (required)</label> <input type="text" name="author" id="author" value="" placeholder="Your Name*" tabindex="1" aria-required="true"></li>
+          <li> <label for="email">Mail (required)</label> <input type="email" name="email" id="email" value="" placeholder="Your E-Mail*" tabindex="2" aria-required="true"></li>
+         </ul>
+         <label for="email">Comment</label>
+         <p><textarea name="comment" id="comment" placeholder="Your Comment here..." tabindex="4"></textarea></p>
+         <p> <input type="hidden" name="bwp-recaptcha-widget-id" value="bwpRecaptchaWidget1"></p>
+         <div id="bwp-recaptcha-3fcdb73d36d54f2cc22d0f68e6b6e182" class="bwp-recaptcha g-recaptcha"></div>
+         <p></p>
+         <p> <input name="submit" type="submit" id="submit" class="submit-button" tabindex="5" value="Submit"> <input type="hidden" name="comment_post_ID" value="10194" id="comment_post_ID"> <input type="hidden" name="comment_parent" id="comment_parent" value="0"></p>
+        </form>
+       </section>
+      </div>
+     </div>
+     <div class="large-3 medium-3 small-12 columns small-centered page-bar">
+      <div class="theiaStickySidebar">
+       <ul class="large-11 right-rail_categories "> 
+        <span> Learn More </span>
+        <li class="cat-item cat-item-208"><a href="https://www.3pillarglobal.com/news/articles" title="See the latest articles that 3Pillar Global employees have written or been quoted in for outside publications. 3Pillar is one of the world's leading software product development companies.">Articles</a></li>
+        <li class="cat-item cat-item-210"><a href="https://www.3pillarglobal.com/news/awards" title="3Pillar Global is an award-winning software product development company based in Fairfax, VA with offices around the world. Our talented team specializes in creating web applications, mobile apps, and custom software products.">Awards</a></li>
+        <li class="cat-item cat-item-206"><a href="https://www.3pillarglobal.com/news/events" title="3Pillar Global is a leading software development company that delivers technology solutions for clients in the Media &amp; Entertainment, Financial Services, Health &amp; Wellness, and Information Services verticals. Explore the latest 3Pillar Global events here. ">Events</a></li>
+        <li class="cat-item cat-item-209"><a href="https://www.3pillarglobal.com/news/press-release" title="The latest news and headlines from 3Pillar Global. Explore the latest 3Pillar Global news, including Press Releases, Events, and Awards announcements. ">Press Releases</a></li>
+        <li class="cat-item cat-item-211"><a href="https://www.3pillarglobal.com/insights/blog-posts" title="3Pillar Global, a leading software development company that provides innovative technology solutions for clients, regularly publishes blog posts on issues related to software product design, development, testing, and more. ">Blogs</a></li>
+        <li class="cat-item cat-item-207"><a href="https://www.3pillarglobal.com/insights/podcast" title="3Pillar Global, a leading software development company, is publishing podcast series for business leaders titled The Innovation Engine and a technology-themed podcast called Take 3.">Podcasts</a></li>
+        <li class="cat-item cat-item-560"><a href="https://www.3pillarglobal.com/insights/videos" title="Videos from 3Pillar Global, a leading software development company, showcasing our thoughts on topics like agile software development best practices, recent events or webinars we have hosted, and more. ">Videos</a></li>
+       </ul>
+       <div class="large-11 right-rail_most-viewed">
+        <div class="yuzo_related_post style-2" data-version="5.12.70">
+         <div class="yuzo_clearfixed yuzo__title">
+          <h3>Related Posts</h3>
+         </div>
+         <div class="yuzo_wraps">
+          <div class="relatedthumb yuzo-list  " style=""> 
+           <a href="https://www.3pillarglobal.com/insights/jessica-hall-speaks-scope-creep-atlassian-summit" class="image-list">
+            <div class="yuzo-img-wrap " style="width: 46px;height:32px;">
+             <div class="yuzo-img" style="background:url('https://www.3pillarglobal.com/wp-content/uploads/2017/09/jess_Atlassian_600x600-150x150.png') 50% 50% no-repeat;width: 46px;height:32px;margin-bottom: 5px;background-size:  cover;  "></div>
+            </div> </a> 
+           <a class="link-list yuzo__text--title" href="https://www.3pillarglobal.com/insights/jessica-hall-speaks-scope-creep-atlassian-summit" style="font-size:14px;;line-height:22px;"> Jessica Hall Speaks on Scope Creep at Atlassian Summit </a> 
+           <span class="yuzo_text" style="font-size:10px;">On September 14th, 2017, Jessica Hall presented on scope creep at the Atlassian Summit in San Jose, CA. The Atlassian Summit is a 3-day annual summit ...</span>
+          </div>
+          <div class="relatedthumb yuzo-list  " style=""> 
+           <a href="https://www.3pillarglobal.com/insights/tarun-kumar-component-driven-development-using-react-js-meetup" class="image-list">
+            <div class="yuzo-img-wrap " style="width: 46px;height:32px;">
+             <div class="yuzo-img" style="background:url('https://www.3pillarglobal.com/wp-content/uploads/2017/08/tarum_kumar_600x600-150x150.png') 50% 50% no-repeat;width: 46px;height:32px;margin-bottom: 5px;background-size:  cover;  "></div>
+            </div> </a> 
+           <a class="link-list yuzo__text--title" href="https://www.3pillarglobal.com/insights/tarun-kumar-component-driven-development-using-react-js-meetup" style="font-size:14px;;line-height:22px;"> Tarun Kumar at the Component Driven Development Using React.... </a> 
+           <span class="yuzo_text" style="font-size:10px;">On June 29th, Tarun Kumar spoke at Component Driven Development Using React.js at 3Pillar Global's office in Noida, India. Component Driven Developmen...</span>
+          </div>
+          <div class="relatedthumb yuzo-list  " style=""> 
+           <a href="https://www.3pillarglobal.com/insights/special-podcast-industry-summit-2017-interviews-guest-host-julia-slattery" class="image-list">
+            <div class="yuzo-img-wrap " style="width: 46px;height:32px;">
+             <div class="yuzo-img" style="background:url('https://www.3pillarglobal.com/wp-content/uploads/2017/09/IndustrySummit2017_TIE_Ep126_QUOTES_TILE-3-1-150x150.jpg') 50% 50% no-repeat;width: 46px;height:32px;margin-bottom: 5px;background-size:  cover;  "></div>
+            </div> </a> 
+           <a class="link-list yuzo__text--title" href="https://www.3pillarglobal.com/insights/special-podcast-industry-summit-2017-interviews-guest-host-julia-slattery" style="font-size:14px;;line-height:22px;"> Interviews from Industry Summit 2017 – with Guest Host... </a> 
+           <span class="yuzo_text" style="font-size:10px;">On this special double episode of The Innovation Engine, the 3Pillar team interviews many of the speakers who took the stage at Industry Summit 2017. ...</span>
+          </div>
+          <div class="relatedthumb yuzo-list  " style=""> 
+           <a href="https://www.3pillarglobal.com/insights/ravish-tiwari-component-driven-development-using-react-js-meetup" class="image-list">
+            <div class="yuzo-img-wrap " style="width: 46px;height:32px;">
+             <div class="yuzo-img" style="background:url('https://www.3pillarglobal.com/wp-content/uploads/2017/08/rawish_tiwari_600x600-150x150.png') 50% 50% no-repeat;width: 46px;height:32px;margin-bottom: 5px;background-size:  cover;  "></div>
+            </div> </a> 
+           <a class="link-list yuzo__text--title" href="https://www.3pillarglobal.com/insights/ravish-tiwari-component-driven-development-using-react-js-meetup" style="font-size:14px;;line-height:22px;"> Ravish Tiwari at the Component Driven Development Using Reac... </a> 
+           <span class="yuzo_text" style="font-size:10px;">On June 29th, Ravish Tiwari spoke at Component Driven Development Using React.js at 3Pillar Global's office in Noida, India. Component Driven Developm...</span>
+          </div>
+          <div class="relatedthumb yuzo-list  " style=""> 
+           <a href="https://www.3pillarglobal.com/insights/raj-kumar-bharti-component-driven-development-using-react-js-meetup" class="image-list">
+            <div class="yuzo-img-wrap " style="width: 46px;height:32px;">
+             <div class="yuzo-img" style="background:url('https://www.3pillarglobal.com/wp-content/uploads/2017/08/raj_kumar_bharti_600x600-150x150.png') 50% 50% no-repeat;width: 46px;height:32px;margin-bottom: 5px;background-size:  cover;  "></div>
+            </div> </a> 
+           <a class="link-list yuzo__text--title" href="https://www.3pillarglobal.com/insights/raj-kumar-bharti-component-driven-development-using-react-js-meetup" style="font-size:14px;;line-height:22px;"> Raj Kumar Bharti at the Component Driven Development Using R... </a> 
+           <span class="yuzo_text" style="font-size:10px;"> On June 29th, Raj Kumar Bharti spoke at Component Driven Development Using React.js at 3Pillar Global's office in Noida, India. Component Driven Dev...</span>
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="large-11 right-rail_subscribe-bar">
+        <div class="color-test">
+         <div class="right-rail_subscribe-bar_text">
+          <h3>SUBSCRIBE TODAY</h3>
+          <br>
+          <span> Sign up today to receive our monthly product development tips newsletter.</span>
+         </div> 
+         <noscript> 
+          <iframe src="//go.pardot.com/l/21482/2015-03-12/x8ydy" width="280px" height="145" type="text/html" frameborder="0" allowtransparency="true" style="border: 0" id="sub-form-2"></iframe> 
+         </noscript> 
+         <script type="text/javascript">var form='//go.pardot.com/l/21482/2015-03-12/x8ydy';var params=window.location.search;var thisScript=document.scripts[document.scripts.length-1];var iframe=document.createElement('iframe');iframe.setAttribute('src',form+params);iframe.setAttribute('width','280');iframe.setAttribute('height','145');iframe.setAttribute('type','text/html');iframe.setAttribute('frameborder',0);iframe.setAttribute('allowTransparency','true');iframe.style.border='0';thisScript.parentElement.replaceChild(iframe,thisScript);</script> 
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <section class="contact-block">
+    <div class="row">
+     <div class="cta-box"> 
+      <a href="/contact" class="tagline cta lg">LET'S WORK TOGETHER</a>
+     </div>
+    </div>
+   </section>
+  </div>
+  <footer class="footer" role="contentinfo">
+   <div id="inner-footer" class="row clearfix">
+    <div class="large-8 medium-7 columns">
+     <nav role="navigation">
+      <ul id="menu-footer-nav" class="nav footer-nav clearfix">
+       <li id="menu-item-171" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-171"><a href="https://www.3pillarglobal.com/contact">Contact</a></li>
+       <li id="menu-item-174" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-174"><a href="https://www.3pillarglobal.com/sitemap">Sitemap</a></li>
+       <li id="menu-item-175" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-175"><a href="https://www.3pillarglobal.com/legal">Legal</a></li>
+      </ul>
+     </nav>
+    </div>
+    <div class="large-4 medium-5 columns">
+     <ul class="footer-share">
+      <li><a href="https://www.linkedin.com/company/3pillar-global" target="_blank"><i class="entypo linkedin"></i></a></li>
+      <li><a href="https://twitter.com/3PillarGlobal" target="_blank"><i class="entypo twitter"></i></a></li>
+      <li><a href="http://vimeo.com/user34550270" target="_blank"><i class="fa fa-vimeo"></i></a></li>
+      <li><a href="https://www.youtube.com/c/3pillarglobal" target="_blank"><i class="fa fa-youtube-play"></i></a></li>
+      <li><a href="http://www.facebook.com/3PillarGlobal" target="_blank"><i class="entypo facebook"></i></a></li>
+      <li><a href="http://instagram.com/3pillarglobal" target="_blank"><i class="fa fa-instagram"></i></a></li>
+     </ul>
+    </div>
+   </div>
+  </footer>
+  <style scoped>.yuzo_related_post{}.yuzo_related_post .relatedthumb{}.yuzo_text{display:none}</style>
+  <script type="text/javascript">piCId='4470';piAId='22482';(function(){function async_load(){var s=document.createElement('script');s.type='text/javascript';s.src=('https:'==document.location.protocol?'https://pi':'http://cdn')+'.pardot.com/pd.js';var c=document.getElementsByTagName('script')[0];c.parentNode.insertBefore(s,c);}if(window.attachEvent){window.attachEvent('onload',async_load);}else{window.addEventListener('load',async_load,false);}})();</script>
+  <style id="commentvalidation-css" media="all">#commentform input.error,#commentform textarea.error{border:1px solid red}#commentform div.error,#commentform label.error{color:red}#commentform div.errorlabels label{display:block}</style> 
+  <script type="text/javascript">var viewsCacheL10n={"admin_ajax_url":"https:\/\/www.3pillarglobal.com\/wp-admin\/admin-ajax.php","post_id":"10194","is_singular":"1"};</script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/plugins/yuzo-related-post/assets/js/yuzo-postviews-cache.js.pagespeed.jm.ISzMsJR6rR.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/plugins/yuzo-related-post/assets/js/jquery.equalizer.js.pagespeed.jm.S5se4J_pow.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-includes/js/comment-reply.min.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/themes/base/library/js/base.min.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/themes/base/library/js/app.min.js.pagespeed.jm.kL7EupDPkP.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/themes/base/library/js/combine.js.pagespeed.jm.aL0Y2wH7p5.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-includes/js/wp-embed.min.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/plugins/instant-comment-validation/assets/js/jquery.validate.min.js.pagespeed.jm.Gi38OXUw0i.js"></script> 
+  <script type="text/javascript" src="https://www.3pillarglobal.com/wp-content/plugins/instant-comment-validation/assets/js/instant-comment-validation.js.pagespeed.jm.JdnSMa9txb.js"></script> 
+  <script type="text/javascript">var bwpRecaptchaWidget1;var bwpRecaptchaCallback=function(){bwpRecaptchaWidget1=grecaptcha.render('bwp-recaptcha-3fcdb73d36d54f2cc22d0f68e6b6e182',{sitekey:'6LcURAgUAAAAAIIkBebsrrbBXHYICs0N3nW2HEXG',theme:'light',size:'normal',tabindex:'0'});};</script> 
+  <script src="https://www.google.com/recaptcha/api.js?onload=bwpRecaptchaCallback&amp;render=explicit" async defer></script>  
+  <script type="text/javascript">_linkedin_data_partner_id="14344";</script>
+  <script type="text/javascript">(function(){var s=document.getElementsByTagName("script")[0];var b=document.createElement("script");b.type="text/javascript";b.async=true;b.src="https://snap.licdn.com/li.lms-analytics/insight.min.js";s.parentNode.insertBefore(b,s);})();</script> 
+  <noscript> 
+   <img height="1" width="1" style="display:none;" alt="" src="https://dc.ads.linkedin.com/collect/?pid=14344&amp;fmt=gif" data-pagespeed-url-hash="4103557290"> 
+  </noscript> 
+  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-54081dd5686fdabe"></script> 
+  <script type="text/javascript">jQuery(document).ready(function(){jQuery('.page-bar').theiaStickySidebar({additionalMarginTop:0});});</script>
+ </body>
+</html>

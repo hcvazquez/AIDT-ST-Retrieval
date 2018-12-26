@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <title>Static Analysis and Burp Suite</title> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="author" content="^Lift Security Team"> 
+  <meta name="description" content="security, secure apps, node.js, audits, advisories, security training"> 
+  <link rel="icon" type="image/png" href="/theme/images/favicon.png"> 
+  <script src="//use.typekit.net/jle1tuk.js"></script> 
+  <script>
+  try{Typekit.load({async:true});}catch(e){}
+</script> 
+  <link rel="stylesheet" href="/theme/css/main.css"> 
+  <script src="/theme/js/highlight.min.js"></script> 
+  <script>
+  hljs.initHighlightingOnLoad();
+  hljs.configure({classPrefix: '' });
+</script> 
+  <script src="/theme/js/google.js" async></script> 
+  <script src="/theme/js/gs.js" async></script> 
+  <link href="https://blog.liftsecurity.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="The ^lift Security Blog — All Content Atom Feed"> 
+  <link href="https://blog.liftsecurity.io/feeds/posts.atom.xml" type="application/atom+xml" rel="alternate" title="The ^lift Security Blog Categories Atom Feed"> 
+  <meta name="tags" contents="security"> 
+  <meta name="tags" contents="burp"> 
+  <meta name="tags" contents="static analysis"> 
+  <meta name="tags" contents="burpbuddy"> 
+  <script src="/theme/js/permalink.min.js" async></script> 
+  <script>
+    var emailInput = document.querySelector('[type=email]');
+    if (emailInput) {
+        emailInput.addEventListener('change', function () {
+            var val = emailInput.value.replace(/\s*/g, '');
+            if (val) {
+                _kmq.push(['identify', val]);
+            }
+        });
+    }
+    _kmq.push(['trackSubmit', '.andyou-form', '&you Subscribe']);
+
+    // autofocus input (the script is loaded async, so we don't know if we have it)
+    var input = document.getElementById('subscribe-name')
+    if (window.focusWhenFirstVisible) {
+        window.focusWhenFirstVisible(input)
+    } else {
+        window.autofocus = input
+    }
+</script> 
+ </head> 
+ <body id="post"> 
+  <header role="banner" class="header-has-logo cf header-has-logo header-short"> 
+   <div class="container cf"> 
+    <h1 class="pull-left mb0"><a href="//liftsecurity.io" title="^Lift Security" class="logo logo-lift transition transition-fadeout">^Lift Security</a></h1> 
+    <nav role="navigation" class="pull-right top-nav cf mb0"> 
+     <input type="checkbox" id="menu-toggle" class="menu-toggle"> 
+     <label for="menu-toggle">Menu</label> 
+     <ul class="list-unstyled list-inline cf"> 
+      <li><a href="//liftsecurity.io/#services" title="Services">Services</a></li> 
+      <li><a href="//liftsecurity.io/case-studies" title="Case Studies">Case Studies</a></li> 
+      <li><a href="//liftsecurity.io/team" title="Team">Team</a></li> 
+      <li><a href="//blog.liftsecurity.io" title="Blog">Blog</a></li> 
+      <li><a href="//liftsecurity.io/contact" title="Contact">Contact</a></li> 
+     </ul> 
+    </nav> 
+    <h2 class="headline-main">The Blog</h2> 
+   </div> 
+  </header> 
+  <div class="container"> 
+   <div class="grid-flex-container cf"> 
+    <div role="main" class="grid-flex-cell"> 
+     <div class="content" role="main"> 
+      <article class="post"> 
+       <h2 class="postTitle">Static Analysis and Burp Suite</h2> 
+       <div class="meta cf"> 
+        <span> <a href="../../../../2014/11/18/static-analysis-and-burp-suite" rel="bookmark" title="Permalink" class="permalink">Nov 18, 2014</a> </span> 
+        <span> • <span> <a href="/authors/adam-baldwin">Adam Baldwin</a> </span> </span> 
+       </div> 
+       <div class="postContent">
+        <h1>Static Analysis and Burp Suite</h1> 
+        <p><a href="http://portswigger.net/burp/">Burp Suite</a> ("Burp") is a web application testing toolset that we use on a daily basis. The toolset includes an inspecting proxy, allowing us to see exactly what is being sent to an application, as well as utilities to replay and modify previously sent traffic. In addition to these manual utilities, Burp also includes some automated scanning functionality, and compared to it's competitors, it's quite good. Just recently, the developers added a new static analysis engine for JavaScript, allowing us to passively identify vulnerabilities in code.</p> 
+        <p>A few weeks ago ^Lift team member Tom Steele built a tool called <a href="https://github.com/tomsteele/burpstaticscan">burpstaticscan</a> to utilize this built-in static analyzer to scan code locally.</p> 
+        <p>I don't know how it came up, but the words "You should scan all the front-end packages in bower with it." were spoken. Thus I was nerd snipped into another crazy project.</p> 
+        <p>I was really excited to see what Burp might find, as I had yet to see it find any meaningful static analysis results during a client security assessment.</p> 
+        <h2>The results</h2> 
+        <p>For those of you that are impatient here are the raw (unexplored) results.</p> 
+        <p>21973 repositories were scanned.</p> 
+        <table> 
+         <thead> 
+          <tr> 
+           <th>Count</th> 
+           <th>Vulnerability Type</th> 
+          </tr> 
+         </thead> 
+         <tbody> 
+          <tr> 
+           <td>1</td> 
+           <td>Ajax request header manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>64</td> 
+           <td>Client-side JSON injection (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>47</td> 
+           <td>Cookie manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>1950</td> 
+           <td>Cross-site scripting (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>956</td> 
+           <td>DOM data manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>10</td> 
+           <td>Denial of service (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>1</td> 
+           <td>Document domain manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>103</td> 
+           <td>HTML5 storage manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>6</td> 
+           <td>HTML5 web message manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>1</td> 
+           <td>JavaScript injection (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>818</td> 
+           <td>Link manipulation (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>3949</td> 
+           <td>Open redirection (DOM-based)</td> 
+          </tr> 
+          <tr> 
+           <td>7917</td> 
+           <td>Total Potential Vulnerabilities</td> 
+          </tr> 
+         </tbody> 
+        </table> 
+        <p>There was a lot of uninteresting data in there. After I removed anything with 'test, example, docs, doc' in it, the potential count dropped to 5976.</p> 
+        <p>The <a href="https://github.com/evilpacket/bower-burp-static-analysis">raw data</a> is available. I highly recommend anybody that publishes their code to bower to take a look at the <a href="https://github.com/evilpacket/bower-burp-static-analysis/blob/master/packages">list of packages</a> and see if yours is listed and let <a href="https://twitter.com/adam_baldwin">me</a> know if you need help figuring out the data.</p> 
+        <h2>Get Burp Setup Right</h2> 
+        <p>Here are a few tips when getting ready to do something like this yourself. It cost me plenty of time trying to figure out the best way to tune things to even be able to pull this off using just my machine.</p> 
+        <h3>Disable all checks but the static analyze checks</h3> 
+        <p>I only wanted to focus on static analyzer findings and wanted to make Burp as efficient as possible.</p> 
+        <h3>Reduce the static analyzer time</h3> 
+        <p>30 seconds seemed to be a good threshold to not timeout too many tests.</p> 
+        <h3>Get your logging in place before you start</h3> 
+        <p>The biggest suggestion I can give is to get your data out of Burp as fast as you can. That way if it crashes you can resume with no trouble. I had to stop and restart a number of times.</p> 
+        <p>For this I used <a href="https://github.com/liftsecurity/burpbuddy">burpbuddy</a> and wrote a small file logger so I could do post processing of the scan issues at a later time.</p> 
+        <div class="highlight">
+         <pre><span class="kd">var</span> <span class="nx">WebSocket</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'ws'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">crypto</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'crypto'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">fs</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'fs'</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">url</span> <span class="o">=</span> <span class="s1">'ws://localhost:8000/'</span><span class="p">;</span>
+<span class="kd">var</span> <span class="nx">ws</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="nx">url</span><span class="p">);</span>
+
+<span class="nx">ws</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'open'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'opened connection to '</span> <span class="o">+</span> <span class="nx">url</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="nx">ws</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">'message'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">flags</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">filename</span> <span class="o">=</span> <span class="nx">__dirname</span> <span class="o">+</span> <span class="s2">"/data/"</span> <span class="o">+</span> <span class="nx">crypto</span><span class="p">.</span><span class="nx">randomBytes</span><span class="p">(</span><span class="mi">12</span><span class="p">).</span><span class="nx">toString</span><span class="p">(</span><span class="s1">'hex'</span><span class="p">)</span> <span class="o">+</span> <span class="s2">".json"</span><span class="p">;</span>
+
+    <span class="kd">var</span> <span class="nx">obj</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">messageType</span> <span class="o">===</span> <span class="s1">'scanIssue'</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">fs</span><span class="p">.</span><span class="nx">writeFileSync</span><span class="p">(</span><span class="nx">filename</span><span class="p">,</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">obj</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="mi">4</span><span class="p">));</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">name</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</pre>
+        </div> 
+        <h2>Burp might burp if you feed it too fast</h2> 
+        <p>Machine resources are finite, so be careful when feeding burp too fast. I found that pausing for a couple minutes every 100 repositories worked well. This was frustrating to experiment with as there is no indicator inside Burp that can tell you what files it's working on and CPU was really the only indicator I could go off of.</p> 
+        <p>The other thing I found was that I had to stop Burp, and start it up every 4000 repositories. Burp would run out of memory and start acting weird, probably because it's simply not designed to do this and it's a relatively new feature.</p> 
+        <p>Here is a condensed version of the script that was used to feed Burp. The one on GitHub has tracking to keep track of how far it got which is really useful for stopping and starting Burp.</p> 
+        <table class="highlighttable">
+         <tbody>
+          <tr>
+           <td class="linenos">
+            <div class="linenodiv">
+             <pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14</pre>
+            </div></td>
+           <td class="code">
+            <div class="highlight">
+             <pre><span class="c">#!/bin/bash</span>
+<span class="k">for</span> URL in <span class="sb">`</span>jq .<span class="o">[]</span>.url all<span class="p">|</span>sed s/<span class="se">\"</span>//g<span class="sb">`</span><span class="p">;</span> <span class="k">do</span>
+
+    <span class="nv">ROOT</span><span class="o">=</span><span class="sb">`</span><span class="nb">echo</span> <span class="si">${</span><span class="nv">URL</span><span class="si">}</span><span class="p">|</span>awk -F <span class="s1">'/'</span> <span class="s1">'{print "/"$(NF-1)"/"$NF}'</span><span class="p">|</span>sed s/<span class="se">\\</span>.git<span class="nv">$/</span>/<span class="sb">`</span>
+        <span class="nb">echo</span> <span class="s2">"SCANNING: </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span><span class="s2">"</span>
+        git clone <span class="nv">$URL</span> data/repo
+
+        <span class="c"># Remove dot files </span>
+        rm -rf data/repo/.* 2&gt; /dev/null
+
+        burpstaticscan --dir data/repo --root <span class="s2">"</span><span class="si">${</span><span class="nv">ROOT</span><span class="si">}</span><span class="s2">"</span>
+        rm -rf data/repo
+        <span class="nb">echo</span> <span class="s2">"DONE SCANNING: </span><span class="si">${</span><span class="nv">URL</span><span class="si">}</span><span class="s2">"</span>
+<span class="k">done</span>
+</pre>
+            </div> </td>
+          </tr>
+         </tbody>
+        </table> 
+        <p>I hope this helps you avoid some pitfalls when doing mass static analysis scanning with Burp. If you find something interesting in the raw data give <a href="https://twitter.com/adam_baldwin">me</a> a ^5 on twitter.</p> 
+        <p>Enjoyed the article, <a href="https://twitter.com/liftsecurity">follow us</a>. Built a webapp? Have us <a href="https://liftsecurity.io/contact">audit your code</a>.</p>
+       </div> 
+       <div class="postContent"> 
+        <h4>You might also enjoy reading:</h4> 
+        <ul> 
+         <li> <a href="../../../../2014/08/23/burp-extender-with-scala">Burp Extender With Scala</a> </li> 
+         <li> <a href="../../../../2014/10/07/node-security-performance-london-september">Node.js Security and Performance Training in London</a> </li> 
+         <li> <a href="../../../../2015/02/24/road-node-show">"^lift security Road Node Show"</a> </li> 
+         <li> <a href="../../../../2015/06/08/security-and-internationalization">"Security and Internationalization"</a> </li> 
+         <li> <a href="../../../../2015/10/13/requiresafe-and-code-climate">requireSafe joins Code Climate</a> </li> 
+        </ul> 
+       </div> 
+      </article> 
+     </div> 
+    </div> 
+    <aside role="complementary" class="grid-flex-cell grid-flex-cell-1of3"> 
+     <div class="center"> 
+      <img src="/theme/images/logo-node-security-project.svg" height="80" alt="Node Security Project logo"> 
+      <p><strong>Find and Fix Node.js Security Flaws</strong></p> 
+      <p>Continuously monitor your node.js applications for the latest security flaws found and curated by our team.</p>
+      <a href="https://nodesecurity.io" class="button button-outlined">Learn more</a> 
+     </div> 
+    </aside> 
+   </div> 
+  </div> 
+  <footer role="contentinfo" class="footer-primary"> 
+   <div class="container center"> 
+    <nav role="navigation"> 
+     <ul class="list-unstyled list-inline"> 
+      <li><a href="//liftsecurity.io/#services">Services</a></li> 
+      <li><a href="//liftsecurity.io/case-studies" title="Case Studies">Case Studies</a></li> 
+      <li><a href="//liftsecurity.io/advisories" title="Advisories">Advisories</a></li> 
+      <li><a href="//liftsecurity.io/jobs" title="Jobs">Jobs</a></li> 
+      <li><a href="//blog.liftsecurity.io" title="Blog">Blog</a></li> 
+      <li><a href="//liftsecurity.io/contact" title="Contact">Contact</a></li> 
+     </ul> 
+    </nav> 
+    <p>© 2017, ^Lift Security</p> 
+   </div> 
+  </footer>  
+ </body>
+</html>

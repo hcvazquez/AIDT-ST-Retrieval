@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <!-- #BeginTemplate "/Templates/topic_1col.dwt" -->
+ <head> 
+  <!-- #BeginEditable "doctitle" --> 
+  <title>JAVA-Based Client Authentication (JAAS)</title> 
+  <!-- #EndEditable --> 
+  <!-- #BeginEditable "keywords" --> 
+  <!-- #EndEditable --> 
+  <!-- #BeginEditable "loadFrame" --> 
+  <script type="text/javascript" src="../../nav/en_adm_loadFrame.js"></script> 
+  <!-- #EndEditable --> 
+  <!-- #BeginEditable "topicID" --> 
+  <script type="text/javascript">
+		var pageid = '4ec55d96-9b7f-49ea-8529-57a6ace4ab5d';
+		var reff = 0;
+	</script> 
+  <!-- #EndEditable --> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <link rel="stylesheet" href="../../css/fnhelp.css" type="text/css"> 
+ </head> 
+ <!--================================ BODY ==================================--> 
+ <body onload="sync_ready(0,pageid,reff)"> 
+  <!--  TOPIC CONTENTS --> 
+  <!-- #BeginEditable "TopicContent" --> 
+  <h1>JAVA-based client authentication (JAAS)</h1> 
+  <p> Content Engine accepts requests either through a standard Java™ 2 Enterprise Edition (J2EE) EJB or through the Content Engine (CE) web service. Clients of the CE Java API have the option of choosing to use either of these transport layers. </p> 
+  <p>One of the advantages inherent to the EJB transport layer is the ability to leverage Java™ Authentication and Authorization Service (JAAS)-based authentication. The JAAS standard provides a mechanism that allows third-party authentication or single sign-on (SSO) solutions to be integrated with any J2EE-compliant application such as Content Engine. If an SSO provider writes a JAAS Login Module for a given application server, then clients of applications hosted in that application server can leverage that SSO solution. </p> 
+  <p>The way that JAAS-based authentication is used can differ in different client and server scenarios. The sections below illustrate several such scenarios.</p> 
+  <h2><a name="browserbased_clients" id="browserbased_clients"></a>Browser-based clients of J2EE application servers </h2> 
+  <p>Browser-based clients of J2EE-based application servers interact with servlets and Java™Server Pages (JSPs). To access a FileNet P8 server, J2EE servlet-based applications must obtain a JAAS Subject that is valid in the J2EE EJB container that hosts the Content Engine EJB. There are two paradigms that may be used to obtain this JAAS Subject: application-managed authentication and container-managed authentication.</p> 
+  <h3> Application-managed authentication </h3> 
+  <p>A servlet may make JAAS calls to perform its own JAAS login programmatically (see <a href="sec_authenticate_ov.htm#jaas_ov">JAAS Overview</a>). This approach may involve application-server-specific idiosyncrasies and configuration issues, but it is fairly standardized for the common username/password case. To use application-managed authentication, each servlet deployed in the container must include logic that determines whether the user is authenticated. If the caller is authenticated, then its identity is determined by examining information in the user's session. Each servlet must perform some action (such as redirecting an unauthenticated user to a logon page) that collects and verifies the user's credentials, handles errors, and manages the encoding of the authenticated identity into the user's session. </p> 
+  <h3>Container-managed authentication </h3> 
+  <p>One of a standard set of servlet authentication options may be specified in the web application's deployment descriptor. In this case, the servlet container performs the JAAS login, based on the credentials that are supplied, relieving the application of this burden.&nbsp; </p> 
+  <p>Each web application deployed in a servlet container can specify one of the following options, as defined in the servlet specification, that the container should use to authenticate users: </p> 
+  <ul> 
+   <li> HTTP Basic Authentication (BASIC): The container requests the client browser to prompt the user for a username and password, using a browser-specific dialog box. This option is defined by the HTTP specification. The user-supplied credentials are sent to the server for authentication. A secure transport must be used, as credentials are unencrypted. Few applications use this method, since the application's look and feel are not preserved, and the login prompt cannot be integrated into the application in a cohesive presentation. </li> 
+   <li> HTTP Digest Authentication (DIGEST): Like HTTP Basic, but a digest (a one-way hash) of the password is sent instead of the password. This option is somewhat more secure, as the actual password is not compromised, but requires that the authentication mechanism that manages identities accept the password hash in a particular form, rather than the actual password. This is not possible in most real-world cases. </li> 
+   <li> Forms-Based Authentication (FORM): Instead of asking the client browser to prompt for username/password, the caller is redirected to an application-specific form to provide this information. This option allows customization of the look and feel of the login page and any error pages. It also requires a secure transport to protect the password. This option is the default for both Workplace and Workplace XT sign-in.</li> 
+   <li> HTTPS Client Authentication (CLIENT-CERT): This option requires each user to have a unique Public Key Certificate (PKC), and requires the use of an HTTPS (SSL) connection between the client and the server. </li> 
+  </ul> 
+  <p>Note that while all four of the options above may be executed over an HTTPS connection (and, in fact that is a recommended best practice), only CLIENT-CERT actually requires an HTTPS connection. SSL is engaged through the configuration in the servlet descriptor of &lt;transport-guarantee&gt; as CONFIDENTIAL or INTEGRAL. </p> 
+  <p>All of these technologies are forms of container-managed authentication, where the J2EE servlet container performs the JAAS authentication based on credentials obtained by a standard mechanism. The specification of one of these authentication mechanisms is a standard part of a servlet deployment descriptor. The specification and configuration of how the J2EE application server validates these credentials, however, is application-server-dependent. In an enterprise environment, an authentication mechanism must be provided to validate credentials against the enterprise identity management solution (either a directory service or SSO solution).</p> 
+  <p>Once a caller has been authenticated by a J2EE servlet container, if the servlet subsequently calls an EJB, the Servlet Container is required to propagate the caller's identity (JAAS Subject) to the EJB. The diagram below illustrates the container-managed authentication case, using forms-based authentication to authenticate the caller against Active Directory: </p> 
+  <p align="center"><img src="images/container-managed_using_forms.gif" border="1"></p> 
+  <p align="center"><strong><a name="fig3" id="fig3"></a>Container-managed authentication, using a forms-based authentication option.</strong></p> 
+  <p align="left">The following steps occur in this graphic:</p> 
+  <ol> 
+   <li> A user attempts to access a servlet-based application. </li> 
+   <li> The J2EE application server redirects the user to a page that challenges for credentials. </li> 
+   <li> The user enters credentials and submits them to the server. </li> 
+   <li> The J2EE server validates the user's credentials via JAAS. </li> 
+   <li> The J2EE server creates JAAS Principal and Subject objects using the Active Directory JAAS Login Module, and places them in the user's session. </li> 
+   <li> The J2EE server redirects the user back to the application page that was originally requested. </li> 
+   <li> The servlet container looks for a user principal value available on the incoming request. </li> 
+   <li> Once invoked, the servlet makes a call to Content Engine, and the user's JAAS Subject is propagated to Content Engine's EJB container.</li> 
+  </ol> 
+  <h4><a name="perimeter_authentication" id="perimeter_authentication"></a>Perimeter authentication </h4> 
+  <p>In perimeter mode, the authentication process occurs outside of the web container. An entity outside of the application server collects the users' credentials, validates them through proprietary mechanisms, and sends them onto the server in the form of an HTTP cookie. This is the mechanism used by SSO solutions to integrate with a J2EE web application. Several examples of this mode are discussed in <a href="sec_authenticate_sso_jaas.htm">Single sign-on via JAAS.</a><br> </p> 
+  <p>The basic pattern is that a third-party proxy server intercepts the web server requests and authenticates them using proprietary technology. A proprietary HTTP header is then added to the request (an SM-Session token in the Netegrity case, or an LTPA token in the Tivoli Access Manager case). When the request arrives at the web server, the servlet container intercepts it, detects that it contains an SSO cookie, extracts the cookie, and invokes the SSO provider logic to perform a JAAS login, using SSO specific Login Modules, converting the contents of the cookie into a valid JAAS subject.</p> 
+  <p>Perimeter authentication is considered as a form of container-managed authentication, even though authentication occurs outside of the container. Perimeter authentication is configured by selecting CLIENT-CERT as the container-managed authentication mechanism, and then performing some additional SSO provider-specific steps. The web container extracts whatever data was present in the CLIENT-CERT cookie of the incoming request and passes it into the JAAS Login Modules that are configured for the web application. A JAAS Login Module for a third-party SSO vendor can pass a proprietary token in this CLIENT-CERT field and then process that token in a Login Module the vendor provides.</p> 
+  <p>Integration with Kerberos-based authentication environments via the Simple and Protected GSS API Negotiation Mechanism (SPNEGO) standard is one type of perimeter authentication used by many J2EE web container implementations. </p> 
+  <h2>J2EE thick Java client </h2> 
+  <p>As discussed in <a href="sec_authenticate_ov.htm#using_jaas">Using JAAS from a stand-alone Java client</a>, additional challenges exist when using JAAS in a stand-alone Java client environment. In particular, integration options with third-party SSO providers may be limited or unavailable. In many cases, third-party JAAS Login Modules may be provided that work well when executing within a J2EE container, but cease to work when running in a stand-alone Java environment. The stand-alone Java environment may not support the application-server-specific trust mechanisms needed to produce valid JAAS subjects for the target application server. </p> 
+  <p>Login Modules that allow the use of username/password credentials from a stand-alone client are available from the individual application server vendors. In some cases, a Login Module that allows the use of PKI certificates with two-way SSL may also be available. Support for other authentication options in a thick Java client environment will most likely require a custom integration. Clients of the FileNet P8 Content Engine Java API may use a JAAS Subject that they have obtained themselves, or pass in username/password credentials to the API, which will then attempt to obtain a JAAS Subject for them, using Login Modules specified in the operative JAAS configuration. </p> 
+  <h2>Support for Content Engine 3.5 Java API clients </h2> 
+  <p> Clients using the Java Compatibility Layer may continue to provide username/password credentials as for the Content Engine 3.5.x Java API. In this case, the Java Compatibility Layer will perform a JAAS login on each user's behalf, using the Login Modules specified in the operative JAAS configuration. Alternatively, a client may perform its own JAAS Login prior to calling the Java Compatibility Layer. New configuration options are provided in the Java Compatibility Layer configuration file for controlling these authentication options. </p> 
+  <h2> Support for Java applets </h2> 
+  <p> A Java applet is a utility that conforms to the interfaces defined in the java.applet package and is designed to run as an embedded part of another application, typically a web browser. An applet will be launched in a separate window, and may execute independently from the parent application that launched it. Applets are typically created to host graphically complex interactive user interfaces that would be difficult to implement in a browser. </p> 
+  <p>In the common case where an authenticated client running in a browser takes some action that causes an applet to be launched, the applet may be able to inherit the parent's credentials. If the applet communicates via HTTP to servlets in the same J2EE web container that the parent browser was communicating with, then authentication credentials that are stored in HTTP headers received by the parent should be accessible to the applet, and the applet should not require further authentication.</p> 
+  <p>If, however, the applet uses other APIs to connect to the server, or if the applet communicates with different servers than the parent application, then propagating the caller's identity may require custom development, or a second authentication may be required for the applet. </p> 
+  <h3><a name="applets_and_reverse_proxy" id="applets_and_reverse_proxy"></a>Applets and reverse proxy servers </h3> 
+  <p>The <a href="#perimeter_authentication">Perimeter authentication section</a> above discussed the use of reverse proxy servers in perimeter authentication scenarios. The reverse proxy server acts as an intermediary between the browser-based client and the HTTP server. It appears to the browser that the reverse proxy is the server. The browser does not know that the reverse proxy is actually translating the requests and forwarding them on to another server, and then translating the responses that are sent back.</p> 
+  <p>To make it appear that the reverse proxy is the actual server, the reverse proxy must translate the responses from the server so that any references to the target server are converted to references to the reverse proxy server. This primarily affects embedded URL's. Web pages often contain many links to other pages hosted in the same web site. The reverse proxy must translate these references so that they appear to reference the same resource, when in fact they are hosted on the reverse proxy server rather than the target server.</p> 
+  <p>Reverse proxy servers are designed to handle traffic from browser-based clients, and typically translate any references that appear in HTML data correctly. There are a number of special considerations that come into play when applet traffic is sent through a reverse proxy server: </p> 
+  <ul> 
+   <li><strong>Handling Cookies:</strong> Cookies are data sent between a client and a server via HTTP headers. In a reverse proxy scenario, the reverse proxy may interject its own cookies into the data sent to the server, as well as adding to and translating the set of cookies that are returned from the server to the client. The applet must not cache cookies in memory; it must obtain them from the HTTP connection every time it needs to access them so that it can obtain the latest set of translated cookies sent by the reverse proxy. </li> 
+   <li><strong>Handling Redirects:</strong> If a reverse proxy detects stale or invalid authentication tokens in the cookies sent from a client, it may use an HTTP re-direct to cause the client to refresh its cookies. The applet must handle HTTP re-directs properly. </li> 
+   <li><strong>Translating URL's embedded in XML or other non-HTML data:</strong> Applets typically send non-HTML data back and forth with the server. If the data returned from the server contains embedded URL's, then the reverse proxy server must translate these. Causing this to happen may require changes in the proxy server, to have it translate data in fields which it would not normally examine. </li> 
+  </ul> 
+  <p>&nbsp;</p> 
+  <!-- #EndEditable --> 
+  <p>&nbsp;</p>  
+  <!-- #EndTemplate -->  
+ </body>
+</html>

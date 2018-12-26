@@ -1,0 +1,599 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+  <meta name="Author" content="Build"> 
+  <meta name="GENERATOR" content="Mozilla/4.5 [en] (WinNT; I) [Netscape]"> 
+  <title>Creating an Eclipse View</title> 
+  <link rel="stylesheet" href="../default_style.css"> 
+ </head> 
+ <body> 
+  <div align="right">
+   &nbsp; 
+   <font face="Times New Roman, Times, serif"><font size="-1">Copyright © 2001 Object Technology International, Inc.</font></font>
+  </div> 
+  <br>
+  <table border="0" cellspacing="0" cellpadding="2" width="100%"> 
+   <caption></caption>
+   <tbody> 
+   </tbody> 
+   <tbody>
+    <tr> 
+     <td align="LEFT" valign="TOP" colspan="2" bgcolor="#0080C0"><b><font face="Arial,Helvetica"><font color="#FFFFFF">&nbsp;Eclipse Corner Article</font></font></b></td> 
+    </tr> 
+   </tbody>
+  </table> 
+  <h1> <img SRC="Idea.jpg" height="86" width="120" align="CENTER"></h1> 
+  <center> 
+   <h1> Creating an Eclipse View</h1>
+  </center> 
+  <blockquote> 
+   <b>Summary</b> 
+   <br> In the Eclipse Platform a view is typically used to navigate a hierarchy of information, open an editor, or display properties for the active editor.&nbsp; In this article the design and implementation of a view will be examined in detail.&nbsp; You'll learn how to create a simple view based on SWT, and a more advanced view using the JFace viewer hierarchy.&nbsp; We'll also look at ways to achieve good integration with many of the existing features in the workbench, such as the window menu and toolbar, view linking, workbench persistence and action extension. 
+   <p><b>By Dave Springgay, OTI</b> <br> <font size="-1">November 2, 2001</font> </p>
+  </blockquote> 
+  <hr WIDTH="100%"> 
+  <h2> Introduction</h2> In the Eclipse Platform the workbench contains a collection of workbench windows.&nbsp; Each workbench window contains one or more pages, and each page contains a collection of editors and views.&nbsp; An editor is typically used to edit or browse a document or input object.&nbsp; Modifications made in an editor follow an open-save-close lifecycle model.&nbsp; A view is typically used to navigate a hierarchy of information, open an editor, or display properties for the active editor.&nbsp; In contrast to an editor, modifications made in a view are saved immediately.&nbsp; The layout of editors and views within a page is controlled by the active perspective. 
+  <p>The workbench contains a number of standard components which demonstrate the role of a view.&nbsp; For instance, the Navigator view is used to display and navigate through the workspace.&nbsp; If you select a file in the Navigator, you can open an editor on the contents of the file.&nbsp; Once an editor is open, you can navigate the structure in the editor data using the Outline view, or edit the properties of the file contents using the Properties view. </p>
+  <p>In this article we'll look at how you, as a plug-in developer, can add new views to the workbench.&nbsp; First we'll examine the process through the creation of a simple Label view.&nbsp; This view just displays the words "Hello World".&nbsp; Then we'll design and implement a more comprehensive view, called Word view, which displays a list of words which can be modified through addition and deletion.&nbsp; And finally, we'll look at ways to achieve good integration with many of the existing features in the workbench. </p>
+  <h2> Source Code</h2> 
+  <p>To run the example or view the source for code for this article you can unzip <a href="viewArticleSrc.zip">viewArticleSrc.zip</a> into your <i>plugins/ </i>subdirectory. </p> 
+  <p>&nbsp; </p> 
+  <h2> <a name="Adding a New Perspective"></a>Adding a New View</h2> A new view is added to the workbench using a simple three step process. 
+  <br>&nbsp; 
+  <ol> 
+   <li> Create a plug-in.</li> 
+   <li> Add a view extension to the plugin.xml file.</li> 
+   <li> Define a view class for the extension within the plug-in.</li> 
+  </ol> 
+  <p><br>To illustrate this process we'll define a view called "Label", which just displays the words "Hello World". </p>
+  <h3> Step 1: Create a Plug-in</h3> In step 1 we need to create a new plug-in.&nbsp; The process of plug-in creation is explained in detail in 
+  <a href="http://www.eclipse.org/articles/Your%20First%20Plug-in.html">Your First Plugin</a>, by Jim Amsden, so we won't go into the details here.&nbsp; To be brief, we need to create a plugin project, and then define a plugin.xml file (shown below).&nbsp; This file contains a declaration of the plug-in id, name, pre-requisites, etc. 
+  <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;plugin
+&nbsp;&nbsp; name="Views Plugin"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp; id="org.eclipse.ui.articles.views"
+&nbsp;&nbsp; version="1.0.0"
+&nbsp;&nbsp; provider-name="OTI"&gt;
+
+&lt;requires&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import plugin="org.eclipse.core.boot"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import plugin="org.eclipse.core.runtime"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import plugin="org.eclipse.core.resources"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import plugin="org.eclipse.swt"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;import plugin="org.eclipse.ui"/&gt;
+&lt;/requires&gt;
+
+&lt;runtime&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;library name="views.jar"/&gt;
+&lt;/runtime&gt;
+
+&lt;/plugin&gt;</pre> 
+  <h3> Step 2: Add a View Extension to the plugin.xml file</h3> Once we have a plugin, we can define a view extension.&nbsp; The org.eclipse.ui plug-in defines a single extension point for view contribution: org.eclipse.ui.views.&nbsp; In the XML below, we use this extension point to add the Label view extension.&nbsp; This XML is added to the plugin.xml file, after the runtime element, and contains the basic attributes for the view: id, name, icon and class. 
+  <pre>&lt;extension point="org.eclipse.ui.views"&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;view id="org.eclipse.ui.articles.views.labelview"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name="Label View"
+<img SRC="tag_a.jpg" BORDER="0" height="13" width="24">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; class="org.eclipse.ui.articles.views.LabelView"
+<img SRC="tag_b.jpg" BORDER="0" height="13" width="24">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; icon="icons\view.gif"/&gt;
+&lt;/extension&gt;</pre> A complete description of the view extension point and the syntax are available in the developer documentation for 
+  <tt>org.eclipse.ui</tt>.&nbsp; The attributes are described as follows. 
+  <br>&nbsp; 
+  <ul> 
+   <li> <b>id</b> - a unique name that will be used to identify this view</li> 
+   <li> <b>name</b> - a translatable name that will be used in the UI for this view</li> 
+   <li> <b>class</b> - a fully qualified name of the class that implements <tt>org.eclipse.ui.IViewPart</tt>. A common practice is to subclass <tt>org.eclipse.ui.part.ViewPart</tt> in order to inherit the default functionality.</li> 
+   <li> <b>icon</b> - a relative name of the icon that will be associated with the view.</li> 
+  </ul> 
+  <p><br>Perhaps the most important attribute is <i>class </i>(<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; This attribute must contain the fully qualified name of a class that implements <tt>org.eclipse.ui.IViewPart</tt>.&nbsp; The <tt>IViewPart</tt> interface defines the minimal responsibilities of the view, the chief one being to create an SWT Control within the workbench.&nbsp; This provides the presentation for an underlying model.&nbsp; In the XML above, the class for the Label view is defined as <tt>org.eclipse.ui.articles.views.LabelView</tt>.&nbsp; The implementation of <tt>LabelView</tt> will be examined in a few paragraphs. </p>
+  <p>The <i>icon</i> attribute (<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">) contains the name of an image that will be associated with the view.&nbsp; This image must exist within the plugin directory or one of the sub directories. </p>
+  <h3> Step 3: Define a View Class for the Extension within the Plug-in</h3> Now we need to define the view class.&nbsp; To help us out, the platform contains an abstract class, named 
+  <tt>org.eclipse.ui.part.ViewPart</tt>, which implements most of the default behavior for an 
+  <tt>IViewPart</tt>.&nbsp; By subclassing this, we inherit all of the behavior.&nbsp; The result is LabelView (shown below).&nbsp; The methods in this class implement the view specific presentation.&nbsp; The 
+  <tt>createPartControl</tt> method (
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">)&nbsp; creates an SWT 
+  <tt>Label</tt> object to display the phrase "Hello World".&nbsp; The 
+  <tt>setFocus</tt> (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) method gives focus to this control.&nbsp; Both of these methods will be called by the platform. 
+  <pre>package org.eclipse.ui.articles.views;
+
+import org.eclipse.swt.widgets.*;
+import org.eclipse.ui.part.ViewPart;
+
+public class LabelView extends ViewPart {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private Label label;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public LabelView() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; super();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">&nbsp;&nbsp;&nbsp;&nbsp; public void setFocus() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label.setFocus();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">&nbsp;&nbsp;&nbsp;&nbsp; public void createPartControl(Composite parent) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label = new Label(parent, 0);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label.setText("Hello World");
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+
+}</pre> Once the LabelView class has been declared and compiled, we can test the results.&nbsp; To do this, invoke the Perspective &gt; Show View &gt; Other menu item.&nbsp; A dialog will appear containing all of the view extensions: the Label View item will appear in the Other category.&nbsp; If you select the Label View item and press OK, the view will be instantiated and opened in the current perspective.&nbsp; Here is a screen snapshot of the Label view after it has been opened within the Resource perspective. 
+  <center> 
+   <p><img SRC="LabelView.jpg" height="397" width="534"></p>
+  </center> 
+  <h3> View Lifecycle</h3> The lifecycle of a view begins when the view is added to a workbench page.&nbsp; This can occur during the creation of the page, or afterwards, if the user invokes Perspective &gt; Show View.&nbsp; In either case the following lifecycle is performed. 
+  <br>&nbsp; 
+  <ol> 
+   <li> An instance of the view class is instantiated.&nbsp; If the view class does not implement <tt>IViewPart</tt> an <tt>PartInitException</tt> is thrown.</li> 
+   <li> The <tt>IViewPart.init</tt> method is called to initialize the context for the view.&nbsp; An <tt>IViewSite</tt> object is passed, and contains methods to get the containing page, window, and other services is passed.</li> 
+   <li> The <tt>IViewPart.createPartControl</tt> method is called.&nbsp; Within this method the view can create any number of SWT controls within a parent <tt>Composite</tt>.&nbsp; These provide the presentation for some underlying, view specific model.</li> 
+  </ol> 
+  <p><br>When the view is closed the lifecycle is completed. <br>&nbsp; </p>
+  <ol> 
+   <li> The parent <tt>Composite</tt> passed to <tt>createPartControl</tt> is disposed.&nbsp; This children are also implicitly disposed.&nbsp; If you wish to run any code at this time, you must hook the control dispose event.</li> 
+   <li> The <tt>IViewPart.dispose</tt> method is called to terminate the part lifecycle.&nbsp; This is the last method which the workbench will call on the part.&nbsp; It is an ideal time to release any fonts, images, etc.</li> 
+  </ol> 
+  <h3> View Position</h3> As we have already seen, the user can open a view by invoking Perspective &gt; Show View.&nbsp; In this scenario, the initial position of the new view is determined by the active perspective within the current page.&nbsp; You can think of a perspective as a layout containing views, folders, and place holders.&nbsp; A 
+  <i>folder</i> is a stack of views.&nbsp; A 
+  <i>place holder</i> marks the desired position of a view, should the user open it.&nbsp; When a new view is opened the platform will search the perspective for a place holder with the same 
+  <tt>id</tt> as the view.&nbsp; If such a place holder is found, it will be replaced by the new view.&nbsp; Otherwise, the new view will be placed on the right hand side of the page. 
+  <p>As a plugin developer, you may also define a new perspective which contains your view, or add your view to a perspective which has been contributed by another plug-in. In either case, you have greater control over view position.&nbsp; For more information about the use of perspectives see <a href="http://www.eclipse.org/articles/using-perspectives/PerspectiveArticle.html">Using Perspectives in the Eclipse UI</a>. </p>
+  <h3> Can I Declare A View Through API?</h3> Every view within the workbench must be declared in XML.&nbsp; There are two reasons for this. 
+  <br>&nbsp; 
+  <ol> 
+   <li> Within Eclipse, XML is typically used to declare the presence of an extension and the circumstances under which it should be loaded.&nbsp; This information is used to load the extension and its plugin lazily for better startup performance.&nbsp; For views in particular, the declaration is used to populate the Show View menu item before the plugin is loaded.</li> 
+   <li> The view declaration is also used for workbench persistence.&nbsp; When the workbench is closed, the id and position of each view within the workbench is saved to a file.&nbsp; It is possible to save the specific view class.&nbsp; However, the persistence of class names in general is brittle, so view id's are used instead.&nbsp; On startup, the view id is mapped to a view extension within the plugin registry.&nbsp; Then a new instance of the view class is instantiated.</li> 
+  </ol> 
+  <h2> The Word View</h2> In this section we'll implement a more comprehensive view, called Word view, which displays a list of words which can be modified through addition and deletion. 
+  <h3> Adding a View Extension to the plugin.xml file</h3> To start out, we add another view extension to the plugin.xml (shown below).&nbsp; This extension has the same format as the Label view: id, name, icon and class.&nbsp; In addition, the extension contains a 
+  <i>category</i> element (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; A 
+  <i>category</i> is used to group a set of views within the Show View dialog.&nbsp; A category must be defined using a category element.&nbsp; Once this has been done, we can populate the category by including the category attribute in the Word view declaration (
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; The category, and the Word view within it, will both be visible in the Show View dialog. 
+  <pre>&lt;extension point="org.eclipse.ui.views"&gt;
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; &lt;category&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id="org.eclipse.ui.article"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name="Article"&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/category&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;view id="org.eclipse.ui.articles.views.wordview"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name="Word View"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; icon="icons\view.gif"
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; category="org.eclipse.ui.article"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; class="org.eclipse.ui.articles.views.WordView"/&gt;
+&lt;/extension&gt;</pre> 
+  <h3> Defining a View Class for the Extension within the Plug-in</h3> Now we need to define a view class for the Word view.&nbsp; For simplicity, we subclass ViewPart to create a WordView class (shown below), and then implement 
+  <tt>setFocus</tt> and 
+  <tt>createPartControl</tt>.&nbsp; The implementation of this class is discussed after the code. 
+  <pre>public class WordView extends ViewPart&nbsp;
+{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; WordFile input;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ListViewer viewer;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Action addItemAction, deleteItemAction, selectAllAction;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IMemento memento;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Constructor
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; public WordView() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; super();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; input = new WordFile(new File("list.lst"));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * @see IViewPart.init(IViewSite)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; public void init(IViewSite site) throws PartInitException {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; super.init(site);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Normally we might do other stuff here.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * @see IWorkbenchPart#createPartControl(Composite)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+<img SRC="tag_c.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; public void createPartControl(Composite parent) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create viewer.
+<img SRC="tag_d.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer = new ListViewer(parent);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setContentProvider(new WordContentProvider());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setLabelProvider(new LabelProvider());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setInput(input);
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create menu and toolbars.
+<img SRC="tag_e.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createActions();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createMenu();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createToolbar();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createContextMenu();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; hookGlobalActions();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Restore state from the previous session.
+<img SRC="tag_f.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; restoreState();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * @see WorkbenchPart#setFocus()
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void setFocus() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.getControl().setFocus();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> In the 
+  <tt>WordView</tt> constructor, the model, a 
+  <tt>WordFile</tt>, is created (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; The actual shape of the model is somewhat irrelevant, as we wish to focus on the details of view creation, and the appropriate model will vary with the problem domain.&nbsp; To be brief, a 
+  <tt>WordFile</tt> is simply a list of words which are stored in a file.&nbsp; The storage location of the 
+  <tt>WordFile</tt> is passed to the constructor.&nbsp; If this file exists the 
+  <tt>WordFile</tt> will read it.&nbsp; Otherwise it will create the file.&nbsp; The 
+  <tt>WordFile</tt> also has simple methods to add, remove, and get all of the words.&nbsp; Each word is stored in a 
+  <tt>Word</tt> object, which is just a wrapper for a 
+  <tt>String</tt>.&nbsp; The Word and WordFile classes are supplied with the source of this article. 
+  <p>After the view is instantiated, the <tt>IViewPart.init</tt> method is called with an <tt>IViewSite</tt> (<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; The site is the primary interface between the view part and the outside world.&nbsp; Given the site, you can access the view menu, toolbar, status line, containing page, containing window, shell, etc.&nbsp; In the code above we simply call the superclass, ViewPart, where the site is stored in an instance variable.&nbsp; It can be retrieved at any time by calling getViewSite(). </p>
+  <p>The <tt>createPartControl</tt> method (<img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">) is called to create an SWT Control for the <tt>WordFile</tt> model.&nbsp; The creation of this presentation can be done with raw SWT widgets.&nbsp; However, the platform UI contains a class framework, known as JFace, which provides a viewer hierarchy for list, tree, table, and text widgets.&nbsp; A <i>viewer</i> is a wrapper for an SWT control, adding a model based interface to it.&nbsp;&nbsp; If you need to display a simple list model, tree model, or table model, use a viewer.&nbsp; Otherwise, it is probably easier to use raw SWT widgets.&nbsp; In the Word view the model is a simple list of words, so a ListViewer is used for the presentation. </p>
+  <p>On the first line of <tt>createPartControl</tt> the <tt>ListViewer</tt> is created (<img SRC="tag_d.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; The constructor chosen here automatically creates an SWT List control in the parent.&nbsp; Then a <i>content provider</i> is defined.&nbsp; A content provider is an adapter for a domain specific model, wrapping it in an abstract interface which the viewer invokes to get the model root and its children.&nbsp; If the model (the <tt>WordFile</tt>) changes, the content provider will also refresh the state of the <tt>ListViewer</tt> to make the changes visible.&nbsp; A <i>label provider</i> is also defined.&nbsp; This serves up a label and image for each object which is supplied by the content provider.&nbsp; And finally, we set the input for the <tt>ListViewer</tt>.&nbsp; The input is just the <tt>WordFile</tt> created in the <tt>WordView</tt> constructor. </p>
+  <p>The <tt>createPartControl</tt> method also contains several method calls for the creation of a menu, toolbar, context menu, and global actions (<img SRC="tag_e.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; These methods will be examined in later sections.&nbsp; For now, it is sufficient to say that each view has a local menu and toolbar which appear in the view title area.&nbsp; The view itself may contribute menu and toolbar items to these areas.&nbsp; The view may define a context menu (pop-up menu) for each control it creates, or hook a global action in the parent window.&nbsp; A <i>global action</i> refers to those actions in the window menu and toolbar which are always visible, but delegate their implementation to the active part.&nbsp; For instance, the Cut, Copy and Paste actions are always visible in the Edit menu.&nbsp; If invoked, their implementation is delegated to the active part.&nbsp; The last line (<img SRC="tag_f.jpg" height="13" width="24" align="ABSCENTER">) relates to state persistence between sessions.&nbsp; We will examine the code for each of these features in later sections. </p>
+  <p>Once the Word view has been declared and compiled we can test the results.&nbsp; To do this, invoke Perspective &gt; Show View &gt; Other, and then select the Word View in the Show View dialog.&nbsp; The Word view will appear in the Resource perspective, as shown below. </p>
+  <center> 
+   <p><img SRC="WordView.jpg" height="397" width="534"></p>
+  </center> 
+  <h2> Menus and Toolbars</h2> As the Word view exists now it isn't very useful.&nbsp; We can browse a list of words, but we can't modify that list.&nbsp; In this section we'll add some menu and toolbar items to the view so the user can add and delete words within the list. 
+  <p>But first, some background information.&nbsp; Each view has a local menu and toolbar.&nbsp; The toolbar is located to the right of the view caption.&nbsp; The menu is initially invisible, but becomes visible if you click on the menu button, which is just to the left of the close button.&nbsp; For instance, here is a snapshot of the Word view with the menu and toolbar we are about to define. </p>
+  <center> 
+   <p><img SRC="menus.jpg" height="247" width="264"></p>
+  </center> 
+  <p>The menu and toolbar controls for a view are initially empty and invisible.&nbsp; As the view adds items to each, the menu or toolbar will become visible.&nbsp; A view can also contribute items to the status line which appears at the bottom of the parent window.&nbsp; Together, the local menu, toolbar and status line are known as the <i>action bars</i>. </p>
+  <p>In code, access to the action bars is provided by the view site.&nbsp; The site is the primary interface between the view part and the outside world.&nbsp; If your view is a subclass of ViewPart, the site can be accessed by calling ViewPart.getViewSite.&nbsp; If not, then you must manage your own storage and retrieval of the site, which is passed to the view in the IViewPart.init method.&nbsp; Given the site, you can call <tt>getActionBars().getMenuManager</tt> to get an <tt>IMenuManager</tt>, or getActionBars().getToolBarManager() to get an IToolBarManager. </p>
+  <p>The IMenuManager and IToolBarManager interfaces are a JFace abstraction.&nbsp; They wrap an SWT <tt>Menu</tt> or <tt>Toolbar</tt> object so that you, the developer, can think in terms of action and action contribution. An <i>action</i> represents a command which can be triggered by the user from a menu or toolbar.&nbsp; It has a run method, plus other methods which return the menu or tool item presentation (text, image, etc.).&nbsp; In JFace, you create a menu or toolbar by adding instances of org.eclipse.jface.action.IAction to an IMenuManager or IToolBarManager. </p>
+  <h3> Defining our Actions</h3> We will contribute an "Add..." and "Delete" action to the Word view toolbar, and a "Select All" action to the view menu.&nbsp; In general, the initial actions within a view are contributed using Java™ code, and other plugin developers extend the menus and toolbars of a view using XML. 
+  <p>In the WordView class, the actions are created in the createActions method (shown below), which is called from createPartControl.&nbsp; For simplicity, each action is defined as anonymous subclass (<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) of <tt>org.eclipse.jface.actions.Action</tt>.&nbsp; We override the run method (<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">) to implement the actual behavior of the action. </p>
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void createActions() {
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; addItemAction = new Action("Add...") {
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void run() {&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; addItem();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; };
+<img SRC="tag_c.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; addItemAction.setImageDescriptor(getImageDescriptor("add.gif"));</pre> 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteItemAction = new Action("Delete") {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void run() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteItem();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; };
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteItemAction.setImageDescriptor(getImageDescriptor("delete.gif"));</pre> 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; selectAllAction = new Action("Select All") {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void run() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; selectAll();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; };
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Add selection listener.
+<img SRC="tag_d.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void selectionChanged(SelectionChangedEvent event) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; updateActionEnablement();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> The label of each action is defined in the action constructor (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; In addition, an image is defined for the "Add..." and "Delete" actions (
+  <img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">), since they will appear in the toolbar.&nbsp; These images are defined by invoking getImageDescriptor (shown below), a method which returns an image descriptor for a file stored in the plugin directory.&nbsp; Within this method the ViewsPlugin object is retrieved, the install URL (plugin directory) is determined, and then an ImageDescriptor is created for a path based on this URL. 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Returns the image descriptor with the given relative path.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private ImageDescriptor getImageDescriptor(String relativePath) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String iconPath = "icons/";
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; try {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ViewsPlugin plugin = ViewsPlugin.getDefault();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; URL installURL = plugin.getDescriptor().getInstallURL();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; URL url = new URL(installURL, iconPath + relativePath);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return ImageDescriptor.createFromURL(url);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; catch (MalformedURLException e) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // should not happen
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return ImageDescriptor.getMissingImageDescriptor();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> 
+  <p><br>On the last line of createActions (<img SRC="tag_d.jpg" height="13" width="24" align="ABSCENTER">), a selection listener is created and added to the list viewer.&nbsp; In general, the enablement state of a menu or tool item should reflect the view selection.&nbsp; If a selection occurs in the Word view, the enablement state of each action will be updated in the updateActionEnablement method (shown below). </p>
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void updateActionEnablement() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IStructuredSelection sel =&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (IStructuredSelection)viewer.getSelection();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteItemAction.setEnabled(sel.size() &gt; 0);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> 
+  <p><br>The approach taken for action enablement in the Word view is just one way to go.&nbsp; It is also possible to imagine an implementation where each action is a selection listener, and will enable itself to reflect the selection.&nbsp; This approach would make the actions reusable beyond the context of the original view. </p>
+  <h3> Adding our Actions</h3> Once the actions have been created we can add them to the existing menu and toolbar for the view.&nbsp; In the WordView class, this is done in the createMenu and createToolbar methods (shown below), which are called from createPartControl.&nbsp; In each case the view site is used to access the menu and toolbar managers, and then actions are added. 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Create menu.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void createMenu() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IMenuManager mgr = getViewSite().getActionBars().getMenuManager();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(selectAllAction);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Create toolbar.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void createToolbar() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(addItemAction);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(deleteItemAction);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> At this point the definition of the menu and toolbar are complete.&nbsp; If the Word view is opened in the workbench, the toolbar will be populated with the Add and Delete items.&nbsp; If you click the down arrow for the menu, you will see the Select All item there. 
+  <h2> <a name="Context Menus"></a>Context Menus</h2> In Eclipse, it is very common to expose and invoke actions from the context menu.&nbsp; For instance, if you press and release the right mouse button over an IFile in the Navigator, a context menu appears with standard file operations like Open, Rename, and Delete.&nbsp; Experienced users come to expect this, so in this section we will define a context menu for the Word view. 
+  <p>But first, some background info.&nbsp; One of the primary goals for the platform UI is extensibility.&nbsp; In fact, it is this extensibility which gives you the freedom to add new views, editors, perspectives, actions, etc., to the platform.&nbsp; Of course, extensibility is a two way street.&nbsp; While you may wish to extend the platform, others may wish to extend your view.&nbsp; It is common for one plug-in to add actions to the menu, toolbar, or context menu of a view from another plugin. </p>
+  <p>Support for context menu extension is accomplished by collaboration between the view and the platform.&nbsp; In contrast to the local menu and toolbar for each view, which are created by the platform and populated by the view, each context menu within a view must be created by the view itself.&nbsp; This is because the context menus within a view are beyond the scope of platform visibility, and there may be zero, one, or many context menus within the view.&nbsp; Once a context menu has been created, the view must explicitly register each context menu with the platform.&nbsp; This makes it available for extension. </p>
+  <p>A context menu can be created using the SWT <tt>Menu</tt> and <tt>MenuItem</tt> classes directly, or it can be created using the JFace <tt>MenuManager</tt> class.&nbsp; If you define a context menu using the MenuManager class, the platform can extend this menu with actions.&nbsp; However, if you define a context menu using the SWT Menu and MenuItem classes directly, this is not possible. </p>
+  <h3> Creating the Context Menu</h3> In the WordView class, the context menu is created in the createContextMenu method (shown below), which is called from createPartControl.&nbsp;&nbsp; Within this method a MenuManager is created (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">), a menu is created (
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">), and then the menu manager is passed to the platform for extension with other actions (
+  <img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">). 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void createContextMenu() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create menu manager.
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; MenuManager menuMgr = new MenuManager();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; menuMgr.setRemoveAllWhenShown(true);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; menuMgr.addMenuListener(new IMenuListener() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void menuAboutToShow(IMenuManager mgr) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; fillContextMenu(mgr);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create menu.
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Menu menu = menuMgr.createContextMenu(viewer.getControl());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.getControl().setMenu(menu);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Register menu for extension.
+<img SRC="tag_c.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; getSite().registerContextMenu(menuMgr, viewer);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> In the first few lines of 
+  <tt>createContextMenu</tt> a new 
+  <tt>MenuManager</tt> is created (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">), and it is configured for dynamic action population.&nbsp; In other words, w
+  <font color="#000000">henever the menu is opened, the old actions will be removed, and new actions will be added to reflect the current selection.&nbsp; This behavior is a requirement for action extension, and if not implemented, the action extensions contributed by the platform will soon flood the context menu.&nbsp;&nbsp;&nbsp; To accomplish this, we invoke setRemoveAllWhenShown(true) to clear the menu when it opens.&nbsp; Then we add a menu listener to populate the menu when it opens.&nbsp; The menu listener just calls fillContextMenu, which will be discussed below.</font> 
+  <p>After creating the MenuManager, we can create the menu, and then register the menu manager with the site (<img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; Take a good look at the last line of createContextMenu.&nbsp; In this statement we pass the menu manager and the viewer to the site.&nbsp; In general, the platform will only add action extensions to a menu if it opens.&nbsp; At that time, the action extensions for the menu are determined by examining the menu id and view selection.&nbsp; So where is the menu id?&nbsp; To answer, we need to look at the definition of IWorkbenchPartSite.registerContextMenu.&nbsp; There are two registerContextMenu methods (shown below).&nbsp; If there is only one context menu in the view, we should call the first.&nbsp; The menu id will be derived from the part id to ensure consistency.&nbsp; So in this case, our menu id is "org.eclipse.ui.articles.views.wordview".&nbsp; If there is more than one context menu in the view, we should use the second, where the menu id is explicit. </p>
+  <pre>&nbsp;&nbsp;&nbsp; // Defined on IWorkbenchPartSite.
+&nbsp;&nbsp;&nbsp; public void registerContextMenu(MenuManager menuManager,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ISelectionProvider selectionProvider);
+&nbsp;&nbsp;&nbsp; public void registerContextMenu(String menuId, MenuManager menuManager,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ISelectionProvider selectionProvider);</pre> If the user opens our context menu, the fillContextMenu method will be called.&nbsp;&nbsp; This method adds the Add, Delete and SelectAll actions to the menu.&nbsp; It is important to notice that a 
+  <tt>GroupMarker</tt> is also added to the menu for "additions" (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; This group will be used as a target for action extension by other plug-ins.&nbsp; If it does not exist, all of the action extensions will appear at the end of the menu. 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void fillContextMenu(IMenuManager mgr) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(addItemAction);
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(deleteItemAction);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(new Separator());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mgr.add(selectAllAction);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> 
+  <h3> Supporting Extension of the Context Menu</h3> In the last section extensibility was a prominent issue.&nbsp; If we want to support context menu extension in the Word view, or any other view, the following process should be followed. 
+  <br>&nbsp; 
+  <ol> 
+   <li> If you create a context menu, publish the menu id in a public interface which other plug-in developers can reference.</li> 
+   <li> Add a GroupMarker with <i>id == IWorkbenchActionConstants.MB_ADDITIONS</i> to each context menu.&nbsp; Other plug-in developers will use this as a target for menu extensions.</li> 
+   <li> If you have additional groups in the menu, publish each id.</li> 
+   <li> Register each context menu with your IWorkbenchPartSite.&nbsp; If you don't do this the workbench can't extend it.</li> 
+   <li> Define an IActionFilter for each of the objects in your model.&nbsp; Within this filter, publish the filter attributes.&nbsp; This allows for more accurate targeting of menu extensions.</li> 
+  </ol> 
+  <p><br>The first couple of items have already been discussed.&nbsp; At this point we will focus on the last point: define an IActionFilter for each object in your model. </p>
+  <h3> The Simple Case of Action Extension</h3> An action can be added to a context menu by defining an extension for the 
+  <tt>org.eclipse.ui.popupMenus</tt> extension point in the workbench plug-in.&nbsp; For instance, the following XML can be used to add the "Word Action" to the context menu for Word objects.&nbsp; Without going into too many details, the target for the action is specified by declaring an 
+  <tt>objectContribution </tt>(
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) with an 
+  <tt>objectClass</tt> of 
+  <tt>org.eclipse.ui.articles.views.Word </tt>(
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; Once this declaration is made, the action will appear within the context menu for any Word. 
+  <pre>&lt;extension point="org.eclipse.ui.popupMenus"&gt;
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; &lt;objectContribution
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id="org.eclipse.ui.articles.pm1"
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; objectClass="org.eclipse.ui.articles.views.Word"&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;action&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id="org.eclipse.ui.articles.a1"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label="Word Action"&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; menubarPath="additions"&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; class="org.eclipse.ui.articles.views.WordActionDelegate"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/objectContribution&gt;
+&lt;/extension&gt;</pre> The target for an 
+  <tt>objectContribution</tt> can be defined using the 
+  <tt>objectClass</tt> attribute and an optional 
+  <tt>nameFilter</tt> attribute.&nbsp; The 
+  <tt>nameFilter</tt> is used to specify objects with a specific label.&nbsp; Together, these attributes provide reasonable accuracy when targeting objects. 
+  <h3> The Problem Case of Action Extension</h3> In some situations the 
+  <tt>objectClass</tt> and 
+  <tt>nameFilter</tt> attributes are not enough to describe the intended target object.&nbsp; For instance, what if we wanted to add an action to a .java file which is read only, or a project which has the java nature?&nbsp; Luckily, the platform can help. 
+  <p>Within an <tt>objectContribution</tt>, a plug-in developer may define <tt>filter</tt> sub elements. Each <tt>filter</tt> describes one attribute of the target object using a name value pair.&nbsp; For instance, the following XML can be used to target an action at any Word object with <i>name = "Blue"</i>.&nbsp; Notice how the <tt>filter</tt> sub element (<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) is used to define an attribute value pair. </p>
+  <pre>&lt;extension point="org.eclipse.ui.popupMenus"&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;objectContribution
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id="org.eclipse.ui.articles.pm2"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; objectClass="org.eclipse.ui.articles.views.Word"&gt;
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;filter name="name" value="Blue"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;action&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id="org.eclipse.ui.articles.a2"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label="Blue Action"&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; menubarPath="additions"&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; class="org.eclipse.ui.articles.views.BlueActionDelegate"/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/objectContribution&gt;
+&lt;/extension&gt;</pre> Now let's look at the implementation of the 
+  <tt>filter</tt> sub element.&nbsp; The attributes for an object are type specific, and beyond the domain of the workbench itself, so the workbench will delegate filtering at this level to the selection itself.&nbsp; To do this, the platform will test to see if the selected object implements an 
+  <tt>org.eclipse.ui.IActionFilter</tt>.&nbsp; This is a type specific filtering strategy.&nbsp; If the selection does not implement 
+  <tt>IActionFilter</tt>, the platform will ask the selection for a filter using the IAdaptable mechanism defined in org.eclipse.core.runtime.&nbsp; If a filter is found, the platform will pass each name value pair to the filter to determine if it matches the state of the selected object.&nbsp; If so, or there is no IActionFilter, the action will be added to the context menu for the object. 
+  <p>In order to support the XML above, we need to define an IActionFilter for the Word class.&nbsp; To do this, we define a class called WordActionFilter (shown below), which simply implements the IActionFilter interface (<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; This class is defined as a singleton for memory efficiency (<img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; It also publishes the filter attributes for the Word class (<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">), so that they can be referenced outside the plugin. </p>
+  <pre><img SRC="tag_a.jpg" height="13" width="24" align="TEXTTOP"> public class WordActionFilter implements IActionFilter {
+
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; public static final String NAME = "name";&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private static WordActionFilter singleton;
+
+<img SRC="tag_c.jpg" height="13" width="24" align="TEXTTOP">&nbsp;&nbsp;&nbsp;&nbsp; public static WordActionFilter getSingleton() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (singleton == null)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; singleton = new WordActionFilter();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return singleton;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * @see IActionFilter#testAttribute(Object, String, String)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public boolean testAttribute(Object target, String name, String value) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (name.equals(NAME)) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Word le = (Word)target;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return value.equals(le.toString());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return false;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+}</pre> The action filter for the Word class will be exposed using the IAdaptable mechanism.&nbsp; To do this, we need to implement the IAdaptable interface on our Word object, and return the WordActionFilter singleton if the platform asks for an IActionFilter.&nbsp; The implementation of getAdapter is shown below. 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public Object getAdapter(Class adapter) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (adapter == IActionFilter.class) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return WordActionFilter.getSingleton();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return null;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> At this point the WordActionFilter is complete.&nbsp; If we open the Word view and select a Word with 
+  <i>name = Blue</i>, the "Blue Action" will appear in the context menu.&nbsp; Stepping back from this example, the WordActionFilter is actually fairly useless.&nbsp; However, it does illustrate how precise action extension targeting should be supported by a model within a view (or editor). 
+  <p>In the platform, action filters already exist for markers, resources, and projects.&nbsp; The attribute names for each are defined in IMarkerActionFilter, IResourceActionFilter, and IProjectActionFilter within org.eclipse.ui, so other plug-in developers can reference them easily.&nbsp; If we look at an existing, production quality filter like IResourceActionFilter we can see that it contains matching attributes for NAME, EXTENSION, PATH, READ_ONLY and PROJECT_NATURE.&nbsp; You should define attributes which reflect your own model and permit precise action targeting. </p>
+  <h2> Integration with the Window Menu and Toolbar</h2> In the workbench window menu there are a number of pre-existing actions which target the active part (as indicated by a shaded title bar) .&nbsp; For instance, if the Delete action within the Edit menu is invoked when the Navigator view is active, the Delete implementation is delegated to the Navigator view.&nbsp; If the Tasks view is active the Delete implementation is delegated to that view.&nbsp; The Delete action is just one of many actions, known as 
+  <i>global actions</i>, which are always visible within the window menu and, when invoked, delegate their implementation to the active part. 
+  <p>In the Word view there are three actions (Add, Delete and Select All).&nbsp; The complete set of global actions is declared in IWorkbenchActionConstants.GLOBAL_ACTIONS (shown below).&nbsp; A quick comparison will demonstrate that there is no semantic equivalent to Add, but the Delete (<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) and Select all actions (<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">) are represented within the global actions.&nbsp; So the Word view will hook both of these actions. </p>
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * From IWorkbenchActionConstants.&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * Standard global actions in a workbench window.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public static final String [] GLOBAL_ACTIONS = {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; UNDO,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; REDO,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CUT,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; COPY,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PASTE,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PRINT,
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER"><font color="#000000"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </b>DELETE,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FIND,
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SELECT_ALL,
+</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; BOOKMARK
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; };
+}</pre> In the WordView class, the global actions are hooked within hookGlobalActions (shown below), which is called from createPartControl.&nbsp; Within this method, the Word view retrieves the action bars from the workbench part site (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) and then calls setGlobalActionHandler for each action (
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; This establishes a link between the global action in the window and the implementation within the view. 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void hookGlobalActions() {
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IActionBars bars = getViewSite().getActionBars();
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bars.setGlobalActionHandler(IWorkbenchActionConstants.SELECT_ALL, selectAllAction);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bars.setGlobalActionHandler(IWorkbenchActionConstants.DELETE, deleteItemAction);
+<img SRC="tag_c.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.getControl().addKeyListener(new KeyAdapter() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void keyPressed(KeyEvent event) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (event.character == SWT.DEL &amp;&amp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; event.stateMask == 0 &amp;&amp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteItemAction.isEnabled())&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; deleteItemAction.run();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; });
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> On the last line of hookGlobalActions (
+  <img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">) we add a key listener to the viewer control.&nbsp; If the "delete" key is pressed, the Delete action should run.&nbsp; In the case of every other action except Delete, the accelerator is defined and implemented by the workbench, so there is no need for a key listener.&nbsp; In the case of Delete, however, a key listener must be defined in the part.&nbsp; This extra work is required because the platform cannot define an accelerator containing the delete key.&nbsp; In doing so, it would break any text editors where the "delete" key has two different behaviors: delete the selection, and delete the next character. 
+  <p>Registration of the global action handlers is complete.&nbsp; If the Select All or Delete action in the window is invoked, and the Word view is active, the corresponding handler within the Word view will be invoked.&nbsp; The approach taken here can be used for other actions, and you are encouraged to do so.&nbsp; For instance, most editors provide a handler for all of the global actions.&nbsp; The Navigator implements the Delete and Bookmark actions.&nbsp; The Tasks view implements the Delete and Select All actions. </p>
+  <h3> Can I add new actions to the window menu or toolbar?</h3> In general all view actions should be contributed to the local menu, toolbar, or context menu for a view.&nbsp; There is no way to add view specific actions to a window menu or toolbar. The justification for this is simple: the proximity of view actions to the view itself creates a stronger coupling between the two, and it also helps to reduce clutter on the window menu and toolbar. 
+  <h2> Integration with Other Views</h2> No view is an island.&nbsp; In most cases, a view co-exists with other views and selection within one view may affect the input of another.&nbsp; In this section we'll create a Listener view, which will listen for the selection of objects in the Word view.&nbsp; If a Word object is selected, the Listener view will display the word attributes.&nbsp; This behavior is similar to the existing Properties view in the workbench standard components. 
+  <p>To start out, we need to create a new Listener view.&nbsp; We've already done this twice, so let's skip the declaration within the plugin.xml and concentrate on the ListenerView class (shown below).&nbsp; This class is very similar to LabelView.&nbsp; In createPartControl we create a simple SWT Label (<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">), where we will display the word attributes. </p>
+  <pre>public class ListenerView extends ViewPart&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; implements ISelectionListener
+{
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private Label label;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public ListenerView() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; super();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void setFocus() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label.setFocus();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; public void createPartControl(Composite parent) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label = new Label(parent, 0);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label.setText("Hello World");
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; getViewSite().getPage().addSelectionListener(this);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; * @see ISelectionListener#selectionChanged(IWorkbenchPart, ISelection)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */
+<img SRC="tag_c.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp; public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (selection instanceof IStructuredSelection) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Object first = ((IStructuredSelection)selection).getFirstElement();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (first instanceof Word) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; label.setText(((Word)first).toString());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+}</pre> Things get interesting on the last line of createPartControl (
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; The Listener view exists in a page with other views.&nbsp; If a selection is made in any of those views, the platform will forward the selection event to all interested parties.&nbsp; We are an interested party.&nbsp; To register our interest, we get the site, get the page, and add the ListenerView as a selection listener.&nbsp; If a selection occurs within the page, the ListenerView.selectionChanged method will be called (
+  <img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; Within this method, the selection is examined and, if it is a Word, the label text will be updated to reflect the Word name. 
+  <p>So far so good.&nbsp; The Listener view is ready to receive selection events.&nbsp; However, we have a problem: the Word view doesn't publish any selection events. </p>
+  <p>To reconcile our problem we add one line of code to the Word view (<img SRC="tag_d.jpg" height="13" width="24" align="ABSCENTER">)&nbsp; Within the createPartControl method, a selection provider is passed to the site.&nbsp; Fortunately, the viewer itself is an ISelectionProvider, so it is very easy to define the selection provider for the view.&nbsp; When the Word view is active (as indicated by shading in the title bar) the platform will redirect any selection events fired from viewer to selection listeners within the page. </p>
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void createPartControl(Composite parent) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create viewer.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer = new ListViewer(parent);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setContentProvider(new ListContentProvider());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setLabelProvider(new LabelProvider());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setInput(input);
+<img SRC="tag_d.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; getSite().setSelectionProvider(viewer);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create menu and toolbars.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createActions();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createMenu();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createToolbar();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; createContextMenu();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; hookGlobalActions();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Restore state from the previous session.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; restoreState();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> Now we can try out the Listener view.&nbsp; Open up the Word view and the Listener view.&nbsp; Add a word to the Word view and then select it.&nbsp; The name of the Word will be displayed in the Listener view.&nbsp; A snapshot of the result is shown below. 
+  <center> 
+   <p><img SRC="ListenerView.jpg" height="397" width="534"></p>
+  </center> 
+  <p>The linking approach demonstrated here can be described as <i>activation linking</i>.&nbsp; In activation linking, the listener receives selection from the active part.&nbsp; The benefit of this approach is that there is a loose coupling between the Listener view and other views within the same page.&nbsp; If we were to introduce another view, similar to the Word view, which published selection events for objects of type Word, these objects would also appear in the Listener view.&nbsp; This makes it very easy to add, remove, or replace the views in the workbench while maintaining good integration between views. </p>
+  <p>In contrast to activation linking, a view may also implement <i>explicit linking</i>.&nbsp; In explicit linking, the listener tracks selection within a specific source view, which is usually discovered by calling <tt>IWorkbenchPage.findView(String id)</tt>.&nbsp; There are two drawbacks to this approach.&nbsp; First, the listener will be disabled if the specific source view is nonexistent or closed by the user, and second, the listener will never work with additional views added by the user, or another plug-in.&nbsp; For this reason, the use of explicit linking is discouraged. </p>
+  <h2> Integration with the WorkbenchPage Input</h2> In a large, real world project the workspace may contain hundreds or thousands of resources.&nbsp; These resources are split among many projects, containing many folders, containing many files.&nbsp; It's a tree, and each subtree within the whole defines a physical subset of information.&nbsp; To avoid the information overload which can sometimes occur by looking at the whole, the user can "open a perspective" on any resource subtree within the workspace.&nbsp; This is done by selecting a resource in the Navigator view and invoking "Open Perspective".&nbsp; The result is a new workbench page where only the children of the subtree root are visible.&nbsp; This subtree root is known as the 
+  <i>input</i>. 
+  <p>In practice, the visibility of resources within a page is implemented through collaboration between the page and the views within that page.&nbsp; The page itself is just a visual container for views and editors.&nbsp; It doesn't provide any presentation for resources.&nbsp; That is delegated to the parts within the page.&nbsp; The hand off usually occurs during part creation.&nbsp; In the early stages of part lifecycle a part can obtain a handle to the containing <tt>IWorkbenchPage,</tt> and from this it can call <tt>IWorkbenchPage.getInput</tt>.&nbsp; The result can be used as the initial input for the view.&nbsp; For instance, if a new perspective containing the Navigator is opened, the Navigator will use the page input as its own input.&nbsp; The Packages view does the same. </p>
+  <p>The strategy should be adopted by any view which displays resources within the workspace.&nbsp; This will ensure a consistent navigational paradigm for users within the platform. </p>
+  <h2> State Persistence</h2> One of the primary goals for the platform UI is to provide efficient interaction with the workspace.&nbsp; In the platform this is promoted by saving the state of the workbench when a session ends.&nbsp; When a new session is started the state of the workbench is recreated.&nbsp; The state of each window, page, view and editor is persisted between sessions, reducing the time required for the user to get back to work.&nbsp; In this section we'll examine how the state of the Word view is saved. 
+  <p>Within any view there are at least two elements of state: the model itself and model presentation (widget state). In our Word view, the model is stored as a file in the file system, so it is a non issue.&nbsp; However, the widget state should be saved.&nbsp; To do this we need to implement the IViewPart.init and IViewPart.saveState methods (shown below) in WordView. </p>
+  <pre>&nbsp;&nbsp;&nbsp; public void init(IViewSite site,IMemento memento) throws PartInitException;
+&nbsp;&nbsp;&nbsp; public void saveState(IMemento memento);</pre> But first, some background info.&nbsp; When the workbench is closed, the IViewPart.saveState method is called on every view.&nbsp; An IMemento is passed to the saveState method.&nbsp; This is a structured, hierarchical object where you can store integers, floats, Strings, and other IMementos.&nbsp; The platform will store the IMemento data in a file called 
+  <tt>workbench.xml</tt> within the 
+  <tt>org.eclipse.ui</tt> metadata directory.&nbsp; When a new session is started, the platform will read this file, recreate each window, page, and view, and then pass an IMemento to each view in the init method.&nbsp; The view can use this to recreate the state of the previous session. 
+  <p>Now we can do some coding.&nbsp; We will implement the saveState method first (shown below).&nbsp; Within this method a memento is created for the selection (<img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">) and then one item is added to it for every word which is selected (<img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; In our code, the word string is used to identify the word.&nbsp; This may be an inaccurate way to identify words (two words may have the same string), but this is only an article.&nbsp; You should develop a more accurate strategy which reflects your own model. </p>
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void saveState(IMemento memento){
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IStructuredSelection sel = (IStructuredSelection)viewer.getSelection();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (sel.isEmpty())
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return;
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memento = memento.createChild("selection");
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Iterator iter = sel.iterator();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; while (iter.hasNext()) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Word word = (Word)iter.next();
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memento.createChild("descriptor", word.toString());
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> Next we implement the init method.&nbsp; When a new session is started, the init method will be called just after the part is instantiated, but before the createPartControl method is called.&nbsp; In our code all of the information within the memento must be restored to the control, so we have no choice but to hold on to the memento until createPartControl is called. 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; public void init(IViewSite site,IMemento memento) throws PartInitException {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; init(site);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.memento = memento;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> Within createPartControl, the restoreState method is called.&nbsp; Within restoreState the selection memento is retrieved (
+  <img SRC="tag_a.jpg" height="13" width="24" align="ABSCENTER">), and each descriptor within it is mapped to a real Word (
+  <img SRC="tag_b.jpg" height="13" width="24" align="ABSCENTER">).&nbsp; The resulting array of words is used to restore the selection for the viewer (
+  <img SRC="tag_c.jpg" height="13" width="24" align="ABSCENTER">). 
+  <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; private void restoreState() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (memento == null)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return;
+<img SRC="tag_a.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memento = memento.getChild("selection");
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (memento != null) {
+<img SRC="tag_b.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IMemento descriptors [] = memento.getChildren("descriptor");
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (descriptors.length &gt; 0) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ArrayList objList = new ArrayList(descriptors.length);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; for (int nX = 0; nX &lt; descriptors.length; nX ++) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String id = descriptors[nX].getID();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Word word = input.find(id);
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (word != null)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; objList.add(word);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+<img SRC="tag_c.jpg" height="13" width="24" align="CENTER">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; viewer.setSelection(new StructuredSelection(objList));
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memento = null;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; updateActionEnablement();
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</pre> You may notice certain limitations in the IMemento interface.&nbsp; For instance, it can only be used to store integers, floats, and Strings.&nbsp; This limitation is a reflection of the persistence requirements in the platform UI. 
+  <br>&nbsp; 
+  <ol> 
+   <li> Certain objects need to be saved and restored across platform sessions.</li> 
+   <li> When an object is restored, an appropriate class for an object might not be available. It must be possible to skip an object in this case.</li> 
+   <li> When an object is restored, the appropriate class for the object may be different from the one when the object was originally saved. If so, the new class should still be able to read the old form of the data.</li> 
+  </ol> 
+  <p><br>Java serialization could be used for persistence.&nbsp; However, serialization is only appropriate for RMI and light-weight persistence (the archival of an object for use in a later invocation of the same program).&nbsp; It is not considered robust for long term storage, where class names and structure may change.&nbsp; If any of these occur serialization will throw an exception. </p>
+  <h2> State Inheritance</h2> If we take a close look at the standard components in Eclipse an interesting pattern emerges.&nbsp; Most of them provide some degree of customization.&nbsp; For instance, in the Navigator view there are two actions in the menu, Sort and Filter, which can be used to sort or select the visible resources in the Navigator.&nbsp; Similar functionality exists within the Tasks view.&nbsp; In general, customization is a desirable feature.&nbsp; In this section we're not going to look at customization itself, as customization is very specific to a particular view and the underlying model.&nbsp; Instead, we'll look at some different strategies which you could use to share user preferences between views. 
+  <p>Let's start out with the assumption that the Word view has two sorting algorithms.&nbsp; The user may select one as the preferred algorithm.&nbsp; How do we share this preference with other views of the same type? </p>
+  <p><b>Approach #1: We don't.</b> </p>
+  <p>The initial value of the preference will be hard coded in some way, probably as a constant in the class declaration.&nbsp; If the user changes this preference in one view, it will not be reflected in other views.&nbsp; For instance, the Navigator preference for "Sort" is a local preference, and is not shared with other Navigator views. </p>
+  <p><b>Approach #2: We Use a Preference Page</b> </p>
+  <p>The initial value of the preference will be exposed in a preference page in the Workbench Preferences.&nbsp; If the user changes this preference, the new preference will apply to all instances of the view.&nbsp; For instance, the Navigator preference for "Link Navigator selection to active editor" is controlled by a check box in the Workbench Preferences.&nbsp; This option applies to all Navigator views. </p>
+  <p><b>Approach #3: Inheritance.</b> </p>
+  <p>The initial value of the preference will be defined in the plugin metadata.&nbsp; If a view is opened, it will read the plugin metadata to determine the preference.&nbsp; If the user changes the preference in one view, it will not affect other views, but it will be saved to the plugin metadata, so that any view created in the future will inherit the preference.&nbsp; For instance, if the user changes the sort preference in one Word view, it will have no affect on other Word views.&nbsp; However, if the user opens a new Word view it will inherit the most recent preference. </p>
+  <p>While each of these is a valid approach, the correct choice should reflect your own view and the underlying model. </p>
+  <h2> Summary</h2> In this article we have examined the design and implementation of two views, a simple Label view and a more comprehensive Word view.&nbsp; The features of your own view will probably vary greatly from what we have created.&nbsp; However, the integration of your view with the workbench will follow the same pattern demonstrated by these views. Further information on view implementation is available in the Platform Plug-in Developer Guide and in the javadoc for 
+  <tt>org.eclipse.ui</tt>. 
+  <p><small>Java and all Java-based trademarks and logos are trademarks or registered trademarks of Sun Microsystems, Inc. in the United States, other countries, or both.</small></p>   
+ </body>
+</html>

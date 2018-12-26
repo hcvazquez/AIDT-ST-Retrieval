@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Mine of Information - OSGi Classloading</title> 
+  <link rel="stylesheet" type="text/css" href="/assets/css/coderay.css"> 
+  <link rel="stylesheet" type="text/css" href="/assets/css/stylesheet.css"> 
+  <link type="application/atom+xml" title="Mine of Information" rel="alternate" href="/atom.xml"> 
+  <meta name="generator" content="nanoc 4.3.4"> 
+  <meta name="author" content="Simon Kitching"> 
+ </head> 
+ <body> 
+  <section id="header"> 
+   <span class="title">The Mine of Information</span> 
+   <span class="desc">(Nuggets of Programming and Linux)</span> 
+  </section> 
+  <div id="main"> 
+   <section id="navpane"> 
+    <section> 
+     <ul id="navicons"> 
+      <li class="nav"> <a href="/" title="Home"><img src="/assets/images/Home.png"></a> <a href="/archives/" title="Archives"><img src="/assets/images/Calendar.png"></a> <a href="/site/welcome" title="E-Mail"><img src="/assets/images/Envelope.png"></a> <a href="/atom.xml" title="Subscribe Feed"><img src="/assets/images/RSS.png"></a> </li> 
+     </ul> 
+    </section> 
+    <section> 
+     <h1>About</h1> 
+     <ul id="about"> 
+      <li> <a href="/site/welcome">Welcome</a> </li> 
+     </ul> 
+    </section> 
+    <section> 
+     <h1>Recent Posts</h1> 
+     <ul id="recent_posts"> 
+      <li class="post"> <a href="/2017/09/tsconfig/">Typesafe Config</a> </li> 
+      <li class="post"> <a href="/2017/09/hive-jdbc/">Accessing Hive via JDBC</a> </li> 
+      <li class="post"> <a href="/2017/09/hive-cli-memory/">Hive container is running beyond physical memory limits</a> </li> 
+      <li class="post"> <a href="/2017/08/spark/">Spark Overview</a> </li> 
+      <li class="post"> <a href="/2017/08/scala/">Scala Overview</a> </li> 
+      <li class="post"> <a href="/2017/08/jdbc-connect-where/">Kafka Connect JDBC Source Where Clauses</a> </li> 
+      <li class="post"> <a href="/2017/08/git-multi-remotes/">A Git Repo Mirroring Multiple Remotes</a> </li> 
+      <li class="post"> <a href="/2017/07/java-jigsaw/">Java 9's Jigsaw Module Framework (JPMS)</a> </li> 
+     </ul> 
+    </section> 
+    <section> 
+     <h1>Categories</h1> 
+     <ul id="categories"> 
+      <li class="catlink"> <a href="/category/BigData/">BigData</a> </li> 
+      <li class="catlink"> <a href="/category/Cryptography/">Cryptography</a> </li> 
+      <li class="catlink"> <a href="/category/Git/">Git</a> </li> 
+      <li class="catlink"> <a href="/category/Java/">Java</a> </li> 
+      <li class="catlink"> <a href="/category/Links/">Links</a> </li> 
+      <li class="catlink"> <a href="/category/Linux/">Linux</a> </li> 
+      <li class="catlink"> <a href="/category/Management/">Management</a> </li> 
+      <li class="catlink"> <a href="/category/OSGi/">OSGi</a> </li> 
+      <li class="catlink"> <a href="/category/Off-topic/">Off-topic</a> </li> 
+      <li class="catlink"> <a href="/category/OpenWRT/">OpenWRT</a> </li> 
+      <li class="catlink"> <a href="/category/Programming/">Programming</a> </li> 
+      <li class="catlink"> <a href="/category/Site/">Site</a> </li> 
+     </ul> 
+    </section> 
+   </section> 
+   <section id="content"> 
+    <div class="page"> 
+     <h1>OSGi Classloading</h1> 
+     <aside>
+      First published on: March 4, 2013
+     </aside> 
+     <article> 
+      <p>Categories: <a href="/category/Java/">Java</a>, <a href="/category/OSGi/">OSGi</a></p> 
+      <p><a href="/java/osgi-intro">(back to Osgi Introduction)</a></p> 
+      <h1 id="about-this-article--osgi-and-classloading">About This Article : OSGi and Classloading</h1> 
+      <p>OSGi is a Java-specific framework that improves the way that Java classes interact within a single JVM. It provides the following features:</p> 
+      <ol> 
+       <li>a modified Java classloader which provides fine-grained control over symbolic linking with other code in the same JVM;</li> 
+       <li>a central service registry for decoupling callers of an interface from the interface implementation;</li> 
+       <li>an enhanced version of the java.lang.SecurityManager (ConditionalPermissionAdmin);</li> 
+       <li>a large set of standardized optional services for things like loading configuration-files, publishing events, exposing Java servlets, etc.</li> 
+      </ol> 
+      <p>This article provides some details about how item (1) is implemented; it is (IMHO) the most useful and best-designed part of OSGi. It can be used without the rest of OSGi, and is very light-weight. Among other features, it:</p> 
+      <ul> 
+       <li>allows internal implementation classes to be hidden from other jarfiles (mostly);</li> 
+       <li>allows concurrent loading of jarfiles whose implementation happens to depend on different versions of the same library;</li> 
+       <li>reduces the chance that the dreaded ClassNotFoundException will occur at runtime (missing dependencies are much more obvious);</li> 
+       <li>speeds up application startup (class resolution) a little;</li> 
+       <li>allows code in a jarfile to be executed when the jarfile is loaded;</li> 
+       <li>allows jarfiles to take actions when other jarfiles are loaded (self-extensible framework);</li> 
+       <li>allows jarfiles to be unloaded at runtime (under some conditions);</li> 
+       <li>forces bundles to include metadata about their identity and version (similar to maven pom declarations);</li> 
+       <li>treats much of the JDK library like an OSGi bundle, forcing jarfiles to declare their dependencies on JDK features explicitly.</li> 
+      </ul> 
+      <p>There has been ongoing discussion within the core Java developer teams about building a similar system into the Java JDK itself; there was some attempt to design something for Java 1.7; it was postponed to 1.8 and has then been postponed again. The need for a “module” system in Java is well recognised, and hopefully (when/if something ever finally gets released) it will bear some resemblance to the OSGi one.</p> 
+      <p>This article assumes that you are familiar with traditional Java classloaders: ie that a classloader can have a “parent”, and that when classes are loaded at runtime, the loading classloader and its parents are responsible for finding other classes that the loaded one references.</p> 
+      <p>For further information about OSGi in general, see the <a href="/java/osgi-intro">OSGi Introduction</a>.</p> 
+      <h1 id="osgi-manifests">OSGi Manifests</h1> 
+      <p>The OSGi unit of code-packaging is the jarfile (just like traditional Java). If a jarfile has some extra OSGi-specific properties in its /META-INF/MANIFEST.MF file then it is an “OSGi Bundle”.</p> 
+      <p>There are a dozen or so properties defined by the OSGi specification, of which only a few are relevant for OSGi’s enhanced classloading abilities. The relevant properties are:</p> 
+      <ul> 
+       <li>Bundle-SymbolicName -&gt; the name of this bundle; normally the FQDN (fully qualified domain name) of the primary Java package within this jarfile</li> 
+       <li>Bundle-Version -&gt; major.minor.patch version of <em>this</em> release of the bundle</li> 
+       <li>Import-Package: list of (Java package, version-range) that classes in <em>this</em> jarfile expect other bundles to provide.</li> 
+       <li>Export-Package: list of Java packages within <em>this</em> jarfile that external code is allowed to access.</li> 
+       <li>Require-Bundle: list of other bundles (specified via symbolic-name and version-range) that must also be installed</li> 
+      </ul> 
+      <p>Require-bundle declares a dependency on a specific <em>bundle</em> (which might export multiple packages), while “import-package” declares that <em>some</em> bundle in the current environment must provide the specified code, but doesn’t care which. The “require-bundle” declaration is similar to having an “import-package” declaration for each “export-package” declaration in the target bundle, but is not so flexible as it constrains the solution to a specific bundle (implementation) rather than a package requirement (interface).</p> 
+      <p>Multiple loaded bundles can export the same Java package with different versions; having two bundles export the same package with the same version is probably an error.</p> 
+      <p>The jarfiles containing OSGi bundles must not be on the normal Java classpath; instead they are loaded by creating an OSGi org.osgi.framework.launch.Framework object, and using Framework.getBundleContext().installBundle(path) to load bundle jarfiles. See the example code referenced below. If you are using an OSGi container such as Apache Servicemix then you don’t have to worry about these things; the OSGi container will provide its own main method, and config parameters can be used to specify which jarfiles (bundles) should be loaded.</p> 
+      <h1 id="osgi-environments-and-the-bundle-registry">OSGi environments and the Bundle Registry</h1> 
+      <p>To start up an OSGi “environment”, the OSGi core jarfile is placed on the normal java classpath and bootstrap code creates an instance of the OSGi Framework class. A method on the Framework instance is then used to tell the Framework to load various jarfiles (bundles).</p> 
+      <p>The framework maintains a “bundle registry”, consisting of an instance of class org.osgi.framework.Bundle representing each loaded jarfile. The bundle instance in turn contains a custom Classloader instance which is used to load classes from its jarfile (ie there is a separate classloader for each jarfile). The bundle instance holds information extracted from the MANIFEST.MF file within the jarfile, in particular the bundle version and list of imported and exported packages.</p> 
+      <p>When initially created a bundle will check to see if its “imports” are satisfied - that is, whether there exist within the same bundle registry other “resolved” bundle objects which export all of the packages that its jarfile wants to import - in the version that is needed.</p> 
+      <p>If these imports cannot (yet) be satisfied, then the bundle is marked as “installed” (but not resolved), and the check will be repeated again later (eg after other bundles have been installed); while in the “installed” state, no other bundle can import packages from it. A bundle in “installed” state does not yet have an associated classloader - classes from this jarfile cannot yet be loaded.</p> 
+      <p>If the constraints <em>can</em> be satisfied, however, then the bundle builds a map of (imported-package-name =&gt; bundle.classloader) for each imported package, creates a classloader instance which is initialised with that map, and then marks itself as “resolved”. At this point it is now possible to actually load classes from the jarfile that this bundle represents; class resolution (ie finding external classes referenced from a class in this bundle) should always be possible - assuming the “import-packages” declaration was correct. And because the map entries point directly to a classloader that can supply that package, class resolution is actually more efficient than a J2EE-like system which builds a tree of classloaders and always has to pass class-lookups to the parent classloader first. And unlike a standard “tree” of classloaders where there is a single parent, the bundle classloader can point to many other bundles - potentially a different one for each package it imports.</p> 
+      <p>When a bundle moves to the “resolved” state (ie classes can be loaded from it), other bundles that require classes which the bundle exports may now be able to themselves move from “installed” to “resolved” state. The OSGi environment automatically tries resolving such dependent bundles.</p> 
+      <p>Bundles can also potentially be “uninstalled” while an OSGi environment is running, in which case other bundles that currently use code from the uninstalled bundle need to be correctly handled; see the section later which addresses unloading/reloading bundles.</p> 
+      <h1 id="bundle-events">Bundle Events</h1> 
+      <p>As the framework loads bundles (state=installed), and as bundles transition from “installed” to “resolved”, corresponding events are broadcast to any registered listeners. This mechanism makes it possible for user code to customise many aspects of bundle loading. Interestingly, such code is usually written as a bundle itself, and simply installed early in the application startup sequence so that it can register and then receive events about other bundle state transitions occurring after it has itself been activated.</p> 
+      <h1 id="classloading">Classloading</h1> 
+      <p>As a result of the framework startup procedure described above, a large number of classloaders (one per bundle) are created. The classloader hierarchy that exists at runtime is typically something like:</p> 
+      <pre><code>bootstrap classloader (includes Java standard libraries from jre/lib/rt.jar etc)
+   ^
+extension classloader
+   ^
+system classloader (ie stuff on $CLASSPATH, including OSGi core code)
+   ^
+OSGi environment classloader
+   ^    (** Note: OSGi classloaders forward lookups to parent classloader only for some packages, eg java.*)
+   \ 
+    \   |-- OSGi classloader for "system bundle"  -&gt; (map of imported-package-&gt;classloader)
+     \--|-- OSGi classloader for bundle1    -&gt; (map of imported-package-&gt;classloader)
+        |-- OSGi classloader for bundle2    -&gt; (map of imported-package-&gt;classloader)
+        |-- OSGi classloader for bundle3    -&gt; (map of imported-package-&gt;classloader)
+                                     /
+                                    /
+      /========================================================================================\
+      |  shared bundle registry, holding info about all bundles and their exported-packages  |
+      \========================================================================================/
+</code></pre> 
+      <p>Each OSGi classloader instance (ie OSGi bundle) has its own private mapping table that tells it which classloader is responsible for providing classes from a particular package to the current bundle. This is usually populated when the bundle is first loaded (“resolved”), although “dynamic imports” look things up via the “bundle registry” as needed.</p> 
+      <p>When the jarfile for a bundle is loaded, OSGi’s Framework class first creates a Bundle object to represent it, and that in turn creates a classloader which is a child of an “osgi environment classloader”. The bunde-specific classloaders pass requests for classes in packages under <code>java.*</code> up to the parent classloader as is standard in java, ie classes from the very <em>core</em> of java are available automatically to all bundles and are loaded from the <code>bootstrap</code> classloader as normal. However for all other packages, requests are <em>not</em> passed up the chain to the parent; instead the bundle’s classloader resolves classes using the bundle-specific map of package-to-classloader. As a result, classes in the new bundle can’t by default see <em>any</em> classes from the Java JDK which are in namespaces like <code>javax.*</code> or <code>org.*</code>, nor classes on the normal Java application classpath ($CLASSPATH). To see those “standard but not core” packages, a bundle should simply use an Import-Package declaration, which tells OSGi to copy the appropriate entry from the shared map of all possible packages into the bundle-specific map of <em>imported</em> packages.</p> 
+      <p>Note that because OSGi classloaders do not pass requests up to their parent (other than <code>java.*</code>), it is actually fairly irrelevant what their parent is. However current versions (as of end 2012) of Felix and Equinox both use the above classloader hierarchy layout.</p> 
+      <h2 id="processing-import-package-declarations">Processing Import-Package declarations</h2> 
+      <p>A new OSGi bundle instance reads its jarfile’s META-INF/MANIFEST and for each “Import-Package: {package};{version}” declaration:</p> 
+      <ul> 
+       <li>locates a suitably matching entry exported by a bundle in the bundle registry. If this fails, then processing stops and the bundle is marked as “installed but not resolved”, and cannot be used for loading any classes yet, as its dependencies are not yet available.</li> 
+       <li>adds an entry to a local map of (packagename=&gt;classloader)</li> 
+      </ul> 
+      <p>If all imports can be resolved, then the classloader marks itself as being in RESOLVED state, and continues to the next step.</p> 
+      <p>When a bundle gets left in INSTALLED state due to currently-missing dependencies then it is retried again each time some other bundle becomes RESOLVED, in case the missing dependencies have now been fulfilled.</p> 
+      <h2 id="processing-export-package-declarations">Processing Export-Package declarations</h2> 
+      <p>Unlike “import-package” declarations, these are more passive; they simply tell other bundles that they can use this bundle’s classloader as a source of the specified package, ie that a reference to this bundle’s classloader can be added into the (package-&gt;classloader) map of some other bundle.</p> 
+      <h2 id="resolving-classes">Resolving Classes</h2> 
+      <p>When some OSGi classloader has to load a class from its own jarfile, and finds that the class depends on some type <code>example.ui.Gadget</code> which is not in the local jarfile, then it simply does a lookup in its local mapping table to find the classloader responsible for package <code>example.ui</code>, and asks that classloader to return the Class object for <code>example.ui.Gadget</code>.</p> 
+      <p>If a class tries to reference some other class from a package that was not explicitly imported, then there will be no corresponding entry in the (package-&gt;classloader) mapping, so that lookup will immediately fail (ClassNotFoundException or NoClassDefFoundException). The only exceptions are classes in the ‘java.*’ package (and the configurable “bootclass delegation” list), where the request is forwarded to the parent classloader.</p> 
+      <p>This process can actually be faster than the normal Java classloading algorithm, which requires classloaders to first ask their parent classloader, and only if that fails to try to resolve the class themselves. The OSGi approach does a little more work when loading a bundle, but then normally resolves any needed class with a single table lookup followed by invocation of <code>getClass</code> on exactly the right classloader instance.</p> 
+      <p>A ClassNotFoundException can still occur in an OSGi environment, in the following circumstances:</p> 
+      <ul> 
+       <li>a class in the bundle statically references some other type, and that package is not in the Import-Packages list, ie the bundle’s import-packages declaration is wrong</li> 
+       <li>a class is looked-up dynamically via the Class.forName(String name) API or similar, and the package is not in the Imported-Packages list.</li> 
+       <li>code references some class “example.ui.Gadget”, and package “example.ui” has successfully been imported - but does not contain a “Gadget” class.</li> 
+      </ul> 
+      <p>There are tools which can scan Java code and correctly compute the necessary Import-Package declaration for static references (eg bndtools.org). However uses of Class.forName will usually have to be added to the import-packages declaration manually.</p> 
+      <h2 id="resolving-osgi-core-classes">Resolving OSGi core classes</h2> 
+      <p>The OSGi core jarfile is on the normal classpath, and so can see both the JDK and potentially any other jarfiles on the normal classpath.</p> 
+      <p>When an API from this jarfile is used to create an OSGi “environment”, it automatically creates a dummy “system” bundle whose classloader can see the OSGi standard classes. To other bundles, the “system” bundle looks and behaves just like any other OSGi bundle.</p> 
+      <h2 id="resolving-classes-from-the-java-standard-libraries">Resolving classes from the Java standard libraries</h2> 
+      <p>As noted above, an OSGi classloader will pass requests for classes in any package matching <code>java.*</code> up to the parent classloader in the traditional Java manner. The request will continue up to the top <code>bootstrap</code> classloader which will then return the <code>global</code> class instance. There is a configuration option that tells OSGi what other classes to perform the same behaviour for; some <code>com.sun.*</code> classes for example malfunction if not loaded from the bootstrap classloader. However there are only a handful of such packages.</p> 
+      <p>For other packages that are in the <code>$JRE_HOME/lib/*.jar</code> files (and are therefore usually also available from the bootstrap classloader), the OSGi startup code simply makes them “exports” of the OSGi system bundle. Bundles can then use normal <code>Import-Package</code> statements which causes lookups of such classes to be delegated to the OSGi system bundle’s classloader which is able to resolve them. Examples of packages which need to be explicitly imported are <code>javax.swing</code>, <code>javax.sql</code>, <code>org.xml.sax</code>.</p> 
+      <p>Not automatically making the whole JDK available to bundles has the following benefits:</p> 
+      <ul> 
+       <li>certain Java environments (eg JavaME) only have subsets of the full Java libraries that come with the desktop JDK; because bundles declare their requirements, it is easy to see which bundles are compatible with restricted Java environments.</li> 
+       <li>older <em>versions</em> of Java have fewer packages in their libraries than newer versions. However declaring a constraint on a Java <em>version</em> is not the solution because sometimes third-party libraries can be installed to provide functionality that is only in later JDKs.</li> 
+       <li>the full JDK is huge; it is just good design for bundles to declare their requirements at a finer-grained level</li> 
+      </ul> 
+      <h1 id="optional-imports-and-dynamic-imports">Optional Imports and Dynamic Imports</h1> 
+      <p>An <code>Import-Package</code> statement can be marked <code>optional</code>, meaning the bundle will be resolved (and therefore be useable) even when the imported package cannot be found at the time the bundle is being resolved.</p> 
+      <p>The <code>DynamicImport-Package:</code> statement declares that packages will be looked up at runtime; as with optional imports, the bundle will resolve even when the imported package cannot be found at the time the bundle is being resolved.</p> 
+      <p>Both Import-Package and DynamicImport-Package can take a list of package-names; dynamic import can also take a ‘*’ wildcard.</p> 
+      <p>Import-Package is always processed at bundle resolution time. Dependencies can be marked ‘optional’, but if the bundle successfully resolves all of its non-optional imports without finding a provider of an optional package, that optional package cannot be found later. Using Import-Package with the ‘optional’ flag is appropriate when it is known that a bundle will <em>definitely</em> be providing a particular package and <em>might</em> be providing an associated one, ie where the mandatory and optional packages are visible as an “atomic” operation, and the importing bundle already explicitly imports the mandatory one. This may be the case where a bundle has an optional “bundle fragment”; in this situation the expected package and the optional package will be made visible together as bundle-fragments are loaded before the host bundle is resolved. Using the ‘optional’ flag in other circumstances is an invitation to “startup race conditions”, where the optional package might or might not be visible depending upon whether the bundle providing the optional package is started first. Otherwise, if a bundle with optional imports is resolved before the optional import is available, then an explicit “refresh” of that bundle will be needed before it sees those now-available optional imports.</p> 
+      <p>DynamicImport-Package is instead processed when needed, eg when Class.forName is used. When a match is found at runtime, the classloader which provided the needed package is cached in a similar way to the Import-Package behaviour, so that later lookups of classes in the same package will go direct to the appropriate classloader. The performance impact is therefore similar, except that the resolving performance hit is taken for Import-Package at “bundle resolve” time, while for DynamicImport-Package it happens unpredictably whenever the package is actually needed. There <em>is</em> a significant performance hit for lookups that fail, as <em>each</em> lookup of a missing class by name will search over all bundles each time. As with Import-Package, there are potential “startup race conditions” where Class.forName is invoked before the bundle providing the needed package has been resolved. However in this case, a later lookup will repeat the search and find the bundle whereas once Import-Package has decided the package is not available (at resolution time) it will never be found unless the searching bundle is uninstalled and reinstalled/re-resolved.</p> 
+      <p>Using DynamicImport-Package with a wildcard <code>*</code> prevents using a version-specifier, ie if multiple versions of the package are available it is not defined <em>which</em> version will get used.</p> 
+      <p>The classic use-case for DynamicImport-Package is a bundle which implements deserialization of arbitrary objects (eg from binary form, or from xml). If the bundle cannot know which classes it may encounter, then dynamic imports is a possible solution. An alternative solution for this use-case may be to iterate over a set of Bundle objects calling <code>Bundle.loadClass</code> to see which (if any) bundle can provide the required class; this is effectively what OSGi will do anyway, but the application may have better information about which bundles to look in.</p> 
+      <h1 id="bundle-fragments">Bundle Fragments</h1> 
+      <p>A jarfile with the entry <code>Fragment-Host: {bundle-name}</code> in its manifest.mf file is an OSGi <code>fragment</code>. Fragments are not bundles themselves, but instead “additional resources” for the bundle specified by <code>{bundle-name}</code>. In effect, the fragment is “merged into” the specified bundle at runtime (ie content is accessed via the host’s classloader). Any classes inside the fragment are effectively part of the host bundle, as are any non-class resource files.</p> 
+      <p>A fragment has no effect at all if there is no installed bundle matching the <code>{bundle-name}</code>.</p> 
+      <p>One use-case for fragments is to contribute localisation configuration files to a core bundle. The core bundle can be shipped to all customers, and different localisation fragments to corresponding customers. At runtime, there is just one bundle which appears to have both the code and the relevant localisation files.</p> 
+      <p>Fragment bundles must be installed before their host bundles.</p> 
+      <h1 id="bundles-with-embedded-jarfiles">Bundles with Embedded Jarfiles</h1> 
+      <p>A bundle can include one or more jarfiles within it, and use a <code>Bundle-Classpath</code> manifest.mf entry to point to them. The classes in those jarfiles effectively become part of the bundle’s code. Bundle fragments can also include jarfiles and point to them via a Bundle-Classpath entry in which case classes and resources in those jars also become part of whatever “host” bundle they are merged with.</p> 
+      <h1 id="importing-an-exported-package">Importing an Exported Package</h1> 
+      <p>When a bundle includes some classes and exports these to other users, it can also optionally choose to add an <code>import</code> statement for the same package. This is useful if multiple bundles (particularly different versions of the same bundle) contain copies of the same classes.</p> 
+      <p>When code is just used for internal purposes (ie is not exported), then the fact that there are multiple copies does no harm. However if those classes become part of a public API (ie are exported) then communication between bundles can fail because classes (even when identical) with different classloaders are not compatible (cannot be cast to each other).</p> 
+      <p>When a bundle <code>imports</code> a package it also declares internally, and the import-statement matches some other bundle then the classes are <em>imported</em> from the other bundle and override (hide) the internal implementation. The result is that (as long as the imported code really is compatible with the internal one, which the import-statement can ensure by specifying the right version range), the incompatible-class-in-api issue is resolved.</p> 
+      <p>When “Import-Package” is used, and the package is not found externally but is found internally then resolution succeeds anyway.</p> 
+      <h1 id="unloadingreloading-bundles">Unloading/reloading bundles</h1> 
+      <p>OSGi provides an API to “unload” a bundle (ie a jarfile) at runtime. This is possible because each OSGi bundle has its own Classloader (unlike in traditional Java where unloading a jarfile is not possible because all classes are loaded via a single classloader responsible for everything on $CLASSPATH).</p> 
+      <p>However bundles that “import” packages from an unloaded bundle still have references to the bundle’s classloader and therefore to the bundle classes. In addition, all classes which inherit from or have members with types from the the referenced bundle have indirect references to the original bundle classloader. The original classloader for the unloaded bundle therefore cannot yet be garbage-collected (nor any class the classloader ever loaded). If an unloaded bundle is replaced by another which provides the same packages (eg has been upgraded to a new version with bugfixes) then class-cast-exceptions can also occur when communicating between bundles that have bound to different (old vs new) versions of those packages; in addition, bundles resolved against the old uninstalled bundle version will still be using old/obsolete code.</p> 
+      <p>OSGi therefore supports “refreshing” a bundle, forcing OSGi to re-resolve its imported packages, and if any change has occurred in the providing classloaders then the refreshed bundle’s classloader is discarded (ie as if the refreshed bundle had itself been unloaded/reloaded). Bundles that then use exports from the refreshed bundle should also be refreshed.</p> 
+      <p>This cascading refresh process doesn’t work well if any bundle is using static variables, as their value is lost when the bundle is refreshed. And if a static variable in a non-refreshed bundle references a class from another bundle then that blocks garbage-collection of that bundle’s classloader including <em>all</em> classes it has previously loaded.</p> 
+      <p>However the refresh process <em>does</em> work very well when some “api” bundle defines an interface and then an “implementation” bundle defines a private implementation of that interface and exposes <em>instances</em> of the type to users rather than the raw implementation class. This is in fact exactly the design pattern used for OSGi services.</p> 
+      <h1 id="supporting-incompatible-libraries">Supporting Incompatible Libraries</h1> 
+      <p>Suppose bundle A requires package org.utils version 2, and bundle B requires package org.utils version 3.</p> 
+      <p>Both versions of org.utils need to be packaged as OSGi bundles, with a manifest that declares “Export-Package: org.utils; version=…”, and loaded as OSGi bundles rather than being on the normal classpath. Each will then get its own OSGi classloader. When bundle A is resolved, its internal map will have an entry for “org.utils” that points to the bundle-loader for the org.utils(v2) jarfile. Any classes in A which reference types in package org.utils then have their dependencies resolved via <em>that</em> bundle-classloader. When bundle B is resolved, its map points to a different bundle-classloader, and both A and B are happy.</p> 
+      <p>This is not possible if either A or B export classes whose <em>apis</em> expose classes from org.utils, as typecasts will fail when A and B try to communicate. See the section on “importing exported packages” for further information on this.</p> 
+      <h1 id="possible-complications-of-incompatible-library-versions">Possible Complications of incompatible library versions.</h1> 
+      <p>Static variables need to be handled with some care. If one bundle <code>A</code> exports code that directly or indirectly uses a static variable, then other bundles which use <em>the same version</em> of <code>A</code> will effectively be sharing that static variable. However if multiple different versions of <code>A</code> are available, then other bundles might <em>not</em> share the static variable depending on which version of <code>A</code> they bind to. This is particularly interesting for static vars that are used to implement the <code>singleton</code> pattern.</p> 
+      <p>When a bundle internally uses a dependency-injection framework (such as Guice) then injection of objects whose types are taken from other bundles becomes interesting.</p> 
+      <p>Defining AOP rules in one bundle which are to be applied to types from other bundles may be tricky.</p> 
+      <h1 id="initialising-an-osgi-environment">Initialising an OSGi environment</h1> 
+      <p>To take advantage of OSGi’s classloading model without necessarily using the rest of OSGi, a simple <code>Main</code> class is needed which initialises OSGi and loads any required jarfiles. You can find <a href="/downloads/code/osgi-classloaders/MyOsgiMain.java">an example program here</a>.</p> 
+      <p>If you still want to develop in a “top down” approach rather than an event-driven one, then perhaps the best way to “retake control” after starting OSGi is to define an “activator class” in one of your bundles pointing at the class that should be invoked after OSGi has been started. This class must implement the <code>org.osgi.framework.BundleActivator</code> interface. Alternately you can add a <code>Declarative Services</code> xml file to the jarfile containing an entry pointing at a plain POJO to be executed on startup (although it is then necessary to load/start the optional declarative-services bundle first).</p> 
+      <h1 id="the-export-package-qualifiers">The Export-Package qualifiers</h1> 
+      <p>The <code>Export-Package</code> declaration can specify <code>uses {package}</code>, <code>include {classname}</code> or <code>exclude {classname}</code> to ensure that other bundles can only successfully import this package if they can also:</p> 
+      <ul> 
+       <li>see the specified packages <em>in the same version the exporter uses</em>;</li> 
+       <li>see the specified included-classes; and</li> 
+       <li> <em>not</em> see the specified excluded-classes.</li> 
+      </ul> 
+      <p>In effect, uses/include are declaring “transitive dependencies” while exclude is declaring a “conflicts-with” issue. The requirement that the importer sees exactly the same package ensures that a ClassCastException does not occur. The referenced packages/classes should be types used in the <em>api</em> of classes in the exported package.</p> 
+      <h1 id="provisioning">Provisioning</h1> 
+      <p>An OSGi “application” is composed of a set of cooperating bundles. However OSGi deliberately does not specify how to group sets of bundles that should be deployed together. This is done by higher-level management/provisioning software.</p> 
+      <p>One example is <em>Apache Karaf</em>. Karaf defines the concept of a “features file” which is an xml file containing a list of bundles under a “feature name”. In the Karaf config files or user interface it is then possible to “install a feature” which simply uses the OSGi api to load each of the bundles in the feature. Interestingly, an entry in the feature file may use <em>maven</em> syntax to specify the location of the bundle, ie the bundle will be pulled from a maven repository (which may be remote).</p> 
+      <p>There are many other “management” applications for OSGi.</p> 
+      <h1 id="bundle-activators">Bundle Activators</h1> 
+      <p>Usually, one or more bundles also specifies a Bundle-Activator property in its MANIFEST which points to a class inside the jarfile; that activator class is eventually instantiated and invoked which results in an active thread now running “inside” the OSGi environment rather than the initial main method which was running “outside” it.</p> 
+      <h1 id="other-notes">Other Notes</h1> 
+      <p>Require-bundle declarations are also processed at load-time; they are basically equivalent to having an “import-package” declaration for each “export-package” declaration in the target bundle.</p> 
+      <p>The fact that import-package/requires-bundle declarations have been satisfied is enough to move a bundle to RESOLVED state. However this doesn’t mean that every class needed by the bundle exists; it is still possible when loading a class from the bundle to fail to find a type it uses; this triggers a ClassNotFoundException for that required type - which then results in a NoClassDefFound exception due to failed class resolution. There is a Maven plugin that checks for referential correctness at compile-time, and some IDEs do too. However if the bundle with the ‘Export-Package’ declaration properly applies <code>uses</code>, <code>include</code> and <code>exclude</code> options to the export-package declaration then the change of a ClassNotFound/NoClassDefFound exception at runtime is significantly reduced or eliminated.</p> 
+      <p>A single JVM instance can potentially have multiple OSGi “environments” active at the same time. This is useful for webservers for example, where each webapp can run in its own OSGi environment totally decoupled from other webapps (including having its own copy of static variables)</p> 
+      <p>Although it is not possible to <em>directly</em> obtain references to Class objects from bundles that don’t explicitly export them, it is possible to do so via reflection. If a bundle exposes classes in package example.util, and those classes have member fields of types from the (unexported) example.util.internal package, then code in other bundles can load a class in the exported package and then use reflection APIs to follow the links to the types in the internal package. Therefore ‘internal’ (unexported) packages prevent accidental use of internal classes, and prevent accidental name clashes, but are not a security mechanism. In fact, the <code>Class.loadClass(classname, resolve, classloader)</code> method can be used to load internal classes from any bundle; the OSGi bundle classloader implementations make no effort to separate “in-bundle callers” from “external callers”. It is of course trivial to obtain access to the ClassLoader for any bundle. In fact, loading internal classes is even easier than that : the <code>Bundle.loadClass</code> method can be used to load any class (including internal classes) from a bundle, and references to any Bundle can be obtained via <code>BundleContext.getBundles()</code>. Again, this just points out that not exporting a class is not a security measure; importing/exporting packages avoids only <em>accidental</em> coupling between bundles.</p> 
+      <p>It is technically possible for multiple bundles to contribute different classes to the same java package, eg one bundle provides “example.ui.Widget” and a different bundle provides “example.ui.Gadget”; this is called “split packages”. It is highly discouraged, and the only good reason to do this is if you are refactoring an existing jarfile into multiple jarfiles and do not wish to break users of the old code. See the official OSGi documentation on “split packages” for more details.</p> 
+      <h1 id="summary">Summary</h1> 
+      <p>OSGi has some very neat features at a very low overhead; I strongly recommend that any project which is composed of more than half-a-dozen libraries use the OSGi framework to launch itself, and take advantage of the OSGi classloader - even if it doesn’t use the rest of OSGi (service registration, standard service providers). The clean declaration of dependencies and the hiding of internal implementation details such as reliance on specific versions of other libraries are very tempting features for medium-to-large application development.</p> 
+      <h1 id="references">References</h1> 
+      <ul> 
+       <li><a href="http://www.martinlippert.org/events/WJAX2008-ClassloadingTypeVisibilityOSGi.pdf">http://www.martinlippert.org/events/WJAX2008-ClassloadingTypeVisibilityOSGi.pdf</a></li> 
+       <li><a href="http://njbartlett.name/2011/03/07/embedding-osgi.html">Embedding OSGi</a></li> 
+      </ul> 
+     </article> 
+    </div> 
+    <div id="disqus_thread"></div> 
+    <script type="text/javascript">
+      var disqus_shortname = 'mineofinformation'; // mineofinformation (disqus site id)
+      var disqus_pageid = '/java/osgi-classloaders/'; // /relative/path/to/article/dir
+
+      var disqus_config = function () {
+        this.page.identifier = disqus_pageid;
+        this.page.url = 'https://moi.vonos.net' + disqus_pageid;
+      };
+      (function() {
+        var d = document, s = d.createElement('script');
+        s.src = 'https://' + disqus_shortname + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+      })();
+    </script> 
+    <noscript>
+     Please enable JavaScript to view the 
+     <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a>
+    </noscript> 
+   </section> 
+  </div> 
+  <section id="footer"> 
+   <p>Copyright © 2017 - Simon Kitching</p> 
+  </section>   
+ </body>
+</html>

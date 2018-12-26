@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="description" content="Radix sort using an iterative bucket and queue implementation."> 
+  <title>Least Significant Digit (LSD) Radix Sort in Java · Edd Mann</title> 
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,700italic,400italic"> 
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"> 
+  <link rel="stylesheet" href="/styles.css"> 
+  <link rel="shortcut icon" href="/favicon.ico"> 
+  <link rel="alternate" href="/rss.xml" title="" type="application/rss+xml"> 
+  <script>
+        var _gaq=[['_setAccount','UA-32512081-1'],['_setDomainName','eddmann.com'],['_trackPageview']];
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+    </script> 
+ </head> 
+ <body> 
+  <div class="container content"> 
+   <header class="masthead"> 
+    <h3 class="masthead-title"> <a href="/" title="Home">Edd Mann</a> <small><i class="fa fa-code"></i> Developer</small> </h3> 
+    <nav> 
+     <a href="https://twitter.com/edd_mann"><i class="fa fa-twitter"></i></a> 
+     <a href="https://github.com/eddmann"><i class="fa fa-github"></i></a> 
+     <a href="mailto:the@eddmann.com"><i class="fa fa-envelope"></i></a> 
+    </nav> 
+    <div class="cf"></div> 
+   </header> 
+   <main> 
+    <article class="post"> 
+     <h1 class="post-title">Least Significant Digit (LSD) Radix Sort in Java</h1> 
+     <time datetime="2013-12-28T00:00:00+00:00" class="post-date">28 Dec 2013</time> 
+     <p>Radix sort is a O(digits·keys) sorting algorithm which relies on integer key grouping to successfully process and naturally order the specified data set. Basing the sort on structure and positional notation, many other data types which can be represented in integer form (i.e. ASCII characters) can take advantage of the algorithm. Sorting occurs by acting on the comparison between item digits in the same position. Two alternative version of the algorithm exists, both tackling the problem from the opposite direction. In this post I will be describing an iterative lowest significant digit implementation which as the name hints at, starts processing from the right most digit position. This implementation results in a <a href="http://en.wikipedia.org/wiki/Stable_sort#Stability">stable</a> sort, where as the other implementation, tackles the most significant digit first and can not make such guarantees. In a stable sorting algorithm the initial ordering of equal keys is left unchanged in the result. </p> 
+     <figure class="highlight">
+      <pre><code class="language-java" data-lang="java"><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">radixSort</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">arr</span><span class="o">)</span>
+<span class="o">{</span>
+    <span class="n">Queue</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;[]</span> <span class="n">buckets</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Queue</span><span class="o">[</span><span class="mi">10</span><span class="o">];</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+        <span class="n">buckets</span><span class="o">[</span><span class="n">i</span><span class="o">]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedList</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;();</span>
+
+    <span class="kt">boolean</span> <span class="n">sorted</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="kt">int</span> <span class="n">expo</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+
+    <span class="k">while</span> <span class="o">(</span> <span class="o">!</span> <span class="n">sorted</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">sorted</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">item</span> <span class="o">:</span> <span class="n">arr</span><span class="o">)</span> <span class="o">{</span>
+            <span class="kt">int</span> <span class="n">bucket</span> <span class="o">=</span> <span class="o">(</span><span class="n">item</span> <span class="o">/</span> <span class="n">expo</span><span class="o">)</span> <span class="o">%</span> <span class="mi">10</span><span class="o">;</span>
+            <span class="k">if</span> <span class="o">(</span><span class="n">bucket</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="n">sorted</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="n">buckets</span><span class="o">[</span><span class="n">bucket</span><span class="o">].</span><span class="na">add</span><span class="o">(</span><span class="n">item</span><span class="o">);</span>
+        <span class="o">}</span>
+
+        <span class="n">expo</span> <span class="o">*=</span> <span class="mi">10</span><span class="o">;</span>
+        <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+
+        <span class="k">for</span> <span class="o">(</span><span class="n">Queue</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">bucket</span> <span class="o">:</span> <span class="n">buckets</span><span class="o">)</span>
+            <span class="k">while</span> <span class="o">(</span> <span class="o">!</span> <span class="n">bucket</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">())</span>
+                <span class="n">arr</span><span class="o">[</span><span class="n">index</span><span class="o">++]</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="na">remove</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="k">assert</span> <span class="nf">isSorted</span><span class="o">(</span><span class="n">arr</span><span class="o">);</span>
+<span class="o">}</span></code></pre>
+     </figure> 
+     <p>Above shows an example of a queue-based least significant digit radix sorting implementation. Starting from the right-most digit, the process occurs over multiple passes, distributing each item into calculated buckets, based on positional key. After each pass through the collection the items are retrieved in order from each bucket. This process is repeated up and including to the length of the longest key.</p> 
+     <figure class="highlight">
+      <pre><code class="language-java" data-lang="java"><span class="kd">private</span> <span class="kd">static</span> <span class="kt">boolean</span> <span class="nf">isSorted</span><span class="o">(</span><span class="kt">int</span><span class="o">[]</span> <span class="n">arr</span><span class="o">)</span>
+<span class="o">{</span>
+    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">arr</span><span class="o">.</span><span class="na">length</span><span class="o">;</span> <span class="n">i</span><span class="o">++)</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">arr</span><span class="o">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="o">]</span> <span class="o">&gt;</span> <span class="n">arr</span><span class="o">[</span><span class="n">i</span><span class="o">])</span>
+            <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+
+    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+<span class="o">}</span></code></pre>
+     </figure> 
+     <p>To make sure that the resulting processed data set is correctly sorted an assertion was included. Using such a feature is great in development, allowing you to verify the correctness of a specific invariant. This assertion can be activated at run-time by inclusion of the ‘-ea’ option in the ‘java’ command.</p> 
+     <h2 id="resources">Resources</h2> 
+     <ul> 
+      <li><a href="http://www.dcs.gla.ac.uk/~pat/52233/slides/RadixSort1x1.pdf">Radix Sort</a></li> 
+      <li><a href="http://xlinux.nist.gov/dads/HTML/radixsort.html">NIST: Radix Sort</a></li> 
+      <li><a href="http://stackoverflow.com/questions/5167928/what-is-natural-ordering-when-we-talk-about-sorting">What is natural ordering when we talk about sorting?</a></li> 
+     </ul> 
+    </article> 
+    <div id="disqus_thread"></div> 
+    <script>
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//eddmann.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+   </main> 
+   <footer class="footer"> 
+    <img src="http://www.gravatar.com/avatar/c5c2978bb14d16460f73399c394b6acd?s=160"> 
+    <ul> 
+     <li>Developer at <a href="http://www.mybuilder.com/">MyBuilder</a></li> 
+     <li><a href="http://threedevsandamaybe.com/">Three Devs and a Maybe</a> podcast co-host</li> 
+     <li>All ramblings can be found in the <a href="/archive/">Archive</a></li> 
+    </ul> 
+    <div class="cf"></div> 
+   </footer> 
+  </div>   
+ </body>
+</html>

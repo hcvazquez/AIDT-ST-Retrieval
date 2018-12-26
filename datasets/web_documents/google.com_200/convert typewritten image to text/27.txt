@@ -1,0 +1,420 @@
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Strongly typed vs. Dynamic Content Access</title> 
+  <meta name="description" content="This article describes the difference in using strongly typed and dynamic content access in Umbraco when using MVC views"> 
+  <link rel="stylesheet" href="/assets/20D1/app.css"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="apple-touch-icon-precomposed" href="/assets/20D1/24days-icon.png"> 
+  <script>
+	(function(d) {
+		var config = {
+			kitId: 'ycw6xzz',
+			scriptTimeout: 3000,
+			async: true
+		},
+		h=d.documentElement,t=setTimeout(function(){h.className=h.className.replace(/\bwf-loading\b/g,"")+" wf-inactive";},config.scriptTimeout),tk=d.createElement("script"),f=false,s=d.getElementsByTagName("script")[0],a;h.className+=" wf-loading";tk.src='https://use.typekit.net/'+config.kitId+'.js';tk.async=true;tk.onload=tk.onreadystatechange=function(){a=this.readyState;if(f||a&&a!="complete"&&a!="loaded")return;f=true;clearTimeout(t);try{Typekit.load(config)}catch(e){}};s.parentNode.insertBefore(tk,s)
+	})(document);
+	</script> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-11788998-5', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+ </head> 
+ <body> 
+  <section class="page">
+   <main class="article">
+    <header>
+     <h1 class="header">Strongly typed vs. Dynamic Content Access</h1> 
+     <p class="byline"> by Dave Woestenborghs</p>
+    </header>
+    <div class="content-column"> 
+     <p class="teaser">I frequently see posts on <a href="http://our.umbraco.org" target="_blank">our.umbraco.org</a> where people post questions on how to retrieve content from Umbraco. Often they have problems because they are mixing strongly typed content access with dynamics. Probably because they have seen some different examples on the web and trying to mix stuff from these examples.</p> 
+     <p class="intro">In this article I want to explain the differences, the pros and the cons of each approach.</p> 
+     <h2>Templating</h2> 
+     <p>When creating MVC templates in Umbraco you have 2 types you can inherit from.</p> 
+     <p class="code">@inherits UmbracoTemplatePage</p> 
+     <p>And</p> 
+     <p class="code">@inherits UmbracoViewPage</p> 
+     <p>Both of these provide access to the UmbracoHelper, so you can do things like <span class="code">@Umbraco.Field("fieldname")</span> or <span class="code">@Umbraco.GetDictionaryValue("dictionaryKey")</span></p> 
+     <h3>UmbracoTemplatePage</h3> 
+     <p>When you use this, your model will be of the type <span class="code">Umbraco.Web.Models.RenderModel</span>.</p> 
+     <p>The model will have a property called <span class="code">Content</span> that is a implementation of the interface <span class="code">Umbraco.Core.Models.IPublishedContent</span></p> 
+     <p>This template type will also expose a property called <span class="code">CurrentPage</span> of the type <span class="code">Umbraco.Web.Models.DynamicPublishedContent</span></p> 
+     <h3 class="Heading3NoNumbering"><span>UmbracoViewPage</span></h3> 
+     <p>When you inherit from this, your model will always be an implementation of the type <span class="code">Umbraco.Core.Models.IPublishedContent</span></p> 
+     <h3>UmbracoViewPage&lt;T&gt; and UmbracoTemplatePage&lt;T&gt;</h3> 
+     <p>With these generic versions you can also pass in your own model:</p> 
+     <p class="code">@inherits UmbracoViewPage&lt;NewsItem&gt;</p> 
+     <p>So if you have a closer look at the Umbraco Source code you will see that <span class="code">UmbracoViewPage</span> inherits from <span class="code">UmbracoViewPage&lt;IPublishedContent&gt;</span> and that <span class="code">UmbracoTemplatePage</span> inherits from <span class="code">UmbracoViewPage&lt;RenderModel&gt;</span></p> 
+     <h2>Content access</h2> 
+     <p>So now we have seen what the different options are for setting up your template let's have a look what the difference is between <span class="code">IPublishedContent</span> and its dynamic counterpart</p> 
+     <h3>IPublishedContent vs DynamicPublishedContent</h3> 
+     <p>When using strongly typed content access, the Umbraco frontend cache will return an object implementing the <span class="code">IPublishedContent</span> interface. In a default Umbraco install this will be an object of the type <span class="code">Umbraco.Web.PublishedCache.XmlPublishedCache.XmlPublishedContent</span></p> 
+     <p>The object will expose properties and methods needed for retrieving the content of the current item. But also methods for retrieving the children, descendants, parent, ancestors, ...</p> 
+     <p>When we use the dynamic version we get an object of the type <span class="code">Umbraco.Web.Models.DynamicPublishedContent</span> (which actually implements the interface <span class="code">IPublishedContent</span>)</p> 
+     <p>So let's see how it works in practice.</p> 
+     <p>We have the following 2 document types set up in our plain Umbraco install.</p> 
+     <ul> 
+      <li>Homepage</li> 
+      <li>News item 
+       <ul> 
+        <li>Title : textbox</li> 
+        <li>News Date : date picker</li> 
+        <li>Overview text : textarea</li> 
+        <li>Image : Media picker</li> 
+        <li>Text : Rich Text Editor</li> 
+        <li>Show on homepage : true/false</li> 
+       </ul> </li> 
+     </ul> 
+     <p>Using the strongly typed syntax we can use this to show the title</p> 
+     <p class="code">@Model.GetPropertValue&lt;string&gt;("title")</p> 
+     <p>Using <span class="code">DynamicPublishedContent</span> object we would do this:</p> 
+     <p class="code">@CurrentPage.Title</p> 
+     <p>So when we look at this the dynamic variant looks much more human readable and feels more natural when you are used to object oriented programming. But there are also some downsides :</p> 
+     <ul> 
+      <li>No intellisense when using Visual Studio or WebMatrix</li> 
+      <li>No compile errors. Because it's dynamic you won't see syntax errors until runtime.</li> 
+      <li>A small performance hit. Because Umbraco will try to map the Title property on the dynamic object to a property in the "real" content object. If you are interested you can see all the magic happening here :<a href="/%20https:/github.com/umbraco/Umbraco-CMS/blob/dev-v7/src/Umbraco.Web/Models/DynamicPublishedContent.cs"> https://github.com/umbraco/Umbraco-CMS/blob/dev-v7/src/Umbraco.Web/Models/DynamicPublishedContent.cs</a></li> 
+     </ul> 
+     <p>It's worth mentioning that the strongly typed version is also not failsafe. If you make a typo in your property name it will not render. And this is a mistake that is sometimes easy to look over when debugging.</p> 
+     <p>So for our complete news item template it would look like this for the strongly typed version:</p> 
+     <pre class="language-markup"><code>@using Umbraco.Web 
+@using Umbraco.Web.Mvc
+@inherits UmbracoViewPage
+@{
+    Layout = null;
+}
+
+&lt;div&gt;
+    &lt;h1&gt;@(Model.HasValue("title") ? Model.GetPropertyValue&lt;string&gt;("title") : Model.Name)&lt;/h1&gt;
+
+    &lt;p&gt;@(Model.HasValue("newsDate") ? Model.GetPropertyValue&lt;DateTime&gt;("newsDate").ToString("dd MMMM yyyy") : Model.CreateDate.ToString("dd MMMM yyyy"))&lt;/p&gt;
+
+    @if(Model.HasValue("image"))
+    {
+        var mediaId = Model.GetPropertyValue&lt;int&gt;("image");
+        var mediaItem = Umbraco.TypedMedia(mediaId);
+        if(mediaItem != null &amp;&amp; mediaItem.DocumentTypeAlias == "Image")
+        {
+            &lt;p&gt;&lt;img src="@mediaItem.GetCropUrl(200,200)" alt="" /&gt;&lt;/p&gt;    
+        }
+    }
+
+    &lt;div&gt;@(Model.GetPropertyValue&lt;IHtmlString&gt;("text"))&lt;/div&gt;
+&lt;/div&gt;</code></pre> 
+     <p class="snippet-caption">News detail template using the IPublished content object</p> 
+     <p>For the dynamic version it will look like this:</p> 
+     <pre class="language-markup"><code>@using Umbraco.Web 
+@using Umbraco.Web.Mvc
+@inherits UmbracoTemplatePage
+@{
+    Layout = null;
+}
+
+&lt;div&gt;
+    &lt;h1&gt;@(CurrentPage.Title != null ? CurrentPage.Title : CurrentPage.Name)&lt;/h1&gt;
+
+    &lt;p&gt;@(CurrentPage.NewsDate != DateTime.MinValue ? CurrentPage.NewsDate.ToString("dd MMMM yyyy") : CurrentPage.CreateDate.ToString("dd MMMM yyyy"))&lt;/p&gt;
+
+    @if(CurrentPage.Image != null)
+    {
+        var mediaId = CurrentPage.Image;
+        var mediaItem = Umbraco.Media(mediaId);
+        &lt;text&gt;@mediaItem.Name&lt;/text&gt;
+        if(mediaItem != null)
+        {           
+            &lt;p&gt;&lt;img src="@mediaItem.Url" alt="" /&gt;&lt;/p&gt;    
+        }
+    }
+
+    &lt;div&gt;@CurrentPage.Text&lt;/div&gt;
+&lt;/div&gt;</code></pre> 
+     <p class="snippet-caption">News detail template using the DynamicPublishedContent object</p> 
+     <p>At this point the dynamics variant looks easier to write and read. The performance penalty for using dynamics would also be negligible.</p> 
+     <p>But what if we want to render a list of items with some filtering applied and ordering. Let's say we want to render a list of news items on the homepage that are marked to display on the homepage (property <strong>Show on homepage</strong>) and order them by <strong>newsdate</strong> descending, or <strong>createdate</strong> when newsdate isn't filled.</p> 
+     <p>With the strongly typed version we would get our newsitems for the homepage like this:</p> 
+     <p class="code">Model.Children.Where(x =&gt; x.GetPropertyValue&lt;bool&gt;("showOnHomepage"))<br>.OrderByDescending(x =&gt; x.HasValue("newsDate") ?<br>x.GetPropertyValue&lt;DateTime&gt;("newsDate") : x.CreateDate)</p> 
+     <p>With the dynamic version this would look like this:</p> 
+     <p class="code">CurrentPage.newsItems.Where("showOnHomepage")<br>.OrderBy("createDate desc").ToList();</p> 
+     <p>We see immediately it is not possible to order on newsdate and use createdate when this is not filled (or maybe it's just me not knowing how to do it). Also the where statement is relatively easy here. But this can become pretty complex when you want to filter on multiple properties. Because you have to write everything as string, instead of a lambda expression, like you do with the strongly typed version.</p> 
+     <p>This is an example taken from the Umbraco documentation: <br><span class="code">CurrentPage.Where("NodeTypeAlias == @0 &amp;&amp; Level == @1 || Name = @2", "HomePage", 0, "Home");</span></p> 
+     <p>Here is the entire code example for rendering the news list on the homepage using strongly typed content access:</p> 
+     <pre class="language-markup"><code>@using Umbraco.Web
+@using Umbraco.Web.Mvc
+@inherits UmbracoViewPage
+@{
+    Layout = null;
+    var newsItems = Model.Children.Where(x =&gt; x.GetPropertyValue&lt;bool&gt;("showOnHomepage")).OrderByDescending(x =&gt; x.HasValue("newsDate") ? x.GetPropertyValue&lt;DateTime&gt;("newsDate") : x.CreateDate).ToList();
+}
+@foreach(var item in newsItems)
+{
+    &lt;div&gt;
+        &lt;h2&gt;@(item.HasValue("title") ? item.GetPropertyValue&lt;string&gt;("title") : item.Name)&lt;/h2&gt;
+        &lt;p&gt;@(item.HasValue("newsDate") ? item.GetPropertyValue&lt;DateTime&gt;("newsDate").ToString("dd MMMM yyyy") : item.CreateDate.ToString("dd MMMM yyyy"))&lt;/p&gt;
+        @if(item.HasValue("overviewText")){
+            &lt;p&gt;@(item.GetPropertyValue&lt;string&gt;("overviewText"))&lt;/p&gt;
+        }
+        &lt;p&gt;&lt;a href="@item.Url"&gt;Read more&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+}</code></pre> 
+     <p class="snippet-caption">Code snippet for news list on homepage using the IPublishedContent object</p> 
+     <p>And here is the same snippet using dynamics :</p> 
+     <pre class="language-markup"><code>@using Umbraco.Web
+@using Umbraco.Web.Mvc
+@inherits Umbraco.Web.Mvc.UmbracoTemplatePage
+@{
+    Layout = null;
+    var newsItems = CurrentPage.Children.Where("showOnHomepage").OrderBy("createDate desc").ToList();
+}
+@foreach(var item in newsItems)
+{
+    &lt;div&gt;
+        &lt;h2&gt;@(item.Title != null ? item.Title : item.Name)&lt;/h2&gt;
+        &lt;p&gt;@(item.NewsDate != DateTime.MinValue ? item.NewsDate.ToString("dd MMMM yyyy") : item.CreateDate.ToString("dd MMMM yyyy"))&lt;/p&gt;
+        @if(item.OverviewText != null){
+            &lt;p&gt;@item.OverviewText&lt;/p&gt;
+        }
+        &lt;p&gt;&lt;a href="@item.Url"&gt;Read more&lt;/a&gt;&lt;/p&gt;
+    &lt;/div&gt;
+}</code></pre> 
+     <p class="snippet-caption">Code snippet for news list on homepage using the DynamicPublishedContent object</p> 
+     <p>The performance penalty will be much higher when using dynamics and applying filters on a list because "where" string need to be parsed. In this simple example the dynamics version was on average 40% slower.</p> 
+     <p>So let's summarize what we have discussed until now:</p> 
+     <ul> 
+      <li>Dynamics are easier to write and read for simple things</li> 
+      <li>Filtering and ordering is more complex using dynamics</li> 
+      <li>Dynamics don't offer intellisense</li> 
+      <li>With both versions typos in property names won't throw an error, but are difficult to pinpoint.</li> 
+      <li>Dynamics can cause a performance hit.</li> 
+     </ul> 
+     <h2>Alternatives</h2> 
+     <p>Luckily there are some alternatives around that will let you work with strongly typed models. The one I want to discuss with you today is <a href="https://our.umbraco.org/projects/developer-tools/zbumodelsbuilder/">https://our.umbraco.org/projects/developer-tools/zbumodelsbuilder/</a></p> 
+     <p>This is created by HQ employee Stéphane Gay and will be integrated in Umbraco 7.4</p> 
+     <p>This generates strongly typed models for your document types. So in our case we would get a model looking like this, representing our news item.</p> 
+     <pre class="language-markup"><code>//------------------------------------------------------------------------------
+// &lt;auto-generated&gt;
+//   This code was generated by a tool.
+//
+//    Zbu.ModelsBuilder v2.1.5.54
+//
+//   Changes to this file will be lost if the code is regenerated.
+// &lt;/auto-generated&gt;
+//------------------------------------------------------------------------------
+
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Web;
+using Umbraco.Core.Models;
+using Umbraco.Core.Models.PublishedContent;
+using Umbraco.Web;
+using Zbu.ModelsBuilder;
+using Zbu.ModelsBuilder.Umbraco;
+
+namespace Umbraco.Web.PublishedContentModels
+{
+	/// &lt;summary&gt;News Item&lt;/summary&gt;
+	[PublishedContentModel("NewsItem")]
+	public partial class NewsItem : PublishedContentModel
+	{
+#pragma warning disable 0109 // new is redundant
+		public new const string ModelTypeAlias = "NewsItem";
+		public new const PublishedItemType ModelItemType = PublishedItemType.Content;
+#pragma warning restore 0109
+
+		public NewsItem(IPublishedContent content)
+			: base(content)
+		{ }
+
+#pragma warning disable 0109 // new is redundant
+		public new static PublishedContentType GetModelContentType()
+		{
+			return PublishedContentType.Get(ModelItemType, ModelTypeAlias);
+		}
+#pragma warning restore 0109
+
+		public static PublishedPropertyType GetModelPropertyType&lt;TValue&gt;(Expression&lt;Func&lt;NewsItem, TValue&gt;&gt; selector)
+		{
+			return PublishedContentModelUtility.GetModelPropertyType(GetModelContentType(), selector);
+		}
+
+		///&lt;summary&gt;
+		///Image
+		///&lt;/summary&gt;
+		[ImplementPropertyType("image")]
+		public object Image
+		{
+			get { return this.GetPropertyValue("image"); }
+		}
+
+		///&lt;summary&gt;
+		///News date
+		///&lt;/summary&gt;
+		[ImplementPropertyType("newsDate")]
+		public DateTime NewsDate
+		{
+			get { return this.GetPropertyValue&lt;DateTime&gt;("newsDate"); }
+		}
+
+		///&lt;summary&gt;
+		///Overview text
+		///&lt;/summary&gt;
+		[ImplementPropertyType("overviewText")]
+		public object OverviewText
+		{
+			get { return this.GetPropertyValue("overviewText"); }
+		}
+
+		///&lt;summary&gt;
+		///Show on homepage
+		///&lt;/summary&gt;
+		[ImplementPropertyType("showOnHomepage")]
+		public bool ShowOnHomepage
+		{
+			get { return this.GetPropertyValue&lt;bool&gt;("showOnHomepage"); }
+		}
+
+		///&lt;summary&gt;
+		///Text
+		///&lt;/summary&gt;
+		[ImplementPropertyType("text")]
+		public IHtmlString Text
+		{
+			get { return this.GetPropertyValue&lt;IHtmlString&gt;("text"); }
+		}
+
+		///&lt;summary&gt;
+		///Title
+		///&lt;/summary&gt;
+		[ImplementPropertyType("title")]
+		public string Title
+		{
+			get { return this.GetPropertyValue&lt;string&gt;("title"); }
+		}
+	}
+}
+</code></pre> 
+     <p class="snippet-caption">C# class generated by Zbu Models builder for the newsitem doctype</p> 
+     <p>&nbsp;</p> 
+     <p>Then in our views when we access our Model it will be of the type NewsItem.</p> 
+     <pre class="language-markup"><code>@using Umbraco.Web
+@using Umbraco.Web.Mvc
+@using Umbraco.Web.PublishedContentModels
+@inherits UmbracoViewPage&lt;NewsItem&gt;
+@{
+    Layout = null;
+}
+&lt;div&gt;
+    &lt;h1&gt;@(!string.IsNullOrEmpty(Model.Title) ? Model.Title : Model.Name)&lt;/h1&gt;
+
+    &lt;p&gt;@(Model.NewsDate != DateTime.MinValue ? Model.NewsDate.ToString("dd MMMM yyyy") : Model.CreateDate.ToString("dd MMMM yyyy"))&lt;/p&gt;
+
+    @if(Model.Image != null)
+    {
+        var mediaId = Model.Image;
+        var mediaItem = Umbraco.TypedMedia(mediaId);
+        if(mediaItem != null &amp;&amp; mediaItem.DocumentTypeAlias == "Image")
+        {
+            &lt;p&gt;&lt;img src="@mediaItem.Url" alt="" /&gt;&lt;/p&gt;    
+        }
+    }
+
+    &lt;div&gt;@Model.Text&lt;/div&gt;
+&lt;/div&gt;</code></pre> 
+     <p class="snippet-caption">News detail template using the model created by the Zbu Models builder</p> 
+     <p>The benefits of this approach are :</p> 
+     <ul> 
+      <li>Much more readable and easier to write views</li> 
+      <li>Compile errors on syntax errors</li> 
+      <li>Intellisense in Visual Studio and Webmatrix</li> 
+     </ul> 
+     <p>If you want to know more about the models builder watch this <a href="http://uhangout.co.uk/videos/ep033-with-stephan-gay-code-last-model-generation/">uHangout episode</a> about it.</p> 
+     <p>If you don't like your models to be generated and want to have more control on how your models are setup, I would recommend using <a href="https://our.umbraco.org/projects/developer-tools/ditto/">Ditto</a>. There is also a <a href="http://uhangout.co.uk/videos/ep041-with-lee-kelleher-model-mapping-with-umbraco-ditto/">uHangout episode</a> about using it.</p> 
+     <h2 class="Heading1NoNumbering">Wrap up</h2> 
+     <p class="MsoNormal">Always try to use strongly typed content access. Using dynamics can look easier to write and read but that doesn't weigh up to the downsides. And with alternatives like Zbu Models builder it makes using strongly typed models even easier.</p> 
+     <p class="MsoNormal">In my opinion dynamics have served their purpose. They were introduced in Umbraco with the first implementation of Razor, somewhere in a v4.x version. But the core should actually think about removing it in a future version (V8 ?).</p> 
+     <p class="MsoNormal"><span style="font-size: 16px; font-weight: bold;">Interesting reading</span></p> 
+     <ul> 
+      <li>Understanding the dynamic keyword:<br><a href="https://visualstudiomagazine.com/Articles/2011/02/01/Understanding-the-Dynamic-Keyword-in-C4.aspx">https://visualstudiomagazine.com/Articles/2011/02/01/Understanding-the-Dynamic-Keyword-in-C4.aspx</a></li> 
+      <li>A four part article from Stéphane Gay on strongly typed models in Umbraco<br>h<a href="http://www.zpqrtbnk.net/posts/strongly-typed-models-1">ttp://www.zpqrtbnk.net/posts/strongly-typed-models-1<br></a><a href="http://www.zpqrtbnk.net/posts/strongly-typed-models-2">http://www.zpqrtbnk.net/posts/strongly-typed-models-2</a><br><a href="http://www.zpqrtbnk.net/posts/strongly-typed-models-3">http://www.zpqrtbnk.net/posts/strongly-typed-models-3<br></a><a href="http://www.zpqrtbnk.net/posts/strongly-typed-models-4">http://www.zpqrtbnk.net/posts/strongly-typed-models-4</a><br><br></li> 
+     </ul> 
+    </div>
+    <footer>
+     <ul class="tags"> 
+      <li><a rel="tag" href="/umbraco-cms/tags/api/" title="See all articles tagged with API">API</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/mvc/" title="See all articles tagged with MVC">MVC</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/performance/" title="See all articles tagged with Performance">Performance</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/razor/" title="See all articles tagged with Razor">Razor</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/source/" title="See all articles tagged with Source">Source</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/templates/" title="See all articles tagged with Templates">Templates</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/views/" title="See all articles tagged with Views">Views</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/visual-studio/" title="See all articles tagged with Visual Studio">Visual Studio</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/v6/" title="See all articles tagged with v6">v6</a></li> 
+      <li><a rel="tag" href="/umbraco-cms/tags/v7/" title="See all articles tagged with v7">v7</a></li> 
+     </ul>
+    </footer>
+    <section class="bios">
+     <div class="bio"> 
+      <div class="gravatar" title="Dave Woestenborghs">
+       <img src="//gravatar.com/avatar/c6c76510af08bcb2896f4e9e887074fd.jpg?d=mm&amp;s=150" srcset="//gravatar.com/avatar/c6c76510af08bcb2896f4e9e887074fd.jpg?d=mm&amp;s=300 2x" width="150" height="150">
+      </div> 
+      <h1>Dave Woestenborghs</h1> 
+      <p>Dave is on Twitter as <a href="//twitter.com/dawoe21" title="Dave Woestenborghs on Twitter" rel="author">@dawoe21</a></p> 
+     </div>
+    </section>
+    <section class="comments">
+     <div id="disqus_thread"></div>
+    </section>
+   </main>
+   <nav class="dates-navbar">
+    <a href="/umbraco-cms/2015/" class="home-link"><span class="scr-text">Home</span></a>
+    <ol> 
+     <li><a href="/umbraco/2015/umbraco-zeitgeist/" title="Umbraco Zeitgeist: Effective Umbraco Development in 2016"><span class="scr-text">Umbraco Zeitgeist: Effective Umbraco Development in 2016</span></a></li> 
+     <li><a href="/umbraco/2015/how-to-design-reusable-components/" title="How to Design Reusable Components for Umbraco: 6 Steps to Better, More Fun Code"><span class="scr-text">How to Design Reusable Components for Umbraco: 6 Steps to Better, More Fun Code</span></a></li> 
+     <li><a href="/umbraco/2015/grunt-all-the-things!/" title="Creating and releasing Umbraco packages for multiple platforms using Grunt"><span class="scr-text">Creating and releasing Umbraco packages for multiple platforms using Grunt</span></a></li> 
+     <li class="selected"><a href="/umbraco/2015/strongly-typed-vs-dynamic-content-access/" title="Strongly typed vs. Dynamic Content Access"><span class="scr-text">Strongly typed vs. Dynamic Content Access</span></a></li> 
+     <li><a href="/umbraco/2015/custom-listview/" title="Recreating the listview in a custom section"><span class="scr-text">Recreating the listview in a custom section</span></a></li> 
+     <li><a href="/umbraco/2015/seo-controls/" title="SEO in Umbraco"><span class="scr-text">SEO in Umbraco</span></a></li> 
+     <li><a href="/umbraco/2015/umbraco-rest-api/" title="Umbraco REST API"><span class="scr-text">Umbraco REST API</span></a></li> 
+     <li><a href="/umbraco/2015/the-humble-ambition-of-pipeline-crm/" title="The humble ambition of Pipeline CRM"><span class="scr-text">The humble ambition of Pipeline CRM</span></a></li> 
+     <li><a href="/umbraco/2015/using-a-cdn-with-umbraco/" title="Using a CDN with Umbraco"><span class="scr-text">Using a CDN with Umbraco</span></a></li> 
+     <li><a href="/umbraco/2015/multilingual-vorto-nested-content/" title="1-1 Multilingual websites with Vorto and Nested Content"><span class="scr-text">1-1 Multilingual websites with Vorto and Nested Content</span></a></li> 
+     <li><a href="/umbraco/2015/the-code-that-changed-my-life/" title="The Code That Changed My Life"><span class="scr-text">The Code That Changed My Life</span></a></li> 
+     <li><a href="/umbraco/2015/membership-apis-investigation/" title="An Investigation into the Umbraco Membership APIs"><span class="scr-text">An Investigation into the Umbraco Membership APIs</span></a></li> 
+     <li><a href="/umbraco/2015/extending-membership/" title="Everything you need to know about MembershipProvider"><span class="scr-text">Everything you need to know about MembershipProvider</span></a></li> 
+     <li><a href="/umbraco/2015/umbraco-7-back-office-tweaks/" title="Tweaking Umbraco 7 Back Office"><span class="scr-text">Tweaking Umbraco 7 Back Office</span></a></li> 
+     <li><a href="/umbraco/2015/a-diverse-umbraco-community-equates-to-success/" title="How Diverse Umbraco Community Involvement Can Lead to Greater Success Both Personally &amp; Professionally"><span class="scr-text">How Diverse Umbraco Community Involvement Can Lead to Greater Success Both Personally &amp; Professionally</span></a></li> 
+     <li><a href="/umbraco/2015/so-whats-up-with-angular-these-days/" title="So whats up with Angular these days..."><span class="scr-text">So whats up with Angular these days...</span></a></li> 
+     <li><a href="/umbraco/2015/integrating-an-application-into-umbraco-(using-ninject)/" title="Integrating an application into Umbraco (Using Ninject)"><span class="scr-text">Integrating an application into Umbraco (Using Ninject)</span></a></li> 
+     <li><a href="/umbraco/2015/may-the-tools-be-with-you/" title="May The Tools Be With You"><span class="scr-text">May The Tools Be With You</span></a></li> 
+     <li><a href="/umbraco/2015/when-public-access-isnt-quite-enough/" title="When Public Access isn't quite enough"><span class="scr-text">When Public Access isn't quite enough</span></a></li> 
+     <li><a href="/umbraco/2015/hacking-around-with-search-and-strong-typed-models/" title="Hacking around with search and strong typed models."><span class="scr-text">Hacking around with search and strong typed models.</span></a></li> 
+     <li><a href="/umbraco/2015/a-web-for-everyone/" title="'A web for everyone'"><span class="scr-text">'A web for everyone'</span></a></li> 
+     <li><a href="/umbraco/2015/ode-to-joy/" title="Ode to Joy (of the community contributor)"><span class="scr-text">Ode to Joy (of the community contributor)</span></a></li> 
+     <li><a href="/umbraco/2015/turbo-charging-websites-with-pjax/" title="Turbo charging websites with PJAX"><span class="scr-text">Turbo charging websites with PJAX</span></a></li> 
+     <li><a href="/umbraco/2015/not-another-grid-layouts-post/" title="Not another Grid Layouts post"><span class="scr-text">Not another Grid Layouts post</span></a></li> 
+    </ol>
+   </nav>
+  </section> 
+  <script>var disqus_config = function () {this.page.url = '/umbraco-cms/2015/strongly-typed-vs-dynamic-content-access/';this.page.identifier = '24DaysInUmbraco_2214';};(function() {
+		var d = document, s = d.createElement('script');
+		s.src = '//24daysinumbraco.disqus.com/embed.js';
+		s.setAttribute('data-timestamp', +new Date());
+		(d.head || d.body).appendChild(s);
+		})();
+	</script>
+  <noscript>
+   Please enable JavaScript to view the 
+   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </noscript> 
+  <script src="/assets/20D1/libs.min.js"></script> 
+  <script src="/assets/20D1/app.js"></script>   
+ </body>
+</html>

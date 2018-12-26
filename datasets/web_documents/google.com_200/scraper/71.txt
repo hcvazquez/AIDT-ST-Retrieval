@@ -1,0 +1,243 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <title>No time to wait</title> 
+  <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css" type="text/css"> 
+  <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-responsive.min.css" type="text/css"> 
+  <link rel="stylesheet" href="/static/css/codemirror.css" type="text/css"> 
+  <link rel="stylesheet" href="/static/css/styles.css" type="text/css"> 
+  <link rel="alternate" type="application/rss+xml" title="No time to wait" href="http://showmetheco.de/index.rss"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta name="generator" content=""> 
+ </head> 
+ <body> 
+  <div class="container"> 
+   <div class="row"> 
+    <div class="span2">
+     &nbsp;
+    </div> 
+    <div class="span8"> 
+     <div class="page-header"> 
+      <div id="header"> 
+       <div id="title"> 
+        <a href="http://showmetheco.de/">No time to wait</a> 
+        <sup><a href="http://showmetheco.de/index.rss"><img src="/static/images/rss.png" alt="RSS"></a></sup> 
+       </div> 
+       <div id="description">
+        Just code
+       </div> 
+       <span id="author">vti</span>, 
+       <span id="about">founder of <a href="https://kritika.io">kritika.io</a></span> 
+       <div class="menu"> 
+        <a href="/">index</a> 
+        <a href="/tags.html">tags</a> 
+        <a href="/archive.html">archive</a> 
+        <a href="/pages/about.html">about</a> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="span2">
+     &nbsp;
+    </div> 
+   </div> 
+   <div class="row"> 
+    <div class="span2">
+     &nbsp;
+    </div> 
+    <div class="span8"> 
+     <div class="text"> 
+      <h1 class="title"><a href="http://showmetheco.de/articles/2012/11/scraping-pages-full-of-javascript.html">Scraping pages full of JavaScript</a></h1> 
+      <div class="article-meta">
+        Mo, 23 Nov 2012 by vti 
+       <div class="tags"> 
+        <a href="http://showmetheco.de/tags/Perl.html">Perl</a> 
+        <a href="http://showmetheco.de/tags/scraping.html">scraping</a> 
+        <a href="http://showmetheco.de/tags/javascript.html">javascript</a> 
+       </div> 
+      </div> 
+      <div class="article-content"> 
+       <p>When scraping internet websites I use <a href="https://metacpan.org/pod/Web::Scraper">Web::Scraper</a>. It's simple, readable and very handy. I can use XPath and CSS3 selectors or can get raw HTML and parse it with regexps when in despair. But sometimes the pages are full of JavaScript that is required to be run in order to modify the DOM, do some adjustments and so on. Good thing <a href="https://metacpan.org/pod/Web::Scraper">Web::Scraper</a> does not only accepts URLs but the raw content also. So let's use WebKit to render the HTML!</p> 
+       <a id="cut"></a> 
+       <p>As all the good things WebKit Perl bindings are already on CPAN. I used <a href="https://metacpan.org/pod/Gtk3::WebKit">Gtk3::WebKit</a> and it worked very well. Here is the fetcher class:</p> 
+       <pre><code>package Fetcher::WebKit;
+
+use strict;
+use warnings;
+
+use Capture::Tiny qw(capture);
+
+use Gtk3 -init;
+use Gtk3::WebKit ':xpath_results';
+
+sub new {
+    my $class = shift;
+
+    my $self = {@_};
+    bless $self, $class;
+
+    return $self;
+}
+
+sub fetch {
+    my $self = shift;
+    my ($url) = @_;
+
+    my $loop = Glib::MainLoop-&gt;new();
+
+    my $view = Gtk3::WebKit::WebView-&gt;new();
+
+    $self-&gt;_register_requests;
+
+    $view-&gt;signal_connect(
+        'notify::load-status' =&gt; \&amp;_load_status_cb,
+        [$self, $loop]
+    );
+    $view-&gt;load_uri($url);
+
+    # Shut the #$%# up!
+    capture { $loop-&gt;run() };
+
+    my $doc = $view-&gt;get_dom_document;
+    return $doc-&gt;get_body-&gt;get_outer_html;
+}
+
+sub _register_requests {
+    my $self = shift;
+
+    my $session = Gtk3::WebKit-&gt;get_default_session();
+    $self-&gt;{requests_started}  = 0;
+    $self-&gt;{requests_finished} = 0;
+    $session-&gt;signal_connect(
+        'request-started' =&gt; sub {
+            my ($session, $message, $socket) = @_;
+
+            ++$self-&gt;{requests_started};
+            $message-&gt;signal_connect(
+                "finished" =&gt; sub {
+                    my ($message) = @_;
+
+                    ++$self-&gt;{requests_finished};
+                }
+            );
+        }
+    );
+}
+
+sub _load_status_cb {
+    my ($self, $loop, $resources) = @{pop @_};
+    my ($view) = @_;
+
+    my $uri = $view-&gt;get_uri or return;
+    return unless $view-&gt;get_load_status eq 'finished';
+
+    my $frame       = $view-&gt;get_main_frame;
+    my $data_source = $frame-&gt;get_data_source;
+    return if $data_source-&gt;is_loading;
+
+    Glib::Idle-&gt;add(
+        sub {
+            return 1
+              unless $self-&gt;{requests_started}
+              and $self-&gt;{requests_started} == $self-&gt;{requests_finished};
+
+            eval { $loop-&gt;quit(); };
+        }
+    );
+}
+
+1;
+</code></pre> 
+       <p>And I can do:</p> 
+       <pre><code>my $fetcher = Fetcher::WebKit-&gt;new;
+my $content = $fetcher-&gt;fetch('http://some.url');
+
+my $scraper = scraper {
+    process 'div', 'info' =&gt; scraper {
+        process 'h1',         title =&gt; 'TEXT';
+        process 'span.date', date  =&gt; [
+            'TEXT',
+            sub { join '-', reverse split /\./ }
+        ];
+
+        process 'p', 'content[]' =&gt; 'TEXT';
+    };
+};
+
+my $info = $scraper-&gt;scrape($content)-&gt;{info};
+</code></pre> 
+       <p>And no JavaScript can stop you!</p> 
+      </div> 
+      <div id="pager"> 
+       <span class="active"> <span class="arrow">? </span><a href="http://showmetheco.de/articles/2012/12/design-by-contract-in-perl.html">Design by contract in Perl</a> &nbsp; | &nbsp;<a href="http://showmetheco.de/articles/2012/11/testing-websockets-from-console.html">Testing WebSockets from console</a><span class="arrow"> ?</span> </span> 
+      </div> 
+      <h2>Comments</h2> 
+      <div id="disqus_thread"></div> 
+      <script type="text/javascript">
+         
+        var disqus_shortname = 'showmetheco-de'; 
+
+        
+
+         
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script> 
+      <noscript>
+       Please enable JavaScript to view the 
+       <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+      </noscript> 
+      <a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a> 
+     </div> 
+    </div> 
+    <div class="span2">
+     &nbsp;
+    </div> 
+   </div> 
+   <div class="row"> 
+    <div class="span2">
+     &nbsp;
+    </div> 
+    <div class="span8"> 
+     <div id="footer">
+       Care about code quality? Try 
+      <a href="https://kritika.io">kritika.io</a> 
+     </div> 
+    </div> 
+    <div class="span2">
+     &nbsp;
+    </div> 
+   </div> 
+  </div> 
+  <script type="text/javascript" src="/static/javascripts/jquery.js"></script> 
+  <script type="text/javascript" src="/static/javascripts/codemirror.js"></script> 
+  <script type="text/javascript" src="/static/javascripts/perl.js"></script> 
+  <script type="text/javascript">
+            $(document).ready(function() {
+                var editors = [];
+                $('pre.perl').each(function() {
+                    $(this).replaceWith('<textarea class="code perl">' + $(this).text() + '</textarea>');
+                });
+                $('textarea').each(function() {
+                    var editor = CodeMirror.fromTextArea(this, {readOnly: true, lineNumbers: true});
+                    editors.push(editor);
+                });
+            });
+        </script> 
+  <script type="text/javascript">
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-3438369-7']);
+          _gaq.push(['_trackPageview']);
+
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+        </script>   
+ </body>
+</html>

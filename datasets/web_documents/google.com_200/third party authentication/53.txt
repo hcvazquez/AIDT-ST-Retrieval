@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title>3.1.15. Authentication — Buildbot latest documentation</title> 
+  <link rel="stylesheet" href="../_static/qtile.css" type="text/css"> 
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css"> 
+  <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     'latest',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script> 
+  <script type="text/javascript" src="../_static/jquery.js"></script> 
+  <script type="text/javascript" src="../_static/underscore.js"></script> 
+  <script type="text/javascript" src="../_static/doctools.js"></script> 
+  <link rel="shortcut icon" href="../_static/buildbot.ico"> 
+  <link rel="index" title="Index" href="../genindex.html"> 
+  <link rel="search" title="Search" href="../search.html"> 
+  <link rel="next" title="3.1.16. Authorization" href="authz.html"> 
+  <link rel="prev" title="3.1.14. Material design Base application" href="www-md_base-app.html"> 
+  <!-- GA-TRACKING-START --> 
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script> 
+  <script type="text/javascript">
+try{
+var pageTracker = _gat._getTracker("UA-12313843-4");
+pageTracker._setDomainName("none");
+pageTracker._setAllowLinker(true);
+pageTracker._trackPageview();
+} catch(err) {}
+</script> 
+  <!-- GA-TRACKING-END --> 
+ </head> 
+ <body> 
+  <div class="related" role="navigation" aria-label="related navigation"> 
+   <h3>Navigation</h3> 
+   <ul> 
+    <li class="right" style="margin-right: 10px"> <a href="../genindex.html" title="General Index" accesskey="I">index</a></li> 
+    <li class="right"> <a href="../py-modindex.html" title="Python Module Index">modules</a> |</li> 
+    <li class="right"> <a href="authz.html" title="3.1.16. Authorization" accesskey="N">next</a> |</li> 
+    <li class="right"> <a href="www-md_base-app.html" title="3.1.14. Material design Base application" accesskey="P">previous</a> |</li> 
+    <li class="nav-item nav-item-0"><a href="../index.html">Buildbot latest documentation</a> »</li> 
+    <li class="nav-item nav-item-1"><a href="index.html">3. Buildbot Development</a> »</li> 
+    <li class="nav-item nav-item-2"><a href="general.html" accesskey="U">3.1. General Documents</a> »</li> 
+   </ul> 
+  </div> 
+  <div class="document"> 
+   <div class="documentwrapper"> 
+    <div class="bodywrapper"> 
+     <div class="body" role="main"> 
+      <div class="admonition caution"> 
+       <p class="first admonition-title">Caution</p> 
+       <p class="last">This page documents the latest, unreleased version of Buildbot. For documentation for released versions, see <a class="reference external" href="http://docs.buildbot.net/current/">http://docs.buildbot.net/current/</a>.</p> 
+      </div> 
+      <div class="section" id="authentication"> 
+       <h1>3.1.15. Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h1> 
+       <p>Buildbot’s HTTP authentication subsystem supports a rich set of information about users:</p> 
+       <ul> 
+        <li><p class="first">User credentials: Username and proof of ownership of that username.</p> </li> 
+        <li><p class="first">User information: Additional information about the user, including</p> 
+         <blockquote> 
+          <div>
+           <ul class="simple"> 
+            <li>email address</li> 
+            <li>full name</li> 
+            <li>group membership</li> 
+           </ul> 
+          </div>
+         </blockquote> </li> 
+        <li><p class="first">Avatar information: a small image to represent the user.</p> </li> 
+       </ul> 
+       <p>Buildbot’s authentication subsystem is designed to support several authentication modes:</p> 
+       <ul class="simple"> 
+        <li>
+         <dl class="first docutils"> 
+          <dt>
+           Simple username/password authentication.
+          </dt> 
+          <dd>
+           The Buildbot UI prompts for a username and password and the backend verifies them.
+          </dd> 
+         </dl> </li> 
+        <li>
+         <dl class="first docutils"> 
+          <dt>
+           External authentication by an HTTP Proxy.
+          </dt> 
+          <dd>
+           An HTTP proxy in front of Buildbot performs the authentication and passes the verified username to Buildbot in an HTTP Header.
+          </dd> 
+         </dl> </li> 
+        <li>
+         <dl class="first docutils"> 
+          <dt>
+           Authentication by a third-party website.
+          </dt> 
+          <dd>
+           Buildbot sends the user to another site such as GitHub to authenticate and receives a trustworty assertion of the user’s identity from that site.
+          </dd> 
+         </dl> </li> 
+       </ul> 
+       <div class="section" id="implementation"> 
+        <h2>3.1.15.1. Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2> 
+        <p>Authentication is implemented by an instance of <a class="reference internal" href="cls-auth.html#buildbot.www.auth.AuthBase" title="buildbot.www.auth.AuthBase"><code class="xref py py-class docutils literal"><span class="pre">AuthBase</span></code></a>. This instance is supplied directly by the user in the configuration file. A reference to the instance is available at <code class="docutils literal"><span class="pre">self.master.www.auth</span></code>.</p> 
+       </div> 
+       <div class="section" id="username-password-authentication"> 
+        <h2>3.1.15.2. Username / Password Authentication<a class="headerlink" href="#username-password-authentication" title="Permalink to this headline">¶</a></h2> 
+        <p>In this mode, the Buildbot UI displays a form allowing the user to specify a username and password. When this form is submitted, the UI makes an AJAX call to <code class="docutils literal"><span class="pre">/auth/login</span></code> including HTTP Basic Authentication headers. The master verifies the contents of the header and updates the server-side session to indicate a successful login or to contain a failure message. Once the AJAX call is complete, the UI reloads the page, re-fetching <code class="docutils literal"><span class="pre">/config.js</span></code>, which will include the username or failure message from the session.</p> 
+        <p>Subsequent access is authorized based on the information in the session; the authentication credentials are not sent again.</p> 
+       </div> 
+       <div class="section" id="external-authentication"> 
+        <h2>3.1.15.3. External Authentication<a class="headerlink" href="#external-authentication" title="Permalink to this headline">¶</a></h2> 
+        <p>Buildbot’s web service can be run behind an HTTP proxy. Many such proxies can be configured to perform authentication on HTTP connections before forwarding the request to Buildbot. In these cases, the results of the authentication are passed to Buildbot in an HTTP header.</p> 
+        <p>In this mode, authentication proceeds as follows:</p> 
+        <ul class="simple"> 
+         <li>The web browser connects to the proxy, requesting the Buildbot home page</li> 
+         <li>The proxy negotiates authentication with the browser, as configured</li> 
+         <li>Once the user is authenticated, the proxy forwards the request goes to the Buildbot web service. The request includes a header, typically <code class="docutils literal"><span class="pre">Remote-User</span></code>, containing the authenticated username.</li> 
+         <li>Buildbot reads the header and optionally connects to another service to fetch additional user information about the user.</li> 
+         <li>Buildbot stores all of the collected information in the server-side session.</li> 
+         <li>The UI fetches <code class="docutils literal"><span class="pre">/config.js</span></code>, which includes the user information from the server-side session.</li> 
+        </ul> 
+        <p>Note that in this mode, the HTTP proxy will send the header with every request, although it is only interpreted during the fetch of <code class="docutils literal"><span class="pre">/config.js</span></code>.</p> 
+        <div class="section" id="kerberos-example"> 
+         <h3>Kerberos Example<a class="headerlink" href="#kerberos-example" title="Permalink to this headline">¶</a></h3> 
+         <p>Kerberos is an authentication system which allows passwordless authentication on corporate networks. Users authenticate once on their desktop environment, and the OS, browser, webserver, and corporate directory cooperate in a secure manner to share the authentication to a webserver. This mechanism only takes care about the authentication problem, and no user information is shared other than the username. The kerberos authentication is supported by a Apache front-end in <code class="docutils literal"><span class="pre">mod_kerberos</span></code>.</p> 
+        </div> 
+       </div> 
+       <div class="section" id="third-party-authentication"> 
+        <h2>3.1.15.4. Third-Party Authentication<a class="headerlink" href="#third-party-authentication" title="Permalink to this headline">¶</a></h2> 
+        <p>Third-party authentication involves Buildbot redirecting a user’s browser to another site to establish the user’s identity. Once that is complete, that site redirects the user back to Buildbot, including a cryptographically signed assertion about the user’s identity.</p> 
+        <p>The most common implementation of this sort of authentication is oAuth2. Many big internet service companies are providing oAuth2 services to identify their users. Most oAuth2 services provide authentication and user information in the same api.</p> 
+        <p>The following process is used for third-party authentication:</p> 
+        <ul class="simple"> 
+         <li>The web browser connects to buildbot ui</li> 
+         <li>A session cookie is created, but user is not yet authenticated. The UI adds a widget entitled <code class="docutils literal"><span class="pre">Login</span> <span class="pre">via</span> <span class="pre">GitHub</span></code> (or whatever third party is configured)</li> 
+         <li>When the user clicks on the widget, the UI fetches <code class="docutils literal"><span class="pre">/auth/login</span></code>, which returns a bare URL on <code class="docutils literal"><span class="pre">github.com</span></code>. The UI loads that URL in the browser, with an effect similar to a redirect.</li> 
+         <li>GitHub authenticates the user, if necessary, and requests permission for Buildbot to access the user’s information.</li> 
+         <li>On success, the GitHub web page redirects back to Buildbot’s <code class="docutils literal"><span class="pre">/auth/login?code=..</span></code>, with an authentication code.</li> 
+         <li>Buildbot uses this code to request more information from GitHub, and stores the results in the server-side session. Finally, Buildbot returns a redirect response, sending the user’s browser to the root of the Buildbot UI. The UI code will fetch <code class="docutils literal"><span class="pre">/config.js</span></code>, which contains the login data from the session.</li> 
+        </ul> 
+       </div> 
+       <div class="section" id="logout"> 
+        <h2>3.1.15.5. Logout<a class="headerlink" href="#logout" title="Permalink to this headline">¶</a></h2> 
+        <p>A “logout” button is available in the simple and third-party modes. Such a button doesn’t make sense for external authentication, since the proxy will immediately re-authenticate the user.</p> 
+        <p>This button fetches <code class="docutils literal"><span class="pre">/auth/logout</span></code>, which destroys the server-side session. After this point, any stored authentication information is gone and the user is logged out.</p> 
+       </div> 
+       <div class="section" id="future-additions"> 
+        <h2>3.1.15.6. Future Additions<a class="headerlink" href="#future-additions" title="Permalink to this headline">¶</a></h2> 
+        <ul class="simple"> 
+         <li>Browserid/Persona: This method is very similar to oauth2, and should be implemented in a similar way (i.e. two stage redirect + token-verify)</li> 
+         <li>Use the User table in db: This is a very similar to the UserPasswordAuth use cases (form + local db verification). Eventually, this method will require some work on the UI in order to populate the db, add a “register” button, verification email, etc. This has to be done in a ui plugin.</li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="sphinxsidebar" role="navigation" aria-label="main navigation"> 
+    <div class="sphinxsidebarwrapper"> 
+     <p class="logo"><a href="../index.html"> <img class="logo" src="../_static/header-text-transparent.png" alt="Logo"> </a></p> 
+     <div id="searchbox" style="display: none" role="search"> 
+      <h3>Quick search</h3> 
+      <form class="search" action="../search.html" method="get"> 
+       <div>
+        <input type="text" name="q">
+       </div> 
+       <div>
+        <input type="submit" value="Go">
+       </div> 
+       <input type="hidden" name="check_keywords" value="yes"> 
+       <input type="hidden" name="area" value="default"> 
+      </form> 
+     </div> 
+     <script type="text/javascript">$('#searchbox').show(0);</script>
+     <h3>Table Of Contents</h3> 
+     <ul class="current"> 
+      <li class="toctree-l1"><a class="reference internal" href="../tutorial/index.html">1. Buildbot Tutorial</a></li> 
+      <li class="toctree-l1"><a class="reference internal" href="../manual/index.html">2. Buildbot Manual</a></li> 
+      <li class="toctree-l1 current"><a class="reference internal" href="index.html">3. Buildbot Development</a>
+       <ul class="current"> 
+        <li class="toctree-l2 current"><a class="reference internal" href="general.html">3.1. General Documents</a>
+         <ul class="current"> 
+          <li class="toctree-l3"><a class="reference internal" href="master-overview.html">3.1.1. Master Organization</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="definitions.html">3.1.2. Definitions</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="style.html">3.1.3. Buildbot Coding Style</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="coffeescript-style.html">3.1.4. CoffeeScript Coding Style</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="tests.html">3.1.5. Buildbot’s Test Suite</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="config.html">3.1.6. Configuration</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="config.html#configuration-in-angularjs">3.1.7. Configuration in AngularJS</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="schedulers.html">3.1.8. Writing Schedulers</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="utils.html">3.1.9. Utilities</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="results.html">3.1.10. Build Result Codes</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="www-server.html">3.1.11. WWW Server</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="www-data-module.html">3.1.12. Javascript Data Module</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="www-base-app.html">3.1.13. Base web application</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="www-md_base-app.html">3.1.14. Material design Base application</a></li> 
+          <li class="toctree-l3 current"><a class="current reference internal" href="#">3.1.15. Authentication</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="authz.html">3.1.16. Authorization</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="master-worker.html">3.1.17. Master-Worker API</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="br-claiming.html">3.1.18. Claiming Build Requests</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="encodings.html">3.1.19. String Encodings</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="metrics.html">3.1.20. Metrics</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="secrets.html">3.1.21. Secrets</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="secrets.html#secrets-manager">3.1.22. Secrets manager</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="secrets.html#secrets-providers">3.1.23. Secrets providers</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="stats-service.html">3.1.24. Statistics Service</a></li> 
+          <li class="toctree-l3"><a class="reference internal" href="plugins-publish.html">3.1.25. How to package Buildbot plugins</a></li> 
+         </ul> </li> 
+        <li class="toctree-l2"><a class="reference internal" href="apis.html">3.2. APIs</a></li> 
+        <li class="toctree-l2"><a class="reference internal" href="py3-compat.html">3.3. Python3 compatibility</a></li> 
+        <li class="toctree-l2"><a class="reference internal" href="classes.html">3.4. Classes</a></li> 
+       </ul> </li> 
+      <li class="toctree-l1"><a class="reference internal" href="../relnotes/index.html">4. Release Notes</a></li> 
+      <li class="toctree-l1"><a class="reference internal" href="../relnotes/index.html#older-release-notes">5. Older Release Notes</a></li> 
+      <li class="toctree-l1"><a class="reference internal" href="../indices.html">6. Indices and Tables</a></li> 
+     </ul> 
+     <h4>Previous topic</h4> 
+     <p class="topless"><a href="www-md_base-app.html" title="previous chapter">3.1.14. Material design Base application</a></p> 
+     <h4>Next topic</h4> 
+     <p class="topless"><a href="authz.html" title="next chapter">3.1.16. Authorization</a></p> 
+     <div role="note" aria-label="source link"> 
+      <h3>This Page</h3> 
+      <ul class="this-page-menu"> 
+       <li><a href="../_sources/developer/auth.rst.txt" rel="nofollow">Show Source</a></li> 
+      </ul> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="clearer"></div> 
+  </div>  
+ </body>
+</html>

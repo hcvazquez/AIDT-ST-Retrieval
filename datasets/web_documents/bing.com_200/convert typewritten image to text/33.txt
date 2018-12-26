@@ -1,0 +1,816 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <meta name="copyright" content="Copyright Nadeau Software Consulting. All rights reserved."> 
+  <meta name="description" content="This article shows how to use Java's URL and URLConnection classes to get a text web page, image, audio clip, or data file."> 
+  <meta name="keywords" content="java,search engine,link checker,keyword extractor,web page,url,urlconnection,httpurlconnection"> 
+  <link rel="shortcut icon" href="/favicon.gif" type="image/x-icon"> 
+  <style type="text/css" media="all">@import "/sites/NadeauSoftware.com/files/css/d125078869b336dd69d9f5492f6739d3.css";</style> 
+  <title>Java tip: How to get a web page | Nadeau Software</title> 
+ </head> 
+ <body> 
+  <div id="page-body"> 
+   <div class="breadcrumb">
+    <a href="/">Home</a> » 
+    <a href="/topics">Articles</a> » 
+    <a href="/articles/2008">2008</a> » 
+    <a href="/articles/2008/01">January</a>
+   </div> 
+   <div id="page-main" class="article"> 
+    <h1 class="title">Java tip: How to get a web page</h1>
+    <div class="node"> 
+     <div class="submitted">
+      January 6, 2008 
+     </div> 
+     <div class="taxonomy">
+      Topics: 
+      <a href="/articles/java">Java</a>, 
+      <a href="/articles/text_processing">Text processing</a>
+     </div> 
+     <div class="content">
+      <div class="article-requirements">
+       Technologies: Java 5+
+      </div> 
+      <p class="summary">The starting point for building a link checker, web spider, or web page analyzer is, of course, to get the web page from the web server. Java's <code>java.net</code> package includes classes to manage URLs and to open web server connections. This tip shows how to use them to a get text, image, audio, or data file from a web server.</p> 
+      <div class="toc"> 
+       <h2>Table of Contents</h2> 
+       <ol> 
+        <li><a href="#Introduction">Introduction</a></li> 
+        <li><a href="#Code">Code</a></li> 
+        <li><a href="#Examples">Examples</a></li> 
+        <li><a href="#Explanation">Explanation</a></li> 
+        <ol> 
+         <li><a href="#CreatingaURL">Creating a URL</a></li> 
+         <li><a href="#OpeningaURLconnection">Opening a URL connection</a></li> 
+         <li><a href="#Settinguparequest">Setting up a request</a></li> 
+         <li><a href="#Sendingtherequest">Sending the request</a></li> 
+         <li><a href="#Gettingtheresponse">Getting the response</a></li> 
+         <li><a href="#Gettingthecontent">Getting the content</a></li> 
+         <li><a href="#Interpretingthecontent">Interpreting the content</a></li> 
+         <li><a href="#Interpretingthecontentwithoutacharactersetname">Interpreting the content without a character set name</a></li> 
+        </ol> 
+        <li><a href="#Alternatives">Alternatives</a></li> 
+        <li><a href="#Furtherreading">Further reading</a></li> 
+        <ol> 
+         <li><a href="#Relatedtips">Related tips</a></li> 
+         <li><a href="#Otherarticlesandspecifications">Other articles and specifications </a></li> 
+        </ol> 
+       </ol> 
+      </div> 
+      <h2 id="Introduction">Introduction</h2> 
+      <p>Downloading a web file sends a "request" to a web server using the standard HTTP 1.1 protocol. The server processes your request and sends you a "response". The response's "header" tells you the file's size, last modified date, MIME type, and other useful information. Finally, the response's payload is the file itself.</p> 
+      <p>Java has several ways to do this request-response interchange between your application and a web server. Most of them hide these details. While this simplifies the process, a lot of control and error handling is lost. The simpler approaches don't let you check the response header to see if you got an error and what type of error it was. These approaches also don't let you ask for or receive compressed content and they don't tell you the MIME type and character encoding of returned data.</p> 
+      <p>I don't advocate using the simpler approaches that hide the request-response interchange. I list them at the <a href="#Alternatives">end of this article</a> if you're interested. Instead, this article shows you how to use the lower-level classes that give you more control over requests and responses. As you'll see, this isn't that hard.</p> 
+      <h2 id="Code">Code</h2> 
+      <p>First off is the complete code for a sample <code>WebFile</code> class that illustrates the use of <code>java.net</code>'s <code>URL</code>, <code>URLConnection</code>, and <code>HttpURLConnection</code> classes. The constructor takes a URL string, opens a web server connection, sends a server request, checks the response, and reads the file (text, image, audio, etc.). If needed, the file is transcoded into Java's UTF-8 character encoding. Methods on the class return important header values and the web file content.</p> 
+      <p>In the sections after the code I'll explain the code, the request-response steps, and how to use the appropriate Java classes.</p> 
+      <pre class="code-example"><strong>/**
+ * Get a web file.
+ */
+public final class WebFile {</strong>
+    // Saved response.
+    private java.util.Map&lt;String,java.util.List&lt;String&gt;&gt; responseHeader = null;
+    private java.net.URL responseURL = null;
+    private int responseCode = -1;
+    private String MIMEtype  = null;
+    private String charset   = null;
+    private Object content   = null;
+ 
+<strong>    /** Open a web file. */
+    public WebFile( String urlString )
+        throws java.net.MalformedURLException, java.io.IOException {</strong>
+        // Open a URL connection.
+        final java.net.URL url = new java.net.URL( urlString );
+        final java.net.URLConnection uconn = url.openConnection( );
+        if ( !(uconn instanceof java.net.HttpURLConnection) )
+            throw new java.lang.IllegalArgumentException(
+                "URL protocol must be HTTP." );
+        final java.net.HttpURLConnection conn =
+            (java.net.HttpURLConnection)uconn;
+ 
+        // Set up a request.
+        conn.setConnectTimeout( 10000 );    // 10 sec
+        conn.setReadTimeout( 10000 );       // 10 sec
+        conn.setInstanceFollowRedirects( true );
+        conn.setRequestProperty( "User-agent", "spider" );
+ 
+        // Send the request.
+        conn.connect( );
+ 
+        // Get the response.
+        responseHeader    = conn.getHeaderFields( );
+        responseCode      = conn.getResponseCode( );
+        responseURL       = conn.getURL( );
+        final int length  = conn.getContentLength( );
+        final String type = conn.getContentType( );
+        if ( type != null ) {
+            final String[] parts = type.split( ";" );
+            MIMEtype = parts[0].trim( );
+            for ( int i = 1; i &lt; parts.length &amp;&amp; charset == null; i++ ) {
+                final String t  = parts[i].trim( );
+                final int index = t.toLowerCase( ).indexOf( "charset=" );
+                if ( index != -1 )
+                    charset = t.substring( index+8 );
+            }
+        }
+ 
+        // Get the content.
+        final java.io.InputStream stream = conn.getErrorStream( );
+        if ( stream != null )
+            content = readStream( length, stream );
+        else if ( (content = conn.getContent( )) != null &amp;&amp;
+            content instanceof java.io.InputStream )
+            content = readStream( length, (java.io.InputStream)content );
+        conn.disconnect( );
+<strong>    }
+ 
+    /** Read stream bytes and transcode. */
+    private Object readStream( int length, java.io.InputStream stream )
+        throws java.io.IOException {</strong>
+        final int buflen = Math.max( 1024, Math.max( length, stream.available() ) );
+        byte[] buf   = new byte[buflen];;
+        byte[] bytes = null;
+ 
+        for ( int nRead = stream.read(buf); nRead != -1; nRead = stream.read(buf) ) {
+            if ( bytes == null ) {
+                bytes = buf;
+                buf   = new byte[buflen];
+                continue;
+            }
+            final byte[] newBytes = new byte[ bytes.length + nRead ];
+            System.arraycopy( bytes, 0, newBytes, 0, bytes.length );
+            System.arraycopy( buf, 0, newBytes, bytes.length, nRead );
+            bytes = newBytes;
+        }
+ 
+        if ( charset == null )
+            return bytes;
+        try {
+            return new String( bytes, charset );
+        }
+        catch ( java.io.UnsupportedEncodingException e ) { }
+        return bytes;
+<strong>    }
+ 
+    /** Get the content. */
+    public Object getContent( ) {</strong>
+        return content;<strong>
+    }
+ 
+    /** Get the response code. */
+    public int getResponseCode( ) {</strong>
+        return responseCode;<strong>
+    }
+ 
+    /** Get the response header. */
+    public java.util.Map&lt;String,java.util.List&lt;String&gt;&gt; getHeaderFields( ) {
+</strong>        return responseHeader;
+<strong>    }
+ 
+    /** Get the URL of the received page. */
+    public java.net.URL getURL( ) {</strong>
+        return responseURL;<strong>
+    }
+ 
+    /** Get the MIME type. */
+    public String getMIMEType( ) {
+</strong>        return MIMEtype;
+<strong>    }
+}</strong></pre> 
+      <h2 id="Examples">Examples</h2> 
+      <p>Open a <code>WebFile</code> and get the HTML text, if any:</p> 
+      <pre class="code-example">WebFile file   = new WebFile( "http://example.com" );
+String MIME    = file.getMIMEType( );
+Object content = file.getContent( );
+if ( MIME.equals( "text/html" ) &amp;&amp; content instanceof String )
+{
+    String html = (String)content;
+    ...
+}</pre> 
+      <p>Open a <code>WebFile</code> and get the image, if any:</p> 
+      <pre class="code-example">WebFile file   = new WebFile( "http://example.com/example.gif" );
+String MIME    = file.getMIMEType( );
+Object content = file.getContent( );
+if ( MIME.startsWith( "image" ) &amp;&amp; content instanceof java.awt.Image )
+{
+    java.awt.Image image = (java.awt.Image)content;
+    ...
+}</pre> 
+      <p>Open a <code>WebFile</code> and get the audio clip, if any:</p> 
+      <pre class="code-example">WebFile file   = new WebFile( "http://example.com/example.aiff" );
+String MIME    = file.getMIMEType( );
+Object content = file.getContent( );
+if ( MIME.startsWith( "audio" ) &amp;&amp; content instanceof java.applet.AudioClip )
+{
+    java.applet.AudioClip audio = (java.applet.AudioClip)content;
+    ...
+}</pre> 
+      <h2 id="Explanation">Explanation</h2> 
+      <p>The <code><a href="http://java.sun.com/javase/6/docs/api/java/net/package-summary.html" class="externallink">java.net</a></code> package's <code><a href="http://java.sun.com/javase/6/docs/api/java/net/URL.html" class="externallink">URL,</a></code><code><a href="http://java.sun.com/javase/6/docs/api/java/net/URLConnection.html" class="externallink">URLConnection,</a></code> and <code><a href="http://java.sun.com/javase/6/docs/api/java/net/HttpURLConnection.html" class="externallink">HttpURLConnection</a></code> classes have been available since JDK 1.1. Getting a web file using these classes always includes these steps:</p> 
+      <ol> 
+       <li>Create a <code>URL</code> object from a URL string.</li> 
+       <li>Open a <code>URLConnection</code> object from the <code>URL</code> object.</li> 
+       <li>Set up the web server request by calling <code>set</code>* methods on the <code>URLConnection</code> object.</li> 
+       <li>Send the request to the web server by calling <code>connect()</code> on the <code>URLConnection</code> object.</li> 
+       <li>Get the web server response by calling <code>get</code>* methods on the <code>URLConnection</code> object.</li> 
+       <li>Decode the file content based upon the content type.</li> 
+      </ol> 
+      <p>So, let's walk through each of these steps.</p> 
+      <h3 id="CreatingaURL">Creating a URL</h3> 
+      <p>Starting with a URL string like "http://example.com", simply call the <code>URL( string ) </code>constructor. A <code>MalformedURLException</code> is thrown if there is a URL syntax problem.</p> 
+      <pre class="code-example">URL url = new URL( "http://example.com" );</pre> 
+      <h3 id="OpeningaURLconnection">Opening a URL connection</h3> 
+      <p>To prepare for communications with a web server, call <code>URL.openConnection( )</code> to get a <code>URLConnection</code> object. Despite the method name, no communications actually occurs yet. Instead, the object provides methods to build a web server request, then issue that request and get the server's response.</p> 
+      <pre class="code-example">URLConnection uconn = url.openConnection( );</pre> 
+      <p>A <code>URLConnection</code> is a generic interface to several protocols supported by Java. For the HTTP protocol used by web servers, the object is actually an <code>HttpURLConnection</code> object, which offers several necessary methods for web server communications. So, cast the <code>URLConnection</code> object to an <code>HttpURLConnection</code> when you're dealing with a web server.</p> 
+      <pre class="code-example">HttpURLConnection conn = (HttpURLConnection)uconn;</pre> 
+      <h3 id="Settinguparequest">Setting up a request</h3> 
+      <p>Methods on the <code>URLConnection</code> enable you to configure the file request. Here are the essentials:</p> 
+      <ul class="bullet-block-list"> 
+       <li><code>setConnectTimeout( )</code>. Fail if a web server doesn't respond to a connection with a time limit (in milliseconds). The default value is 0, which waits forever and is clearly undesirable. Ten or twenty seconds is more reasonable.</li> 
+       <li><code>setReadTimeout( )</code>. Fail if a web server doesn't return the web file within a time limit (in milliseconds). Again, the default value is 0, which waits forever and is clearly bad. Ten or twenty seconds is a better limit.</li> 
+       <li><code>setInstanceFollowRedirects( )</code>. When <code>true</code>, follow web page redirects automatically. Otherwise, only make the first request and stop, which is the default. Since you probably want the redirected-to page, set this to <code>true</code>.</li> 
+       <li><code>setRequestProperty( )</code>. Set other request properties. See below.</li> 
+      </ul> 
+      <pre class="code-example">conn.setConnectTimeout( 10000 );
+conn.setReadTimeout( 10000 );
+conn.setInstanceFollowRedirects( true );
+conn.setRequestProperty( "User-agent", "spider" );</pre> 
+      <p>Use <code>setRequestProperty( )</code> to set special properties in the request. The most important is the "<code>User-Agent</code>", which gives the name of the application making the request (such as a web browser). If left empty or set to a non-standard value, some web servers will reject the request. <a href="http://www.useragentstring.com/pages/useragentstring.php" class="externallink">UserAgentString.com</a> has a good list of known user agent strings for common web browsers and spiders. However, it is poor web etiquette to lie and send a bogus user agent string. Instead, send something that identifies the name and purpose of the application.</p> 
+      <p>Other settable request properties include the "<code>Authorization</code>" for logging in to a site, the "<code>Referer</code>" for the URL of a page that led you to the requested file, or any of several "<code>If</code>" properties for conditionally getting the file. All of these are standard HTTP 1.1 request header fields discussed in the <a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html" class="externallink">HTTP 1.1 specification.</a> Wikipedia has a nice summary of <a href="http://en.wikipedia.org/wiki/HTTP" class="externallink">HTTP.</a></p> 
+      <p>If you are sending a form, you can configure the request as a GET or a POST using <code>setRequestMethod( )</code>. The same method also supports HEAD, OPTIONS, PUT, DELETE, and TRACE requests. The <a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html" class="externallink">HTTP 1.1 specification</a> discusses these types of requests. For most situations, use the default GET request.</p> 
+      <h3 id="Sendingtherequest">Sending the request</h3> 
+      <p>Call the <code>connect( )</code> method to connect to the web server, send your request, and collect the server's response. An <code>IOException</code> is thrown if there is a problem.</p> 
+      <pre>conn.connect( );</pre> 
+      <p>Actually, this call is optional. Calling any of the response methods below will automatically call <code>connect( )</code> if needed.</p> 
+      <h3 id="Gettingtheresponse">Getting the response</h3> 
+      <p>Once your request is sent, response values are available from <code>get</code>* methods. Here are the essentials:</p> 
+      <ul class="bullet-block-list"> 
+       <li><code>getHeaderFields( )</code>. Get all of the response header fields as a list of strings. The most common header fields are also available by dedicated methods, like those in the next few bullets here.</li> 
+       <li><code>getResponseCode( )</code>. Get the HTTP numeric response code from the header. This is important since it tells you if your request succeeded. See the HTTP specification or Wikipedia's <a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes" class="externallink">List of HTTP status codes.</a> On success, the code is 200. 404 means the page wasn't found, 503 means the site was down, and so on for about 50 standard codes. The <code>HttpURLConnection</code> class also has constants for the codes, such as <code>HTTP_OK</code> for 200, <code>HTTP_NOT_FOUND</code> for 404, etc.</li> 
+       <li><code>getURL( )</code>. Before sending the request, this gets the original URL. But after getting a response, this gets the URL from that response. Normally, they are the same. But if the response is a redirect to another page, this will be the URL of that page.</li> 
+       <li><code>getContentType( )</code>. Get the content type string from the header. This is discussed more below.</li> 
+       <li><code>getContentEncoding( )</code>. Get the encoding (compression) used by the content. Web servers are supposed to always return uncompressed content unless the request includes an "<code>Accept-encoding</code>" property. If you've included such a property, the content still might not be compressed if the server doesn't support it or if it didn't want to do it for some reason. Use <code>getContentEncoding( )</code> and look for a value like "<code>gzip</code>" to see if the returned content is compressed.</li> 
+       <li><code>getContentLength( )</code>. Get the length of the content, in bytes. This value will be a -1 if the length is not known. This is quite common and occurs when content is sent in bursts by server-side PHP, Perl, or Java code generating the content on-the-fly. When you get a -1 for the content length, you'll have to detect the end of the data yourself during parsing.</li> 
+      </ul> 
+      <pre class="code-example">Map&lt;String,List&lt;String&gt;&gt; header = conn.getHeaderFields( );
+int responseCode       = conn.getResponseCode( );
+URL responseURL        = conn.getURL( );
+String contentType     = conn.getContentType( );
+String contentEncoding = conn.getContentEncoding( );
+int contentLength      = conn.getContentLength( );</pre> 
+      <p>There are a few more less essential methods. Call <code>getDate( )</code> to get the date and time of the server's response. Call <code>getLastModified( )</code> for the date the content was last modified on the server, and <code>getExpiration( )</code> to get the server's recommended cache expiration date. But if you aren't planning on managing a cache, you can ignore these.</p> 
+      <p>The <code>getHeaderFields( )</code> method returns a rather cumbersome <code>Map</code> of named lists of strings. This map includes the content type, content encoding, content length, etc., retrieved more easily by the above methods. It also includes the "<code>Set-Cookie</code>" field for cookies, "<code>Keep-Alive</code>" for controlling connections that remain open for awhile, "<code>Server</code>" for the name and version number of the web server, "<code>Cache-Control</code>" for the server's preferences on caching the returned content, and others. All of these are explained further in the <a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html" class="externallink">HTTP 1.1 specification.</a> But if you are just getting a single web file, you can usually ignore these.</p> 
+      <h3 id="Gettingthecontent">Getting the content</h3> 
+      <p>Finally, there are two methods to get the payload of the server's response:</p> 
+      <ul class="bullet-block-list"> 
+       <li><code>getErrorStream( )</code>. Get the <code>InputStream</code> to access the web server's error response, if any. Some response codes, such as 404 for a missing file, tell you that an error occurred when trying to get the file. Nevertheless, web servers usually send a custom error page to be shown to the user. <code>getErrorStream( )</code> returns an <code>InputStream</code> for reading this error page. It also returns <code>null</code> if no error occurred. Checking for this <code>null</code> is a quick way to quickly detect an error.</li> 
+       <li><code>getContent( )</code>. Get the web file's content if no error occurred. On an error it throws an exception.</li> 
+      </ul> 
+      <pre class="code-example">java.io.InputStream errorStream = conn.getErrorStream( );
+if ( errorStream == null ) {
+    Object content = conn.getContent( );
+    ...
+}</pre> 
+      <p>There are several types of content that can be delivered by a web server, such as HTML text, images, audio clips, videos, ZIP archives, etc. Since <code>URLConnection</code> is generic, its <code>getContent( )</code> method simply returns an <code>Object</code>. The type of <code>Object</code> depends upon the content:</p> 
+      <ul class="bullet-block-list"> 
+       <li>Image content returns a <code>java.awt.Image</code> object, if the image file format is supported by Java, such as GIF, JPEG, and PNG.</li> 
+       <li>Audio content returns a <code>java.applet.AudioClip</code> object, if the audio file format is supported by Java, such as AIFF and WAV.</li> 
+       <li>HTML and plain text, ZIP files, JAR files, unrecognized image and audio types, and all other content returns a <code>java.io.InputStream</code> so that the application can parse the content itself. You can also get this stream by calling <code>getInputStream( )</code>.</li> 
+      </ul> 
+      <p>The <code>getContentType( )</code> method listed earlier returns the type of content returned by the server. For instance, if it reads "<code>image/gif</code>", <code>getContent( )</code> returns an <code>Image</code> constructed from a GIF file. You can do string comparisons on the content type, but it is easier to use <code>instanceof</code> to check the object returned by <code>getContent( )</code>:</p> 
+      <pre class="code-example">Object content = conn.getContent( );
+if ( content instanceof java.awt.Image )
+{
+    java.awt.Image image = (java.awt.Image)content;
+    ...
+}
+else if ( content instanceof java.applet.AudioClip )
+{
+    java.applet.AudioClip audio = (java.applet.AudioClip)content;
+    ...
+}
+else
+{
+    java.io.InputStream stream = (java.io.InputStream)content;
+    ...
+}</pre> 
+      <p><strong>However, none of this is guaranteed!</strong> The Java API does not specify what types of objects may be returned by <code>getContent( )</code>. Instead, it leaves this to whatever <a href="http://java.sun.com/javase/6/docs/api/java/net/ContentHandler.html" class="externallink"><code>ContentHandler</code></a> objects are returned by a <a href="http://java.sun.com/javase/6/docs/api/java/net/ContentHandlerFactory.html" class="externallink"><code>ContentHandlerFactory</code></a> set on the <code>URLConnection</code>. The defaults are not specified and are implemented by Sun's internal code. While that code has been released as Open Source along with Java, there is no requirement that other vendors support that code in their Java releases. Vendors may skip it, change it, or add their own. For instance, Apple's Java in Mac OS X uses different image code that is probably more efficient on its platform. Apple's code still returns an <code>Image</code> object, but not via Sun's own implementation.</p> 
+      <p>Sun's default content handlers are all in the <code>sun.net.www.content</code> package and include the following classes as of Java 5:</p> 
+      <ul> 
+       <li><code>sun.net.www.content.audio.aiff</code></li> 
+       <li><code>sun.net.www.content.audio.wav</code></li> 
+       <li><code>sun.net.www.content.image.gif</code></li> 
+       <li><code>sun.net.www.content.image.jpeg</code></li> 
+       <li><code>sun.net.www.content.image.png</code></li> 
+       <li><code>sun.net.www.content.text.plain</code></li> 
+      </ul> 
+      <p>Notice that none of these are for HTML. To handle HTML text, you can write your own <code>ContentHandler</code> or, more easily, process the bytes from an <code>InputStream</code>.</p> 
+      <p>If you decide to write our own <code>ContentHandler</code>, <a href="http://javaboutique.internet.com/" class="externallink">Java Boutique</a> has a brief tutorial on <a href="http://javaboutique.internet.com/tutorials/handlers/" class="externallink">Creating Content and Protocol Handlers in Java.</a></p> 
+      <h3 id="Interpretingthecontent">Interpreting the content</h3> 
+      <p>When <code>getContent( )</code> returns an <code>InputStream</code> (such as for HTML text), you can use a loop to read all of the stream's data into a byte array. Note that these are <em>bytes</em>, not characters.</p> 
+      <p>To convert the stream's bytes to characters you need to know the character encoding. This is available within the content type returned by <code>getContentType( )</code>. That type has one of two common forms:</p> 
+      <ul> 
+       <li>"<em>type/subtype</em>"</li> 
+       <li>"<em>type/subtype</em><code>; charset=</code><em>set</em>"</li> 
+      </ul> 
+      <p>The <em>type</em> and <em>subtype</em> characterize the content, such as "<code>text/html</code>" or "<code>image/png</code>". Together, these form a <a href="http://en.wikipedia.org/wiki/MIME" class="externallink">MIME type.</a> These values are standardized and the Internet Assigned Numbers Authority has a list of standard <a href="http://www.iana.org/assignments/media-types/" class="externallink">MIME Media Types.</a> Some common MIME types include:</p> 
+      <div style="margin-left: 20px; margin-bottom: 1em;"> 
+       <table border="0" cellpadding="5"> 
+        <tbody>
+         <tr> 
+          <th scope="col">MIME type</th> 
+          <th scope="col">Meaning</th> 
+         </tr> 
+         <tr> 
+          <td><code>text/plain</code></td> 
+          <td>Plain text file</td> 
+         </tr> 
+         <tr> 
+          <td><code>text/html</code></td> 
+          <td>HTML web page</td> 
+         </tr> 
+         <tr> 
+          <td><code>application/xml</code></td> 
+          <td>XML data file</td> 
+         </tr> 
+         <tr> 
+          <td><code>application/xhtml+xml</code></td> 
+          <td>XHTML web page</td> 
+         </tr> 
+         <tr> 
+          <td><code>image/jpeg</code></td> 
+          <td>JPEG image</td> 
+         </tr> 
+         <tr> 
+          <td><code>image/png</code></td> 
+          <td>PNG image</td> 
+         </tr> 
+         <tr> 
+          <td><code>image/gif</code></td> 
+          <td>GIF image</td> 
+         </tr> 
+        </tbody>
+       </table> 
+      </div> 
+      <p>While XHTML has its own MIME type, most web servers are intentionally misconfigured to return XHTML under the incorrect "<code>text/html</code>" MIME type. This is done because Internet Explorer 6 didn't recognize XHTML's MIME type and would incorrectly show XHTML as an unstyled hierarchical XML listing. Additionally, incorrectly configured web servers sometimes return ZIP archives, JAR files, and anything else they don't recognize as "<code>text/plain</code>". So, the MIME type should be consider only as a strong hint, not absolute truth.</p> 
+      <p>In a content type, optional parameters may follow the MIME type after a semicolon. While there are several parameters possible, common use primarily includes the "<code>charset</code>" parameter giving a character set (encoding) name for text content. This important name indicates how to map the raw bytes from the <code>InputStream</code> into characters.</p> 
+      <p>If there is no character set name, the content is data, not text. It is up to the application to process the data appropriately. For instance, if the MIME type were "<code>application/zip</code>", you could pass the <code>InputStream</code> to <code>java.util.zip.ZipInputStream</code> to read and unarchive a ZIP file.</p> 
+      <p>Text content is <em>supposed to</em> always have a character set name. Character set names are <a href="http://www.iana.org/assignments/character-sets" class="externallink">standardized.</a> Older content may use <a href="http://en.wikipedia.org/wiki/ASCII" class="externallink">"US-ASCII"</a> for US English text, <a href="http://en.wikipedia.org/wiki/Big5" class="externallink">"Big5"</a> for Chinese, or <a href="http://en.wikipedia.org/wiki/Shift_JIS" class="externallink">"Shift_JIS"</a> for Japanese. There are also a flock of Microsoft Windows-specific encodings that may be in use for content generated by Microsoft products. Fortunately, today, content is moving towards the <a href="http://en.wikipedia.org/wiki/UTF-8" class="externallink">"UTF-8"</a> character encoding for the international Unicode character set. This is also Java's default encoding for strings.</p> 
+      <p>To transcode the stream's bytes into Java's UTF-8 characters, extract the character set name from the content type and create a new <code>String</code>. An exception is thrown if the character set name isn't recognized.</p> 
+      <pre class="code-example">String text = new String( bytes, charset );</pre> 
+      <p>At this point you <em>finally</em> have HTML, XHTML, or plain text content from the web server. Congratulations!</p> 
+      <h3 id="Interpretingthecontentwithoutacharactersetname">Interpreting the content without a character set name</h3> 
+      <p>But what if the content is text, but there is no character set name in the content type? When improperly configured web servers do this, applications must fall back to looking at the content itself. For HTML, look for a <code>&lt;meta&gt;</code> tag:</p> 
+      <pre class="code-example">&lt;meta http-equiv="Content-Type" content="text/html; charset=utf-8"&gt;</pre> 
+      <p>For XML and XHTML, look for an <code>&lt;?xml&gt;</code> tag:</p> 
+      <pre>&lt;?xml version="1.0" encoding="UTF-8" ?&gt;</pre> 
+      <p>There should be just one of these tags early in the content. However, improperly authored content may not include these, may include multiple tags, or may include tags whose character set is wrong or doesn't match that in the response header (if any). For instance, as of this writing, Microsoft's own microsoft.com home page incorrectly includes <em>two</em> <code>&lt;meta&gt;</code> tags with differing character sets. What's an application to do?</p> 
+      <p>When there is conflicting information about the character set, the response header's content type has first priority. If that is missing, the content's <em>first</em> <code>&lt;meta&gt;</code> or <code>&lt;?xml&gt;</code> tag has second priority. Finally, when there is no explicit character set stated anywhere, the application can guess or use its own preferences. Often, "<code>UTF-8</code>" is a good guess.</p> 
+      <p>Since all HTML and XML tags use 8-bit bytes in the US-ASCII character set, Java code can fairly safely scan through the beginning of the byte array from an <code>InputStream</code> and look for a <code>&lt;meta&gt;</code> or <code>&lt;?xml&gt;</code> tag if needed. Once the tag is found and the character set name is extracted, transcode to UTF-8 and start over with whatever processing you intend to do with the web page.</p> 
+      <h2 id="Alternatives">Alternatives</h2> 
+      <p>The code and discussion above is a general approach for getting content from a URL. However, there are several simpler alternatives listed below. All of these are actually implemented using the <code>URLConnection</code> and <code>HttpURLConnection</code> objects we discussed above. However, because these objects are not exposed, you can't set HTTP request parameters (timeouts, user agent string, etc.), or get response headers, the response code, a redirected-to URL, or the content type. This is a significant drawback and why I advocate using the underlying classes directly.</p> 
+      <p>Here are a few of the many places URLs are used by Java classes to automatically load content from a web server:</p> 
+      <ul class="bullet-block-list"> 
+       <li>For all URLs: <pre class="code-example">Object content = url.getContent( );</pre> </li> 
+       <li>For text URLs displayed in a <code>JEditorPane</code>: <pre class="code-example">javax.swing.JEditorPane editor = new javax.swing.JEditorPane( url );
+</pre> </li> 
+       <li>For GIF, JPEG, and PNG image URLs: <pre class="code-example">java.awt.Toolkit toolkit = java.awt.Toolkit.getDefaultToolkit( );
+java.awt.Image   image  = toolkit.createImage( url );</pre> </li> 
+       <li>For GIF, JPEG, and PNG image URLs loaded as an <code>ImageIcon</code>: <pre class="code-example">javax.swing.ImageIcon icon = new javax.swing.ImageIcon( url );</pre> </li> 
+       <li>For GIF, JPEG, PNG, BMP, and WBMP image URLs: <pre class="code-example">java.awt.Image image = javax.imageio.ImageIO.read( url );</pre> </li> 
+       <li>For audio URLs: <pre class="code-example">java.applet.AudioClip audio = java.applet.Applet.newAudioClip( url );</pre> </li> 
+       <li>For MIDI sequence URLs: <pre class="code-example">javax.sound.midi.Sequence midi = javax.sound.midi.MidiSystem.getSequence( url ); </pre> </li> 
+      </ul> 
+      <p>The <code>InputStream</code> from a URLConnection also can be used to load content:</p> 
+      <ul class="bullet-block-list"> 
+       <li>For ZIP input streams: <pre class="code-example">java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(
+    (java.io.InputStream)url.getContent( ) );
+java.util.zip.ZipEntry entry = null;
+while ( (entry = zip.getNextEntry( )) != null )
+{ ... }</pre> </li> 
+       <li>For GZIP input streams: <pre class="code-example">
+java.util.zip.GZipInputStream zip = new java.util.zip.GZipInputStream(
+    (java.io.InputStream)url.getContent( ) );
+java.util.zip.ZipEntry entry = null;
+while ( (entry = zip.getNextEntry( )) != null )
+{ ... }</pre> </li> 
+       <li>For JAR input streams: <pre class="code-example">java.util.jar.JarInputStream jar = new java.util.jar.JarInputStream(
+    (java.io.InputStream)url.getContent( ) );
+java.util.zip.ZipEntry entry = null;
+while ( (entry = jar.getNextEntry( )) != null )
+{ ... }</pre> </li> 
+      </ul> 
+      <h2 id="Furtherreading">Further reading</h2> 
+      <h3 id="Relatedtips">Related tips</h3> 
+      <ul class="link-list-flush"> 
+       <li><a href="/articles/2007/06/php_tip_how_get_web_page_using_curl">PHP tip: How to get a web page using CURL.</a> While Java is a very powerful application programming language, PHP is more often used for web text processing. Use PHP’s CURL (Client URL) functions to get a web file, handling web server redirects, compressed content, cookies, and user-agent strings.</li> 
+       <li><a href="/articles/2007/07/php_tip_how_get_web_page_using_fopen_wrappers">PHP tip: How to get a web page using the fopen wrappers.</a> As an alternative to Java, consider using PHP's file reading functions to get a web page and handle web server redirects and user-agent strings.</li> 
+      </ul> 
+      <h3 id="Otherarticlesandspecifications">Other articles and specifications </h3> 
+      <ul class="link-list-flush"> 
+       <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html" class="externallink">Hypertext Transfer Protocol - HTTP/1.1.</a> The W3C's specification on the current HTTP protocol between applications and web servers. The specification lists request properties, response header fields, response codes, and how to use them all.</li> 
+       <li><a href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes" class="externallink">List of HTTP status codes.</a> Wikipedia has a summary of HTTP status codes and what they mean.</li> 
+      </ul>
+     </div> 
+    </div> 
+    <div id="comments">
+     <h2>Comments</h2>
+     <a id="comment-381"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-381" class="active">Nice</a></h3> 
+      <div class="submitted">
+        Submitted by 
+       <a href="http://openbook.blog.co.in">ManojKumar.A</a> (not verified) on September 11, 2008 - 8:39am. 
+      </div> 
+      <div class="content"> 
+       <p>Nice material ! thanks !!</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/381" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <a id="comment-407"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-407" class="active">Hey, I just tried your</a></h3> 
+      <div class="submitted">
+        Submitted by Rick (not verified) on September 16, 2008 - 6:10pm. 
+      </div> 
+      <div class="content"> 
+       <p>Hey, I just tried your class, it's interesting &amp; useful.<br> just tell you maybe 2 bugs I found.</p> 
+       <p>1, final int buflen = Math.max( 1024, Math.max( length, stream.available() ) );<br> in this line, I believe the first one should be "Math.min".</p> 
+       <p>2, When MIMEtype is an image or other non-text,<br> I believe the content should readStream from conn.getInputStream( ),<br> instead of just content = readStream( length, (java.io.InputStream)content );<br> The content seems to be empty at this time. What do you think?</p> 
+       <p>Thanks,</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/407" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <div class="indented">
+      <a id="comment-413"></a> 
+      <div class="comment clear-block"> 
+       <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-413" class="active">Re: Hey, I just tried your</a></h3> 
+       <div class="submitted">
+         Submitted by Dave_Nadeau on September 18, 2008 - 7:25am. 
+       </div> 
+       <div class="content"> 
+        <p>I'm glad you find the code useful. :-) Now, to address your questions:</p> 
+        <p>1. Regarding this line of code:</p> 
+        <pre>final int buflen = Math.max( 1024, Math.max( length, stream.available() ) );</pre> 
+        <p>Well, the code is correct as-is. The code here selects a buffer size for reading data from the stream. For the best performance, we'd like that buffer to be as large as the incoming data so that we make as few I/O calls as possible. We are given two estimates of the length of that data: the <code>length</code> variable filled in earlier from the HTTP header's "content-length" field, and the value returned by <code>stream.available(&nbsp;).</code> Unfortunately, both of these can be unusable. The HTTP "content-length" field is optional and will not be present for server-side script-generated content, such as that from PHP, Perl, or Java scripts. In these cases, the <code>length</code> returned by the earlier <code>length = conn.getContentLength(&nbsp;)</code> call will be -1. Next, the stream's available bytes will be zero if no data has arrived yet because the connection is slow. But if both of these values are non-positive, we still need a non-zero length buffer. So, we take the Max of the Max of 1024 and these two values.</p> 
+        <p>2. Regarding this line of code:</p> 
+        <pre>content = readStream( length, (java.io.InputStream)content ); </pre> 
+        <p>Well, this code is correct as-is too. The idea here is to read in the stream's bytes and return them in some usable form. The code in the constructor first checks if the returned "content" from the connection is a stream or not. For recognized image content types, the returned content will be an <code>Image</code> object and we return that as-is. For recognized sound types, the content will be an <code>AudioClip</code> and we can return that as-is too.</p> 
+        <p>For all other content, we just get back an input stream. It might contain HTML text, a different type of image, or something else. But no matter what it is, we have to read the bytes first before we can do anything more. If the HTTP header's "content-type" field just includes a MIME type, and no charset, then the input is binary data (such as an unrecognized image type) and we can just read in the bytes and return them as-is. The application has to take it from there. But if the HTTP header includes a charset value, then the content is some form of text and we have to transcode the raw bytes into that charset. The transcoded result is returned as a <code>String.</code></p> 
+        <p>The internal call to <code>readStream(&nbsp;)</code> does the reading and transcoding (if needed) for you. If you call <code>conn.getInputStream(&nbsp;)</code> yourself, then you'll need to do these same tasks too and your code will probably look pretty much the same as the code above.</p> 
+       </div> 
+       <ul class="links">
+        <li class="first last comment_reply"><a href="/comment/reply/73/413" class="comment_reply">reply</a></li> 
+       </ul>
+      </div> 
+     </div>
+     <a id="comment-473"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-473" class="active">Re: Charset</a></h3> 
+      <div class="submitted">
+        Submitted by tyler (not verified) on October 24, 2008 - 3:37pm. 
+      </div> 
+      <div class="content"> 
+       <p>How do would you extract the charset again? I'm trying to read a page where charset=iso-8859-1. Not quite sure how this line of code:<br> String text = new String( bytes, charset );<br> helps anything.<br> thanks!!</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/473" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <div class="indented">
+      <a id="comment-477"></a> 
+      <div class="comment clear-block"> 
+       <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-477" class="active">Re: Charset</a></h3> 
+       <div class="submitted">
+         Submitted by Dave_Nadeau on October 25, 2008 - 5:56pm. 
+       </div> 
+       <div class="content"> 
+        <p>The character set name is available as part of the <em>content type</em> in the HTTP header when you get the file, or in a meta tag at the top of the file. The code in this Java article parses the HTTP header content type in the <code>WebFile</code> constructor in the code chunk commented as "Get the response". Once you've got the charset value (such as "ISO-8859-1"), then calling the <code>String</code> constructor creates a new string and converts from the file's charset to Java's internal UTF character encoding. This is discussed some in the above section <a href="#Gettingthecontent">Getting the content.</a></p> 
+        <p>I also have a PHP article that may help. The article explains more about the content type and includes PHP regular expressions to parse it from the HTTP header or from a meta tag. While the PHP syntax is certainly different from Java, the regular expressions used are essentially the same. See <a href="http://nadeausoftware.com/articles/2007/06/php_tip_how_get_web_page_content_type" class="externallink">PHP tip: How to get a web page content type.</a></p> 
+        <p>I hope this helps.</p> 
+       </div> 
+       <ul class="links">
+        <li class="first last comment_reply"><a href="/comment/reply/73/477" class="comment_reply">reply</a></li> 
+       </ul>
+      </div> 
+     </div>
+     <a id="comment-699"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-699" class="active">I found this explanation</a></h3> 
+      <div class="submitted">
+        Submitted by Azhar (not verified) on January 27, 2009 - 11:24pm. 
+      </div> 
+      <div class="content"> 
+       <p>I found this explanation very usefull<br> Thanks</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/699" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <a id="comment-753"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-753" class="active">Great post</a></h3> 
+      <div class="submitted">
+        Submitted by Anonymous (not verified) on February 13, 2009 - 12:53pm. 
+      </div> 
+      <div class="content"> 
+       <p>I had some real problems with the size of the byte arrays that your class created. I found that a BufferedReader did the same thing much easier....</p> [ Ed: removed extra code not related to the BufferedReader topic ] 
+       <pre>
+BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+String inputLine;
+while ((inputLine = in.readLine()) != null) 
+    content += inputLine;
+in.close();
+</pre> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/753" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <div class="indented">
+      <a id="comment-759"></a> 
+      <div class="comment clear-block"> 
+       <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-759" class="active">re: Great post</a></h3> 
+       <div class="submitted">
+         Submitted by Dave_Nadeau on February 17, 2009 - 6:09pm. 
+       </div> 
+       <div class="content"> 
+        <p>Your use of a <code>BufferedReader</code> assumes that the stream being read contains text, and that it uses Unicode multibyte character encoding. Those may be poor assumptions. How will you read an image? Or text using a different encoding?</p> 
+        <p>My code instead reads a raw stream of bytes, without assumptions. If a character encoding was provided in the HTTP header, then and only then does my code interpret those bytes as characters. And it interprets them with whatever encoding was named, not just Unicode.</p> 
+       </div> 
+       <ul class="links">
+        <li class="first last comment_reply"><a href="/comment/reply/73/759" class="comment_reply">reply</a></li> 
+       </ul>
+      </div> 
+     </div>
+     <a id="comment-954"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-954" class="active">getting content</a></h3> 
+      <div class="submitted">
+        Submitted by STERZILLA (not verified) on April 2, 2009 - 12:01am. 
+      </div> 
+      <div class="content"> 
+       <p>Regarding:</p> 
+       <pre>
+  if ( errorStream != null )
+  {
+    Object content = conn.getContent();
+    ...
+  }
+</pre> 
+       <p>Why would you get the content if <code>errorStream</code> is <em>NOT</em> null? Wouldn't you want to get it only if <code>errorStream</code> <em>IS</em> null?</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/954" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <div class="indented">
+      <a id="comment-970"></a> 
+      <div class="comment clear-block"> 
+       <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-970" class="active">Re: getting content</a></h3> 
+       <div class="submitted">
+         Submitted by Dave_Nadeau on April 6, 2009 - 8:36pm. 
+       </div> 
+       <div class="content"> 
+        <p>You're right. This was a bug in the explanation text, but not in the main code at the top of the article. I've updated the text. Thanks.</p> 
+       </div> 
+       <ul class="links">
+        <li class="first last comment_reply"><a href="/comment/reply/73/970" class="comment_reply">reply</a></li> 
+       </ul>
+      </div> 
+     </div>
+     <a id="comment-964"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-964" class="active">Very Useful Post, and with a question </a></h3> 
+      <div class="submitted">
+        Submitted by Marv (not verified) on April 5, 2009 - 1:54pm. 
+      </div> 
+      <div class="content"> 
+       <p>Hi, (from a beginner), I tried your files, but met an error when compiling. Hope you can give me a hint. the error is "postc.java:5: unreported exception java.net.MalformedURLException; must be caught or declared to be thrown". I just use two java file one is "WebFile.java" with the content mentioned in the article, and another one is "postc.java" with the code below:</p> 
+       <pre>
+import java.awt.*;
+import java.applet.*;
+public class postc extends Applet {
+    public static void main(String[] args)
+    {
+        WebFile file   = new WebFile( "http://www.liacs.com" );
+        String MIME    = file.getMIMEType( );
+        Object content = file.getContent( );
+        if ( MIME.equals( "text/html" ) &amp;&amp; content instanceof String )
+        {    String html = (String)content;
+            System.out.println(content);
+        }
+    }    
+}</pre> 
+       <p>Thanks!</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/964" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <div class="indented">
+      <a id="comment-969"></a> 
+      <div class="comment clear-block"> 
+       <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-969" class="active">Re: Very Useful Post, and with a question</a></h3> 
+       <div class="submitted">
+         Submitted by Dave_Nadeau on April 6, 2009 - 8:29pm. 
+       </div> 
+       <div class="content"> 
+        <p>The <code>WebFile</code> constructor takes a URL text string and internally creates a <code>URL</code> object. That <code>URL</code> creation may fail with a <code>MalformedURLException</code> if the URL string is badly formatted. When that happens, the <code>WebFile</code> constructor fails by letting the exception pass through to the caller. In this case, that means it will interrupt your first line of code and it is up to you to do something about it. This is easily done by adding a <code>try...catch</code> block:</p> 
+        <pre>
+try
+{
+    WebFile file = new WebFile( "http://www.liacs.com" );
+    ... rest of your code ...
+}
+catch ( java.net.MalformedURLException e )
+{
+    System.err.println( "Bad URL" );
+}
+</pre> 
+       </div> 
+       <ul class="links">
+        <li class="first last comment_reply"><a href="/comment/reply/73/969" class="comment_reply">reply</a></li> 
+       </ul>
+      </div> 
+     </div>
+     <a id="comment-2311"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-2311" class="active">Most Useful Explanation I've Read!</a></h3> 
+      <div class="submitted">
+        Submitted by 
+       <a href="http://www.drewdahl.com">Andrew Dahl</a> (not verified) on January 18, 2010 - 2:36am. 
+      </div> 
+      <div class="content"> 
+       <p>Well, first off, I'd like to say you did an excellent job with this. I've read through quite a few tutorials and explanations on how to get a web request, but they all lacked what you had.</p> 
+       <p>For that reason, I was curious if you'd be okay with me using this in an application I'm making for the Android OS. I didn't see any specific copyright on the code, so I figured I'd ask before I just go out and use it.</p> 
+       <p>Again, much appreciated for the great explanation!</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/2311" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <a id="comment-2318"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-2318" class="active">getUrl()</a></h3> 
+      <div class="submitted">
+        Submitted by MyD (not verified) on January 20, 2010 - 9:50pm. 
+      </div> 
+      <div class="content"> 
+       <p>the getUrl() method does not return the redirected url, it gets the original URL!</p> 
+       <p>Cheers,<br> MyD</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/2318" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <a id="comment-3191"></a> 
+     <div class="comment clear-block"> 
+      <h3><a href="/articles/2008/01/java_tip_how_get_web_page#comment-3191" class="active">hey thanks</a></h3> 
+      <div class="submitted">
+        Submitted by Anonymous (not verified) on October 9, 2010 - 4:55pm. 
+      </div> 
+      <div class="content"> 
+       <p>this is a great walk-through and had everything i needed to start working with the java.net.URL, java.net.URLConnection, and java.net.HttpURLConnection libraries.</p> 
+      </div> 
+      <ul class="links">
+       <li class="first last comment_reply"><a href="/comment/reply/73/3191" class="comment_reply">reply</a></li> 
+      </ul>
+     </div> 
+     <div class="box"> 
+      <h2 class="title">Post new comment</h2> 
+      <div class="content">
+       <form action="/comment/reply/73" accept-charset="UTF-8" method="post" id="comment-form"> 
+        <div>
+         <div class="form-item" id="edit-name-wrapper"> 
+          <label for="edit-name">Your name: </label> 
+          <input type="text" maxlength="60" name="name" id="edit-name" size="30" value="Anonymous" class="form-text"> 
+         </div> 
+         <div class="form-item" id="edit-mail-wrapper"> 
+          <label for="edit-mail">E-mail: </label> 
+          <input type="text" maxlength="64" name="mail" id="edit-mail" size="30" value="" class="form-text"> 
+          <div class="description">
+           The content of this field is kept private and will not be shown publicly.
+          </div> 
+         </div> 
+         <div class="form-item" id="edit-homepage-wrapper"> 
+          <label for="edit-homepage">Homepage: </label> 
+          <input type="text" maxlength="255" name="homepage" id="edit-homepage" size="30" value="" class="form-text"> 
+         </div> 
+         <div class="form-item" id="edit-subject-wrapper"> 
+          <label for="edit-subject">Subject: </label> 
+          <input type="text" maxlength="64" name="subject" id="edit-subject" size="60" value="" class="form-text"> 
+         </div> 
+         <div class="form-item" id="edit-comment-wrapper"> 
+          <label for="edit-comment">Comment: <span class="form-required" title="This field is required.">*</span></label> 
+          <textarea cols="60" rows="15" name="comment" id="edit-comment" class="form-textarea resizable required"></textarea> 
+         </div> 
+         <ul class="tips">
+          <li>Allowed HTML tags: &lt;a&gt; &lt;em&gt; &lt;strong&gt; &lt;cite&gt; &lt;code&gt; &lt;ul&gt; &lt;ol&gt; &lt;li&gt; &lt;dl&gt; &lt;dt&gt; &lt;dd&gt;</li>
+          <li>Lines and paragraphs break automatically.</li>
+          <li>Web page addresses and e-mail addresses turn into links automatically.</li>
+         </ul>
+         <p><a href="/filter/tips">More information about formatting options</a></p>
+         <input type="hidden" name="form_id" id="edit-comment-form" value="comment_form"> 
+         <input type="submit" name="op" id="edit-preview" value="Preview comment" class="form-submit"> 
+        </div>
+       </form> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <div id="footer">
+    Copyright © Nadeau Software Consulting (Dr. David R. Nadeau). All rights reserved. 
+    <div class="footer-links"> 
+     <a href="/about/privacy_policy">Privacy policy</a> | 
+     <a href="/about/terms_use">Terms of use</a> | 
+     <a href="/sitemap">Site map</a>
+    </div> 
+   </div> 
+  </div> 
+  <div id="page-gradient"></div> 
+  <div id="page-upperleft"></div> 
+  <div id="page-upperright"></div> 
+  <div id="page-logo"> 
+   <a href="/" title="Home"><img src="/sites/nadeausoftware.com/themes/NS/logo.png" alt="Home"></a>
+  </div> 
+  <div id="page-id-shadow"> 
+   <span id="page-sitename-shadow">Nadeau</span> 
+   <span id="page-sitename2-shadow">software consulting</span> 
+  </div> 
+  <div id="page-id"> 
+   <span id="page-sitename"><a href="/" title="Home">Nadeau</a></span> 
+   <span id="page-sitename2"><a href="/" title="Home">software consulting</a></span> 
+  </div> 
+  <div id="page-menu"> 
+   <div class="block block-block" id="block-block-1"> 
+    <h2 class="title"></h2> 
+    <div class="content">
+     <ul class="menu"> 
+      <li class="expanded"><a href="/articles">Articles</a> 
+       <ul class="menu"> 
+        <li class="leaf">Programming 
+         <ul class="menu"> 
+          <li class="leaf"><a href="/articles/c_c">C/C++</a></li> 
+          <li class="leaf"><a href="/articles/java">Java</a></li> 
+          <li class="leaf"><a href="/articles/php">PHP</a></li> 
+         </ul></li> 
+        <li class="leaf">Technique 
+         <ul class="menu"> 
+          <li class="leaf"><a href="/articles/text_processing">Text processing</a></li> 
+          <li class="leaf"><a href="/articles/user_interfaces">User interfaces</a></li> 
+          <li class="leaf"><a href="/articles/visualization">Visualization</a></li> 
+         </ul></li> 
+        <li class="leaf">Web 
+         <ul class="menu"> 
+          <li class="leaf"><a href="/articles/web_servers">Apache</a></li> 
+          <li class="leaf"><a href="/articles/drupal">Drupal</a></li> 
+          <li class="leaf"><a href="/articles/web_site_performance">Site performance</a></li> 
+          <li class="leaf"><a href="/articles/safe_web_use">Spam blocking</a></li> 
+          <li class="leaf"><a href="/articles/web_authoring">Web authoring</a></li> 
+         </ul></li> 
+       </ul></li> 
+      <li class="leaf"><a href="/books">Books</a></li> 
+      <li class="leaf"><a href="/about">About</a></li> 
+     </ul>
+    </div> 
+   </div> 
+  </div> 
+  <div id="page-search">
+   <form action="/articles/2008/01/java_tip_how_get_web_page" accept-charset="UTF-8" method="post" id="search-theme-form"> 
+    <div>
+     <div id="search" class="container-inline">
+      <div class="form-item" id="edit-search-theme-form-keys-wrapper"> 
+       <input type="text" maxlength="128" name="search_theme_form_keys" id="edit-search-theme-form-keys" size="15" value="" title="Enter the terms you wish to search for." class="form-text"> 
+      </div> 
+      <input type="submit" name="op" id="edit-submit" value="Search" class="form-submit"> 
+      <input type="hidden" name="form_id" id="edit-search-theme-form" value="search_theme_form"> 
+     </div> 
+    </div>
+   </form> 
+  </div> 
+  <script type="text/javascript" src="/misc/jquery.js"></script> 
+  <script type="text/javascript" src="/misc/drupal.js"></script> 
+  <script type="text/javascript" src="/misc/textarea.js"></script> 
+  <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-2204216-1']);
+  _gaq.push(['_trackPageview']);
+
+    (function() {
+	        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		      })();
+
+</script>   
+ </body>
+</html>

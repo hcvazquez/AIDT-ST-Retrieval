@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="icon" href="//www.ibm.com/favicon.ico"> 
+  <link rel="canonical" href="http://www.ibm.com/developerworks/library/wa-nodejs-app/index.html"> 
+  <meta name="geo.country" content="ZZ"> 
+  <meta name="dcterms.rights" content="© Copyright&nbsp;IBM Corporation&nbsp;2013,&nbsp;2014"> 
+  <meta name="dcterms.date" content="2014-06-27"> 
+  <meta name="description" content="Build a Node.js application to analyze public reaction to any given topic on Twitter. This article includes a demo, sample code, and full instructions for creating a basic PaaS app, then adding sentiment analysis to it and connecting it to Twitter. The app you build will use popular Node.js modules. You can reuse it anytime you need a quick mobile app to analyze and monitor large volumes of data over time."> 
+  <meta name="keywords" content="Node.js, sentiment analysis, twitter, cloud, PaaS, JavaScript, text analytics, social analytics, jazzhub, Node.js module, ntwitter, tttwaca, tttmobca"> 
+  <meta name="robots" content="index,follow"> 
+  <title>Build a sentiment analysis application with Node.js, Express, sentiment, and ntwitter</title> 
+  <script> 
+    digitalData = {
+        "page":{
+            "category":{
+                "primaryCategory":"SOFDCDEVZZ"
+            },
+            "pageInfo":{
+                "effectiveDate":"2013-10-08",
+                "language":"en",
+                "publishDate":"2014-06-27",
+                "publisher":"IBM Corporation",
+                "version":"v18",
+                "ibm":{ 
+                    "contentDelivery":"IBM developerWorks template",
+                    "contentProducer":"IBM developerWorks",
+                    "country":"ZZ",
+                    "owner":"developerWorks Content/Raleigh/IBM",
+                    "subject":"TTA00",
+                    "type":"CT316",
+                    "topic":"Bluemix,Cloud operating environment services,Application development,JavaScript,Social tools,node.js",
+                    "topicId":"1237,1235,263,107,971,1021",
+                    "contentArea":"web,cloud,mobile",
+                    "contentAreaId":"5,47,52",
+                    "contentType":"article",
+                    "contentId":"960951",
+                },
+                "keywords":"Node.js, sentiment analysis, twitter, cloud, PaaS, JavaScript, text analytics, social analytics, jazzhub, Node.js module, ntwitter, tttwaca, tttmobca",
+                "description":"Build a Node.js application to analyze public reaction to any given topic on Twitter. This article includes a demo, sample code, and full instructions for creating a basic PaaS app, then adding sentiment analysis to it and connecting it to Twitter. The app you build will use popular Node.js modules. You can reuse it anytime you need a quick mobile app to analyze and monitor large volumes of data over time."
+            }
+        }
+    };
+    window._analytics = {
+        "segment_key":'HU3dbkAG5wE0F1IkRf9S1RexlAqo3jby'
+    };
+</script> 
+  <meta content="player" name="twitter:card"> 
+  <meta name="twitter:site" content="@developerworks"> 
+  <meta property="og:title" content="Build a sentiment analysis application with Node.js, Express, sentiment, and ntwitter"> 
+  <meta property="og:description" content="Build a Node.js application to analyze public reaction to any given topic on Twitter. This article includes a demo, sample code, and full instructions for creating a basic PaaS app, then adding sentiment analysis to it and connecting it to Twitter. The app you build will use popular Node.js modules. You can reuse it anytime you need a quick mobile app to analyze and monitor large volumes of data over time."> 
+  <meta property="og:image" content="http://www.ibm.com/developerworks/library/wa-nodejs-app/sentiment-analysis-thumb-940x330.jpg"> 
+  <meta name="twitter:player" content="https://www.youtube.com/embed/THN_nq7W6PE"> 
+  <meta content="435" name="twitter:player:width"> 
+  <meta content="251" name="twitter:player:height"> 
+  <!-- Segment meta tag --> 
+  <meta name="segment" property="(developerWorks)" productTitle="developerWorks" value="Web Development English (developerWorks)"> 
+  <!-- SITE MON : START (DO NOT DELETE) --> 
+  <!-- developerWorks monitoring token --> 
+  <!-- SITE MON : END (DO NOT DELETE) --> 
+  <!-- HEADER_SCRIPTS_AND_CSS_INCLUDE --> 
+  <!-- <script src="//cdn.optimizely.com/js/5399420604.js"></script> --> 
+  <!-- BEGIN: Use this section to set page specific variables for the Page Tag --> 
+  <script language="JavaScript">var NTPT_PGEXTRA="ibmSkillLevel=2&ibmCmaId=960951&ibmContentAreas=web,cloud,mobile";</script> 
+  <!--END --> 
+  <script src="//1.www.s81c.com/common/stats/ida_stats.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/www.css" rel="stylesheet"> 
+  <link href="//1.www.s81c.com/common/v18/css/syntaxhighlighter.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/www.js"></script> 
+  <script src="//1.www.s81c.com/common/v18/js/syntaxhighlighter.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/tables.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/tables.js"></script> 
+  <!--  Masthead/footer  --> 
+  <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-v18.css?v=092117" rel="stylesheet"> 
+  <!-- <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/alt-signedin-ux.css" rel="stylesheet" /> --> 
+  <!--[if lt IE 9]>
+    <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-ie8fix.css?v=022216" rel="stylesheet" />
+<![endif]--> 
+  <link href="//dw1.s81c.com/developerworks/css/v18/dw-article.css?v=073117" rel="stylesheet"> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth-properties.js?v=041017"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth.js?v=062717"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/dw-mf/v18/dw-mf.js?v=110316"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-include.js"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-article.js?v=051817"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auto-links.js?v=091217"></script> 
+  <script src="//www.ibm.com/software/info/js/tactic.js"></script> 
+  <script src="//www.ibm.com/software/info/js/tacticbindlinks.js"></script> 
+  <!-- Segment --> 
+  <script src="//console.ng.bluemix.net/analytics/build/bluemix-analytics.min.js"></script> 
+  <!-- 
+<PageMap>
+    <DataObject type="document">
+        <Attribute name="topic">Bluemix,Cloud operating environment services,Application development,JavaScript,Social tools,node.js</Attribute>
+        <Attribute name="topicId">1237,1235,263,107,971,1021</Attribute>
+        <Attribute name="contentArea">web,cloud,mobile</Attribute>
+        <Attribute name="contentAreaId">5,47,52</Attribute>
+        <Attribute name="abstract">Build a Node.js application to analyze public reaction to any given
+            topic on Twitter. This article includes a demo, sample code, and full
+            instructions for creating a basic PaaS app, then adding sentiment analysis to
+            it and connecting it to Twitter. The app you build will use popular Node.js
+            modules. You can reuse it anytime you need a quick mobile app to analyze and
+            monitor large volumes of data over time.</Attribute>
+        <Attribute name="pub.date">2014-06-27</Attribute>
+        <Attribute name="contentType">article</Attribute>
+    </DataObject>
+</PageMap>
+--> 
+ </head> 
+ <body id="ibm-com" class="ibm-type dw-js-disabled"> 
+  <div id="ibm-top" class="ibm-landing-page"> 
+   <!-- MASTHEAD_BEGIN --> 
+   <div id="ibm-masthead" role="banner" aria-label="IBM"> 
+    <div id="ibm-mast-options"> 
+     <ul role="toolbar" aria-labelledby="ibm-masthead"> 
+      <li id="ibm-geo" role="presentation"><a href="http://www.ibm.com/planetwide/select/selector.html" role="button" aria-label="United States selected - Choose a country">United States</a></li> 
+     </ul> 
+    </div> 
+    <div id="ibm-universal-nav"> 
+     <nav role="navigation" aria-label="IBM"> 
+      <div id="ibm-home">
+       <a href="http://www.ibm.com/us/en/">IBM®</a>
+      </div> 
+      <ul id="ibm-menu-links" role="toolbar" aria-label="Site map"> 
+       <li><a href="http://www.ibm.com/sitemap/us/en/">Site map</a></li> 
+      </ul> 
+     </nav> 
+     <div id="ibm-search-module" role="search" aria-labelledby="ibm-masthead"> 
+      <form id="ibm-search-form" action="https://www.ibm.com/Search/" method="get"> 
+       <p> <label for="q">IBM</label> <input type="text" maxlength="100" value="" placeholder="Search" name="q" id="q" aria-label="Search developerWorks"> <input type="hidden" value="18" name="v"> <input type="hidden" value="utf" name="en"> <input type="hidden" value="en" name="lang"> <input type="hidden" value="us" name="cc"> <input type="hidden" name="sn" value="dw"> <input type="hidden" name="dws" value="dw"> <input type="hidden" name="hpp" value="20"> <input type="submit" id="ibm-search" class="ibm-btn-search" value="Submit"> </p> 
+      </form> 
+     </div> 
+    </div> 
+   </div>
+   <!-- MASTHEAD_END --> 
+   <!-- LAYOUT --> 
+   <div id="ibm-content-wrapper"> 
+    <!-- LEADSPACE_BEGIN --> 
+    <header role="banner" aria-labelledby="ibm-pagetitle-h1"> 
+     <!-- MASTHEAD_SITENAV_BEGIN --> 
+     <div class="ibm-sitenav-menu-container"> 
+      <div class="ibm-sitenav-menu-name"> 
+       <a href="//www.ibm.com/developerworks/"> <img width="186" height="24" alt="developerWorks®" src="//dw1.s81c.com/developerworks/i/mf/dw-mf-wordmark.svg"> </a> 
+      </div> 
+      <div class="ibm-sitenav-menu-list"> 
+       <ul role="menubar"> 
+        <li class="dw-navpage-learn ibm-haschildlist" role="presentation"> <span role="menuitem"><a href="//www.ibm.com/developerworks/learn/">Learn</a></span> 
+         <ul role="menu" aria-label="Learn" id="dw-mega-learn"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Learn with our tutorials and training</h2> 
+             <p class="dw-mega-main-p">developerWorks provides tutorials, articles and other technical resources to help you grow your development skills on a wide variety of topics and products. Learn about a specific product or take a course and get certified. So, what do you want to learn about?</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/learn/" class="ibm-btn-pri">Choose a topic</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured topics</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/mobile">Mobile development</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bigdata.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/analytics">Big data</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cognitive.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cognitive">Cognitive computing</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cloud">Cloud</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-develop ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/develop/">Develop</a></span> 
+         <ul role="menu" aria-label="Develop" id="dw-mega-develop"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Develop with our trials &amp; downloads</h2> 
+             <p class="dw-mega-main-p">Start developing with product trials, free downloads, and IBM Bluemix™ services. Sort by topic or product name and find everything we have to offer.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/develop/" class="ibm-btn-pri">View all downloads &amp; trials</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured products</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/sso/bmregistration">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-websphere.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/ws/was/">WebSphere Application Server</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-db2express.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/im/db2express/">DB2 Express C</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//mobilefirstplatform.ibmcloud.com/">MobileFirst Platform Foundation</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dest.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-connect ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/connect/">Connect</a></span> 
+         <ul role="menu" aria-label="Connect" id="dw-mega-connect"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Find a community and connect</h2> 
+             <p class="dw-mega-main-p">Learn from the experts and share with other developers in one of our dev centers. Ask questions and get answers with dW answers. Search for local events in your area. All in developerWorks communities.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/connect/" class="ibm-btn-pri">View communities</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured Developer Centers</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-jazz-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//jazz.net/">Jazz.net</a> 
+              </div> 
+             </div> 
+             <!--<div class="dw-mega-nav-item">
+                                        <div class="dw-mega-nav-img">
+                                            <img width="30" height="30" alt=""
+                                                src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud-dev.png">
+                                        </div>
+                                        <div class="dw-mega-nav-link">
+                                            <a href="//developer.ibm.com/cloud-analytics/">IBM Cloud Analytics DEV</a>
+                                        </div>
+                                    </div>--> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/bluemix/">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <!-- dW featured --> 
+        <!-- <li role="presentation" class="dw-navpage-devcenter"><strong>Subheading</strong></li> --> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cognitive/">Cognitive</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cloud/">Cloud</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/analytics/">Data</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/iot/">Internet of Things</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/java/">Java</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/">All topics</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+     <!-- MASTHEAD_SITENAV_END --> 
+     <!-- NAVIGATION_TRAIL_BEGIN --> 
+     <div id="ibm-leadspace-head" class="ibm-alternate"> 
+      <div id="ibm-leadspace-body"> 
+       <nav aria-label="Breadcrumb" role="navigation"> 
+        <ul id="dw-navigation-trail" itemscope itemtype="http://schema.org/BreadcrumbList">
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/learn/"><span itemprop="name">Learn</span></a>
+          <meta itemprop="position" content="1"></li>
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/web/"><span itemprop="name">Web development</span></a>
+          <meta itemprop="position" content="2"></li>
+        </ul> 
+       </nav> 
+      </div> 
+     </div> 
+     <!-- NAVIGATION_TRAIL_END --> 
+    </header> 
+    <!-- LEADSPACE_END --> 
+    <!-- MAIN_CONTENT_BEGIN --> 
+    <main role="main" aria-labelledby="ibm-pagetitle-h1"> 
+     <div id="ibm-pcon"> 
+      <!-- BEGIN_IBM-CONTENT --> 
+      <div id="ibm-content"> 
+       <!-- BEGIN_IBM-CONTENT-BODY --> 
+       <div id="ibm-content-body"> 
+        <!-- BEGIN_IBM-CONTENT-MAIN --> 
+        <div id="ibm-content-main" class="dw-article"> 
+         <!-- BEGIN_INTERIOR-COLUMNS --> 
+         <div class="ibm-columns dw-article-toc"> 
+          <!-- LEFT_6_2_CONTENT_COLUMN_BEGIN --> 
+          <div id="dw-article-toc-container" class="ibm-col-6-2"> 
+           <div id="dw-article-toc-body"> 
+            <h2>Contents</h2>
+            <div class="ibm-alternate-rule">
+             <hr>
+            </div>
+            <ul role="directory" aria-label="Table of contents" class="ibm-plain-list">
+             <li><a href="#ibm-pagetitle-h1">Introduction</a></li>
+             <li><a href="#N10092">What you'll need to build a similar app</a></li>
+             <li><a href="#N100BD">Step 1. Build an Express application</a></li>
+             <li><a href="#N10138">Step 2. Add sentiment analysis to your application</a></li>
+             <li><a href="#N101CF">Step 3. Connect the application to Twitter</a></li>
+             <li><a href="#N1021A">Step 4. Put it all together</a></li>
+             <li><a href="#tools">Additional tooling considerations</a></li>
+             <li><a href="#N10274">Conclusion</a></li>
+             <li><a href="#artdownload">Downloadable resources</a></li>
+             <li><a href="#artrelatedtopics">Related topics</a></li>
+             <li><a href="#icomments">Comments</a></li>
+            </ul> 
+           </div> 
+          </div> 
+          <!-- LEFT_6_2_CONTENT_COLUMN_END --> 
+          <!-- CENTER_6_4_CONTENT_COLUMN_BEGIN --> 
+          <div class="ibm-col-6-4"> 
+           <h1 id="ibm-pagetitle-h1" class="ibm-h1">Build a sentiment analysis application with Node.js, Express, sentiment, and ntwitter</h1> 
+           <!-- Article Top Bar --> 
+           <div class="ibm-columns dw-article-topbar"> 
+            <!-- Author and article info. --> 
+            <div class="ibm-col-6-2 ibm-col-medium-6-4 dw-article-metadata"> 
+             <div class="dw-article-avatar">
+              <img width="42" height="42" src="//www.ibm.com/developerworks/i/p-srich60.png" alt="author image - scott rich">
+             </div>
+             <div class="dw-article-authordate">
+              <span class="dw-article-author"><a href="http://www.linkedin.com/in/scottrichnyc">Scott Rich</a></span>
+              <br>
+              <span class="dw-article-pubdate">Published on October 08, 2013</span>
+              <span class="dw-article-divider">/</span>
+              <span class="dw-article-updated">Updated: June 27, 2014</span>
+             </div> 
+            </div> 
+            <!-- Social --> 
+            <div class="ibm-col-6-2 ibm-col-medium-6-4 ibm-col-small-6-2 dw-article-social"> 
+             <!-- Sharing links --> 
+             <div id="dw-article-share-inline"> 
+              <div class="dw-article-sharelink-inline"> 
+               <div class="ibm-sharethispage"></div> 
+              </div> 
+             </div> 
+             <!-- Number of comments and link to comments --> 
+             <div id="dw-article-cmts"> 
+              <div class="dw-article-cmtslink"> 
+               <a onclick="tocLink('#icomments')" href="#icomments" role="link" tabindex="0" aria-label="Comments"> <img src="//dw1.s81c.com/developerworks/i/v18/article/dw-article-cmt-icon.png" width="29" height="29" alt="Comments"> </a> 
+              </div> 
+              <div class="dw-article-cmtslink"> 
+               <a onclick="tocLink('#icomments')" href="#icomments" role="link" tabindex="0"> 
+                <div id="nCmts"></div> </a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+           <!-- Article Body --> 
+           <div data-widget="videoplayer" data-videodisplay="inline" data-titledisplaytype="overlay" data-videoid="THN_nq7W6PE" data-videotype="youtube" data-customplaceholder="true" data-showvideoduration="true" data-showvideotitle="true" data-showimageplaybutton="true" itemscope="video" itemtype="http://schema.org/VideoObject">
+            <meta itemprop="thumbnailURL" content="//www.ibm.com/developerworks/library/wa-nodejs-app/sentiment-analysis-thumb-940x330.jpg">
+            <meta itemprop="description" content="For more in-depth information about the subject, watch this video: Build a Twitter sentiment analysis application
+                    using Node.js modules.">
+            <meta itemprop="name" content="Build a Twitter sentiment analysis application
+                    using Node.js modules">
+            <meta itemprop="contentURL" content="//www.youtube.com/watch?v=THN_nq7W6PE">
+            <meta itemprop="uploadDate" content="2013-10-08">
+            <meta itemprop="duration" content="3M54S">
+            <a href="//www.youtube.com/watch?v=THN_nq7W6PE"><img class="ibm-resize" src="//www.ibm.com/developerworks/library/wa-nodejs-app/sentiment-analysis-thumb-940x330.jpg" height="330" width="940" alt="Video: Build a Twitter sentiment analysis application
+                    using Node.js modules"></a>
+           </div>
+           <div class="dw-article-video-transcript">
+            <a href="//www.ibm.com/developerworks/library/wa-nodejs-app/wa-nodejs-app-transcript-pdf.pdf">Transcript</a>
+           </div> 
+           <div class="dw-article-sidebar ibm-background-cool-white-20">
+            <p><strong><a href="https://www.bluemix.net/?cm_mmc=developerWorks-_-dW%20CloudOE%20content-_-wa-nodejs-app-_-article">Sign up for IBM Bluemix</a>™</strong><br>This cloud platform is stocked with free services, runtimes, and infrastructure to help you quickly build and deploy your next mobile or web application.</p>
+           </div>
+           <p>As a software app developer, I've been trying to solve the following problem: how to get immediate feedback from users, specifically online users. Getting an instant read on the Twitterverse's reactions to an app, product launch, campaign, or current event, for example, would be enormously helpful. Are the reactions positive, negative, neutral?</p>
+           <p>As I thought through the requirements for an application to quickly gauge public sentiment on Twitter, I wanted it to be quick to develop, interface with a Twitter web service, have a simple mobile interface, and quickly analyze large volumes of data over time.</p>
+           <div class="ibm-pull-quote ibm-h3">
+            <blockquote>
+             <p><em class="dw-pullquote"><span class="dw-pullquote-open">“</span>With existing building blocks, you can put together, very quickly, a fun little sentiment analysis application.<span class="dw-pullquote-close">”</span></em></p>
+            </blockquote>
+           </div>
+           <p>I chose to build it as a <span data-widget="tooltip" title="Platform as a Service: Runtime environment that helps developers build and deploy web applications on a hosted infrastructure">PaaS</span> app, using JavaScript and the popular Node.js runtime for PaaS apps. The app uses the service-composition programming model supported by PaaS environments like <span data-widget="tooltip" title="An interoperable Platform as a Service framework that gives users freedom of choice across cloud infrastructure and application programming models">Cloud Foundry</span> and <span data-widget="tooltip" title="A cloud Platform as a Service that supports Node.js among other programming languages">Heroku</span>. I settled on developing this app at DevOps Services (formerly JazzHub). This provides me with a place to publish the application, as well as a nice browser-based IDE to develop the code.</p>
+           <p class="ibm-btn-row ibm-padding-bottom-r1"><a href="http://simplesentimentanalysis.mybluemix.net/" class="ibm-btn-pri dw-article-btn-pri">Run the app</a><a href="https://hub.jazz.net/project/lhayward/Sentiment%20Analysis%20App/overview" class="ibm-btn-sec dw-article-btn-sec">Get the code</a></p>
+           <h2 id="N10092" class="ibm-h2">What you'll need to build a similar app</h2>
+           <ol>
+            <li>A basic familiarity with <a href="http://www.ibm.com/developerworks/library/j-nodejs/index.html">Node.js</a> and a Node.js development environment.</li>
+            <li>These Node.js modules: 
+             <ul class="ibm-bullet-list">
+              <li><a href="https://github.com/visionmedia/express">Express framework</a>: Makes it easy to build Node.js web apps.</li>
+              <li><a href="https://github.com/thisandagain/sentiment">sentiment module</a>: Does simple sentiment analysis on a string.</li>
+              <li><a href="https://github.com/AvianFlu/ntwitter">ntwitter module</a>: Provides a simple interface to Twitter, including support for Twitter’s Stream API.</li>
+             </ul></li>
+           </ol>
+           <p>The steps below describe the most basic approach. For more advanced tooling to speed your development, see <a href="#tools">Additional tooling considerations</a>.</p>
+           <h2 id="N100BD" class="ibm-h2">Step 1. Build an Express application</h2>
+           <ol>
+            <li>Run the <code>node</code> and <code>npm</code> commands: <h5 id="fig1" class="ibm-h5">Figure 1. Confirming that Node.js and NPM are set up on your system</h5><img src="fig1.jpg" class="ibm-downsize" alt="Screen shot of running the node and npm commands" height="79" width="450"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N100D0');return false;" href="#N100D0">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N100D0">
+              <img alt="Screen shot of running the node and npm commands" src="fig1.jpg" width="450">
+             </div></li>
+            <li>Create the simplest Node.js Express app possible: Hello Node.js (see Listing 1). <p>In a new directory, create the app.js file, the main file of the Node.js app. Tell Node.js that the Express module is required, and create the Express app. Register a route so that requests for <code>/hello</code> will be handled by the anonymous function shown in Listing 1. The handler for <code>/hello</code> uses the Express helpers to send a simple text response. The send method handles details such as defaulting the content type and length. When using Express, we can ignore some of the details of the underlying HTTP conversation.</p><h5 id="listing1" class="ibm-h5">Listing 1. Hello Node.js</h5><span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">var port = (process.env.VCAP_APP_PORT || 3000);
+var express = require("express");
+
+var app = express();
+
+app.get('/hello', function(req, res) {
+    res.send("Hello world.");
+});
+
+app.listen(port);
+console.log("Server listening on port " + port);</pre></span><p><strong>Note:</strong> The program could be even simpler, but a few additional lines of code enable it to run in the CloudFoundry runtime. In CloudFoundry, the app will be relocated to a different port (the port can be discovered from the environment).</p></li>
+            <li>Give Node.js some additional information about the app, as shown in Listing 2. <p> Create a <code>package.json</code> file to tell the app that the Express module will be used, and name the app "Simple Sentiment Analysis App." Since this app is not intended to be published to the NPM registry, you can mark it as private. Finally, declare that the app depends on a 3.x version of the Express module.</p><h5 id="listing2" class="ibm-h5">Listing 2. package.json</h5><span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">package.json for Hello Node
+{
+  "name": "SimpleSentimentAnalysisApp",
+  "description": "Simple Sentiment Analysis App",
+  "version": "0.9.0",
+  "private": true,
+  "dependencies": {
+    "express": "3.x"
+  }
+}</pre></span></li>
+           </ol>
+           <h3 id="N10101" class="ibm-h3">Run and test your Hello Node.js app</h3>
+           <p>Next, run and test the Hello Node.js app using these steps:</p>
+           <ol>
+            <li>Before running your app, prepare the node environment using NPM to fetch the dependencies declared for the app (and their dependencies and so on). <h5 id="fig2" class="ibm-h5">Figure 2. Prepare the node environment</h5><img src="fig2.jpg" class="ibm-downsize" alt="Screen shot of running the npm install command" height="169" width="610"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N1010F');return false;" href="#N1010F">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N1010F">
+              <img alt="Screen shot of running the npm install command" src="fig2.jpg" width="610">
+             </div><p>The result of a successful NPM install is the creation of the <code>node_modules</code> directory, populated with the required modules.</p></li>
+            <li>Type <code>node app.js</code> at the command line. <h5 id="fig3" class="ibm-h5">Figure 3. Run the node app.js command</h5><img src="fig3.jpg" class="ibm-downsize" alt="Screen shot of running the node app.js command" height="29" width="322"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N10122');return false;" href="#N10122">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N10122">
+              <img alt="Screen shot of running the node app.js command" src="fig3.jpg" width="322">
+             </div><p>The message "Server listening on port 3000" confirms that the app has started and is listening for requests.</p></li>
+            <li>Test the behavior of the app by pointing a browser to <a href="http://localhost:3000/hello">http://localhost:3000/hello</a>. <h5 id="fig4" class="ibm-h5">Figure 4. Test the behavior of the app</h5><img src="fig4.jpg" class="ibm-downsize" alt="Screen shot of pointing a browser to //localhost:3000/hello" height="116" width="292"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N10133');return false;" href="#N10133">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N10133">
+              <img alt="Screen shot of pointing a browser to //localhost:3000/hello" src="fig4.jpg" width="292">
+             </div></li>
+           </ol>
+           <h2 id="N10138" class="ibm-h2">Step 2. Add sentiment analysis to your application</h2>
+           <p>Now that your basic app is running and the environment is set up, it's time to add some real function using the very cool <strong>sentiment</strong> module by Andrew Sliwinsky. He describes it as "a Node.js module that uses the AFINN-111 wordlist to perform sentiment analysis on arbitrary blocks of input text." This is a relatively simple implementation of sentiment analysis, as you'll see. It simply scores the words in your text using a dictionary of English words that have been rated for positive or negative sentiment.</p>
+           <ol>
+            <li>To begin using the sentiment module, update the <code>package.json</code> to include it as a dependency: <h5 id="listing3" class="ibm-h5">Listing 3. Update package.json</h5><span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">{
+  "name": "SimpleSentimentAnalysisApp",
+  "description": "Simple Sentiment Analysis App",
+  "version": "0.9.0",
+  "private": true,
+  "dependencies": {
+    "express": "3.x",
+    "sentiment": "0.2.1"
+  }
+}</pre></span></li>
+            <li>Tell Node.js to get this new module with the command <code>npm update</code>. (Note: The docs suggest that <code>npm install</code> should also have picked up the new dependency, but that was not the behavior I saw.) </li>
+            <li>Require the new sentiment module: <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">var express = require("express");</pre></span></li>
+            <li>Create another route to experiment with the sentiment module: <h5 id="listing4" class="ibm-h5">Listing 4. The sentiment analysis app interface code</h5><span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">app.get('/testSentiment',
+    function (req, res) {
+        var response = "&lt;HEAD&gt;" +
+          "&lt;title&gt;Twitter Sentiment Analysis&lt;/title&gt;\n" +
+          "&lt;/HEAD&gt;\n" +
+          "&lt;BODY&gt;\n" +
+          "&lt;P&gt;\n" +
+          "Welcome to the Twitter Sentiment Analysis app.  " +   
+          "What phrase would you like to analzye?\n" +                
+          "&lt;/P&gt;\n" +
+          "&lt;FORM action=\"/testSentiment\" method=\"get\"&gt;\n" +
+          "&lt;P&gt;\n" +
+          "Enter a phrase to evaluate: &lt;INPUT type=\"text\" name=\"phrase\"&gt;&lt;BR&gt;\n" +
+          "&lt;INPUT type=\"submit\" value=\"Send\"&gt;\n" +
+          "&lt;/P&gt;\n" +
+          "&lt;/FORM&gt;\n" +
+          "&lt;/BODY&gt;";
+        var phrase = req.query.phrase;
+        if (!phrase) {
+            res.send(response);
+        } else {
+            sentiment(phrase, function (err, result) {
+                response = 'sentiment(' + phrase + ') === ' + result.score;
+                res.send(response);
+            });
+        }
+    });</pre></span><p>Apologies to web architects and designers everywhere for the brute force simplicity of this new function. I promise we’ll do something more intelligent later. For now, we’re going to put up a form that lets us enter a phrase and then respond with the rating provided by sentiment. The key function call is <strong><code>sentiment(phrase, function)</code></strong>. In the spirit of Node.js, the sentiment library is asynchronous, so the result of the analysis is processed by a callback function.</p></li>
+            <li>Restart the app and point a browser to <a href="http://localhost:3000/testSentiment">http://localhost:3000/testSentiment</a>. <h5 id="fig5" class="ibm-h5">Figure 5. The sentiment analysis app user interface</h5><img src="fig5.jpg" class="ibm-downsize" alt="Screen capture showing a browser pointing to localhost:3000/testSentiment" height="139" width="432"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N10179');return false;" href="#N10179">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N10179">
+              <img alt="Screen capture showing a browser pointing to localhost:3000/testSentiment" src="fig5.jpg" width="432">
+             </div></li>
+           </ol>
+           <div class="ibm-pull-quote ibm-h3">
+            <blockquote>
+             <p><em class="dw-pullquote"><span class="dw-pullquote-open">“</span>Et voilà, a fabulous user interface for sentiment analysis!<span class="dw-pullquote-close">”</span></em></p>
+            </blockquote>
+           </div>
+           <h3 id="N10184" class="ibm-h3">Scoring sample sentiments</h3>
+           <p>Here are some hypothetical results from our sentiment analysis app:</p>
+           <h5 id="table1" class="ibm-h5">Table 1. Hypothetical results of analyzing "Node.js"</h5>
+           <table border="0" cellpadding="0" cellspacing="0" class="ibm-data-table" data-widget="datatable">
+            <thead xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+             <tr>
+              <th class="ibm-background-neutral-white-30" scope="col">Sentiment</th>
+              <th class="ibm-background-neutral-white-30 ibm-numeric" scope="col">Score</th>
+              <th class="ibm-background-neutral-white-30" scope="col">Interpretation</th>
+             </tr>
+            </thead>
+            <tbody xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+             <tr>
+              <th class="ibm-table-row" scope="row">Node.js is cool, I love it</th>
+              <td class="ibm-numeric">4</td>
+              <td>Very positive sentiment</td>
+             </tr>
+             <tr>
+              <th class="ibm-table-row" scope="row">Node.js is uncool, I hate it</th>
+              <td class="ibm-numeric">-3</td>
+              <td>Very negative sentiment</td>
+             </tr>
+             <tr>
+              <th class="ibm-table-row" scope="row">Mi piace Node.js. Node.js é bellissima</th>
+              <td class="ibm-numeric">0</td>
+              <td>No sentiment detected. Sentiment has only an English dictionary.</td>
+             </tr>
+             <tr>
+              <th class="ibm-table-row" scope="row">Node.js is not cool, I do not love it</th>
+              <td class="ibm-numeric">4</td>
+              <td>Oops! Very positive, same score as the first example. Sentiment is not aware of grammar or negation.</td>
+             </tr>
+            </tbody>
+           </table>
+           <p>You can see the limitations of this approach, namely that the sentiment module only has an English dictionary and is not aware of grammar or negation. Still, it’s probably good enough to get the gist of most tweets.</p>
+           <h2 id="N101CF" class="ibm-h2">Step 3. Connect the application to Twitter</h2>
+           <p>The other essential component of the app is the connection to Twitter, so that it can obtain a stream of tweets to analyze.</p>
+           <div class="dw-article-sidebar ibm-background-cool-white-20">
+            <p><strong>Twitter’s Stream interface</strong> is perfect for observing trends in sentiment, since it allows access to all of the Twitter content on a topic over time.</p>
+            <p>Our app works only with the public Twitter stream, so Twitter’s Application-only Authentication scheme is sufficient. This simplified OAuth exchange doesn’t require a user login or consent prompt. Using this method does require an app-specific set of OAuth keys, which are encoded in the app. For more, see <a href="https://dev.twitter.com/docs/streaming-apis">Twitter streaming APIs</a>.</p>
+           </div>
+           <ol>
+            <li>Use the ntwitter module, which provides a Node.js interface to the Twitter API, to request a Stream of public tweets mentioning one or more keywords.</li>
+            <li>Obtain a set of keys by registering it under your Twitter developer account. Go to the Twitter "My Applications" page to create and manage the app.</li>
+            <li>Add a couple of functions to your app to test the connection to Twitter. First construct a twitter object using ntwitter and OAuth keys, then make a simple call to verify those credentials. <br><br><h5 id="listing5" class="ibm-h5">Listing 5. Testing your Twitter connection</h5><span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">// Sample keys for demo and article - you must get your own keys 
+//   if you clone this application!
+// Create your own app at: https://dev.twitter.com/apps
+var tweeter = new twitter({
+    consumer_key: 'your',
+    consumer_secret: 'keys',
+    access_token_key: ‘go',
+    access_token_secret: 'here'
+});
+
+app.get('/twitterCheck', function (req, res) {
+    tweeter.verifyCredentials(function (error, data) {
+        res.send("Hello, " + data.name + ".  I am in your twitters.");
+    });
+});</pre></span></li>
+            <li>Restart the app and visit <code>/twitterCheck</code> to see that the connection and login to Twitter are working: <h5 id="fig6" class="ibm-h5">Figure 6. Test the connection to Twitter</h5><img src="fig6.jpg" class="ibm-downsize" alt="Test the connection to Twitter" height="91" width="432"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N101FB');return false;" href="#N101FB">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N101FB">
+              <img alt="Test the connection to Twitter" src="fig6.jpg" width="432">
+             </div><p>Note that it does identify me as the owner of the app that is connecting.</p></li>
+            <li>Now that the connection to Twitter is established, add a function to monitor Twitter for one or more phrases. ntwitter provides a very simple method for doing this: 
+             <ol class="ibm-alpha-list" type="a">
+              <li>Call <code>stream()</code> and pass the phrase to be monitored.</li>
+              <li>Use a callback function to process tweets as they arrive. <p>The Twitter Stream API allows the app to open a Stream and keep pulling data as long as it is available. This function works perfectly for the Node.js app, because it can keep a stream open on the server and update counters and average sentiment as it processes the stream.</p></li>
+              <li>Create a simple interface to set the phrase to be monitored and to display the results as they come in. A more sophisticated app could store the Tweets to a database for more complex processing.</li>
+             </ol></li>
+           </ol>
+           <p>Listing 6 shows the essence of the code to open a stream and log a sample of the tweets:</p>
+           <h5 id="listing6" class="ibm-h5">Listing 6. Opening a stream and logging tweets</h5>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">app.get('/watchTwitter', function (req, res) {
+    var stream;
+    var testTweetCount = 0;
+    var phrase = 'bieber';
+    tweeter.verifyCredentials(function (error, data) {
+        if (error) {
+            res.send("Error connecting to Twitter: " + error);
+        }
+        stream = tweeter.stream('statuses/filter', {
+            'track': phrase
+        }, function (stream) {
+            res.send("Monitoring Twitter for \'" + phrase 
+                + "\'...  Logging Twitter traffic.");
+            stream.on('data', function (data) {
+                testTweetCount++;
+                // Update the console every 50 analyzed tweets
+                if (testTweetCount % 50 === 0) {
+                    console.log("Tweet #" + testTweetCount + ":  " + data.text);
+                }
+            });
+        });
+    });
+});</pre></span>
+           <h2 id="N1021A" class="ibm-h2">Step 4. Put it all together</h2>
+           <p>Okay, now we have all the parts in place to complete your app:</p>
+           <ul class="ibm-bullet-list">
+            <li>A basic Express app to serve up various pages</li>
+            <li>A sentiment analysis function to assess the sentiment of text</li>
+            <li>A connection to Twitter to provide a source of tweets to analyze</li>
+           </ul>
+           <p>Now we just need to combine them to do something interesting. The finished app will prompt the user for a phrase, call Twitter to open a stream filtered on the phrase, analyze the sentiment of each matching tweet, and create a page to monitor the sentiment over time.</p>
+           <p>Keeping the user interface very simple, Listing 7 shows the full application, in all its Old School Struts-style glory:</p>
+           <h5 id="listing7" class="ibm-h5">Listing 7. The full application</h5>
+           <span class="dw-code-nohighlight"><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">var tweetCount = 0;
+var tweetTotalSentiment = 0;
+var monitoringPhrase;
+
+function resetMonitoring() {
+    monitoringPhrase = "";
+}
+
+function beginMonitoring(phrase) {
+    var stream;
+    // cleanup if we're re-setting the monitoring
+    if (monitoringPhrase) {
+        resetMonitoring();
+    }
+    monitoringPhrase = phrase;
+    tweetCount = 0;
+    tweetTotalSentiment = 0;
+    tweeter.verifyCredentials(function (error, data) {
+        if (error) {
+            return "Error connecting to Twitter: " + error;
+        } else {
+            stream = tweeter.stream('statuses/filter', {
+                'track': monitoringPhrase
+            }, function (stream) {
+                console.log("Monitoring Twitter for " + monitoringPhrase);
+                stream.on('data', function (data) {
+                    // only evaluate the sentiment of English-language tweets
+                    if (data.lang === 'en') {
+                        sentiment(data.text, function (err, result) {
+                            tweetCount++;
+                            tweetTotalSentiment += result.score;
+                        });
+                    }
+                });
+            });
+            return stream;
+        }
+    });
+}
+
+function sentimentImage() {
+    var avg = tweetTotalSentiment / tweetCount;
+    if (avg &gt; 0.5) { // happy
+        return "/images/excited.png";
+    }
+    if (avg &lt; -0.5) { // angry
+        return "/images/angry.png";
+    }
+    // neutral
+    return "/images/content.png";
+}
+
+app.get('/',
+    function (req, res) {
+        var welcomeResponse = "&lt;HEAD&gt;" +
+            "&lt;title&gt;Twitter Sentiment Analysis&lt;/title&gt;\n" +
+            "&lt;/HEAD&gt;\n" +
+            "&lt;BODY&gt;\n" +
+            "&lt;P&gt;\n" +
+            "Welcome to the Twitter Sentiment Analysis app.&lt;br&gt;\n" + 
+            "What would you like to monitor?\n" +
+            "&lt;/P&gt;\n" +
+            "&lt;FORM action=\"/monitor\" method=\"get\"&gt;\n" +
+            "&lt;P&gt;\n" +
+            "&lt;INPUT type=\"text\" name=\"phrase\"&gt;&lt;br&gt;&lt;br&gt;\n" +
+            "&lt;INPUT type=\"submit\" value=\"Go\"&gt;\n" +
+            "&lt;/P&gt;\n" + "&lt;/FORM&gt;\n" + "&lt;/BODY&gt;";
+        if (!monitoringPhrase) {
+            res.send(welcomeResponse);
+        } else {
+            var monitoringResponse = "&lt;HEAD&gt;" +
+                "&lt;META http-equiv=\"refresh\" content=\"5; URL=http://" +
+                req.headers.host +
+                "/\"&gt;\n" +
+                "&lt;title&gt;Twitter Sentiment Analysis&lt;/title&gt;\n" +
+                "&lt;/HEAD&gt;\n" +
+                "&lt;BODY&gt;\n" +
+                "&lt;P&gt;\n" +
+                "The Twittersphere is feeling&lt;br&gt;\n" +
+                "&lt;IMG align=\"middle\" src=\"" + sentimentImage() + "\"/&gt;&lt;br&gt;\n" +
+                "about " + monitoringPhrase + ".&lt;br&gt;&lt;br&gt;" +
+                "Analyzed " + tweetCount + " tweets...&lt;br&gt;" +
+                "&lt;/P&gt;\n" +
+                "&lt;A href=\"/reset\"&gt;Monitor another phrase&lt;/A&gt;\n" +
+                "&lt;/BODY&gt;";
+            res.send(monitoringResponse);
+        }
+    });</pre></span>
+           <p>We’ve finally put something at the root path of the app as Listing 7 shows. The first time through, the app presents a welcome prompt and gathers a phrase to monitor. It then sets up the monitoring stream and presents a results page. The tweeter’s stream callback is updated to pass the tweet contents through the sentiment function, increment the tweet count, and record the sentiment. Non-English tweets are filtered out.</p>
+           <p>For presentation purposes, the app uses the <code>sentimentImage()</code> function, which returns an image URL for a given sentiment value. The ranges for happy and grumpy are arbitrary. I found the range of sentiment to be surprisingly narrow for most topics, maybe due to the relative shortness of tweets. Feel free to play with these ranges.</p>
+           <p>So let’s give it a try. Here are the results of a few test runs:</p>
+           <h5 id="N1023E" class="ibm-h5">Figure 7. Twittersphere is positive about Justin Bieber</h5>
+           <img src="fig7.jpg" class="ibm-downsize" alt="Smiling face icon expressing positive sentiment for the topic                     'Justin Beiber' and the number of tweets analzyed (24)" height="244" width="208">
+           <h5 id="N10247" class="ibm-h5">Figure 8. Twittersphere is ambivalent about Syria</h5>
+           <img src="fig9.jpg" class="ibm-downsize" alt="Neutral face icon expressing neutral sentiment for the topic                          'Syria' and the number of tweets analzyed (5)" height="242" width="205">
+           <h5 id="N10250" class="ibm-h5">Figure 9. Twittersphere is angry about NSA, Snowden, Manning, PRISM</h5>
+           <img src="fig8.jpg" class="ibm-downsize" alt="Ambivalent face icon expressing angry sentiment for the topics                       'NSA, Snowden, PRISM' and the number of tweets analzyed (4)" height="245" width="222">
+           <h2 id="tools" class="ibm-h2">Additional tooling considerations</h2>
+           <p>In Step 1, I showed how you can use the <code>node</code> and <code>npm</code> commands to manage and run the application. You can easily do all of the coding with a text editor. However, in developing the app, I actually used a couple of other tools to ease my development.</p>
+           <p>Also, I ultimately wanted to push the app to a Cloud Foundry-compatible Node.js runtime environment, such as <a href="http://www.cloudfoundry.com">CloudFoundry.com</a> or the <a href="https://www.bluemix.net/?cm_mmc=developerWorks-_-dW%20CloudOE%20content-_-wa-nodejs-app-_-article">IBM® Bluemix™ platform</a>. So the final app includes a few extra files required for that environment: the manifest.yml file describes the app and its resource needs to the Cloud Foundry runtime, and the npm-shrinkwrap.json files tell the Cloud Foundry Node.js runtime exactly which modules the app should be deployed with.</p>
+           <h2 id="N10274" class="ibm-h2">Conclusion</h2>
+           <p>In developing this app using Node.js, Express, ntwitter, and sentiment, I got a real appreciation for how easy it is to consume capabilities like Twitter access and sentiment analysis when they are packaged as Node.js modules. It’s easy to see why Node.js is so popular for developing web and mobile apps.</p>
+           <p>I'm now curious to try using Express to add a more professional user interface to the app. I think there's plenty of room to improve it. ; )</p>
+           <!--CMA ID: 960951-->
+           <!--Site ID: 1-->
+           <!--XSLT stylesheet used to transform this file: dw-document-html-8.0.xsl--> 
+           <!-- Article Resources --> 
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div>
+           <h4 id="artdownload" class="ibm-h4">Downloadable resources</h4>
+           <ul class="ibm-link-list">
+            <li><a class="ibm-pdf-link" href="wa-nodejs-app-pdf.pdf">PDF of this content</a></li>
+           </ul>
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div>
+           <h4 id="artrelatedtopics" class="ibm-h4">Related topics</h4>
+           <ul class="ibm-plain-list">
+            <li><a href="http://www.ibm.com/developerworks/offers/lp/demos/summary/j-jnodejs.html">Getting started with Node.js (demo)</a></li>
+            <li><a href="http://www.ibm.com/developerworks/topics/nodejs/">Node.js</a></li>
+            <li><a href="http://www.ibm.com/developerworks/topics/javascript/">JavaScript</a></li>
+            <li><a href="http://www.ibm.com/developerworks/topics/social data analytics/">Social analytics</a></li>
+           </ul> 
+           <!-- Commenting --> 
+           <!-- INLINE_COMMENTS_BEGIN: --> 
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div> 
+           <div id="dw-article-cmts-top" class="ibm-columns"> 
+            <div class="ibm-col-6-2"> 
+             <h4 id="icomments" class="ibm-h4">Comments</h4> 
+             <div id="dw-article-cmts-login"> 
+              <p><a onclick="window.location=userLinks[0].url;" tabindex="0" role="link">Sign in</a> or <a onclick="window.location=userLinks[1].url;" tabindex="0" role="link">register</a> to add and subscribe to comments.</p> 
+             </div> 
+            </div> 
+            <div class="ibm-col-6-2" id="dw-notify"> 
+             <input type="checkbox" value="1" name="comment_notification" id="comment_notification" disabled> 
+             <label for="comment_notification">Subscribe me to comment notifications</label> 
+            </div> 
+           </div> 
+           <div class="dw-article-cmts-container"> 
+            <div class="ibm-no-print" id="dw-icomments-container"> 
+            </div> 
+           </div> 
+           <!-- INLINE_COMMENTS_END --> 
+           <!-- CENTER_6_4_CONTENT_COLUMN_END --> 
+          </div> 
+         </div> 
+         <!--Rating_Meta_BEGIN-->
+         <div class="metavalue">
+          static.content.url=http://www.ibm.com/developerworks/js/artrating/
+         </div>
+         <div class="metavalue">
+          SITE_ID=1
+         </div>
+         <div class="metavalue">
+          Zone=Web development, Cloud computing, Mobile development
+         </div>
+         <div class="metavalue">
+          ArticleID=960951
+         </div>
+         <div class="metavalue">
+          ArticleTitle=Build a sentiment analysis application with Node.js, Express, sentiment, and ntwitter
+         </div>
+         <div class="metavalue">
+          publish-date=06272014
+         </div>
+         <script language="javascript" type="text/javascript">document.write('<div class="metavalue">url='+location.href.replace(/</g,  '%3C')+'</div>');</script>
+         <!--Rating_Meta_END--> 
+        </div> 
+        <!-- END_IBM-CONTENT-MAIN --> 
+       </div> 
+       <!-- END_IBM-CONTENT-BODY --> 
+      </div> 
+      <!-- END_IBM-CONTENT --> 
+     </div> 
+     <!-- END_IBM-PCON --> 
+    </main> 
+    <!-- MAIN_CONTENT_END --> 
+    <!-- END_CONTENT-WRAPPER --> 
+   </div> 
+   <!-- FOOTER_BEGIN --> 
+   <footer role="contentinfo" aria-label="IBM developerWorks"> 
+    <div id="dw-footer-module" class="dw-footer-home"> 
+     <section aria-label="Resources" role="contentinfo"> 
+      <div class="ibm-columns"> 
+       <div class="ibm-col-6-1 dw-footer-col-1"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="developerWorks">developerWorks</li> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/">About</a></li> 
+         <li><a href="//www.ibm.com/developerworks/feedback">Help</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/ideas">Submit content</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/secure/report/">Report abuse</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/community/terms/thirdparty/">Third-party notice</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Community">Community</li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/rfe/">Product feedback</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/connect/">Developer Centers</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading dw-follow-us" aria-label="Follow us">Follow us</li> 
+        </ul> 
+        <p class="dw-footer-social"> <a href="//twitter.com/developerWorks"> <img width="28" height="27" alt="Twitter" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-twitter.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.facebook.com/developerworks"> <img width="28" height="27" alt="Facebook" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-facebook.png"> </a> </p> 
+        <br> 
+        <p class="dw-footer-social"> <a href="//www.linkedin.com/groups/IBM-developerWorks-8137234"> <img width="28" height="27" alt="LinkedIn" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-linkedin.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.youtube.com/user/developerworks"> <img width="28" height="27" alt="YouTube" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-youtube.png"> </a> </p> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-2"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Join">Join</li> 
+         <li><a href="//developer.ibm.com/academic/">Faculty</a></li> 
+         <li><a href="//developer.ibm.com/students/">Students</a></li> 
+         <li><a href="//developer.ibm.com/startups/">Startups</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/isv/">Business Partners</a></li> 
+        </ul> 
+        <ul class="dw-footer-lang" aria-label="Select a language"> 
+         <li class="dw-footer-heading">Select a language</li> 
+         <li><a href="//www.ibm.com/developerworks/">English</a></li> 
+         <li><a href="//www.ibm.com/developerworks/cn/" lang="zh">??</a></li> 
+         <li><a href="//www.ibm.com/developerworks/jp/" lang="ja">???</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ru/" lang="ru">???????</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/br/" lang="pt">Português (Brasil)</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ssa/" lang="es">Español</a></li> 
+         <li><a href="//developer.ibm.com/kr/" lang="kr">??</a></li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-3"> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-4"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/learn/">Tutorials &amp; training</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/accelerate/">Demos &amp; sample code</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/answers">Q&amp;A forums</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/dwblog/">dW Blog</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/events/">Events</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-5"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/courses/">Courses</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/open/">Open source projects</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/tv/">Videos</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/recipes/">Recipes</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-6"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/develop/">Downloads</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/api/">APIs</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/newsletter/">Newsletters</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/feeds/">Feeds</a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </section> 
+    </div> 
+    <div id="dw-footer" class="ibm-padding-normal ibm-alternate"> 
+     <div class="ibm-columns"> 
+      <div class="ibm-col-1-1"> 
+       <div class="dw-footer-corporate-links"> 
+        <ul> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/contacts.html">Contact</a></li> 
+         <li><a href="//www.ibm.com/privacy/us/en/">Privacy</a></li> 
+         <li><a href="//www.ibm.com/developerworks/community/terms/use/">Terms of use</a></li> 
+         <li><a href="//www.ibm.com/accessibility/us/en/">Accessibility</a></li> 
+         <li class="ibm-feedbacklink"><a href="#">Feedback</a></li> 
+         <li id="ibm-truste-cp"><a onclick="truste.eu.clickListener();return false;" href="#">Cookie Preferences</a></li> 
+        </ul> 
+       </div> 
+       <div id="ibm-footer-locale-selector"></div> 
+      </div> 
+     </div> 
+    </div> 
+   </footer> 
+   <!-- FOOTER_END --> 
+   <!-- END_IBM-TOP --> 
+  </div> 
+  <!-- SCRIPTS_INCLUDE_BEGIN --> 
+  <!-- Styles --> 
+  <link rel="stylesheet" type="text/css" href="/developerworks/maverick/css/plugin/comments/jquery-comments.css"> 
+  <link rel="stylesheet" href="/developerworks/maverick/fonts/awesome-4.5.0/css/font-awesome.min.css"> 
+  <!-- Libraries --> 
+  <script type="text/javascript" src="/developerworks/maverick/js/plugin/comments/jquery-comments.min.js"></script> 
+  <script type="text/javascript" src="/developerworks/maverick/js/plugin/formatter/moment-with-locales.js"></script> 
+  <script type="text/javascript" src="/developerworks/maverick/js/ContentComments.js"></script> 
+  <script type="text/javascript" src="/developerworks/js/v18/ContentCommentsFormatter.js"></script> 
+  <script type="text/javascript" language="JavaScript">
+
+	IBMCore.common.module.masthead.subscribe("ready", "customjs", setupCommentsPlugin).runAsap(setupCommentsPlugin);
+
+	function setupCommentsPlugin(){
+		//debugger;
+			//alert(userLinks);
+			var commentsInitInfo = {
+				contentId : $("div[class=metavalue]:contains('ArticleID=')").text().split("=")[1],
+				siteId :  $("div[class=metavalue]:contains('SITE_ID=')").text().split("=")[1],
+				pluginDivId : '#dw-icomments-container',
+				notifyElementId : "#comment_notification",
+				loginMessageDivId : "#dw-article-cmts-login",
+				totalCommentsDivId : "#nCmts"
+			};				
+								
+			ContentComments.Setup(commentsInitInfo);
+	}
+</script> 
+  <script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-41146412-3','auto');ga('require','linkid','linkid.js');var dcdate="2014-06-27";var cmaid="960951";ga('set','dimension1',dcdate);ga('set','dimension2',cmaid);var dw_canonical="http://www.ibm.com/developerworks/library/wa-nodejs-app/index.html";dw_canonical=dw_canonical.substring(dw_canonical.indexOf(".ibm.com")+8);ga('send','pageview',{'page':dw_canonical,'dimension1':dcdate,'dimension2':cmaid});var trkOBL=function(url,id){id=id.split("-");var cat="v18 article";var act="Bluemix";if(id[2]=="dwpremium")act="Premium";if(id[2]=="dwopen")act="dWOpen";if(id[2]=="devops")act="Devops";act=act+' '+id[3];if(id[4]){var label=id[4];if(label=="btn")label="button";if(label=="txt")label="text link";if(label=="bnr")label="banner";if(label=="tl")label="tile";if(label=="regbar")label="registration bar";if(label=="vp")label="video promotion"}var ab=0;if(id[5]){if(id[5]=="ABa")ab=1;if(id[5]=="ABb")ab=2;if(id[5]=="ABc")ab=3;if(id[5]=="ABd")ab=4;if(id[5]=="ABe")ab=5;if(id[5]=="ABf")ab=6;if(id[5]=="ABg")ab=7;if(id[5]=="ABh")ab=8}ga('send','event',cat,act,label,ab,{'page':dw_canonical,'hitCallback':function(){document.location=url}})}</script>
+  <!-- Piwik --> 
+  <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(["setDomains", ["*.www.ibm.com/developerworks","*.www.ibm.com/developerworks"]]);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+    var u="//developer.ibm.com/piwik/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', 7]);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+</script> 
+  <noscript>
+   <p><img src="//developer.ibm.com/piwik/piwik.php?idsite=7" style="border:0;" alt=""></p>
+  </noscript> 
+  <!-- End Piwik Code -->
+  <!-- Hotjar Tracking Code for ibm.com --> 
+  <script>
+    (function(h,o,t,j,a,r){
+    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+    h._hjSettings={hjid:42920,hjsv:5};
+    a=o.getElementsByTagName('head')[0];
+    r=o.createElement('script');r.async=1;
+    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+    a.appendChild(r);
+    })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+</script> 
+  <!-- SCRIPTS_INCLUDE_END -->   
+ </body>
+</html>

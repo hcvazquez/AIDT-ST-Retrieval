@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>Extracting text from an image using Ocropus</title> 
+  <meta name="author" content="Dan Vanderkam"> 
+  <link rel="alternate" type="application/atom+xml" title="Atom 0.3" href="http://www.danvk.org/atom.xml"> 
+  <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet"> 
+  <link href="/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet"> 
+  <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries --> 
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// --> 
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]--> 
+  <link rel="stylesheet" id="open-sans-css" href="//fonts.googleapis.com/css?family=Open+Sans%3A300italic%2C400italic%2C600italic%2C300%2C400%2C600&amp;subset=latin%2Clatin-ext&amp;ver=3.9.2" type="text/css" media="all"> 
+  <link rel="stylesheet" type="text/css" href="/stylesheets/syntax.css"> 
+  <link rel="stylesheet" type="text/css" href="/stylesheets/stylesheet.css"> 
+  <script>
+    var host = "danvk.github.io";
+    if (window.location.host == host && window.location.protocol != "https:") {
+      window.location.protocol = "https:"
+    }
+  </script> 
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) --> 
+  <!-- sourced in <head> for convenience of individual pages --> 
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> 
+ </head> 
+ <body role="document"> 
+  <div class="navbar navbar-inverse navbar-fixed-top" role="navigation"> 
+   <div class="container"> 
+    <div class="navbar-header"> 
+     <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+     <a class="navbar-brand" href="/">danvk.org</a> 
+    </div> 
+    <div class="collapse navbar-collapse"> 
+     <ul class="nav navbar-nav"> 
+      <li class="active"><a href="/">Home</a></li> 
+      <li><a href="/blog.html">Blog</a></li> 
+      <li><a href="/#contact">Contact</a></li> 
+      <li class="dropdown"> <a href="#" class="dropdown-toggle" data-toggle="dropdown">Features <span class="caret"></span></a> 
+       <ul class="dropdown-menu" role="menu"> 
+        <li><a href="/boggle/">Online Boggle Solver</a></li> 
+        <li><a href="/colorbase.html">Base Pair Colorer</a></li> 
+        <li><a href="/hex2dec.html">Hex ? Dec converter in JavaScript</a></li> 
+        <li class="divider"></li> 
+        <li><a href="/tower/">NS-Tower in the Browser</a></li> 
+        <li><a href="/gwbasic/">GW-BASIC program decoder</a></li> 
+        <li><a href="/wp/beals-conjecture/">Beal's Conjecture</a></li> 
+       </ul> </li> 
+     </ul> 
+    </div>
+    <!--/.nav-collapse --> 
+   </div> 
+  </div> 
+  <div class="container"> 
+   <h1></h1> 
+   <div class="post-page"> 
+    <div class="date">
+     2015.01.09
+    </div> 
+    <h2 class="post-title">Extracting text from an image using Ocropus</h2> 
+    <div id="post"> 
+     <style>
+.bordered {
+  border: 1px solid rgb(204, 204, 204);
+}
+</style> 
+     <p>In the <a href="http://www.danvk.org/2015/01/07/finding-blocks-of-text-in-an-image-using-python-opencv-and-numpy.html">last post</a>, I described a way to crop an image down to just the part containing text. The end product was something like this:</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/start.png" width="608" height="137"> 
+     </div> 
+     <p>In this post, I'll explain how to extract text from images like these using the <a href="https://github.com/tmbdev/ocropy">Ocropus</a> <a href="http://en.wikipedia.org/wiki/Optical_character_recognition">OCR</a> library. Plain text has a number of advantages over images of text: you can search it, it can be stored more compactly and it can be reformatted to fit seamlessly into web UIs.</p> 
+     <p>I don't want to get too bogged down in the details of why I went with Ocropus over its more famous cousin, <a href="https://code.google.com/p/tesseract-ocr/">Tesseract</a>, at least not in this post. The gist is that I found it to be:</p> 
+     <ol> 
+      <li>more transparent about what it was doing.</li> 
+      <li>more hackable</li> 
+      <li>more robust to <a href="http://stackoverflow.com/questions/27592430/how-can-i-tell-tesseract-that-my-font-has-a-particular-size">character segmentation issues</a></li> 
+     </ol> 
+     <p>This post is a bit long, but there are lots of pictures to help you get through it. Be strong!</p> 
+     <h3>Ocropus</h3> 
+     <p>Ocropus (or Ocropy) is a collection of tools for extracting text from scanned images. The basic pipeline looks like this:</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/ocropus-pipeline.png" width="304" height="341"> 
+     </div> 
+     <p>I'll talk about each of these steps in this post. But first, we need to install Ocropus!</p> 
+     <h3>Installation</h3> 
+     <p>Ocropus uses the <a href="http://www.scipy.org/about.html">Scientific Python</a> stack. To run it, you'll need <code>scipy</code>, <code>PIL</code>, <code>numpy</code>, <code>OpenCV</code> and <code>matplotlib</code>. Setting this up is a bit of a pain, but you'll only ever have to do it once (at least until you get a new computer).</p> 
+     <p>On my Mac running Yosemite, I set up <a href="http://brew.sh">brew</a>, then ran:</p> 
+     <div class="highlight">
+      <pre><code class="language-" data-lang="">brew install python
+brew install opencv
+brew install homebrew/python/scipy
+</code></pre>
+     </div> 
+     <p>To make this last step work, I had to follow the workaround described in <a href="https://github.com/Homebrew/homebrew/issues/16016#issuecomment-42912638">this comment</a>:</p> 
+     <div class="highlight">
+      <pre><code class="language-bash" data-lang="bash"><span class="nb">cd</span> /usr/local/Cellar/python/2.7.6_1/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages
+rm cv.py cv2.so
+ln -s /usr/local/Cellar/opencv/2.4.9/lib/python2.7/site-packages/cv.py cv.py
+ln -s /usr/local/Cellar/opencv/2.4.9/lib/python2.7/site-packages/cv2.so cv2.so
+</code></pre>
+     </div> 
+     <p>Then you can follow the instructions on the <a href="https://github.com/tmbdev/ocropy">ocropy site</a>. You'll know you have things working when you can run <code>ocropus-nlbin --help</code>.</p> 
+     <h3>Binarization</h3> 
+     <p>The first step in the Ocropus pipeline is <em>binarization</em>: the conversion of the source image from grayscale to black and white.</p> 
+     <p>There are many ways to do this, some of which you can read about <a href="https://docs.google.com/presentation/d/1N1scoKZhmneH_qyLCjdVcAWKqqL65T3ahKrk2-1Tvcg/edit#slide=id.i39">in this presentation</a>. Ocropus uses a form of <a href="http://opencv-python-tutroals.readthedocs.org/en/latest/py_tutorials/py_imgproc/py_thresholding/py_thresholding.html">adaptive thresholding</a>, where the cutoff between light and dark can vary throughout the image. This is important when working with scans from books, where there can be variation in light level over the page.</p> 
+     <p>Also lumped into this step is <em>skew estimation</em>, which tries to rotate the image by small amounts so that the text is truly horizontal. This is done more or less through brute force: Ocropy tries 32 different angles between +/-2° and picks the one which maximizes the variance of the row sums. This works because, when the image is perfectly aligned, there will be huge variance between the rows with text and the blanks in between them. When the image is rotated, these gaps are blended.</p> 
+     <div class="highlight">
+      <pre><code class="language-bash" data-lang="bash">ocropus-nlbin -n 703662b.crop.png -o book
+</code></pre>
+     </div> 
+     <div class="center"> 
+      <img src="/images/ocropus/binarized.png" width="608" height="137"> 
+     </div> 
+     <p>The <code>-n</code> tells Ocropus to suppress page size checks. We're giving it a small, cropped image, rather than an image of a full page, so this is necessary.</p> 
+     <p>This command produces two outputs:</p> 
+     <ul> 
+      <li><code>book/0001.bin.png</code>: binarized version of the first page (above)</li> 
+      <li><code>book/0001.nrm.png</code>: a "flattened" version of the image, before binarization. This isn't very useful.</li> 
+     </ul> 
+     <p>(The Ocropus convention is to put all intermediate files in a <code>book</code> working directory.)</p> 
+     <h3>Segmentation</h3> 
+     <p>The next step is to extract the individual lines of text from the image. Again, there are many ways to do this, some of which you can read about in this <a href="https://docs.google.com/presentation/d/1N1scoKZhmneH_qyLCjdVcAWKqqL65T3ahKrk2-1Tvcg/edit#slide=id.i151">presentation on segmentation</a>.</p> 
+     <p>Ocropus first estimates the "scale" of your text. It does this by finding connected components in the binarized image (these should mostly be individual letters) and calculating the median of their dimensions. This corresponds to something like the <a href="http://en.wikipedia.org/wiki/X-height">x-height</a> of your font.</p> 
+     <p>Next it tries to find the individual lines of text. The sequence goes something like this:</p> 
+     <ol> 
+      <li>It removes components which are too big or too small (according to <em>scale</em>). These are unlikely to be letters.</li> 
+      <li>It applies the <a href="http://www.cs.cornell.edu/courses/CS6670/2011sp/lectures/lec02_filter.pdf">y-derivative of a Gaussian kernel</a> (p. 42) to detect top and bottom edges of the remaining features. It then blurs this horizontally to blend the tops of letters on the same line together.</li> 
+      <li>The bits between top and bottom edges are the lines.</li> 
+     </ol> 
+     <p>A picture helps explain this better. Here's the result of step 2 (the edge detector + horizontal blur):</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/edge-blur.png" width="608" height="137"> 
+     </div> 
+     <p>The white areas are the tops and the black areas are the bottoms.</p> 
+     <p>Here's the another view of the same thing:</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/edge-boxes.png" width="608" height="137"> 
+     </div> 
+     <p>Here the blue boxes are components in the binarized image (i.e. letters). The wispy green areas are tops and the red areas are bottoms. I'd never seen a Gaussian kernel used this way before: its derivative is an edge detector.</p> 
+     <p>Here are the detected lines, formed by expanding the areas between tops and bottoms:</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/line-components.png" width="608" height="137"> 
+     </div> 
+     <p>It's interesting that the lines needn't be simple rectangular regions. In fact, the bottom two components have overlapping y-coordinates. Ocropus applies these regions as masks before extracting rectangular lines:</p> 
+     <p><img class="bordered" src="/images/ocropus/line1.png" width="610" height="35"><br> <img class="bordered" src="/images/ocropus/line2.png" width="163" height="25"><br> <img class="bordered" src="/images/ocropus/line3.png" width="233" height="24"><br> <img class="bordered" src="/images/ocropus/line4.png" width="208" height="27"></p> 
+     <p>Here's the command I used (the <code>g</code> in <code>ocropus-gpageseg</code> stands for "gradient"):</p> 
+     <div class="highlight">
+      <pre><code class="language-bash" data-lang="bash">ocropus-gpageseg -n --maxcolseps 0 book/0001.bin.png
+</code></pre>
+     </div> 
+     <p>The <code>--maxcolseps 0</code> tells Ocropus that there's only one column in this image. The <code>-n</code> suppresses size checks, as before.</p> 
+     <p>This has five outputs:</p> 
+     <ul> 
+      <li><code>book/0001.pseg.png</code> encodes the segmentation. The color at each pixel indicates which column and line that pixel in the original image belongs to.</li> 
+      <li><code>book/0001/01000{1,2,3,4}.bin.png</code> are the extracted line images (above).</li> 
+     </ul> 
+     <h3>Character Recognition</h3> 
+     <p>After all that prep work, we can finally get to the fun part: character recognition using a <a href="http://en.wikipedia.org/wiki/Artificial_neural_network">Neural Net</a>.</p> 
+     <p>The problem is to perform this mapping:</p> 
+     <div class="center"> 
+      <img class="bordered" src="/images/ocropus/line4.png" width="208" height="27"> ? 
+      <code>August 5, 1934.</code> 
+     </div> 
+     <p>This is challenging because each line will have its own quirks. Maybe binarization produced a darker or lighter image for this line. Maybe skew estimation didn't work perfectly. Maybe the typewriter had a fresh ribbon and produced thicker letters. Maybe the paper got water on it in storage.</p> 
+     <p>Ocropus uses an <a href="http://en.wikipedia.org/wiki/Long_short_term_memory">LSTM Recurrent Neural Net</a> to learn this mapping. The default model has 48 inputs, 200 nodes in a hidden layer and 249 outputs.</p> 
+     <p>The inputs to the network are columns of pixels. The columns in the image are fed into the network, one at a time, from left to right. The outputs are scores for each possible letter. As the columns for the <code>A</code> in the image above are fed into the net, we'd hope to see a spike from the <code>A</code> output.</p> 
+     <p>Here's what the output looks like:</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/network.png" width="700" height="330"> 
+     </div> 
+     <p>The image on the bottom is the output of the network. Columns in the text and the output matrix correspond to one another. Each row in the output corresponds to a different letter, reading alphabetically from top to bottom. Red means a strong response, blue a weaker response. The red streak under the <code>A</code> is a strong response in the <code>A</code> row.</p> 
+     <p>The responses start somewhere around the middle to right half of each letter, once the net has seen enough of it to be confident it's a match. To extract a transcription, you look for maxima going across the image.</p> 
+     <p>In this case, the transcription is <code>Auguat S, 1934.</code>:</p> 
+     <div class="center"> 
+      <img src="/images/ocropus/network-labeled.png" width="699" height="216"> 
+     </div> 
+     <p>It's interesting to look at the letters that this model gets wrong. For example, the <code>s</code> in <code>August</code> produces the strongest response on the <code>a</code> row. But there's also a (smaller) response on the correct <code>s</code> row. There's also considerable ambiguity around the <code>5</code>, which is transcribed as an <code>S</code>.</p> 
+     <p>My #1 <a href="https://github.com/tmbdev/ocropy/issues/16">feature request</a> for Ocropus is for it to output more metadata about the character calls. While there might not be enough information in the image to make a clear call between <code>Auguat</code> and <code>August</code>, a post-processing step with a dictionary would clearly prefer the latter.</p> 
+     <p>The transcriptions with the default model are:</p> 
+     <p><img class="bordered" src="/images/ocropus/line1.png" width="610" height="35"><br> ? <code>O1inton Street, aouth from LIYingston Street.</code> <br> <img class="bordered" src="/images/ocropus/line2.png" width="163" height="25"> ? <code>P. L. Sperr.</code> <br> <img class="bordered" src="/images/ocropus/line3.png" width="233" height="24"> ? <code>NO REPODUCTIONS.</code> <br> <img class="bordered" src="/images/ocropus/line4.png" width="208" height="27"> ? <code>Auguat S, 1934.</code></p> 
+     <p>This is passable, but not great. The Ocropus site explains why:</p> 
+     <blockquote> 
+      <p>There are some things the currently trained models for ocropus-rpred will not handle well, largely because they are nearly absent in the current training data. That includes all-caps text, some special symbols (including "?"), typewriter fonts, and subscripts/superscripts. This will be addressed in a future release, and, of course, you are welcome to contribute new, trained models.</p> 
+     </blockquote> 
+     <p>We'll fix this in the <a href="http://www.danvk.org/2015/01/11/training-an-ocropus-ocr-model.html">next post</a> by training our own model.</p> 
+     <p>The command to make predictions is:</p> 
+     <div class="highlight">
+      <pre><code class="language-" data-lang="">ocropus-rpred -m en-default.pyrnn.gz book/0001/*.png
+</code></pre>
+     </div> 
+     <p>I believe the <code>r</code> stands for "RNN" as in "Recurrent Neural Net".</p> 
+     <p>The outputs are <code>book/0001/01000{1,2,3,4}.txt</code>.</p> 
+     <p>If you want to see charts like the one above, pass <code>--show</code> or <code>--save</code>.</p> 
+     <h3>Extracting the text</h3> 
+     <p>We're on the home stretch!</p> 
+     <p>One way to get a text file out of Ocropus is to concatenate all the transcribed text files:</p> 
+     <div class="highlight">
+      <pre><code class="language-" data-lang="">cat book/????/??????.txt &gt; ocr.txt
+</code></pre>
+     </div> 
+     <p>The files are all in alphabetical order, so this should do the right thing.</p> 
+     <p>In practice, I found that I often disagreed with the line order that Ocropus chose. For example, I'd say that <code>August 5, 1934.</code> is the second line of the image we've been working with, not the fourth.</p> 
+     <p>Ocropus comes with an <code>ocropus-hocr</code> tool which converts its output to <a href="http://en.wikipedia.org/wiki/HOCR">hOCR format</a>, an HTML-based format designed by Thomas Breuel, who also developed Ocropus.</p> 
+     <p>We can use it to get bounding boxes for each text box:</p> 
+     <div class="highlight">
+      <pre><code class="language-" data-lang="">$ ocropus-hocr -o book/book.html book/0001.bin.png
+$ cat book/book.html
+...
+&lt;div class='ocr_page' title='file book/0001.bin.png'&gt;
+&lt;span class='ocr_line' title='bbox 3 104 607 133'&gt;O1inton Street, aouth from LIYingston Street.&lt;/span&gt;&lt;br /&gt;
+&lt;span class='ocr_line' title='bbox 3 22 160 41'&gt;P. L. Sperr.&lt;/span&gt;&lt;br /&gt;
+&lt;span class='ocr_line' title='bbox 1 1 228 19'&gt;NO REPODUCTIONS.&lt;/span&gt;&lt;br /&gt;
+&lt;span class='ocr_line' title='bbox 377 67 579 88'&gt;Auguat S, 1934.&lt;/span&gt;&lt;br /&gt;
+&lt;/div&gt;
+...
+</code></pre>
+     </div> 
+     <p>Ocropus tends to read text more left to right than top to bottom. Since I know my images only have one column of text, I'd prefer to emphasize the top-down order. I wrote a <a href="https://github.com/danvk/oldnyc/blob/master/ocr/tess/extract_ocropy_text.py">small tool</a> to reorder the text in the way I wanted.</p> 
+     <h3>Conclusions</h3> 
+     <p>Congrats on making it this far! We've walked through the steps of running the Ocropus pipeline.</p> 
+     <p>The overall results aren't good (~10% of characters are incorrect), at least not yet. In the <a href="http://www.danvk.org/2015/01/11/training-an-ocropus-ocr-model.html">next post</a>, I'll show how to train a new LSTM model that completely destroys this problem.</p> 
+    </div> 
+   </div> 
+   <!--
+<div id="related">
+  <h2>Related Posts</h2>
+  <ul class="posts">
+    
+      <li><span>15 Mar 2016</span> &raquo; <a href="/2016/03/15/alphago-vs-lee-sedol.html">AlphaGo vs. Lee Sedol</a></li>
+    
+      <li><span>19 Jan 2016</span> &raquo; <a href="/2016/01/19/oldnyc-update.html">Extending the Grid to Add 1,000 Photos to OldNYC</a></li>
+    
+      <li><span>12 Dec 2015</span> &raquo; <a href="/2015/12/12/nips-2015.html">My takeaways from NIPS 2015</a></li>
+    
+  </ul>
+</div>
+--> 
+   <p class="please">Please leave comments! It's what makes writing worthwhile.</p> 
+   <div id="disqus_thread"></div> 
+   <script type="text/javascript">
+    function getDisqusId(pathname) {
+      // For some reason the URL sometimes has "////" in it. Collapse all but one.
+      return pathname.replace(/\/\/+/g, '/');
+    }
+
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'danvk'; // required: replace example with your forum shortname
+    var layout_id = null;
+    var disqus_identifier = layout_id || getDisqusId(document.location.pathname);  // agnostic to host, SSL
+    var disqus_url = 'https://danvk.github.io/' + disqus_identifier;
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script> 
+   <noscript>
+    Please enable JavaScript to view the 
+    <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+   </noscript> 
+   <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+  </div>
+  <!-- /.container -->  
+  <div class="footer"> 
+  </div> 
+  <!-- Include all compiled plugins (below), or include individual files as needed --> 
+  <script src="/bootstrap/js/bootstrap.min.js"></script> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-769809-1', 'auto');
+  ga('send', 'pageview');
+</script>   
+ </body>
+</html>

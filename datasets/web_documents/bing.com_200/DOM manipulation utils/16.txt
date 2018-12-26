@@ -1,0 +1,129 @@
+<html>
+ <head> 
+  <title>comp314: project 2: Gzip Bit Manipulations</title> 
+  <link rel="stylesheet" href="../styles.css"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+ </head> 
+ <body> 
+  <div id="header"> 
+   <h1><a href="http://sys.cs.rice.edu/course/comp314/08/">comp<em>314</em></a></h1> applied algorithms and data structures 
+   <em>•</em> x-list: elec322 
+   <em>•</em> spring 2010 
+   <em>•</em> 
+   <a href="http://www.rice.edu/">rice university</a> 
+  </div>  
+  <div id="content"> 
+   <div class="tabs"> 
+    <ul> 
+     <li><a href="../index.html">Home</a>.</li> 
+     <li><a href="../schedule.html">Schedule</a>.</li> 
+     <li><a href="../homework.html">Homeworks</a>.</li> 
+     <li><a href="../projects.html">Projects</a>.</li> 
+    </ul> 
+   </div> 
+   <h2>Java Bit Manipulation Guide</h2> 
+   <h3>Overview</h3> 
+   <p> The GZIP project has a lot of bit manipulation. Some of you may not have ever done manipulation, and some of you may not know how to do it in Java. This is a short guide to help you. </p> 
+   <h3>Shift Happens</h3> 
+   <p> Some of the most basic operations on bits is <i>shifting</i> in the form of a <i>shift left</i> and a <i>shift right</i>. In Java, the operators are <tt>&lt;&lt;</tt> and <tt>&gt;&gt;</tt>. Here is what they do: </p> 
+   <pre>
+/* 00000001 &lt;&lt; 1 = 00000010 */
+1 &lt;&lt; 1 == 2 
+
+/* 00000001 &lt;&lt; 3 = 00001000 */
+1 &lt;&lt; 3 == 8
+
+/* 11111111 11111111 11111111 11110000 &gt;&gt; 4 = 11111111 11111111 11111111 11111111 */
+0xFFFFFFF0 &gt;&gt; 4 == 0xFFFFFFFF 
+  
+/* 00001111 11111111 11111111 11111111 &gt;&gt; 4 = 00000000 11111111 11111111 11111111 */
+0x0FFFFFFF &gt;&gt; 4 == 0x00FFFFFF 
+</pre> 
+   <p> Note that the right shift operator is <i>signed</i>. Java, as with many languages, uses the most significant bit as a "sign" bit. A negative number's most significant bit is always '1' in Java. A signed shift-right will shift in the value of the sign. So, a binary number that begins with '1' will shift in '1's. A binary number that begins with '0' will shift in '0's. Java does bitwise operators on integers, so be aware! </p> 
+   <p> You can use a third shift operator called the "unsigned shift right" operator: <tt>&gt;&gt;&gt;</tt> for always shifting in a "0" regardless of the sign. </p> 
+   <pre>
+/* 10000000 00000000 00000000 00000000 &gt;&gt;&gt; 1 = 01000000 00000000 00000000 00000000 */
+0x80000000 &gt;&gt;&gt; 1 == 0x40000000
+
+/* 10000000 00000000 00000000 00000000 &gt;&gt; 1 = 11000000 00000000 00000000 00000000 */
+0x80000000 &gt;&gt; 1  == 0xC0000000
+</pre> 
+   <p> One of the uses for in creating quick powers of 2. Shifting "1" by 1 is 2, by 2 is 4, by 4 is 8, etc.. Similarly, a quick shift right will divide a number by two. </p> 
+   <p> This is also useful for creating <i>masks</i>. A bitmask is used for isolating or altering a specific part of a binary number. This is described in detail in the next section. For now, assume that we want to create the bitmask <tt>00001000</tt>. Then the code is just </p> 
+   <pre>
+int bitmask = 1 &lt;&lt; 3;
+</pre> You can create more complicated bit masks using binary arithmetic operators which are also described in the next section. 
+   <h3>Binary "BitWise" Operations</h3> 
+   <p> Here are four common bit operators in Java. </p> 
+   <ul> 
+    <li>~ - The unary complement</li> 
+    <li>&amp; - Bitwise and</li> 
+    <li>^ - Bitwise exclusive or</li> 
+    <li>| - Bitwise inclusive or</li> 
+   </ul> 
+   <p> Here are some examples of their use (just showing the binary for simplicity): </p> 
+   <pre>
+1010 &amp; 0101 == 0000
+1100 &amp; 0110 == 0100
+
+1010 | 0101 == 1111
+1100 | 0110 == 1110
+
+~1111 == 0000
+~0011 == 1100
+
+1010 ^ 0101 == 1111
+1100 ^ 0110 == 1010
+</pre> 
+   <p> You can "set" a bit in a number by "or"-ing with another number with that bit (and only that bit) set to 1. </p> 
+   <pre>
+10000001 | 00100000 = 10100001 /* turned on bit 5 */
+10000001 | 1 &lt;&lt; 5 = 10100001 /* did the same thing
+00000000 | 1 &lt;&lt; 2 | 1 &lt;&lt; 5 = 00100100
+</pre> 
+   <p> There are other methods for setting bits that do not require branching. I do not describe those here, although you might look at this <a href="http://graphics.stanford.edu/~seander/bithacks.html">document</a>. </p> 
+   <p> You can turn off a bit by anding with a binary number of all 1's, except for the bit to be set. </p> 
+   <pre>
+01010101 &amp; ~(1&lt;&lt;2) == 01010101 &amp; 11111011 == 01010001
+</pre> 
+   <h3>A Word About Bit Order</h3> 
+   <p> Assuming that the most-significant-bit is on the left, </p> 
+   <pre>
+10010110
+^      ^
+|      |------- bit 0
+|
+|-------------- bit 7
+</pre> 
+   <p> Notice that the value of bit 0 is 2^0, bit 1 is 2^1, ..., bit 7 is 2^7. </p> 
+   <h3>Using ParseInt</h3> 
+   <p> A very convenient way to work with binary numbers in your code is to use the <tt>Integer.parseInt()</tt> command. <tt>Integer.parseInt("101",2)</tt> creates an integer with the binary value of 101 (decimal 5). This means that you can even do a for loop with binary in this manner: </p>
+   <pre>
+/* loops from 5 up to and including 15 */
+for (int b = Integer.parseInt("0101",2); b &lt;= Integer.parseInt("1111",2); b++) {
+	/* do stuff here */
+}
+</pre> 
+   <p></p> 
+   <h3>Reading and writing bits</h3> 
+   <p> Some useful advice: build yourself a class that knows how to read and write <b>bits</b> to a stream rather than the usual Java input and output streams that know all about reading and writing <b>bytes</b>. You'll find it helpful to separate out the operations of "give me the next <i>N</i> bits" and "advance the cursor by <i>M</i> bits." For example, this would allow you to read enough data to cover the longest possible Huffman code. Once you discover the true length of the Huffman code you just read, then you advance the cursor by only that many bits. A class like that also lets you try to compartmentalize the uglier aspects of bit manipulation into a fairly small chunk of code. </p> 
+   <p> Likewise, if you're going for speed, then you'll find table lookups to be exceptionally powerful. Imagine you've got one Huffman code that's simply "0" while all the other codes are exactly three bits long and start with "1". That means you need a table with eight entries (2^3 = 8). Your table might then say: </p>
+   <pre>
+char code[8];
+int codelen[8];
+
+code[0] = 'a'; codelen[0] = 1;
+code[1] = 'a'; codelen[1] = 1;
+code[2] = 'a'; codelen[2] = 1;
+code[3] = 'a'; codelen[3] = 1;
+code[4] = 'b'; codelen[4] = 3;
+code[5] = 'c'; codelen[5] = 3;
+code[6] = 'd'; codelen[6] = 3;
+code[7] = 'e'; codelen[7] = 3;
+</pre> With two array lookups, you now know the token and how many bits to advance to find the next one. This is going to be far, far cheaper than some kind of for loop over all possible tokens, at the expense of a little more RAM usage. 
+   <p></p> 
+   <p> <i>Exercise to the reader: write some code to auto-generate these tables. Extra fun: allow for variable numbers of bits in the table. If the token you're looking for is larger than the current table, then you have to go look in a secondary table. This would allow you to tradeoff the size of the table for speed in using it.</i> </p> 
+   <hr> 
+  </div>   
+ </body>
+</html>

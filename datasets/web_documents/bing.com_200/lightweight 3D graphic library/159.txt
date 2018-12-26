@@ -1,0 +1,418 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"> 
+  <meta name="keywords" content="explore, funfair, fair,java3d,java 3d, 3d, three-dimensional, graphics, tutorial, examples"> 
+  <meta name="description" content="A site with a tutorial, examples and links about Java 3D"> 
+  <title>Java 3D - Explore 3D Worlds</title> 
+  <style type="text/css" media="all">@import url( style/java3d.css );</style> 
+  <link rel="shortcut icon" href="/var/www/java3d/favicon.ico" type="image/x-icon"> 
+ </head> 
+ <body> 
+  <div id="top" class="top"> 
+   <div id="rightimage"> 
+   </div>  
+   <h1> Java&nbsp;3D<sup><font size="-2">&nbsp;TM</font></sup>&nbsp;Examples </h1> 
+   <br>&nbsp; 
+  </div> 
+  <div id="navcontainer"> 
+   <ul id="navlist"> 
+    <li> <a href="index.html">&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</a></li> 
+    <li><a href="tutorial.html">&nbsp;Tutorial&nbsp;</a></li> 
+    <li><a href="explore.html">&nbsp;Explore&nbsp;&nbsp;</a></li> 
+    <li id="active"><a id="active" ref="samples.html">Examples</a></li> 
+    <li><a href="contact.html">Contact&nbsp;Us&nbsp;</a></li> 
+   </ul> 
+  </div> 
+  <p></p> 
+  <div id="rightimage">
+   <img id="rightimage" SRC="goldpyr.jpg" WIDTH="256" HEIGHT="256">
+  </div> 
+  <h2>Pyramid</h2> This example shows how to create geometry and use the normal generator so that you can add an appearance and lighting. 
+  <span id="code"> <pre>
+import java.awt.Color;
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
+import com.sun.j3d.utils.universe.SimpleUniverse;
+import javax.media.j3d.*;
+import javax.vecmath.*;
+
+// An Egyptian pyramid
+// Base divided into two triangles
+
+public class PyramidExample {
+	public static void main(String[] args) {
+		SimpleUniverse universe = new SimpleUniverse();
+		BranchGroup group = new BranchGroup();
+
+		Point3f e = new Point3f(1.0f, 0.0f, 0.0f); // east
+		Point3f s = new Point3f(0.0f, 0.0f, 1.0f); // south
+		Point3f w = new Point3f(-1.0f, 0.0f, 0.0f); // west
+		Point3f n = new Point3f(0.0f, 0.0f, -1.0f); // north
+		Point3f t = new Point3f(0.0f, 0.721f, 0.0f); // top
+
+		TriangleArray pyramidGeometry = new TriangleArray(18,
+				TriangleArray.COORDINATES);
+		pyramidGeometry.setCoordinate(0, e);
+		pyramidGeometry.setCoordinate(1, t);
+		pyramidGeometry.setCoordinate(2, s);
+
+		pyramidGeometry.setCoordinate(3, s);
+		pyramidGeometry.setCoordinate(4, t);
+		pyramidGeometry.setCoordinate(5, w);
+
+		pyramidGeometry.setCoordinate(6, w);
+		pyramidGeometry.setCoordinate(7, t);
+		pyramidGeometry.setCoordinate(8, n);
+
+		pyramidGeometry.setCoordinate(9, n);
+		pyramidGeometry.setCoordinate(10, t);
+		pyramidGeometry.setCoordinate(11, e);
+
+		pyramidGeometry.setCoordinate(12, e);
+		pyramidGeometry.setCoordinate(13, s);
+		pyramidGeometry.setCoordinate(14, w);
+
+		pyramidGeometry.setCoordinate(15, w);
+		pyramidGeometry.setCoordinate(16, n);
+		pyramidGeometry.setCoordinate(17, e);
+		GeometryInfo geometryInfo = new GeometryInfo(pyramidGeometry);
+		NormalGenerator ng = new NormalGenerator();
+		ng.generateNormals(geometryInfo);
+
+		GeometryArray result = geometryInfo.getGeometryArray();
+		
+		// yellow appearance
+		Appearance appearance = new Appearance();
+		Color3f color = new Color3f(Color.yellow);
+		Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
+		Color3f white = new Color3f(1.0f, 1.0f, 1.0f);
+		Texture texture = new Texture2D();
+		TextureAttributes texAttr = new TextureAttributes();
+		texAttr.setTextureMode(TextureAttributes.MODULATE);
+		texture.setBoundaryModeS(Texture.WRAP);
+		texture.setBoundaryModeT(Texture.WRAP);
+		texture.setBoundaryColor(new Color4f(0.0f, 1.0f, 0.0f, 0.0f));
+		Material mat = new Material(color, black, color, white, 70f);
+		appearance.setTextureAttributes(texAttr);
+		appearance.setMaterial(mat);
+		appearance.setTexture(texture);
+		Shape3D shape = new Shape3D(result, appearance);
+		group.addChild(shape);
+
+		// above pyramid
+		Vector3f viewTranslation = new Vector3f();
+		viewTranslation.z = 3;
+		viewTranslation.x = 0f;
+		viewTranslation.y = .3f;
+		Transform3D viewTransform = new Transform3D();
+		viewTransform.setTranslation(viewTranslation);
+		Transform3D rotation = new Transform3D();
+		rotation.rotX(-Math.PI / 12.0d);
+		rotation.mul(viewTransform);
+		universe.getViewingPlatform().getViewPlatformTransform().setTransform(
+				rotation);
+		universe.getViewingPlatform().getViewPlatformTransform().getTransform(
+				viewTransform);
+		
+		// lights
+		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0),
+				1000.0);
+		Color3f light1Color = new Color3f(.7f, .7f, .7f);
+		Vector3f light1Direction = new Vector3f(4.0f, -7.0f, -12.0f);
+		DirectionalLight light1 = new DirectionalLight(light1Color, light1Direction);
+		light1.setInfluencingBounds(bounds);
+		group.addChild(light1);
+		Color3f ambientColor = new Color3f(.4f, .4f, .4f);
+		AmbientLight ambientLightNode = new AmbientLight(ambientColor);
+		ambientLightNode.setInfluencingBounds(bounds);
+		group.addChild(ambientLightNode);
+		
+		universe.addBranchGraph(group);
+	}
+}
+</pre> </span> 
+  <p></p> 
+  <div id="rightimage"> 
+  </div> 
+  <h2>Stereo 3D Example</h2> This example shows how to load a model and display it in 3D so that it can be viewed with red/green glasses. 
+  <p> Move or spin the girl with the mouse.<br> Use the arrow keys to move her backwards and forwards.</p>
+  <p> View with red-green glasses to get the 3D effect.</p>
+  <p> </p>
+  <p> If the applet doesn't load, see <a href="howto.html">here</a> for instructions.</p> 
+  <applet code="RedGreenGirl.class" codebase="." archive="RedGreenGirl.jar" width="600" height="600" align="middle"> 
+   <blockquote> 
+    <hr> This example requires the Java 3D runtime and the java plug-in 
+    <hr>
+   </blockquote> 
+   <!-- PARAM NAME="url" VALUE="http://www.java3d.org/renee.obj"--> 
+   <param NAME="url" VALUE="renee.obj"> 
+  </applet> 
+  <span id="code"> <pre>
+import java.applet.Applet;
+import java.awt.FlowLayout;
+import java.awt.event.*;
+import java.awt.GraphicsConfiguration;
+import com.sun.j3d.utils.applet.MainFrame;
+import com.sun.j3d.utils.universe.*;
+import javax.media.j3d.*;
+import javax.vecmath.*;
+import javax.swing.*;
+import com.sun.j3d.utils.behaviors.mouse.*;
+import com.sun.j3d.utils.behaviors.keyboard.KeyNavigatorBehavior;
+import com.sun.j3d.loaders.objectfile.ObjectFile;
+import com.sun.j3d.loaders.Scene;
+import java.net.URL;
+import java.util.Hashtable;
+import java.util.Enumeration;
+public class RedGreenGirl extends Applet {
+    
+    protected Canvas3D c1 = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
+   // private Canvas3D c2 = new Canvas3D(SimpleUniverse.getPreferredConfiguration());
+    private static MainFrame mf;
+    protected SimpleUniverse u = null;
+    protected BranchGroup scene = null;
+    protected String URLString = "http://www.java3d.org/renee.obj";
+    protected float eyeOffset =0.03F;
+    protected static int size=600;
+    public void init() {
+        setLayout(new FlowLayout());
+        GraphicsConfiguration config =
+           SimpleUniverse.getPreferredConfiguration();
+        String v = getParameter("url");   
+        if (v != null) { URLString = v; }
+        c1.setSize(size, size);
+        add(c1);
+        scene = createSceneGraph(0);
+        u = new SimpleUniverse(c1);
+        // This will move the ViewPlatform back a bit so the
+        // objects in the scene can be viewed.
+        //u.getViewingPlatform().setNominalViewingTransform();
+        u.addBranchGraph(scene);
+
+    }
+    public BranchGroup createSceneGraph(int i) {
+        System.out.println("Creating scene for: "+URLString);
+        // Create the root of the branch graph
+        BranchGroup objRoot = new BranchGroup();
+        try{
+	        Transform3D myTransform3D = new Transform3D();
+	        myTransform3D.setTranslation(new Vector3f(+0.0f,-0.15f,-3.6f));
+	        TransformGroup objTrans = new TransformGroup(myTransform3D);
+            objTrans.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+            Transform3D t = new Transform3D();
+	        TransformGroup tg = new TransformGroup(t);
+	        tg.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+	        tg.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+	        objTrans.addChild(tg);
+            URL url = new URL(URLString) ;
+            ObjectFile f = new ObjectFile();
+            f.setFlags(ObjectFile.RESIZE | ObjectFile.TRIANGULATE | ObjectFile.STRIPIFY);
+            System.out.println( "About to load" );
+            
+            Scene s = f.load(url);
+            Transform3D myTrans = new Transform3D();
+            myTrans.setTranslation(new Vector3f(eyeOffset, -eyeOffset, 0F));
+            TransformGroup mytg = new TransformGroup(myTrans);
+            //mytg.addChild(s.getSceneGroup());
+            tg.addChild(mytg);
+            Transform3D myTrans2 = new Transform3D();
+            myTrans2.setTranslation(new Vector3f(-eyeOffset, +eyeOffset, 0F));
+            TransformGroup mytg2 = new TransformGroup(myTrans2);
+            //mytg2.addChild(s.getSceneGroup());
+            Hashtable table = s.getNamedObjects(); 
+            for (Enumeration e = table.keys() ; e.hasMoreElements() ;) {
+            Object key = e.nextElement();
+            System.out.println(key);
+            Object obj = table.get(key);
+            System.out.println(obj.getClass().getName());
+            Shape3D shape  = (Shape3D)obj;
+            //shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+            Appearance ap = new Appearance();
+            Color3f black = new Color3f(0.0f, 0.0f, 0.0f);
+            Color3f red = new Color3f(0.7f, .0f, .15f);
+            Color3f green = new Color3f(0f, .7f, .15f);
+            ap.setMaterial(new Material(green,black, green, black, 1.0f));
+            Appearance ap2 = new Appearance();
+            ap2.setMaterial(new Material(red, black, red, black, 1.0f));
+            float transparencyValue = 0.5f;
+            TransparencyAttributes t_attr =
+                new TransparencyAttributes(
+                TransparencyAttributes.BLENDED,
+                transparencyValue,
+                TransparencyAttributes.BLEND_SRC_ALPHA,
+                TransparencyAttributes.BLEND_ONE);
+            ap2.setTransparencyAttributes( t_attr );
+            ap2.setRenderingAttributes( new RenderingAttributes() );
+            ap.setTransparencyAttributes( t_attr );
+            ap.setRenderingAttributes( new RenderingAttributes() );
+            // bg.addChild(ap);
+            shape.setAppearance(ap);
+            mytg2.addChild(new Shape3D(shape.getGeometry(),ap2));
+            mytg.addChild(new Shape3D(shape.getGeometry(),ap));
+        }
+        tg.addChild(mytg2);
+        System.out.println( "Finished Loading" );
+        BoundingSphere bounds =
+	        new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
+        Color3f light1Color = new Color3f(.9f, 0.9f, 0.9f);
+        Vector3f light1Direction  = new Vector3f(4.0f, -7.0f, -12.0f);
+        DirectionalLight light1
+        = new DirectionalLight(light1Color, light1Direction);
+        light1.setInfluencingBounds(bounds);
+        objTrans.addChild(light1);
+	            // Set up the ambient light
+        Color3f ambientColor = new Color3f(1.0f, .4f, 0.3f);
+        AmbientLight ambientLightNode = new AmbientLight(ambientColor);
+        ambientLightNode.setInfluencingBounds(bounds);
+        objTrans.addChild(ambientLightNode);
+        
+        
+        MouseRotate behavior = new MouseRotate();
+	    behavior.setTransformGroup(tg);
+	    objTrans.addChild(behavior);
+	      // Create the translate behavior node
+	    MouseTranslate behavior3 = new MouseTranslate();
+	    behavior3.setTransformGroup(tg);
+	    objTrans.addChild(behavior3);
+	    behavior3.setSchedulingBounds(bounds);
+	    
+	    KeyNavigatorBehavior keyNavBeh = new KeyNavigatorBehavior(tg);
+		keyNavBeh.setSchedulingBounds(new BoundingSphere(
+			new Point3d(),1000.0));
+		objTrans.addChild(keyNavBeh);
+		
+	    behavior.setSchedulingBounds(bounds);
+        objRoot.addChild(objTrans);
+        } catch(Throwable t){System.out.println("Error: "+t);}
+        return objRoot;
+    }     
+    public RedGreenGirl() {
+    }
+    public void destroy() {
+        u.removeAllLocales();
+    }
+ 
+    public static void main(String[] args) {
+       
+        RedGreenGirl s = new RedGreenGirl();
+        if (args.length &gt; 0) {
+            s.URLString = args[0];
+        }
+        mf = new MainFrame(s, size, size);
+    }
+}
+
+</pre> </span> 
+  <p> </p>
+  <div id="rightimage">
+   <img id="rightimage" SRC="welcome.png">
+  </div> 
+  <h2>Text 3D Example</h2> Here is an example of how to convert text into a 3D object. 
+  <span id="code"> <pre>
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.media.j3d.*;
+import javax.vecmath.*;
+import com.sun.j3d.utils.universe.*;
+import com.sun.j3d.utils.geometry.*;
+
+public class Titles {
+
+	public static void main(String[] args) {
+		Titles t = new Titles();
+		t.setUp();
+	}
+
+	public void setUp() {
+		JFrame jf = new JFrame("Welcome");
+		// kill the window on close
+		jf.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent winEvent) {
+				System.exit(0);
+			}
+		});
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridLayout(1, 1, 2, 2));
+
+		GraphicsConfiguration config = SimpleUniverse
+				.getPreferredConfiguration();
+		Canvas3D canvas3D = new Canvas3D(config);
+		canvas3D.setSize(360, 160);
+		SimpleUniverse universe = new SimpleUniverse(canvas3D);
+		BranchGroup group = new BranchGroup();
+		addObjects(group);
+		addLights(group);
+		universe.getViewingPlatform().setNominalViewingTransform();
+		universe.addBranchGraph(group);
+		panel.add(canvas3D);
+		jf.getContentPane().add(panel, BorderLayout.CENTER);
+		jf.pack();
+		jf.setVisible(true);
+	}
+
+	public void addLights(BranchGroup group) {
+		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0),
+				1000.0);
+
+		Color3f light1Color = new Color3f(1.0f, 1.0f, 1.0f);
+		Vector3f light1Direction = new Vector3f(4.0f, -7.0f, -12.0f);
+		DirectionalLight light1 = new DirectionalLight(light1Color,
+				light1Direction);
+		light1.setInfluencingBounds(bounds);
+		group.addChild(light1);
+
+		// Set up the ambient light
+		Color3f ambientColor = new Color3f(.1f, .1f, .1f);
+		AmbientLight ambientLightNode = new AmbientLight(ambientColor);
+		ambientLightNode.setInfluencingBounds(bounds);
+		group.addChild(ambientLightNode);
+	}
+
+	private void addObjects(BranchGroup group) {
+		Font3D f3d = new Font3D(new Font("TestFont", Font.PLAIN, 2),
+				new FontExtrusion());
+		Text3D text = new Text3D(f3d, new String("Java3D.org"), new Point3f(-3.5f,
+				-.5f, -4.5f));
+		 
+		text.setString("Java3D.org");
+		Color3f white = new Color3f(1.0f, 1.0f, 1.0f);
+		Color3f blue = new Color3f(.2f, 0.2f, 0.6f);
+		Appearance a = new Appearance();
+		Material m = new Material(blue, blue, blue, white, 80.0f);
+		m.setLightingEnable(true);
+		a.setMaterial(m);
+
+		Shape3D sh = new Shape3D();
+		sh.setGeometry(text);
+		sh.setAppearance(a);
+		TransformGroup tg = new TransformGroup();
+		Transform3D t3d = new Transform3D();
+		Transform3D tDown = new Transform3D();
+		Transform3D rot = new Transform3D();
+		Vector3f v3f = new Vector3f(-1.6f, -1.35f, -6.5f);
+		t3d.setTranslation(v3f);
+		rot.rotX(Math.PI / 5);
+		t3d.mul(rot);
+		v3f = new Vector3f(0, -1.4f, 0f);
+		tDown.setTranslation(v3f);
+		t3d.mul(tDown);
+		tg.setTransform(t3d);
+		tg.addChild(sh);
+		group.addChild(tg);
+		
+	}
+}
+</pre> </span> 
+  <p> <a name="icosahedron" < a> </a></p>
+  <div id="rightimage">
+   <a name="icosahedron" < a><img id="rightimage" SRC="icos.jpg" WIDTH="256" HEIGHT="256"></a>
+  </div>
+  <a name="icosahedron" < a> <h2>Icosahedron</h2> This example shows how to create an icosahedron and apply various appearances to it. It was donated </a>
+  <a href="http://www.eberdeed.net">Edward Eberle</a>. 
+  <a href="IcosahedronPlus.jar">IcosahedronPlus.jar</a> is an executable jar file containing all the classes, sources and images. 
+  <p> <a href="http://www.java3d.org" target="_top">home</a>    </p>
+ </body>
+</html>

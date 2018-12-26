@@ -1,0 +1,153 @@
+<html>
+ <head> 
+  <title>A Guide to Web Authentication Alternatives: Part 1</title> 
+  <meta NAME="Description" CONTENT="Authentication programs check users logins and passwords.  We detail alternatives and security issues that CGI programmers should consider."> 
+ </head> 
+ <body bgcolor="FFFFFF"> 
+  <center> 
+   <h1>A Guide to Web Authentication Alternatives</h1> 
+   <strong> Copyright Dec 1997, <a href="/work.html">Jan Wolter</a><br> Last Updated Oct 2003. </strong> 
+  </center> 
+  <p> <a name="sec0"></a></p>
+  <h2><a name="sec0">Table of Contents</a></h2> 
+  <dl> 
+   <dt>
+    1. 
+    <a href="#sec1">Introduction</a> 
+   </dt>
+   <dt>
+    2. 
+    <a href="/auth/basic.html">Authentication Options Supported by HTTP Servers and Browsers</a> 
+   </dt>
+   <dd>
+    <dl> 
+     <dt>
+      2.1. 
+      <a href="/auth/basic.html#sec2.1">Basic Authentication</a> 
+     </dt>
+     <dd>
+      <dl> 
+       <dt>
+        2.1.1. How Basic Authentication Works 
+       </dt>
+       <dt>
+        2.1.2. Advantages and Disadvantages of Basic Authentication 
+       </dt>
+      </dl> 
+     </dd>
+     <dt>
+      2.2. 
+      <a href="/auth/basic.html#sec2.2">Digest Authentication</a> 
+     </dt>
+     <dd>
+      <dl> 
+       <dt>
+        2.2.1. How Digest Authentication Works 
+       </dt>
+       <dt>
+        2.2.2. Advantages and Disadvantages of Digest Authentication 
+       </dt>
+       <dt>
+        2.2.3. Why Digest Authentication Isn't Used 
+       </dt>
+      </dl> 
+     </dd>
+    </dl> 
+   </dd>
+   <dt>
+    3. 
+    <a href="/auth/homebuilt.html">Do-It-Yourself Authentication Options</a> 
+   </dt>
+   <dd>
+    <dl> 
+     <dt>
+      3.1. 
+      <a href="/auth/homebuilt.html#sec3.1">Where to Do Authentication</a> 
+     </dt>
+     <dd>
+      <dl> 
+       <dt>
+        3.1.1. Authentication in HTTP Server Daemon 
+       </dt>
+       <dt>
+        3.1.2. Authentication in CGI Programs 
+       </dt>
+      </dl> 
+     </dd>
+     <dt>
+      3.2. 
+      <a href="/auth/homebuilt.html#sec3.2">Collecting and Checking Login Information</a> 
+     </dt>
+     <dd>
+      <dl> 
+       <dt>
+        3.2.1. Designing the Login Form 
+       </dt>
+       <dt>
+        3.2.2. Checking the Login 
+       </dt>
+       <dt>
+        3.2.3. Reload-Proofing the Next Page 
+       </dt>
+      </dl> 
+     </dd>
+     <dt>
+      3.3. 
+      <a href="/auth/homebuilt.html#sec3.3">Preserving Login Information</a> 
+     </dt>
+     <dd>
+      <dl> 
+       <dt>
+        3.3.1. Methods for Passing Authentication Information 
+       </dt>
+       <dd>
+        <dl> 
+         <dt>
+          3.3.1.1. Passing information through link parameters 
+         </dt>
+         <dt>
+          3.3.1.2. Passing information through cookies 
+         </dt>
+        </dl> 
+       </dd>
+       <dt>
+        3.3.2. Methods for Encoding Authentication Information 
+       </dt>
+       <dd>
+        <dl> 
+         <dt>
+          3.3.2.1. Using encrypted user IDs 
+         </dt>
+         <dt>
+          3.3.2.2. Using session IDs 
+         </dt>
+        </dl> 
+       </dd>
+      </dl> 
+     </dd>
+    </dl> 
+   </dd>
+   <dt>
+    4. 
+    <a href="/auth/homebuilt.html#sec4">Conclusions</a> 
+   </dt>
+   <dt>
+    5. 
+    <a href="/auth/homebuilt.html#sec5">Acknowledgements</a> 
+   </dt>
+  </dl> 
+  <a name="sec1"><h2>1. Introduction</h2></a> In many web applications, it is desirable to have users log in by giving some unique login name and a password before accessing pages. There are many ways to implement this, each with different advantages and disadvantages. The considerations involved are complex enough that I'd guess that the majority of authentication systems in use on the web today have at least some fixable security weaknesses. 
+  <p> I originally did a lot of thinking and studying on some of these methods in hopes of developing a better authentication system for my web conferencing system, <a href="/backtalk">Backtalk</a>. This report summarizes my conclusions about the strengths and weaknesses of various methods that I have considered. I've since built many web authentication systems for many customers, so I've continued to update this with new ideas and concerns. </p>
+  <p> I will discuss the two standard authentication systems which are described in the HTTP protocol documents: "basic authentication" which is supported by most browsers and HTTP servers, and "digest authentication" which isn't. I will then discuss various "do-it-yourself" alternatives to basic authentication, focusing on the three basic phases to the web authentication process: </p>
+  <ol> 
+   <li> <strong>Logging in:</strong> The user must be prompted for a login and password. Some program on the server must check these against a database to confirm that they are valid. <p> </p></li>
+   <li> <strong>User Tracking:</strong> Normally there is no persistent connection between a user's browser and and your web server. If the web-site consists of more than one page, and if you don't want the user to have to log in again for each new page he looks at, we need some way to preserve the login information from page to page. <p> </p></li>
+   <li> <strong>Logging Off:</strong> If we have a way to remember that a user is logged on, we also need a way to destroy that information when the user logs off. </li>
+  </ol> 
+  <p> Several commonly used server-side web development packages (such as Microsoft's Active Server Pages, Allaire's Cold Fusion, or Apache's Tomcat server) have authentication systems built in. I won't describe how to use those here. Internally, they all work in much the same way as the "do-it-yourself" methods described here, except that they are mostly done for you. Though this document does not describe the pre-fabricated authentication packages available, it is a pretty thorough discussion of the issues involved, and thus potentially educational for those interested in evaluating pre-fab packages. </p>
+  <p> While most of this report applies equally to servers on all platforms, some of the details are specific to Unix systems. There are probably many issues relevant to security on NT systems that I personally don't know much about. Security issues on Unix systems are generally better understood due to wide availability of information about their internal operation. </p>
+  <p> Finally, the advice and opinions expressed here are my own. No guarantees of completeness or accuracy are intended. If you disagree, let me know, but in the final analysis you must use your own judgment in designing your authentication systems. </p>
+  <p> <strong>Next Sections:</strong><br> 2. <a href="/auth/basic.html">Authentication Options Supported by HTTP Servers and Browsers</a><br> 3. <a href="/auth/homebuilt.html">Do-It-Yourself Authentication Options</a> </p>
+  <hr> Last update: Tue Oct 7 22:06:32 EDT 2003  
+ </body>
+</html>

@@ -1,0 +1,780 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en-US">
+ <head> 
+  <meta charset="UTF-8"> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
+  <link rel="stylesheet" href="https://itp.nyu.edu/physcomp/wp-content/themes/Pcomp-colorway/style.css"> 
+  <title>Lab: Serial Communication with Node.js – ITP Physical Computing</title> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="ITP Physical Computing » Feed" href="https://itp.nyu.edu/physcomp/feed/"> 
+  <script type="text/javascript">
+			window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/72x72\/","ext":".png","svgUrl":"https:\/\/s.w.org\/images\/core\/emoji\/2.3\/svg\/","svgExt":".svg","source":{"concatemoji":"https:\/\/itp.nyu.edu\/physcomp\/wp-includes\/js\/wp-emoji-release.min.js?ver=4.8.1"}};
+			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,56826,8203,55356,56819),0,0),c=j.toDataURL(),b===c&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55358,56794,8205,9794,65039),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55358,56794,8203,9794,65039),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+		</script> 
+  <style type="text/css">
+img.wp-smiley,
+img.emoji {
+	display: inline !important;
+	border: none !important;
+	box-shadow: none !important;
+	height: 1em !important;
+	width: 1em !important;
+	margin: 0 .07em !important;
+	vertical-align: -0.1em !important;
+	background: none !important;
+	padding: 0 !important;
+}
+</style> 
+  <link rel="stylesheet" id="inkthemes_reset_stylesheet-css" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/css/reset.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="inkthemes_responsive_stylesheet-css" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/css/960_24_col_responsive.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="inkthemes_stylesheet-css" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/style.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="inkthemes_superfish-css" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/css/superfish.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="inkthemes-media-css" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/css/media.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="inkthemes-animate-css" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/css/animate.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="mg-style-css" href="https://itp.nyu.edu/physcomp/wp-content/plugins/formget-contact-form/css/mg_popup.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="searchandfilter-css" href="https://itp.nyu.edu/physcomp/wp-content/plugins/search-filter/style.css?ver=1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="toc-screen-css" href="https://itp.nyu.edu/physcomp/wp-content/plugins/table-of-contents-plus/screen.min.css?ver=1509" type="text/css" media="all"> 
+  <link rel="stylesheet" id="easy_table_style-css" href="https://itp.nyu.edu/physcomp/wp-content/plugins/easy-table/themes/minimal/style.css?ver=1.6" type="text/css" media="all"> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/img-mouseover/img-mouseover.js?ver=20110509"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var mg = {"ajaxurl":"https:\/\/itp.nyu.edu\/physcomp\/wp-admin\/admin-ajax.php","imgurl":"https:\/\/itp.nyu.edu\/physcomp\/wp-content\/plugins\/formget-contact-form\/image\/mailget.png","mg_nonce":"ff5f134c43"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/formget-contact-form/js/mg_front.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/superfish.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/jquery.flexslider.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/jquery.tipsy.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/menu/jquery.meanmenu.2.0.min.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/menu/jquery.meanmenu.options.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/modernizr.custom.79639.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/custom.js?ver=4.8.1"></script> 
+  <link rel="https://api.w.org/" href="https://itp.nyu.edu/physcomp/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://itp.nyu.edu/physcomp/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://itp.nyu.edu/physcomp/wp-includes/wlwmanifest.xml"> 
+  <meta name="generator" content="WordPress 4.8.1"> 
+  <link rel="canonical" href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-serial-communication-with-node-js/"> 
+  <link rel="shortlink" href="https://itp.nyu.edu/physcomp/?p=2888"> 
+  <link rel="alternate" type="application/json+oembed" href="https://itp.nyu.edu/physcomp/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fitp.nyu.edu%2Fphyscomp%2Flabs%2Flabs-serial-communication%2Flab-serial-communication-with-node-js%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="https://itp.nyu.edu/physcomp/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fitp.nyu.edu%2Fphyscomp%2Flabs%2Flabs-serial-communication%2Flab-serial-communication-with-node-js%2F&amp;format=xml"> 
+  <link rel="stylesheet" type="text/css" media="all" href="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/css/green.css"> 
+  <style type="text/css" id="custom-background-css">
+body.custom-background { background-image: url("https://itp.nyu.edu/physcomp/wp-content/themes/colorway/images/body-bg.png"); background-position: left top; background-size: auto; background-repeat: repeat; background-attachment: scroll; }
+</style> 
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+ </head> 
+ <body class="page-template-default page page-id-2888 page-child parent-pageid-1979 custom-background" background=""> 
+  <!--Start Container Div--> 
+  <div class="container_24 container"> 
+   <!--Start Header Grid--> 
+   <div class="grid_24 header"> 
+    <div class="logo"> 
+     <h1 class="title">ITP Physical Computing</h1> 
+    </div> 
+    <!--Start MenuBar--> 
+    <div class="menu-bar"> 
+     <div id="menu" class="menu-fall-2015-container">
+      <ul id="menu-fall-2015" class="sf-menu">
+       <li id="menu-item-3218" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-home menu-item-3218"><a href="https://itp.nyu.edu/physcomp/">Home</a></li> 
+       <li id="menu-item-3576" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3576"><a href="https://itp.nyu.edu/physcomp/itp/syllabus/">Syllabus</a></li> 
+       <li id="menu-item-3217" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3217"><a href="https://itp.nyu.edu/physcomp/lessons/">Topics</a> 
+        <ul class="sub-menu"> 
+         <li id="menu-item-3219" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-home menu-item-3219"><a href="https://itp.nyu.edu/physcomp/">What Is Physical Computing?</a></li> 
+         <li id="menu-item-3220" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3220"><a href="https://itp.nyu.edu/physcomp/lessons/electronics/">Electronics</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3221" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3221"><a href="https://itp.nyu.edu/physcomp/lessons/electronics/electricity-the-basics/">Electricity: the Basics</a></li> 
+           <li id="menu-item-3222" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3222"><a href="https://itp.nyu.edu/physcomp/lessons/electronics/transistors-relays-and-controlling-high-current-loads/">Transistors, Relays, and Controlling High-Current Loads</a></li> 
+           <li id="menu-item-3283" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3283"><a href="https://itp.nyu.edu/physcomp/lessons/electronics/understanding-dc-power-supplies/">Understanding DC Power Supplies</a></li> 
+           <li id="menu-item-4105" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4105"><a href="https://itp.nyu.edu/physcomp/lessons/electronics/level-shifting/">Level Shifting</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3223" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3223"><a href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/">Microcontrollers</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3224" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3224"><a href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/microcontrollers-the-basics/">Microcontrollers: The Basics</a></li> 
+           <li id="menu-item-3225" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3225"><a href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/digital-input-output/">Digital Input &amp; Output</a></li> 
+           <li id="menu-item-3226" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3226"><a href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/analog-input/">Analog Input</a></li> 
+           <li id="menu-item-3284" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3284"><a href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/analog-output/">Analog Output</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3227" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3227"><a href="https://itp.nyu.edu/physcomp/lessons/programming/">Programming</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3229" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3229"><a href="https://itp.nyu.edu/physcomp/lessons/programming/variables/">Variables</a></li> 
+           <li id="menu-item-3228" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3228"><a href="https://itp.nyu.edu/physcomp/lessons/programming/programming-terms-and-programming-environments/">Programming Terms and Programming Environments</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3285" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3285"><a href="https://itp.nyu.edu/physcomp/lessons/sensors-the-basics/">Sensors: the Basics</a></li> 
+         <li id="menu-item-3286" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3286"><a href="https://itp.nyu.edu/physcomp/lessons/serial-communication/">Serial Communication</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3244" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3244"><a href="https://itp.nyu.edu/physcomp/lessons/serial-communication/serial-communication-the-basics/">Asynchronous Serial Communication: The Basics</a></li> 
+           <li id="menu-item-3245" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3245"><a href="https://itp.nyu.edu/physcomp/lessons/serial-communication/interpreting-serial-data/">Interpreting Serial Data</a></li> 
+           <li id="menu-item-3287" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3287"><a href="https://itp.nyu.edu/physcomp/lessons/serial-communication/synchronous-serial-communication-the-basics/">Synchronous Serial Communication: The Basics</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3288" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3288"><a href="https://itp.nyu.edu/physcomp/lessons/dc-motors/">DC Motors</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3289" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3289"><a href="https://itp.nyu.edu/physcomp/lessons/dc-motors/dc-motors-the-basics/">DC Motors: The Basics</a></li> 
+           <li id="menu-item-3290" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3290"><a href="https://itp.nyu.edu/physcomp/lessons/dc-motors/stepper-motors/">Controlling Stepper Motors</a></li> 
+          </ul> </li> 
+        </ul> </li> 
+       <li id="menu-item-3310" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3310"><a href="https://itp.nyu.edu/physcomp/videos/">Videos</a> 
+        <ul class="sub-menu"> 
+         <li id="menu-item-3302" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3302"><a href="https://itp.nyu.edu/physcomp/videos/videos-electricity/">Videos: Electricity</a></li> 
+         <li id="menu-item-3308" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3308"><a href="https://itp.nyu.edu/physcomp/videos/videos-tools/">Videos: Tools</a></li> 
+         <li id="menu-item-3306" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3306"><a href="https://itp.nyu.edu/physcomp/videos/videos-schematic-diagrams/">Videos: Schematic Diagrams</a></li> 
+         <li id="menu-item-3305" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3305"><a href="https://itp.nyu.edu/physcomp/videos/videos-sensors/">Videos: Sensors</a></li> 
+         <li id="menu-item-3307" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3307"><a href="https://itp.nyu.edu/physcomp/videos/videos-digital-and-analog-input-and-output/">Videos: Digital and Analog Input and Output</a></li> 
+         <li id="menu-item-3309" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3309"><a href="https://itp.nyu.edu/physcomp/videos/videos-serial-communication/">Videos: Serial Communication</a></li> 
+         <li id="menu-item-3304" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3304"><a href="https://itp.nyu.edu/physcomp/videos/videos-transistors-and-motors/">Videos: Relays, Transistors, and Motors</a></li> 
+         <li id="menu-item-3303" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3303"><a href="https://itp.nyu.edu/physcomp/videos/videos-prototyping-methods-and-tips/">Videos: Prototyping Methods and Tips</a></li> 
+        </ul> </li> 
+       <li id="menu-item-3316" class="menu-item menu-item-type-post_type menu-item-object-page current-page-ancestor current-menu-ancestor current_page_ancestor menu-item-has-children menu-item-3316"><a href="https://itp.nyu.edu/physcomp/labs/">Labs</a> 
+        <ul class="sub-menu"> 
+         <li id="menu-item-3313" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3313"><a href="https://itp.nyu.edu/physcomp/labs/labs-electronics/">Labs: Electronics</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3320" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3320"><a href="https://itp.nyu.edu/physcomp/labs/labs-electronics/components/">Lab: Components</a></li> 
+           <li id="menu-item-3322" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3322"><a href="https://itp.nyu.edu/physcomp/labs/labs-electronics/breadboard/">Lab: Setting Up A Breadboard</a></li> 
+           <li id="menu-item-3321" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3321"><a href="https://itp.nyu.edu/physcomp/labs/labs-electronics/switches/">Lab: Switches</a></li> 
+           <li id="menu-item-3323" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3323"><a href="https://itp.nyu.edu/physcomp/labs/labs-electronics/soldering/">Lab: Soldering</a></li> 
+           <li id="menu-item-3324" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3324"><a href="https://itp.nyu.edu/physcomp/labs/labs-electronics/electronics/">Lab: Electronics</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3314" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3314"><a href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/">Labs: Arduino Digital and Analog</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3325" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3325"><a href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/digital-input-and-output-with-an-arduino/">Lab: Digital Input and Output with an Arduino</a></li> 
+           <li id="menu-item-3326" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3326"><a href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/analog-in-with-an-arduino/">Lab: Analog In with an Arduino</a></li> 
+           <li id="menu-item-3327" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3327"><a href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/servo-motor-control-with-an-arduino/">Lab: Servo Motor Control with an Arduino</a></li> 
+           <li id="menu-item-3328" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3328"><a href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/tone-output-using-an-arduino/">Lab: Tone Output Using An Arduino</a></li> 
+           <li id="menu-item-3735" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3735"><a href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/lab-sensor-change-detection/">Lab: Sensor Change Detection</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3311" class="menu-item menu-item-type-post_type menu-item-object-page current-page-ancestor current-menu-ancestor current-menu-parent current-page-parent current_page_parent current_page_ancestor menu-item-has-children menu-item-3311"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/">Labs: Serial Communication</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3892" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3892"><a href="https://itp.nyu.edu/physcomp/lab-intro-to-serial-communications/">Lab: Intro to Asynchronous Serial Communications</a></li> 
+           <li id="menu-item-3806" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3806"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-serial-input-to-the-p5-js-ide/">Lab: Serial Input to P5.js</a></li> 
+           <li id="menu-item-3893" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3893"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-serial-output-from-p5-js/">Lab: Serial output from P5.js</a></li> 
+           <li id="menu-item-3894" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3894"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/two-way-duplex-serial-communication-using-p5js/">Lab: Two-Way (Duplex) Serial Communication Using An Arduino and P5.js</a></li> 
+           <li id="menu-item-3319" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-2888 current_page_item menu-item-3319"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-serial-communication-with-node-js/">Lab: Serial Communication with Node.js</a></li> 
+           <li id="menu-item-3604" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3604"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-serial-control-of-an-arduino/">Lab: Serial Input to an Arduino from Node.js</a></li> 
+           <li id="menu-item-3329" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3329"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/serial-output-from-an-arduino/">Lab: Serial Output from an Arduino to Processing</a></li> 
+           <li id="menu-item-3330" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3330"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/two-way-duplex-serial-communication-using-an-arduino/">Lab: Two-way (Duplex) Serial Communication using an Arduino and Processing</a></li> 
+           <li id="menu-item-3331" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3331"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-midi-output-using-an-arduino/">Lab: MIDI Output using an Arduino</a></li> 
+           <li id="menu-item-3332" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3332"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-arduino-to-daw/">Lab: Arduino to DAW</a></li> 
+           <li id="menu-item-3318" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3318"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/lab-spi-communication-aith-a-digital-potentiometer/">Lab: SPI Communication With A Digital Potentiometer</a></li> 
+           <li id="menu-item-3317" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3317"><a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/i2c-communication-with-an-infrared-temperature-sensor/">Lab: I2C Communication With An Infrared Temperature Sensor</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3315" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3315"><a href="https://itp.nyu.edu/physcomp/labs/motors-and-transistors/">Labs: Motors and Transistors</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-3333" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3333"><a href="https://itp.nyu.edu/physcomp/labs/motors-and-transistors/using-a-transistor-to-control-a-high-current-load/">Lab: Using a Transistor to Control a High Current Load</a></li> 
+           <li id="menu-item-3334" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3334"><a href="https://itp.nyu.edu/physcomp/labs/motors-and-transistors/using-a-transistor-to-control-high-current-loads-with-an-arduino/">Lab: Using a Transistor to Control High Current Loads with an Arduino</a></li> 
+           <li id="menu-item-3335" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3335"><a href="https://itp.nyu.edu/physcomp/labs/motors-and-transistors/dc-motor-control-using-an-h-bridge/">Lab: DC Motor Control Using an H-Bridge</a></li> 
+           <li id="menu-item-3336" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3336"><a href="https://itp.nyu.edu/physcomp/labs/motors-and-transistors/lab-controlling-a-stepper-motor-with-an-h-bridge/">Lab: Controlling a Stepper Motor With an H-Bridge</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3312" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3312"><a href="https://itp.nyu.edu/physcomp/labs/labs-mouse-control/">Labs: Mouse Control</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-4224" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4224"><a href="https://itp.nyu.edu/physcomp/labs/labs-mouse-control/lab-mouse-control/">Lab: Mouse Control</a></li> 
+           <li id="menu-item-3338" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3338"><a href="https://itp.nyu.edu/physcomp/labs/labs-mouse-control/lab-mouse-control-with-joystick/">Lab: Mouse Control With Joystick</a></li> 
+           <li id="menu-item-3339" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3339"><a href="https://itp.nyu.edu/physcomp/labs/labs-mouse-control/lab-mouse-control-with-pushbuttons/">Lab: Mouse Control With Pushbuttons</a></li> 
+          </ul> </li> 
+        </ul> </li> 
+       <li id="menu-item-3214" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3214"><a href="https://itp.nyu.edu/physcomp/itp/">Pcomp @ ITP</a> 
+        <ul class="sub-menu"> 
+         <li id="menu-item-3215" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3215"><a href="https://itp.nyu.edu/physcomp/itp/syllabus/">Syllabus</a></li> 
+         <li id="menu-item-3216" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3216"><a href="https://itp.nyu.edu/physcomp/itp/phys-comp-list/">Phys-comp List</a></li> 
+         <li id="menu-item-3291" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3291"><a href="https://itp.nyu.edu/physcomp/itp/sections/">Sections</a> 
+          <ul class="sub-menu"> 
+           <li id="menu-item-4443" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4443"><a href="https://itp.nyu.edu/physcomp/itp/sections/jeff-feddersen/">Jeff Feddersen</a></li> 
+           <li id="menu-item-4456" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4456"><a href="https://itp.nyu.edu/physcomp/itp/sections/tom-igoe/">Tom Igoe</a></li> 
+           <li id="menu-item-4441" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4441"><a href="https://itp.nyu.edu/physcomp/itp/sections/ayodamola-okunseinde/">Ayodamola Okunseinde</a></li> 
+           <li id="menu-item-4442" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4442"><a href="https://itp.nyu.edu/physcomp/itp/sections/danny-rozin/">Danny Rozin</a></li> 
+           <li id="menu-item-3295" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3295"><a href="https://itp.nyu.edu/physcomp/itp/sections/previous-years-classes/">Previous Years’ Classes</a></li> 
+          </ul> </li> 
+         <li id="menu-item-3294" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3294"><a href="https://itp.nyu.edu/physcomp/itp/checkout-components-at-itp/">Components at the ER</a></li> 
+        </ul> </li> 
+       <li id="menu-item-3298" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3298"><a href="https://itp.nyu.edu/physcomp/resources/">Resources</a> 
+        <ul class="sub-menu"> 
+         <li id="menu-item-3232" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3232"><a href="https://itp.nyu.edu/physcomp/resources/parts-needed-for-physical-computing/">Parts Needed for Physical Computing</a></li> 
+         <li id="menu-item-4104" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4104"><a href="https://itp.nyu.edu/physcomp/resources/picking-a-microcontroller/">Picking a Microcontroller</a></li> 
+         <li id="menu-item-4130" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4130"><a href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/microcontroller-pin-functions/">Microcontroller Pin Functions</a></li> 
+         <li id="menu-item-3230" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3230"><a href="https://itp.nyu.edu/physcomp/resources/books/">Books</a></li> 
+         <li id="menu-item-3231" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3231"><a href="https://itp.nyu.edu/physcomp/resources/github-repository/">GitHub Repository</a></li> 
+         <li id="menu-item-3300" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3300"><a href="https://itp.nyu.edu/physcomp/resources/additional-useful-parts-and-tools/">Additional Useful Parts and Tools</a></li> 
+         <li id="menu-item-4199" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4199"><a href="https://itp.nyu.edu/physcomp/resources/construction-templates/">Construction Templates</a></li> 
+         <li id="menu-item-3301" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3301"><a href="https://itp.nyu.edu/physcomp/resources/suppliers/">Suppliers</a></li> 
+         <li id="menu-item-3299" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3299"><a href="https://itp.nyu.edu/physcomp/resources/other-useful-itp-sites/">Other Useful Sites</a></li> 
+         <li id="menu-item-3297" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3297"><a href="https://itp.nyu.edu/physcomp/resources/littlebits-resources/">LittleBits Resources</a></li> 
+        </ul> </li> 
+      </ul>
+     </div> 
+     <div class="clearfix"></div> 
+    </div> 
+    <!--End MenuBar--> 
+   </div> 
+   <div class="clear"></div> 
+   <!--End Header Grid--> 
+   <!--Start Content Grid--> 
+   <div class="grid_24 content"> 
+    <div class="grid_16 alpha"> 
+     <div class="content-wrap"> 
+      <div class="content-info"> 
+       <div id="crumbs">
+        <a href="https://itp.nyu.edu/physcomp">Home</a> » 
+        <a href="https://itp.nyu.edu/physcomp/labs/">Labs</a> » 
+        <a href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/">Labs: Serial Communication</a> » 
+        <span class="current">Lab: Serial Communication with Node.js</span>
+       </div> 
+      </div> 
+      <div class="sl"> 
+       <h1> Lab: Serial Communication with Node.js </h1> 
+       <div class="modified-info">
+         Originally written on October 3, 2014 by Tom Igoe 
+        <br> Last modified on September 29, 2015 by Tom Igoe 
+       </div> 
+       <h3><span id="Introduction">Introduction</span></h3>
+       <div id="toc_container" class="toc_wrap_right no_bullets">
+        <p class="toc_title">Contents</p>
+        <ul class="toc_list">
+         <li><a href="#Introduction"><span class="toc_number toc_depth_1">1</span> Introduction</a></li>
+         <li><a href="#Nodejs"><span class="toc_number toc_depth_1">2</span> Node.js</a></li>
+         <li><a href="#Hello_from_Nodejs"><span class="toc_number toc_depth_1">3</span> Hello from Node.js</a></li>
+         <li><a href="#The_Node_Serialport_Library"><span class="toc_number toc_depth_1">4</span> The Node Serialport Library</a>
+          <ul>
+           <li><a href="#Note_What8217s_With_This_Crazy_Syntax"><span class="toc_number toc_depth_2">4.1</span> Note: What’s With This Crazy Syntax?</a></li>
+          </ul></li>
+         <li><a href="#Opening_the_Serial_Port"><span class="toc_number toc_depth_1">5</span> Opening the Serial Port</a>
+          <ul>
+           <li><a href="#The_Program_Won8217t_Stop"><span class="toc_number toc_depth_2">5.1</span> The Program Won’t Stop!</a></li>
+          </ul></li>
+         <li><a href="#Serialport_Library_Events"><span class="toc_number toc_depth_1">6</span> Serialport Library Events</a></li>
+         <li><a href="#Connecting_from_the_Browser_to_the_Node_Program"><span class="toc_number toc_depth_1">7</span> Connecting from the Browser to the Node Program</a></li>
+         <li><a href="#Using_theData_in_HTML"><span class="toc_number toc_depth_1">8</span> Using the&nbsp;Data in HTML</a></li>
+         <li><a href="#Including_P5js"><span class="toc_number toc_depth_1">9</span> Including P5.js</a>
+          <ul>
+           <li><a href="#Note_Check_your_data_types"><span class="toc_number toc_depth_2">9.1</span> Note: Check your data types</a></li>
+          </ul></li>
+         <li><a href="#Adding_Handshaking_aka_Call-and-Response"><span class="toc_number toc_depth_1">10</span> Adding Handshaking (aka Call-and-Response)</a></li>
+        </ul>
+       </div> 
+       <p>You can write programs that handle serial communication in many different languages. This page introduces how to do it using node.js. Node is a JavaScript environment that allows user to write web server programs. Below, you’ll use it to connect a microcontroller to a web browser using the node.js programming environment, HTML, and JavaScript.</p> 
+       <p>To get the most out of this tutorial, you should know <a title="Microcontrollers: The Basics" href="https://itp.nyu.edu/physcomp/lessons/microcontrollers/microcontrollers-the-basics/" target="_blank">what a microcontroller is </a>and <a title="Programming Terms and Programming Environments" href="https://itp.nyu.edu/physcomp/lessons/programming/programming-terms-and-programming-environments/" target="_blank">how to program them</a>. You should also understand <a title="Serial Communication: The Basics" href="https://itp.nyu.edu/physcomp/lessons/serial-communication/serial-communication-the-basics/" target="_blank">asynchronous serial communication</a> between microcontrollers and personal computers. You should also understand the basics of <a href="http://itp.nyu.edu/groups/flyby/unix-intro-1/" target="_blank">command line interfaces</a>.</p> 
+       <p>You will struggle with this tutorial if you aren’t familiar with JavaScript. &nbsp;For more on JavaScript, see Douglas Crockford’s <a href="http://shop.oreilly.com/product/9780596517748.do" target="_blank">JavaScript: The Good Parts,</a>&nbsp;Manuel Kiessling’s &nbsp;the <a href="http://www.nodebeginner.org/" target="_blank">Node Beginner Book</a>, or Shelley Powers’ <a href="http://shop.oreilly.com/product/0636920024606.do" target="_blank">Learning Node</a>.</p> 
+       <p><a href="https://vimeo.com/97949559" target="_blank">This Node video</a> will help in understanding this lab. The code in the video is different than this lab, but the basic concepts are similar. This&nbsp;lab simplifies the process a bit.</p> 
+       <h3><span id="Nodejs">Node.js</span></h3> 
+       <p>The JavaScript programming language is mainly used to add interactivity to web pages. All modern browsers include a JavaScript interpreter, which allows the browser to run JavaScript code that’s embedded in a web page. Google’s JavaScript engine is called <a href="https://code.google.com/p/v8/" target="_blank">v8</a>, and it’s available under an open source license. <a href="http://www.nodejs.org" target="_blank">Node.js</a> wraps the v8 engine up in an application programming interface that can run on personal computers and servers. On your personal computer, you run it through the command line interface.</p> 
+       <p>Node was originally designed as a tool for writing server programs, but it can do much more. It has a library management system called <strong>node package manager</strong> or <a href="https://www.npmjs.org/" target="_blank"><strong>npm</strong></a> that allows you to extend its functionality in many directions. There is also an online registry of node libraries, <a href="https://www.npmjs.org/" target="_blank">npmjs.org</a>. You can download libraries from this registry directly using npm. Below you’ll see npm used to add both serial communication functionality and a simple server programming library to node.</p> 
+       <p>To get started, download the <a href="http://www.nodejs.org" target="_blank">node.js</a> installer and install it on your computer. Then open your command line terminal. On OSX, open the Terminal app, which can be found in the Applications/Utilities directory. On Windows, go to the start menu and type cmd then press enter to open a window to the command line.</p> 
+       <p>Image: OSX and Windows command line interfaces</p> 
+       <p>If you’ve never used a command line interface, check out <a href="http://itp.nyu.edu/groups/flyby/unix-intro-1/" target="_blank">this tutorial</a>. &nbsp;From here on out, you’ll see the command prompt indicated like this:</p> 
+       <pre>$ 
+</pre> 
+       <p>Any commands you need to type will follow the $ symbol. The actual command prompt will vary depending on your operating system. On Windows, it’s typically this: <tt>&gt;</tt>. On most Unix and Linux systems, including OSX, it’s <tt>$</tt>.</p> 
+       <p>When you’ve installed node.js, type this command at the command prompt to get the version of node that you’re running:</p> 
+       <pre>$ node -v
+</pre> 
+       <p>If you installed it correctly, you’ll get a version number like <tt>0.12.7</tt>. The node installer should also install the node package manager (npm). You can check that in the same way:</p> 
+       <pre>$ npm -v
+</pre> 
+       <p>Once node and npm are in place, you’re ready to create a new project. <a href="https://vimeo.com/97949559#t=2m9s" target="_blank">Related video:&nbsp;Install the serialport Node module</a></p> 
+       <h3><span id="Hello_from_Nodejs">Hello from Node.js</span></h3> 
+       <p>There’s a library for node.js that allows you to communicate over your computer’s serial ports called serialport. If your computer’s connected to the internet, you can download install it automatically using npm. Create a new directory for your project:</p> 
+       <pre>$ mkdir nodeSerialExample
+</pre> 
+       <p>Then change directories to that directory:</p> 
+       <pre>$ cd nodeSerialExample
+</pre> 
+       <p>Now make a new text file in that directory with the name <tt>index.js</tt>. &nbsp;This will be your main program file. &nbsp;Add the following text to the file:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+
+console.log("Hello, and welcome to node.");
+
+</pre> 
+       <p>Save the file, then run it by typing the following on the command line:</p> 
+       <pre>$ node index.js</pre> 
+       <p>Your program should print out:</p> 
+       <pre>Hello, and welcome to node.</pre> 
+       <p>The program will finish and return to the command line when it’s done. Seeing that script running is indication that node.js is fully working on your machine.</p> 
+       <p>You can also pass information into your node program using the process arguments on the command line. &nbsp;Change your program like so:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+
+var name = process.argv[2];
+console.log("Hello, and welcome to node," + name);
+
+</pre> 
+       <p>Run this as you did before, but add your name after the name of your program when you invoke it, like so:</p> 
+       <pre>$ node index.js Tom
+</pre> 
+       <p>You’ll get the following:</p> 
+       <pre>Hello, and welcome to node, Tom</pre> 
+       <p>&nbsp;</p> 
+       <p>The command line arguments are passed to your program as an array. The name was the third word you typed, or array element 2 (counting “node” as element 0 and “index.js” as element 1). &nbsp;This is a useful technique, and you’ll see it later to pass the program your serial port’s name.</p> 
+       <h3><span id="The_Node_Serialport_Library">The Node Serialport Library</span></h3> 
+       <p>You’ll also need the <a href="https://www.npmjs.org/package/serialport">node serialport </a>library, which you can install from the npm registry like so:</p> 
+       <pre>$ npm install serialport</pre> 
+       <p>This command will make a new subdirectory called node_modules, and in that directory it will install all the necessary assets for the serialport library. &nbsp;You’ll see a lot of text go by, and hopefully no errors. If you get errors, consult npmjs.org and the <a href="https://github.com/voodootikigod/node-serialport/wiki">github wiki&nbsp;for serialport</a>. Now you’re ready to use the serialport library.</p> 
+       <p>The first thing you’ll want is a list of the serial ports.&nbsp;Replace the text of your program file with the following:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+var serialport = require('serialport');
+var SerialPort = serialport.SerialPort;
+
+// list serial ports:
+serialport.list(function (err, ports) {
+  ports.forEach(function(port) {
+    console.log(port.comName);
+  });
+});
+</pre> 
+       <div class="sidebar-note-content"> 
+        <h4><span id="Note_What8217s_With_This_Crazy_Syntax">Note: What’s With This Crazy Syntax?</span></h4> 
+        <p>If you’re new to JavaScript, this syntax may be confusing. Node.js examples tend to use <strong>anonymous functions</strong> frequently. JavaScript can pass functions as variables (and vice versa). &nbsp;That’s what’s going on here.</p> 
+        <p>Stoyan Stefanov’s <a href="http://shop.oreilly.com/product/9783897215986.do">JavaScript Patterns</a> is useful for understanding the various patterns of JavaScript coding.</p>
+       </div> 
+       <p>When you run this script, you’ll get a list of your serial ports like so:</p> 
+       <pre>$ node ListPorts.js 
+/dev/cu.Bluetooth-Incoming-Port
+/dev/cu.Bluetooth-Modem
+/dev/cu.usbmodem1411
+</pre> 
+       <p>If you’ve got an Arduino plugged in via USB, you should see the name of your board’s port there as well. In the example above, which was run on OSX, the Arduino’s port is&nbsp;<tt>/dev/cu.usbmodem1411</tt>.</p> 
+       <p>The process of using the serialport library will be the same every time:</p> 
+       <ul> 
+        <ul> 
+         <li>initialize the serialport library</li> 
+         <li>open the serial port</li> 
+         <li>set up the callback functions and let them do the rest</li> 
+        </ul> 
+       </ul> 
+       <p>Which are all explained below.</p> 
+       <h3><span id="Opening_the_Serial_Port">Opening the Serial Port</span></h3> 
+       <p>To open a&nbsp;serial port in node, you include the library at the beginning of&nbsp;&nbsp;your script, and make a local&nbsp;instance of the library in a variable.&nbsp;Make a new script or replace index.js with the following:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+var serialport = require('serialport');// include the library
+   SerialPort = serialport.SerialPort; // make a local instance of it
+   // get port name from the command line:
+   portName = process.argv[2];
+</pre> 
+       <p>Then you open the port using new() like so:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+var myPort = new SerialPort(portName, {
+   baudRate: 9600,
+   // look for return and newline at the end of each data packet:
+   parser: serialport.parsers.readline("\n")
+ });
+</pre> 
+       <p>Note the serial parameters, which are passed to the new() function&nbsp;after the port name, as a list. The first item is the baud rate, and the second is a parser, telling the serial library how to interpret data when it comes in. It should read all the incoming data as a line of text, and generate a new data event when it sees &nbsp;a newline (“\n”). The parser is doing the same thing as Processing’s <a href="https://processing.org/reference/libraries/serial/Serial_bufferUntil_.html" target="_blank">Serial.bufferUntil()</a> function does.</p> 
+       <h4><span id="The_Program_Won8217t_Stop">The Program Won’t Stop!</span></h4> 
+       <p>When you run this program now, it won’t automatically stop and return to the command line. To stop it, you’ll need to type control-C in the terminal window to stop it. &nbsp; The new instance of Serialport created a software object that listens for events from the serial port. Any node.js script that creates an event listener like this will run until you explicitly&nbsp;stop it. &nbsp;Both the serialport library and the http library, which you’ll use below, generate event listeners and will need to be explicitly stopped using control-C.</p> 
+       <h3><span id="Serialport_Library_Events">Serialport Library Events</span></h3> 
+       <p>The serialport library, like most node.js libraries, is <strong>event-based</strong>. This means that when the program is running, the operating system and the user’s actions will generate <strong>events</strong> and the program will provide functions to deal with those events called <strong>callback functions</strong>.</p> 
+       <p>The main events that the serial library will deal with are when a&nbsp;serial port opens, when it closes, when new data arrives, and when there’s an error.&nbsp;The new data event in particular performs the same function as <a title="Labs: Serial Communication" href="https://itp.nyu.edu/physcomp/labs/labs-serial-communication/">Processing’s serialEvent()</a> function. &nbsp;Once you’ve made an instance of the serialport library using the new() function as shown above, you define what functions will get called when each event occurs by using <tt>serialport.on()</tt> like so:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+myPort.on('open', showPortOpen);
+myPort.on('data', sendSerialData);
+myPort.on('close', showPortClose);
+myPort.on('error', showError);
+</pre> 
+       <p>The functions that are called by the event are the <strong>callback functions</strong>. In the example above, when the serial port is opened, the showPortOpen function will get called. When new data arrives, the sendSerialData&nbsp;function will get called, and so forth. If the event generates any parameters (for example a new data event will have the data as a parameter), those parameters will get passed to the callback function.</p> 
+       <p>Write the callback functions for these events like so:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+function showPortOpen() {
+   console.log('port open. Data rate: ' + myPort.options.baudRate);
+}
+
+function sendSerialData(data) {
+   console.log(data);
+}
+
+function showPortClose() {
+   console.log('port closed.');
+}
+
+function showError(error) {
+   console.log('Serial port error: ' + error);
+}
+</pre> 
+       <p>Now you’ve got enough of a program to see some results. Upload a simple serial output sketch to your Arduino such as the <a href="http://arduino.cc/en/Tutorial/AnalogReadSerial" target="_blank">AnalogReadSerial example </a>or the sketch shown in the <a title="Lab: Analog In with an Arduino" href="https://itp.nyu.edu/physcomp/labs/labs-arduino-digital-and-analog/analog-in-with-an-arduino/" target="_blank">Analog Input Lab</a>, you’ll be able to see its output from this script. Save the script. Then invoke it as follows, replacing portname with the name of your serial port:</p> 
+       <pre>$ node index.js portname</pre> 
+       <p>For example, on OSX, if you haven an Arduino attached to the serial port called&nbsp;<tt>/dev/cu.usbmodem1411</tt>, then you’d type:</p> 
+       <pre>$ node index.js /dev/cu.usbmodem1411</pre> 
+       <p>When the port opens, you’ll see the message from the <tt>showPortOpen()</tt> function, then the output from the Arduino. Here’s the output from AnalogReadSerial:</p> 
+       <pre>port open. Data rate: 9600
+
+266
+276
+261</pre> 
+       <p>To send serial output from node.js to the Arduino, use the serialport write() function like so:</p> 
+       <pre>myPort.write("Hello");</pre> 
+       <p>That’s all it takes to read and write serial data from node.js to a microcontroller. Node.js is designed for writing web server applications, however, so in the following steps you’ll see how to connect a serial port to your web browser using more of node.js.</p> 
+       <h3><span id="Connecting_from_the_Browser_to_the_Node_Program">Connecting from the Browser to the Node Program</span></h3> 
+       <p>In order to connect your node.js program&nbsp;to a web page, your program needs to listen for messages from the web browser, and the web pages need to connect to the program. To do this, you’ll use a connection called a <strong>webSocket</strong>. WebSockets are connections between web clients and servers that function a bit like serial ports. Both serial connections and webSocket connections are <strong>data streams</strong>, in which the first byte sent into the stream on one end is the first byte read out on the other end. Data streams are common programming structures and you’ll see them used in lots of places. They connect programs to files on your computer, or client programs to server programs, or desktop programs to serial or network ports. &nbsp;The diagram below shows how the browser connects to your node.js program&nbsp;and how the node.js program connects to the serial port.</p> 
+       <p><a href="https://itp.nyu.edu/physcomp/wp-content/uploads/workflow.png"><img class=" size-full wp-image-3559 aligncenter" src="https://itp.nyu.edu/physcomp/wp-content/uploads/workflow.png" alt="workflow" width="781" height="196" srcset="https://itp.nyu.edu/physcomp/wp-content/uploads/workflow.png 781w, https://itp.nyu.edu/physcomp/wp-content/uploads/workflow-300x75.png 300w" sizes="(max-width: 781px) 100vw, 781px"></a></p> 
+       <p>There’s a node.js library your script will need to listen for webSocket connections that you should&nbsp;install using &nbsp;the node package manager like so:</p> 
+       <pre>$ npm install ws</pre> 
+       <p>Once it’s successfully installed, include it with your previous script by adding the following at the beginning of &nbsp;the script, right after you included&nbsp;the serialport library:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+var WebSocketServer = require('ws').Server;
+</pre> 
+       <p>Following that, you need to use new() to make a new instance of the webSocket servver, and then configure a few parameters, and finally start the server:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+var SERVER_PORT = 8081;               // port number for the webSocket server
+var wss = new WebSocketServer({port: SERVER_PORT}); // the webSocket server
+var connections = new Array;          // list of connections to the server
+</pre> 
+       <p>The server will operate on port 8081, so when you write a client-side JavaScript program, you’ll connect to that port number. Your browser will be a client of the node.js script, and the script&nbsp;will be running as a server. Just as there are serialport event listener functions, there will be webSocket event listener functions too. You’ll need to listen for a webSocket connection event, and once connected, you’ll need to listen for incoming messages, and for the webSocket to close.</p> 
+       <p>There can be multiple webSocket clients at any one time, so the server maintains an array to keep track of all the clients. That array is called <code>connections</code>, and every time a new client connects, the client is added to the array using the <code>.push()</code> function. When a client closes, it’s removed from the array using the&nbsp;<code>.slice()</code> function.</p> 
+       <p>Here are the webSocket event listeners:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+wss.on('connection', handleConnection);
+
+function handleConnection(client) {
+ console.log("New Connection"); // you have a new client
+ connections.push(client); // add this client to the connections array
+
+ client.on('message', sendToSerial); // when a client sends a message,
+
+ client.on('close', function() { // when a client closes its connection
+ console.log("connection closed"); // print it out
+ var position = connections.indexOf(client); // get the client's position in the array
+ connections.splice(position, 1); // and delete it from the array
+ });
+}
+</pre> 
+       <p>You’ll also need to modify the serialport data event listener to send data to the webSocket, and vice versa. Here’s a function to send webSocket&nbsp;data to the serial port. Put this after the serial event listeners&nbsp;above:</p> 
+       <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+function sendToSerial(data) {
+ console.log("sending to serial: " + data);
+ myPort.write(data);
+}
+</pre> 
+       <p>To parallel that, here’s a function to send serial data to the webSocket clients. Put this after the webSocket event listeners:</p> 
+       <pre>
+<pre class="brush: jscript; light: true; title: ; notranslate" title="">
+// This function broadcasts messages to all webSocket clients
+function broadcast(data) {
+ for (myConnection in connections) {   // iterate over the array of connections
+  connections[myConnection].send(data); // send the data to each connection
+ }
+}
+</pre>
+<p>Finally, you need to add the highlighted lines below to the sendSerialData() function. This will send the latest data to all available webSocket clients:</p>
+<pre class="brush: jscript; highlight: [3,4,5,6,7]; light: true; title: ; notranslate" title="">
+function saveLatestData(data) {
+   console.log(data);
+   // if there are webSocket connections, send the serial data
+   // to all of them:
+   if (connections.length &gt; 0) {
+     broadcast(data);
+   }
+}
+</pre>
+<p>Now you’ve got a complete script for connecting serial data to a webSocket server, and serving that to a client through a browser. Next you need a web page with its own embedded JavaScript to connect to his script.</p>
+<h3><span id="Using_theData_in_HTML">Using the&nbsp;Data in HTML</span></h3>
+<p>The real value in connecting the serial port to a server is to generate dynamic HTML from the sensor data. You can do this by making an HTML page that includes some JavaScript to request data from the server, and serving that HTML page from a directory&nbsp;called <tt>public</tt> in your project directory. First, create the directory and change directory into it:</p>
+<pre>$ mkdir public
+$ cd public</pre>
+<p>Then create a new document, index.html, in this directory. Don’t enter any elements, just the bare skeleton of a page:</p>
+<pre class="brush: xml; light: true; title: ; notranslate" title="">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+ &lt;meta charset="utf-8"&gt;
+ &lt;title&gt;&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+
+ &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<h3><span id="Including_P5js">Including P5.js</span></h3>
+<p>If you’re used to Processing, then P5.js is a really good way to get started with JavaScript in the browser. It gives you the same structure as Processing, but in JavaScript. &nbsp;To use it, you’ll need to include P5.js using script tags in the head of your HTML.</p>
+<p>First, you need to include P5.js and its DOM manipulation library in the document head. You can either <a href="http://p5js.org/download/" target="_blank">download P5.js and its libraries directly</a>, or you can include them from P5’s content delivery site. The example below will do it the latter way.</p>
+<p>Add an empty script tag as well, because that’s where you’ll write your code:</p>
+<pre class="brush: xml; light: true; title: ; notranslate" title="">
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+ &lt;head&gt;
+ &lt;script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.8/p5.min.js"&gt;&lt;/script&gt;
+ &lt;script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.8/addons/p5.dom.js"&gt;&lt;/script&gt;
+ &lt;script type="text/javascript"&gt;
+ &lt;/script&gt;
+
+ &lt;meta charset="utf-8"&gt;
+ &lt;title&gt;&lt;/title&gt;
+ &lt;/head&gt;
+ &lt;body&gt;
+
+ &lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p>P5.js uses <tt>setup()</tt> and <tt>draw()</tt> methods, just like Processing, and similar to Arduino. You’re going to create an HTML text div element&nbsp;in the document, and when&nbsp;you receive serial data, you’ll use it to set the text and the position of the text element. &nbsp;Start with the <tt>setup()</tt> and <tt>draw()</tt> and global variables for the text element and a webSocket connection like so (from here on out, the rest of the HTML will be omitted&nbsp;for brevity. Everything you see below will be done in the head&nbsp;of the document between</p>
+<pre class="brush: xml; light: true; title: ; notranslate" title="">&lt;script type="text/javascript"&gt;</pre>
+<p>and</p>
+<pre class="brush: xml; light: true; title: ; notranslate" title="">&lt;/script&gt;:</pre>
+<pre class="brush: jscript; light: true; title: ; notranslate" title="">
+  var text;		// variable for the text div you'll create
+  var socket = new WebSocket("ws://localhost:8081");
+
+ function setup() {
+ }
+
+ function draw() {
+ }
+</pre>
+<p>In the setup function, add listeners for the webSocket, and create the text div and position it. You’ll write the listener functions a bit later:</p>
+<pre class="brush: jscript; light: true; title: ; notranslate" title="">
+   // The socket connection needs two event listeners:
+    socket.onopen = openSocket;
+    socket.onmessage = showData;
+
+    // make a new div and position it at 10, 10:
+    text = createDiv("Sensor reading:");
+    text.position(10,10);
+ }
+</pre>
+<p>Next, write the openSocket and showData functions which are the callback functions for the webSocket’s event listeners:</p>
+<pre class="brush: jscript; light: true; title: ; notranslate" title="">
+ function openSocket() {
+    text.html("Socket open");
+    socket.send("Hello server");
+  }
+
+function showData(result) {
+    // when the server returns, show the result in the div:
+    text.html("Sensor reading:" + result.data);
+    xPos = int(result.data);        // convert result to an integer
+    text.position(xPos, 10);        // position the text
+  }
+</pre>
+<p>This last function&nbsp;changes the text inside the div. It also moves the div’s horizontal position. Whenever new data arrives from the server, this function will be called automatically, so there’s no need for a <tt>draw()</tt> function.</p>
+<p>Save this file in the <tt>public</tt> directory, then restart the server and open the file in your browser. &nbsp;You should see the text moving across the screen, depending on the sensor, as in the video below:</p>
+<p><iframe src="//player.vimeo.com/video/137637801" width="300" height="166" frameborder="0" allowfullscreen></iframe></p>
+<p><a href="http://vimeo.com/107957343" target="_blank">browser-animation</a> from <a href="http://vimeo.com/itpred" target="_blank">ITP</a> on <a href="https://vimeo.com" target="_blank">Vimeo</a>.</p>
+<p>Once you’ve got a server program serving data from a serial device to a browser, you have potential to make&nbsp;all kinds dynamic interfaces that combine HTML and physical interfaces.</p>
+<p>Notice that the server program doesn’t actually parse the serial data; it just treats it as a string, and passes that string on to the client. The client does any parsing work; in this case, converting the numeric string to an integer. This means you can keep the server very simple, so you only need to make sure the two endpoints (the microcontroller and the web client) are speaking the same protocol. JavaScript has many functions&nbsp;for manipulating strings, particularly comma-separated values. So consider sending your data from Arduino as comma-separated values.</p>
+
+        <div class="sidebar-note-content">
+
+         <h4><span id="Note_Check_your_data_types">Note: Check your data types</span></h4>
+
+         <p>When p5.js returns the result of a request, it returns the string as an array with one element.&nbsp;If you’re planning on manipulating that string with functions like parseInt(), <a href="http://p5js.org/reference/#/p5/split" target="_blank">split()</a> and <a href="http://p5js.org/reference/#group-Data" target="_blank">other string handling functions</a>, make sure to get&nbsp;the string out of the array first. For example, if you’ve sent over the string:</p>
+
+         <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+ "234, 124, 134"
+</pre>
+
+         <p>and you want to split it, here’s how you’d do it:</p>
+
+         <pre class="brush: jscript; light: true; title: ; notranslate" title="">
+ function showData(result) {
+   var resultString = result.data;
+   text.html("Sensor reading:" + resultString);
+   // split it:
+   var numbers = split(resultString, ",");
+   // use the numbers:
+   text.position(int(numbers[0]), int(numbers[1]));
+   text.style("font-size", int(numbers[2]) + "%");
+ }
+</pre>
+
+        </div>
+<h3><span id="Adding_Handshaking_aka_Call-and-Response">Adding Handshaking (aka Call-and-Response)</span></h3>
+<p>Because the wsServer.js script passes through messages through without parsing, you can add handshaking to this application by modifying only the Arduino program and the P5.js script. When you add handshaking the Arduino will only send new data when it receives a byte of data in the serial port. It allows you to control the flow of data better.</p>
+<p>To implement handshaking, make the following change in the Arduino sketch. Wrap the contents of the <code>loop()</code> in the Arduino sketch in an if statement like so:</p>
+<pre class="brush: arduino; highlight: [2,3,9]; light: true; title: ; notranslate" title="">
+void loop() {
+  if (Serial.available()) {
+    char input = Serial.read();
+    // read the input on analog pin 0:
+    int sensorValue = analogRead(A0);
+    // print out the value you read:
+    Serial.println(sensorValue);
+    delay(1); // delay in between reads for stability
+ }
+}
+</pre>
+<p>Then add the following line to the end of the showData() function in your P5.js script:</p>
+<pre class="brush: jscript; highlight: [6]; light: true; title: ; notranslate" title="">
+ function showData(result) {
+ // when the server returns, show the result in the div:
+ text.html("Sensor reading:" + result.data);
+ xPos = int(result.data); // convert result to an integer
+ text.position(xPos, 10); // position the text
+ socket.send('a');        // send a byte to get the Arduino to send new data
+ }
+</pre>
+<p>You won’t need to change the wsServer.js script at all. Just restart it after you upload to the Arduino, and reload the page in the browser. When the client connects to the server, it will send the “Hello” message, which will be sent from the server to the Arduino, and that will trigger the Arduino to start sending data.</p>
+<p>For more info:</p>
+
+        <ul>
+
+         <li><a href="http://p5js.org/" target="_blank">P5.js</a></li>
+
+         <li><a href="http://nodejs.org/" target="_blank">node.js</a></li>
+
+         <li><a href="https://github.com/voodootikigod/node-serialport" target="_blank">node serialport</a></li>
+
+        </ul>
+<p>A more complete set of code for this lab can be found on <a href="https://github.com/ITPNYU/physcomp/tree/master/labs2014/Node%20Serial%20Lab" target="_blank">gitHub</a>.</p>
+                        
+        <div class="clear"></div>
+                                                                        
+        <div class="clear"></div>
+                        
+        <!--Start Comment Section-->
+                        
+        <div class="comment_section">
+                            
+         <!--Start Comment list-->
+                                                        
+         <!--End Comment Form-->
+                        
+        </div>
+                        
+        <!--End comment Section-->
+                                </pre>
+      </div> 
+      <div class="folio-page-info"> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="grid_8 omega"> 
+     <div class="sidebar"> 
+      <form role="search" method="get" id="searchform" action="https://itp.nyu.edu/physcomp/"> 
+       <div> 
+        <input type="text" onfocus="if (this.value == 'Search') {
+                    this.value = '';
+                }" onblur="if (this.value == '') {
+                            this.value = 'Search';
+                        }" value="Search" name="s" id="s"> 
+        <input type="submit" id="searchsubmit" value="Search"> 
+       </div> 
+      </form> 
+      <div class="clear"></div> 
+      <form action="" method="post" class="searchandfilter"> 
+       <div> 
+        <ul>
+         <li><h4>Find posts by category</h4>
+          <ul> 
+           <li class="cat-item cat-item-12"><label><input type="checkbox" name="ofcategory[]" value="12"> @ITP</label> </li> 
+           <li class="cat-item cat-item-20"><label><input type="checkbox" name="ofcategory[]" value="20"> Analog</label> </li> 
+           <li class="cat-item cat-item-11"><label><input type="checkbox" name="ofcategory[]" value="11"> Code</label> </li> 
+           <li class="cat-item cat-item-21"><label><input type="checkbox" name="ofcategory[]" value="21"> Components</label> </li> 
+           <li class="cat-item cat-item-25"><label><input type="checkbox" name="ofcategory[]" value="25"> Digital</label> </li> 
+           <li class="cat-item cat-item-5"><label><input type="checkbox" name="ofcategory[]" value="5"> Electronics</label> </li> 
+           <li class="cat-item cat-item-15"><label><input type="checkbox" name="ofcategory[]" value="15"> Lab</label> </li> 
+           <li class="cat-item cat-item-8"><label><input type="checkbox" name="ofcategory[]" value="8"> Motors</label> </li> 
+           <li class="cat-item cat-item-18"><label><input type="checkbox" name="ofcategory[]" value="18"> Mouse</label> </li> 
+           <li class="cat-item cat-item-27"><label><input type="checkbox" name="ofcategory[]" value="27"> Multimeter</label> </li> 
+           <li class="cat-item cat-item-16"><label><input type="checkbox" name="ofcategory[]" value="16"> Node.js</label> </li> 
+           <li class="cat-item cat-item-31"><label><input type="checkbox" name="ofcategory[]" value="31"> P5.js</label> </li> 
+           <li class="cat-item cat-item-30"><label><input type="checkbox" name="ofcategory[]" value="30"> Processing</label> </li> 
+           <li class="cat-item cat-item-26"><label><input type="checkbox" name="ofcategory[]" value="26"> Programming</label> </li> 
+           <li class="cat-item cat-item-29"><label><input type="checkbox" name="ofcategory[]" value="29"> PWM</label> </li> 
+           <li class="cat-item cat-item-7"><label><input type="checkbox" name="ofcategory[]" value="7"> Sensors</label> </li> 
+           <li class="cat-item cat-item-9"><label><input type="checkbox" name="ofcategory[]" value="9"> Serial Communication</label> </li> 
+           <li class="cat-item cat-item-17"><label><input type="checkbox" name="ofcategory[]" value="17"> Sound</label> </li> 
+           <li class="cat-item cat-item-19"><label><input type="checkbox" name="ofcategory[]" value="19"> Switches</label> </li> 
+           <li class="cat-item cat-item-28"><label><input type="checkbox" name="ofcategory[]" value="28"> Transistor</label> </li> 
+           <li class="cat-item cat-item-1"><label><input type="checkbox" name="ofcategory[]" value="1"> Uncategorized</label> </li> 
+           <li class="cat-item cat-item-14"><label><input type="checkbox" name="ofcategory[]" value="14"> Video</label> </li> 
+           <li class="cat-item cat-item-10"><label><input type="checkbox" name="ofcategory[]" value="10"> Wireless</label> </li> 
+          </ul><input type="hidden" name="ofcategory_operator" value="and"></li>
+         <li><input type="hidden" name="ofsubmitted" value="1"> <input type="submit" value="Filter"> </li>
+        </ul>
+       </div> 
+      </form> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="clear"></div> 
+   <!--End Content Grid--> 
+  </div> 
+  <!--End Container Div--> 
+  <!--Start Footer container--> 
+  <div class="container_24 footer-container"> 
+   <div class="grid_24 footer"> 
+   </div> 
+   <div class="clear"></div> 
+  </div> 
+  <!--End footer container--> 
+  <!--Start footer navigation--> 
+  <div class="container_24 footer-navi"> 
+   <div class="grid_24"> 
+    <div class="grid_10 alpha"> 
+     <div class="navigation"> 
+      <ul class="footer_des"> 
+       <li><a href="https://itp.nyu.edu/physcomp">ITP Physical Computing - </a></li> 
+      </ul> 
+     </div> 
+    </div> 
+    <div class="grid_4"> 
+     <div class="social-icons"> 
+     </div> 
+    </div> 
+    <div class="grid_10 omega"> 
+     <div class="right-navi"> 
+      <p><a href="http://www.inkthemes.com" rel="nofollow">Colorway Wordpress Theme</a> by InkThemes.com</p> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="clear"></div> 
+  </div> 
+  <!--End Footer navigation--> 
+  <div class="footer_space"></div> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-54952418-1', 'auto');
+  ga('send', 'pageview');
+
+</script> 
+  <script type="text/javascript">function showhide_toggle(a,b,d,f){var e=jQuery("#"+a+"-link-"+b),c=jQuery("a",e),g=jQuery("#"+a+"-content-"+b);a=jQuery("#"+a+"-toggle-"+b);e.toggleClass("sh-show sh-hide");g.toggleClass("sh-show sh-hide").toggle();"true"===c.attr("aria-expanded")?c.attr("aria-expanded","false"):c.attr("aria-expanded","true");a.text()===d?a.text(f):a.text(d)};</script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shCore.js?ver=3.0.9b"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushJScript.js?ver=3.0.9b"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushXml.js?ver=3.0.9b"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/syntaxhighlighter-arduino/shBrushArduino.js?ver=1.2.3"></script> 
+  <script type="text/javascript">
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "https://itp.nyu.edu/physcomp/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "https://itp.nyu.edu/physcomp/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeDefault.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '?';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var tocplus = {"visibility_show":"show","visibility_hide":"hide","visibility_hide_by_default":"1","width":"Auto"};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/plugins/table-of-contents-plus/front.min.js?ver=1509"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/jquery.ba-cond.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/jquery.slitslider.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-content/themes/colorway/js/slider-init.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://itp.nyu.edu/physcomp/wp-includes/js/wp-embed.min.js?ver=4.8.1"></script> 
+ </body>
+</html>

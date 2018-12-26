@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="en-US">
+ <head data-template-path="https://hacks.mozilla.org/wp-content/themes/Hax"> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <!-- Metadata for Facebook --> 
+  <meta property="og:site_name" content="Mozilla Hacks – the Web developer blog"> 
+  <meta property="og:url" content="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/"> 
+  <meta property="og:title" content="QuaggaJS – Building a barcode-scanner for the Web"> 
+  <meta property="og:description" content="Have your ever tried to type in a voucher code on your mobile phone or simply enter the number of your membership card into a ..."> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/quagga_four_frames.png"> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/quagga_teaser_500.jpg"> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/four_frames.png"> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/teaser_500.jpg"> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/skeletonize_buffer-500x268.png"> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/image-stream-profile-vanilla.png"> 
+  <meta property="og:image" content="https://hacks.mozilla.org/files/2014/12/image-stream-profile-asm.png"> 
+  <!-- Metadata for Twitter --> 
+  <meta property="twitter:title" content="QuaggaJS – Building a barcode-scanner for the Web"> 
+  <meta property="twitter:description" content="Have your ever tried to type in a voucher code on your mobile phone or simply enter the number of your membership card into a ..."> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/quagga_four_frames.png"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/quagga_teaser_500.jpg"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/four_frames.png"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/teaser_500.jpg"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/skeletonize_buffer-500x268.png"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/image-stream-profile-vanilla.png"> 
+  <meta property="twitter:image" content="https://hacks.mozilla.org/files/2014/12/image-stream-profile-asm.png"> 
+  <meta name="twitter:site" content="@mozhacks"> 
+  <link rel="alternate" type="application/rss+xml" title="Mozilla Hacks – the Web developer blog RSS Feed" href="https://hacks.mozilla.org/feed/"> 
+  <link href="//fonts.googleapis.com/css?family=Open+Sans:400,400italic,700,700italic" rel="stylesheet" type="text/css"> 
+  <link href="//addons.cdn.mozilla.net/static/css/tabzilla/tabzilla.css" rel="stylesheet"> 
+  <link rel="stylesheet" href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/css/font-awesome.min.css"> 
+  <link rel="stylesheet" href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/style.css"> 
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/highlight.js/8.6.0/styles/solarized_light.min.css"> 
+  <title>  QuaggaJS – Building a barcode-scanner for the Web ?
+        Mozilla Hacks – the Web developer blog  </title> 
+  <script type="text/javascript">
+    window.hacks = {};
+    // http://cfsimplicity.com/61/removing-analytics-clutter-from-campaign-urls
+    var removeUtms  =   function(){
+        var l = window.location;
+        if( l.hash.indexOf( "utm" ) != -1 ){
+            var anchor = l.hash.match(/#(?!utm)[^&]+/);
+            anchor  =   anchor? anchor[0]: '';
+            if(!anchor && window.history.replaceState){
+                history.replaceState({},'', l.pathname + l.search);
+            } else {
+                l.hash = anchor;
+            }
+        };
+    };
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35433268-8'],
+              ['_setAllowAnchor', true]);
+    _gaq.push (['_gat._anonymizeIp']);
+    _gaq.push(['_trackPageview']);
+    _gaq.push( removeUtms );
+    (function(d, k) {
+      var ga = d.createElement(k); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = 'https://ssl.google-analytics.com/ga.js';
+      var s = d.getElementsByTagName(k)[0]; s.parentNode.insertBefore(ga, s);
+    })(document, 'script');
+  </script> 
+  <link rel="dns-prefetch" href="//blog.mozilla.org"> 
+  <link rel="dns-prefetch" href="//s.w.org"> 
+  <link rel="alternate" type="application/rss+xml" title="Mozilla Hacks - the Web developer blog » QuaggaJS – Building a barcode-scanner for the Web Comments Feed" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/feed/"> 
+  <link rel="stylesheet" id="simple-payments-css" href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/plugins/jetpack/modules/simple-payments/simple-payments.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="stcr-plugin-style-css" href="https://blog.mozilla.org/hacks/wp-content/plugins/subscribe-to-comments-reloaded/includes/css/stcr-plugin-style.css?ver=4.8.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="wp-syntax-css-css" href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/plugins/wp-syntax/css/wp-syntax.css?ver=1.1" type="text/css" media="all"> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-includes/js/jquery/jquery.js?ver=1.12.4"></script> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.4.1"></script> 
+  <script type="text/javascript" src="https://blog.mozilla.org/hacks/wp-content/plugins/subscribe-to-comments-reloaded/includes/js/stcr-plugin.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/js/analytics.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/js/socialshare.min.js?ver=4.8.1"></script> 
+  <link rel="https://api.w.org/" href="https://hacks.mozilla.org/wp-json/"> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="https://hacks.mozilla.org/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="https://hacks.mozilla.org/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="Videos and Firefox OS" href="https://hacks.mozilla.org/2014/12/videos-and-firefox-os/"> 
+  <link rel="next" title="Introducing the JavaScript Internationalization API" href="https://hacks.mozilla.org/2014/12/introducing-the-javascript-internationalization-api/"> 
+  <link rel="canonical" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/"> 
+  <link rel="shortlink" href="https://hacks.mozilla.org/?p=27138"> 
+  <link rel="alternate" type="application/json+oembed" href="https://hacks.mozilla.org/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fhacks.mozilla.org%2F2014%2F12%2Fquaggajs-building-a-barcode-scanner-for-the-web%2F"> 
+  <link rel="alternate" type="text/xml+oembed" href="https://hacks.mozilla.org/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fhacks.mozilla.org%2F2014%2F12%2Fquaggajs-building-a-barcode-scanner-for-the-web%2F&amp;format=xml"> 
+  <script type="text/javascript">
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-36116321-4', 'auto');
+                ga('set', 'dimension1', 'Mozilla Hacks - the Web developer blog');
+                ga('send', 'pageview');
+            </script>
+  <link rel="shortcut icon" type="image/x-icon" href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/favicon.ico">
+  <style>#wpadminbar #wp-admin-bar-site-name>.ab-item:before { content: none !important;}li#wp-admin-bar-site-name a { background: url( "https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/favicon.ico" ) left center/20px no-repeat !important; padding-left: 21px !important; background-size: 20px !important; } li#wp-admin-bar-site-name { margin-left: 5px !important; } li#wp-admin-bar-site-name {} #wp-admin-bar-site-name div a { background: none !important; }
+</style>
+ </head> 
+ <body> 
+  <div class="outer-wrapper"> 
+   <header class="section section--fullwidth header"> 
+    <div class="masthead row"> 
+     <div id="tabzilla"> 
+      <a href="https://www.mozilla.org/">Mozilla</a> 
+     </div> 
+     <div class="branding block block--3"> 
+      <h1><a href="https://hacks.mozilla.org"><img src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/img/mdn-logo-mono.svg" alt="Mozilla"><span>Hac<span class="logo-askew">k</span>s</span></a></h1> 
+     </div> 
+     <div class="search block block--2"> 
+      <form class="search__form" method="get" action="https://hacks.mozilla.org/"> 
+       <input type="search" name="s" class="search__input" placeholder="Search Mozilla Hacks" value=""> 
+       <i class="fa fa-search search__badge"></i> 
+      </form> 
+     </div> 
+     <nav class="social"> 
+      <a class="social__link youtube" href="http://www.youtube.com/user/mozhacks" title="YouTube"><i class="fa fa-youtube"></i><span>Hacks on YouTube</span></a> 
+      <a class="social__link twitter" href="https://twitter.com/mozhacks" title="Twitter"><i class="fa fa-twitter"></i><span>@mozhacks on Twitter</span></a> 
+      <a class="social__link rss" href="https://hacks.mozilla.org/feed/" title="RSS Feed"><i class="fa fa-rss"></i><span>Hacks RSS Feed</span></a> 
+     </nav> 
+    </div> 
+   </header> 
+   <div id="content-head" class="section"> 
+    <h1 class="post__title">QuaggaJS – Building a barcode-scanner for the Web</h1> 
+    <div class="byline"> 
+     <h3 class="post__author"> <img alt="" src="https://secure.gravatar.com/avatar/c5bb8c8e571892ba32394c4949ce096c?s=64&amp;d=mm&amp;r=g" srcset="https://secure.gravatar.com/avatar/c5bb8c8e571892ba32394c4949ce096c?s=128&amp;d=mm&amp;r=g 2x" class="avatar avatar-64 photo" height="64" width="64"> By <a class="url" href="https://hacks.mozilla.org/author/ch-oberhofergmail-com/">Christoph Oberhofer</a>, <a class="url" href="https://hacks.mozilla.org/author/havi/">Havi Hoffman [Editor]</a> </h3> 
+     <div class="post__meta">
+       Posted on 
+      <abbr class="published" title="2014-12-10T08:45:25-07:00"> December 10, 2014 </abbr> 
+      <span class="entry-cat">in <a href="https://hacks.mozilla.org/category/firefox-os/" rel="category tag" title="View all posts in Firefox OS">Firefox OS</a> and <a href="https://hacks.mozilla.org/category/javascript/" rel="category tag" title="View all posts in JavaScript">JavaScript</a> </span> 
+      <div class="socialshare" data-type="bubbles"></div> 
+     </div> 
+    </div> 
+   </div> 
+   <main id="content-main" class="section article"> 
+    <article class="post" role="article"> 
+     <p>Have your ever tried to type in a voucher code on your mobile phone or simply enter the number of your membership card into a web form? </p> 
+     <p>These are just two examples of time-consuming and error-prone tasks which can be avoided by taking advantage of printed barcodes. This is nothing new; many solutions exist for reading barcodes with a regular camera, like <a href="https://github.com/zxing/zxing" target="_blank">zxing</a>, but they require a native platform such as Android or iOS. I wanted a solution which works on the Web, without plugins of any sort, and which even Firefox OS could leverage.</p> 
+     <p>My general interest in computer vision and web technologies fueled my curiosity whether something like this would be possible. Not just a simple scanner, but a scanner equipped with localization mechanisms to find a barcode in real-time.</p> 
+     <p>The result is a project called <a href="http://serratus.github.io/quaggaJS/" target="_blank">QuaggaJS</a>, which is hosted on <a href="https://github.com/serratus/quaggaJS" target="_blank">GitHub</a>. Take a look at the <a href="http://serratus.github.io/quaggaJS/examples/" target="_blank">demo pages</a> to get an idea of what this project is all about.</p> 
+     <p><a href="http://serratus.github.io/quaggaJS/" target="_blank"><img src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/teaser_500.jpg" alt="Reading Barcodes - teaser_500" width="500" height="375" class="alignnone size-full wp-image-27197" srcset="https://hacks.mozilla.org/files/2014/12/teaser_500.jpg 500w, https://hacks.mozilla.org/files/2014/12/teaser_500-250x187.jpg 250w" sizes="(max-width: 500px) 100vw, 500px"></a></p> 
+     <h2>How does it work?</h2> 
+     <p>Simply speaking, the pipeline can be divided into the following three steps:</p> 
+     <ol> 
+      <li>Reading the image and converting it into a binary representation</li> 
+      <li>Determining the location and rotation of the barcode</li> 
+      <li>Decoding the barcode based on the type <a href="http://en.wikipedia.org/wiki/EAN" target="_blank">EAN</a>, <a href="http://en.wikipedia.org/wiki/Code_128" target="_blank">Code128</a></li> 
+     </ol> 
+     <p>The first step requires the source to be either a webcam stream or an image file, which is then converted into gray-scale and stored in a 1D array. After that, the image data is passed along to the <strong>locator</strong>, which is responsible for finding a barcode-like pattern in the image. And finally, if a pattern is found, the <strong>decoder</strong> tries to read the barcode and return the result. You can read more about these steps in <a href="http://www.oberhofer.co/how-barcode-localization-works-in-quaggajs/" target="_blank">how barcode localization works in QuaggaJS</a>.</p> 
+     <h2>The real-time challenge</h2> 
+     <p>One of the main challenges was to get the pipeline up to speed and fast enough to be considered as a real-time application. When talking about real-time in image-processing applications, I consider 25 frames per second (FPS) the lower boundary. This means that the entire pipeline has to be completed in at least 40ms.</p> 
+     <p>The core parts of QuaggaJS are made up of computer vision algorithms which tend to be quite heavy on array access. As I already mentioned, the input image is stored in a 1D array. This is not a regular JavaScript Array, but a <a href="https://developer.mozilla.org/en-US/docs/tag/JavaScript%20typed%20arrays" target="_blank">Typed Array</a>. Since the image has already been converted to gray-scale in the first step, the range of each pixel’s value is set between 0 and 255. This is why <code>Uint8Array</code>s are used for all image-related buffers.</p> 
+     <h3>Memory efficiency</h3> 
+     <p>One of the key ways to achieve real-time speed for interactive applications is to create memory efficient code which avoids large GC (garbage collection) pauses. That is why I removed most of the memory allocation calls by simply reusing initially created buffers. However this is only useful for buffers when you know the size up front and when the size does not change over time, as with images.</p> 
+     <h3>Profiling</h3> 
+     <p>When you are curious why a certain part of your application runs too slow, a CPU profile may come in handy.</p> 
+     <p>Firefox includes some wonderful tools to create CPU profiles for the running JavaScript code. During development, this proved to be viable for pinpointing performance bottlenecks and finding functions which caused the most load on the CPU. The following profile was recorded during a session with a webcam on an Intel Core i7-4600U. (Config: video 640×480, half-sampling barcode-localization)</p> 
+     <p><a href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/four_frames.png"><img src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/four_frames.png" alt="alt=" Profiling Four Frames"" width="500" height="366" class="alignnone size-full wp-image-27194" srcset="https://hacks.mozilla.org/files/2014/12/four_frames.png 500w, https://hacks.mozilla.org/files/2014/12/four_frames-250x183.png 250w" sizes="(max-width: 500px) 100vw, 500px"></a></p> 
+     <p>The profile is zoomed in and shows four subsequent frames. On average, one frame in the pipeline is processed in roughly 20 ms. This can be considered fast enough, even when running on machines having a less powerful CPU, like mobile phones or tablets.</p> 
+     <p>I marked each step of the pipeline in a different color; green is the first, blue the second and red the third one. The drill-down shows that the localization step consumes most of the time (55.6 %), followed by reading the input stream (28.4 %) and finally by decoding (3.7 %). It is also worth noting that <code>skeletonize</code> is one of the most expensive functions in terms of CPU usage. Because of that, I re-implemented the entire skeletonizing algorithm in <a href="http://asmjs.org/" title="asmjs.org" target="_blank">asm.js</a> by hand to see whether it could run even faster.</p> 
+     <h3>asm.js</h3> 
+     <p>Asm.js is a highly optimizable subset of JavaScript that can execute at close to native speed. It promises a lot of performance gains when used for compute-intensive tasks (take a look at <a href="https://hacks.mozilla.org/2014/11/massive-the-asm-js-benchmark/" title="MASSIVE" target="_blank">MASSIVE</a>), like most computer vision algorithms. That’s why I ported the entire <code>skeletonizer</code> module to asm.js. This was a very tedious task, because you are actually not supposed to write asm.js code by hand. Usually asm.js code is generated when it is cross-compiled from C/C++ or other LLVM languages using <a href="http://kripken.github.io/emscripten-site/index.html" title="Emscripten wiki" target="_blank">emscripten</a>. But I did it anyway, just to prove a point.</p> 
+     <p>The first thing that needs to be sorted out is how to get the image-data into the asm.js module, alongside with parameters like the size of the image. The module is designed to fit right into the existing implementation and therefore incorporates some constraints, like a square image size. However, the <code>skeletonizer</code> is only applied on chunks of the original image, which are all square by definition. Not only is the input-data relevant, but also three temporary buffers are needed during processing (eroded, temp, skeleton).</p> 
+     <p>In order to cover that, an initial buffer is created, big enough to hold all four images at once. The buffer is shared between the caller and the module. Since we are working with a single buffer, we need to keep a reference to the position of each image. It’s like playing with pointers in C.</p> 
+     <div class="wp_syntax" style="position:relative;">
+      <table>
+       <tbody>
+        <tr>
+         <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">function</span> skeletonize<span style="color: #009900;">(</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+  <span style="color: #000066; font-weight: bold;">var</span> subImagePtr <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    erodedImagePtr <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    tempImagePtr <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    skelImagePtr <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+&nbsp;
+  erodedImagePtr <span style="color: #339933;">=</span> imul<span style="color: #009900;">(</span>size<span style="color: #339933;">,</span> size<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+  tempImagePtr <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>erodedImagePtr <span style="color: #339933;">+</span> erodedImagePtr<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+  skelImagePtr <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>tempImagePtr <span style="color: #339933;">+</span> erodedImagePtr<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+  <span style="color: #006600; font-style: italic;">// ...</span>
+<span style="color: #009900;">}</span></pre></td>
+        </tr>
+       </tbody>
+      </table>
+      <p class="theCode" style="display:none;">function skeletonize() { var subImagePtr = 0, erodedImagePtr = 0, tempImagePtr = 0, skelImagePtr = 0; erodedImagePtr = imul(size, size) | 0; tempImagePtr = (erodedImagePtr + erodedImagePtr) | 0; skelImagePtr = (tempImagePtr + erodedImagePtr) | 0; // ... }</p>
+     </div> 
+     <p>To get a better understanding of the idea behind the structure of the buffer, compare it with the following illustration:</p> 
+     <p><a href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/skeletonize_buffer.png"><img src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/skeletonize_buffer.png" alt="Buffer in Skeletonizer" width="526" height="282" class="alignnone size-full wp-image-27201" srcset="https://hacks.mozilla.org/files/2014/12/skeletonize_buffer.png 526w, https://hacks.mozilla.org/files/2014/12/skeletonize_buffer-250x134.png 250w, https://hacks.mozilla.org/files/2014/12/skeletonize_buffer-500x268.png 500w" sizes="(max-width: 526px) 100vw, 526px"></a></p> 
+     <p>The buffer in green represents the allocated memory, which is passed in the asm.js module upon creation. This buffer is then divided into four blue blocks, of which each contains the data for the respective image. In order to get a reference to the correct data block, the variables (ending with <code>Ptr</code>) are pointing to that exact position.</p> 
+     <p>Now that we have set up the buffer, it is time to take a look at the <code>erode</code> function, which is part of the <code>skeletonizer</code> written in vanilla JavaScript:</p> 
+     <div class="wp_syntax" style="position:relative;">
+      <table>
+       <tbody>
+        <tr>
+         <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">function</span> erode<span style="color: #009900;">(</span>inImageWrapper<span style="color: #339933;">,</span> outImageWrapper<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+  <span style="color: #000066; font-weight: bold;">var</span> v<span style="color: #339933;">,</span>
+    u<span style="color: #339933;">,</span>
+    inImageData <span style="color: #339933;">=</span> inImageWrapper.<span style="color: #660066;">data</span><span style="color: #339933;">,</span>
+    outImageData <span style="color: #339933;">=</span> outImageWrapper.<span style="color: #660066;">data</span><span style="color: #339933;">,</span>
+    height <span style="color: #339933;">=</span> inImageWrapper.<span style="color: #660066;">size</span>.<span style="color: #660066;">y</span><span style="color: #339933;">,</span>
+    width <span style="color: #339933;">=</span> inImageWrapper.<span style="color: #660066;">size</span>.<span style="color: #660066;">x</span><span style="color: #339933;">,</span>
+    sum<span style="color: #339933;">,</span>
+    yStart1<span style="color: #339933;">,</span>
+    yStart2<span style="color: #339933;">,</span>
+    xStart1<span style="color: #339933;">,</span>
+    xStart2<span style="color: #339933;">;</span>
+&nbsp;
+  <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">(</span> v <span style="color: #339933;">=</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> v <span style="color: #339933;">&lt;</span> height <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> v<span style="color: #339933;">++</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+    <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">(</span> u <span style="color: #339933;">=</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> u <span style="color: #339933;">&lt;</span> width <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> u<span style="color: #339933;">++</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+      yStart1 <span style="color: #339933;">=</span> v <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span>
+      yStart2 <span style="color: #339933;">=</span> v <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span>
+      xStart1 <span style="color: #339933;">=</span> u <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span>
+      xStart2 <span style="color: #339933;">=</span> u <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span>
+      sum <span style="color: #339933;">=</span> inImageData<span style="color: #009900;">[</span>yStart1 <span style="color: #339933;">*</span> width <span style="color: #339933;">+</span> xStart1<span style="color: #009900;">]</span> <span style="color: #339933;">+</span>
+        inImageData<span style="color: #009900;">[</span>yStart1 <span style="color: #339933;">*</span> width <span style="color: #339933;">+</span> xStart2<span style="color: #009900;">]</span> <span style="color: #339933;">+</span>
+        inImageData<span style="color: #009900;">[</span>v <span style="color: #339933;">*</span> width <span style="color: #339933;">+</span> u<span style="color: #009900;">]</span> <span style="color: #339933;">+</span>
+        inImageData<span style="color: #009900;">[</span>yStart2 <span style="color: #339933;">*</span> width <span style="color: #339933;">+</span> xStart1<span style="color: #009900;">]</span> <span style="color: #339933;">+</span>
+        inImageData<span style="color: #009900;">[</span>yStart2 <span style="color: #339933;">*</span> width <span style="color: #339933;">+</span> xStart2<span style="color: #009900;">]</span><span style="color: #339933;">;</span>
+&nbsp;
+      outImageData<span style="color: #009900;">[</span>v <span style="color: #339933;">*</span> width <span style="color: #339933;">+</span> u<span style="color: #009900;">]</span> <span style="color: #339933;">=</span> sum <span style="color: #339933;">===</span> <span style="color: #CC0000;">5</span> <span style="color: #339933;">?</span> <span style="color: #CC0000;">1</span> <span style="color: #339933;">:</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+    <span style="color: #009900;">}</span>
+  <span style="color: #009900;">}</span>
+<span style="color: #009900;">}</span></pre></td>
+        </tr>
+       </tbody>
+      </table>
+      <p class="theCode" style="display:none;">function erode(inImageWrapper, outImageWrapper) { var v, u, inImageData = inImageWrapper.data, outImageData = outImageWrapper.data, height = inImageWrapper.size.y, width = inImageWrapper.size.x, sum, yStart1, yStart2, xStart1, xStart2; for ( v = 1; v &lt; height - 1; v++) { for ( u = 1; u &lt; width - 1; u++) { yStart1 = v - 1; yStart2 = v + 1; xStart1 = u - 1; xStart2 = u + 1; sum = inImageData[yStart1 * width + xStart1] + inImageData[yStart1 * width + xStart2] + inImageData[v * width + u] + inImageData[yStart2 * width + xStart1] + inImageData[yStart2 * width + xStart2]; outImageData[v * width + u] = sum === 5 ? 1 : 0; } } }</p>
+     </div> 
+     <p>This code was then modified to conform to the asm.js specification.</p> 
+     <div class="wp_syntax" style="position:relative;">
+      <table>
+       <tbody>
+        <tr>
+         <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #3366CC;">"use asm"</span><span style="color: #339933;">;</span>
+&nbsp;
+<span style="color: #006600; font-style: italic;">// initially creating a view on the buffer (passed in)</span>
+<span style="color: #000066; font-weight: bold;">var</span> images <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> stdlib.<span style="color: #660066;">Uint8Array</span><span style="color: #009900;">(</span>buffer<span style="color: #009900;">)</span><span style="color: #339933;">,</span>
+  size <span style="color: #339933;">=</span> foreign.<span style="color: #660066;">size</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+&nbsp;
+<span style="color: #000066; font-weight: bold;">function</span> erode<span style="color: #009900;">(</span>inImagePtr<span style="color: #339933;">,</span> outImagePtr<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+  inImagePtr <span style="color: #339933;">=</span> inImagePtr <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+  outImagePtr <span style="color: #339933;">=</span> outImagePtr <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+&nbsp;
+  <span style="color: #000066; font-weight: bold;">var</span> v <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    u <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    sum <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    yStart1 <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    yStart2 <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    xStart1 <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    xStart2 <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span>
+    offset <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+&nbsp;
+  <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">(</span> v <span style="color: #339933;">=</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> <span style="color: #009900;">(</span>v <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">&lt;</span> <span style="color: #009900;">(</span><span style="color: #009900;">(</span>size <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> v <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>v <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+    offset <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>offset <span style="color: #339933;">+</span> size<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+    <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">(</span> u <span style="color: #339933;">=</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> <span style="color: #009900;">(</span>u <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">&lt;</span> <span style="color: #009900;">(</span><span style="color: #009900;">(</span>size <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span> u <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>u <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+      yStart1 <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>offset <span style="color: #339933;">-</span> size<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+      yStart2 <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>offset <span style="color: #339933;">+</span> size<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+      xStart1 <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>u <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+      xStart2 <span style="color: #339933;">=</span> <span style="color: #009900;">(</span>u <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+      sum <span style="color: #339933;">=</span> <span style="color: #009900;">(</span><span style="color: #009900;">(</span>images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>inImagePtr <span style="color: #339933;">+</span> yStart1 <span style="color: #339933;">+</span> xStart1<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">+</span>
+        <span style="color: #009900;">(</span>images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>inImagePtr <span style="color: #339933;">+</span> yStart1 <span style="color: #339933;">+</span> xStart2<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">+</span>
+        <span style="color: #009900;">(</span>images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>inImagePtr <span style="color: #339933;">+</span> offset <span style="color: #339933;">+</span> u<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">+</span>
+        <span style="color: #009900;">(</span>images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>inImagePtr <span style="color: #339933;">+</span> yStart2 <span style="color: #339933;">+</span> xStart1<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">+</span>
+        <span style="color: #009900;">(</span>images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>inImagePtr <span style="color: #339933;">+</span> yStart2 <span style="color: #339933;">+</span> xStart2<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+      <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">(</span><span style="color: #009900;">(</span>sum <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span> <span style="color: #339933;">==</span> <span style="color: #009900;">(</span><span style="color: #CC0000;">5</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span><span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+        images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>outImagePtr <span style="color: #339933;">+</span> offset <span style="color: #339933;">+</span> u<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">=</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span>
+      <span style="color: #009900;">}</span> <span style="color: #000066; font-weight: bold;">else</span> <span style="color: #009900;">{</span>
+        images<span style="color: #009900;">[</span><span style="color: #009900;">(</span>outImagePtr <span style="color: #339933;">+</span> offset <span style="color: #339933;">+</span> u<span style="color: #009900;">)</span> <span style="color: #339933;">|</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">]</span> <span style="color: #339933;">=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span>
+      <span style="color: #009900;">}</span>
+    <span style="color: #009900;">}</span>
+  <span style="color: #009900;">}</span>
+  <span style="color: #000066; font-weight: bold;">return</span><span style="color: #339933;">;</span>
+<span style="color: #009900;">}</span></pre></td>
+        </tr>
+       </tbody>
+      </table>
+      <p class="theCode" style="display:none;">"use asm"; // initially creating a view on the buffer (passed in) var images = new stdlib.Uint8Array(buffer), size = foreign.size | 0; function erode(inImagePtr, outImagePtr) { inImagePtr = inImagePtr | 0; outImagePtr = outImagePtr | 0; var v = 0, u = 0, sum = 0, yStart1 = 0, yStart2 = 0, xStart1 = 0, xStart2 = 0, offset = 0; for ( v = 1; (v | 0) &lt; ((size - 1) | 0); v = (v + 1) | 0) { offset = (offset + size) | 0; for ( u = 1; (u | 0) &lt; ((size - 1) | 0); u = (u + 1) | 0) { yStart1 = (offset - size) | 0; yStart2 = (offset + size) | 0; xStart1 = (u - 1) | 0; xStart2 = (u + 1) | 0; sum = ((images[(inImagePtr + yStart1 + xStart1) | 0] | 0) + (images[(inImagePtr + yStart1 + xStart2) | 0] | 0) + (images[(inImagePtr + offset + u) | 0] | 0) + (images[(inImagePtr + yStart2 + xStart1) | 0] | 0) + (images[(inImagePtr + yStart2 + xStart2) | 0] | 0)) | 0; if ((sum | 0) == (5 | 0)) { images[(outImagePtr + offset + u) | 0] = 1; } else { images[(outImagePtr + offset + u) | 0] = 0; } } } return; }</p>
+     </div> 
+     <p>Although the basic code structure did not significantly change, the devil is in the detail. Instead of passing in the references to JavaScript objects, the respective indexes of the input and output images, pointing to the buffer, are used. Another noticeable difference is the repeated casting of values to integers with the <code> | 0 </code> notion, which is necessary for secure array access. There is also an additional variable <code>offset</code> defined, which is used as a counter to keep track of the absolute position in the buffer. This approach replaces the multiplication used for determining the current position. In general, asm.js does not allow multiplications of integers except when using the <code>imul</code> operator.</p> 
+     <p>Finally, the use of the tenary operator (<code> ? : </code>) is forbidden in asm.js which has simply been replaced by a regular <code>if.. else</code> condition.</p> 
+     <h3>Performance comparison</h3> 
+     <p>And now it is time to answer the more important question: How much faster is the asm.js implementation compared to regular JavaScript? Let’s take a look at the performance profiles, of which the first one represents the normal JavaScript version and the second asm.js.</p> 
+     <p><a href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/image-stream-profile-vanilla.png"><img src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/image-stream-profile-vanilla.png" alt="Image Stream Profile" width="500" height="192" class="alignnone size-full wp-image-27202" srcset="https://hacks.mozilla.org/files/2014/12/image-stream-profile-vanilla.png 500w, https://hacks.mozilla.org/files/2014/12/image-stream-profile-vanilla-250x96.png 250w" sizes="(max-width: 500px) 100vw, 500px"></a></p> 
+     <p><a href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/image-stream-profile-asm.png"><img src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/files/2014/12/image-stream-profile-asm.png" alt="image-stream-profile-asm" width="500" height="180" class="alignnone size-full wp-image-27203" srcset="https://hacks.mozilla.org/files/2014/12/image-stream-profile-asm.png 500w, https://hacks.mozilla.org/files/2014/12/image-stream-profile-asm-250x90.png 250w" sizes="(max-width: 500px) 100vw, 500px"></a></p> 
+     <p>Surprisingly, the difference between the two implementations is not as big as you might expect (~10%). Apparently, the initial JavaScript code was already written clean enough, so that the JIT compiler could already take full advantage of that. This assumption can only be proven wrong or right if someone re-implements the algorithm in C/C++ and cross-compiles it to asm.js using emscripten. I’m almost sure that the result would differ from my naïve port and produce much more optimized code.</p> 
+     <h2>getUserMedia</h2> 
+     <p>Besides performance, there are many other parts that must fit together in order to get the best experience. One of those parts is the portal to the user’s world, the camera. As we all know, <code>getUserMedia</code> provides an API to gain access to the device’s camera. Here, the difficulty lies within the differences among all major browser vendors, where the constraints, resolutions and events are handled differently.</p> 
+     <h3>Front/back-facing</h3> 
+     <p>If you are targeting devices other than regular laptops or computers, the chances are high that these devices offer more than one camera. Nowadays almost every tablet or smartphone has a back- and front-facing camera. When using Firefox, selecting the camera programmatically is not possible. Every time the user confirms access to the camera, he or she has to select the desired one. This is handled differently in Chrome, where <code>MediaStreamTrack.getSources</code> exposes the available sources which can then be filtered. You can find the defined sources in the <a href="http://www.w3.org/TR/mediacapture-streams/#video-facing-mode-enum" target="_blank">W3C draft</a>.</p> 
+     <p>The following snippet demonstrates how to get preferred access to the user’s back-facing camera:</p> 
+     <div class="wp_syntax" style="position:relative;">
+      <table>
+       <tbody>
+        <tr>
+         <td class="code"><pre class="javascript" style="font-family:monospace;">MediaStreamTrack.<span style="color: #660066;">getSources</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>sourceInfos<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+  <span style="color: #000066; font-weight: bold;">var</span> envSource <span style="color: #339933;">=</span> sourceInfos.<span style="color: #660066;">filter</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>sourceInfo<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+    <span style="color: #000066; font-weight: bold;">return</span> sourceInfo.<span style="color: #660066;">kind</span> <span style="color: #339933;">==</span> <span style="color: #3366CC;">"video"</span>
+        <span style="color: #339933;">&amp;&amp;</span> sourceInfo.<span style="color: #660066;">facing</span> <span style="color: #339933;">==</span> <span style="color: #3366CC;">"environment"</span><span style="color: #339933;">;</span>
+  <span style="color: #009900;">}</span><span style="color: #009900;">)</span>.<span style="color: #660066;">reduce</span><span style="color: #009900;">(</span><span style="color: #000066; font-weight: bold;">function</span><span style="color: #009900;">(</span>a<span style="color: #339933;">,</span> source<span style="color: #009900;">)</span> <span style="color: #009900;">{</span>
+    <span style="color: #000066; font-weight: bold;">return</span> source<span style="color: #339933;">;</span>
+  <span style="color: #009900;">}</span><span style="color: #339933;">,</span> <span style="color: #003366; font-weight: bold;">null</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+  <span style="color: #000066; font-weight: bold;">var</span> constraints <span style="color: #339933;">=</span> <span style="color: #009900;">{</span>
+    audio <span style="color: #339933;">:</span> <span style="color: #003366; font-weight: bold;">false</span><span style="color: #339933;">,</span>
+    video <span style="color: #339933;">:</span> <span style="color: #009900;">{</span>
+      optional <span style="color: #339933;">:</span> <span style="color: #009900;">[</span><span style="color: #009900;">{</span>
+        sourceId <span style="color: #339933;">:</span> envSource <span style="color: #339933;">?</span> envSource.<span style="color: #660066;">id</span> <span style="color: #339933;">:</span> <span style="color: #003366; font-weight: bold;">null</span>
+      <span style="color: #009900;">}</span><span style="color: #009900;">]</span>
+    <span style="color: #009900;">}</span>
+  <span style="color: #009900;">}</span><span style="color: #339933;">;</span>
+<span style="color: #009900;">}</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre></td>
+        </tr>
+       </tbody>
+      </table>
+      <p class="theCode" style="display:none;">MediaStreamTrack.getSources(function(sourceInfos) { var envSource = sourceInfos.filter(function(sourceInfo) { return sourceInfo.kind == "video" &amp;&amp; sourceInfo.facing == "environment"; }).reduce(function(a, source) { return source; }, null); var constraints = { audio : false, video : { optional : [{ sourceId : envSource ? envSource.id : null }] } }; });</p>
+     </div> 
+     <p>In the use-case of barcode-scanning, the user is most likely going to use the device’s back-facing camera. This is where choosing a camera up front can enormously improve the user experience.</p> 
+     <h3>Resolution</h3> 
+     <p>Another very important topic when working with video is the actual resolution of the stream. This can be controlled with additional constraints to the video stream.</p> 
+     <div class="wp_syntax" style="position:relative;">
+      <table>
+       <tbody>
+        <tr>
+         <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> hdConstraint <span style="color: #339933;">=</span> <span style="color: #009900;">{</span>
+  video<span style="color: #339933;">:</span> <span style="color: #009900;">{</span>
+    mandatory<span style="color: #339933;">:</span> <span style="color: #009900;">{</span>
+      width<span style="color: #339933;">:</span> <span style="color: #009900;">{</span> min<span style="color: #339933;">:</span> <span style="color: #CC0000;">1280</span> <span style="color: #009900;">}</span><span style="color: #339933;">,</span>
+      height<span style="color: #339933;">:</span> <span style="color: #009900;">{</span> min<span style="color: #339933;">:</span> <span style="color: #CC0000;">720</span> <span style="color: #009900;">}</span>
+    <span style="color: #009900;">}</span>
+  <span style="color: #009900;">}</span>
+<span style="color: #009900;">}</span><span style="color: #339933;">;</span></pre></td>
+        </tr>
+       </tbody>
+      </table>
+      <p class="theCode" style="display:none;">var hdConstraint = { video: { mandatory: { width: { min: 1280 }, height: { min: 720 } } } };</p>
+     </div> 
+     <p>The above snippet, when added to the video constraints, tries to get a video-stream with the specified quality. If no camera meets those requirements, an <code>ConstraintNotSatisfiedError</code> error is returned in the callback. However, these constraints are not fully compatible with all browsers, since some use <code>minWidth</code> and <code>minHeight</code> instead.</p> 
+     <h3>Autofocus</h3> 
+     <p>Barcodes are typically rather small and must be close-up to the camera in order to be correctly identified. This is where a built-in auto-focus can help to increase the robustness of the detection algorithm. However, the <code>getUserMedia</code> API lacks functionality for triggering the auto-focus and most devices do not even support continuous autofocus in browser-mode. If you have an up-to-date Android device, chances are high that Firefox is able to use the autofocus of your camera (e.g. Nexus 5 or HTC One). Chrome on Android does not support it yet, but there is already an <a href="https://code.google.com/p/chromium/issues/detail?id=343894" target="_blank">issue</a> filed.</p> 
+     <h3>Performance</h3> 
+     <p>And there is still the question of the performance impact caused by grabbing the frames from the video stream. The results have already been presented in the <strong>profiling</strong> section. They show that almost 30%, or 8ms of CPU time is consumed for just fetching the image and storing it in a <code>TypedArray</code> instance. The typical process of reading the data from a video-source looks as follows:</p> 
+     <ol> 
+      <li>Make sure the camera-stream is attached to a video-element</li> 
+      <li>Draw the image to a canvas using <code>ctx.drawImage</code></li> 
+      <li>Read the data from the canvas using <code>ctx.getImageData</code></li> 
+      <li>Convert the video to gray-scale and store it inside a <code>TypedArray</code></li> 
+     </ol> 
+     <div class="wp_syntax" style="position:relative;">
+      <table>
+       <tbody>
+        <tr>
+         <td class="code"><pre class="javascript" style="font-family:monospace;"><span style="color: #000066; font-weight: bold;">var</span> video <span style="color: #339933;">=</span> document.<span style="color: #660066;">getElementById</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"camera"</span><span style="color: #009900;">)</span><span style="color: #339933;">,</span>
+    ctx <span style="color: #339933;">=</span> document.<span style="color: #660066;">getElementById</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"canvas"</span><span style="color: #009900;">)</span>.<span style="color: #660066;">getContext</span><span style="color: #009900;">(</span><span style="color: #3366CC;">"2d"</span><span style="color: #009900;">)</span><span style="color: #339933;">,</span>
+    ctxData<span style="color: #339933;">,</span>
+    width <span style="color: #339933;">=</span> video.<span style="color: #660066;">videoWidth</span><span style="color: #339933;">,</span>
+    height <span style="color: #339933;">=</span> video.<span style="color: #660066;">videoHeight</span>
+    data <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">new</span> Uint8Array<span style="color: #009900;">(</span>width<span style="color: #339933;">*</span>height<span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+&nbsp;
+ctx.<span style="color: #660066;">drawImage</span><span style="color: #009900;">(</span>video<span style="color: #339933;">,</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">)</span><span style="color: #339933;">;</span>
+ctxData <span style="color: #339933;">=</span> ctx.<span style="color: #660066;">getImageData</span><span style="color: #009900;">(</span><span style="color: #CC0000;">0</span><span style="color: #339933;">,</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span> width<span style="color: #339933;">,</span> height<span style="color: #009900;">)</span>.<span style="color: #660066;">data</span><span style="color: #339933;">;</span>
+computeGray<span style="color: #009900;">(</span>ctxData<span style="color: #339933;">,</span> data<span style="color: #009900;">)</span><span style="color: #339933;">;</span></pre></td>
+        </tr>
+       </tbody>
+      </table>
+      <p class="theCode" style="display:none;">var video = document.getElementById("camera"), ctx = document.getElementById("canvas").getContext("2d"), ctxData, width = video.videoWidth, height = video.videoHeight data = new Uint8Array(width*height); ctx.drawImage(video, 0, 0); ctxData = ctx.getImageData(0, 0, width, height).data; computeGray(ctxData, data);</p>
+     </div> 
+     <p>It would be very much appreciated if there were a way to get lower-level access to the camera frames without going through the hassle of drawing and reading every single image. This is especially important when processing higher resolution content.</p> 
+     <h2>Wrap up</h2> 
+     <p>It has been real fun to create a project centered on computer vision, especially because it connects so many parts of the web platform. Hopefully, limitations such as the missing auto-focus on mobile devices, or reading the camera stream, will be sorted out in the near future. Still, it is pretty amazing what you can build nowadays by simply using HTML and JavaScript.</p> 
+     <p>Another lesson learned is that implementing asm.js by hand is both hard and unnecessary if you already know how to write proper JavaScript code. However, if you already have an existing C/C++ codebase which you would like to port, <a href="https://github.com/kripken/emscripten" target="_blank">emscripten</a> does a wonderful job. This is where asm.js comes to the rescue.</p> 
+     <p>Finally, I hope more and more people are jumping on the computer vision path, even if technologies like WebCL are still a long way down the road. The future for Firefox might even be for <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=664147#c30" target="_blank">ARB_compute_shader</a> to eventually jump on to the fast track.</p> 
+     <section class="about"> 
+      <h2 class="about__header">About <a class="url" href="https://hacks.mozilla.org/author/ch-oberhofergmail-com/"> Christoph Oberhofer </a> </h2> 
+      <p>I'm an application developer focused on web technologies and mobile solutions working @Netconomy. Every bit of JavaScript, Java or CSS gets me excited. I'm @overaldi on Twitter.</p> 
+      <p><a class="url" href="https://hacks.mozilla.org/author/ch-oberhofergmail-com/">More articles by Christoph Oberhofer…</a></p> 
+      <h2 class="about__header">About <a class="url" href="https://hacks.mozilla.org/author/havi/"> Havi Hoffman [Editor] </a> </h2> 
+      <p>Developer Relations team content wrangler &amp; writer, Hacks blog editor, creator of programs and events for developers designed to inform, inspire and extend the open web. Lately, Mozilla Tech Speakers. And a garden in Silicon Valley.</p> 
+      <p><a class="url" href="https://hacks.mozilla.org/author/havi/">More articles by Havi Hoffman [Editor]…</a></p> 
+     </section> 
+    </article> 
+    <section class="discussion"> 
+     <hr class="dino"> 
+     <div class="comments"> 
+      <header class="comments__head"> 
+       <h3>7 comments</h3> 
+      </header> 
+      <ol class="hfeed"> 
+       <li id="comment-16584" class="comment even thread-even depth-1"> <b class="comment__title vcard"> <cite class="author fn">Nn</cite> </b> 
+        <blockquote class="comment__body"> 
+         <p>See also e.g. <a href="http://webqr.com/" rel="nofollow">http://webqr.com/</a> and <a href="https://github.com/EddieLa/JOB" rel="nofollow">https://github.com/EddieLa/JOB</a></p> 
+        </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16584" rel="bookmark" title="Permanent link to this comment by Nn"><abbr class="published" title="2014-12-11">December 11th, 2014</abbr> at 09:00</a> <p class="comment__util"> </p> </li>
+       <!-- #comment-## --> 
+       <li id="comment-16586" class="comment odd alt thread-odd thread-alt depth-1"> <b class="comment__title vcard"> <cite class="author fn">V</cite> </b> 
+        <blockquote class="comment__body"> 
+         <p>I’m not sure, but frequent switches between asm.js and non-asm.js code might hurt performance in Firefox as well.</p> 
+        </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16586" rel="bookmark" title="Permanent link to this comment by V"><abbr class="published" title="2014-12-11">December 11th, 2014</abbr> at 14:29</a> <p class="comment__util"> </p> 
+        <ol class="children"> 
+         <li id="comment-16597" class="comment byuser comment-author-jwaldenmozilla-com even depth-2"> <b class="comment__title vcard"> <cite class="author fn">Jeff Walden</cite> </b> 
+          <blockquote class="comment__body"> 
+           <p>This is somewhat true if you’re jumping between the two really often. Although note that we’ve optimized calls from one sort of code to the other enough that you probably won’t notice much if you’re doing it.</p> 
+           <p>But, if you do <em>enough</em> work in your asm.js code, the benefits outweigh any slowdowns that might be imposed by transition code. And here, where the work function looks to run in time O(array length**2), and the array length is probably on the order of kilobytes, I very much doubt that switching costs matter in the big picture.</p> 
+          </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16597" rel="bookmark" title="Permanent link to this comment by Jeff Walden"><abbr class="published" title="2014-12-11">December 11th, 2014</abbr> at 16:08</a> <p class="comment__util"> </p> 
+          <ol class="children"> 
+           <li id="comment-16599" class="comment odd alt depth-3"> <b class="comment__title vcard"> <cite class="author fn">V</cite> </b> 
+            <blockquote class="comment__body"> 
+             <p>“if you do enough work in your asm.js code, the benefits outweigh any slowdowns”<br> Did you mean if you do enough work in your asm.js code between transitions?<br> It’s not clear from the article (besides the Profiler screenshots), but from the source QuaggaJS splits the image in several subimages in non-asm.js code that then get passed to the asm.js skeletonize(), one subimage per call to skeletonize.</p> 
+            </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16599" rel="bookmark" title="Permanent link to this comment by V"><abbr class="published" title="2014-12-11">December 11th, 2014</abbr> at 22:13</a> <p class="comment__util"> </p> 
+            <ol class="children"> 
+             <li id="comment-16606" class="comment byuser comment-author-jwaldenmozilla-com even depth-4"> <b class="comment__title vcard"> <cite class="author fn">Jeff Walden</cite> </b> 
+              <blockquote class="comment__body"> 
+               <p>Yes, that’s what I meant. So the question becomes how large the subimages are. Assuming the splitting isn’t too fine, the asm.js work should more than compensate for transition costs.</p> 
+              </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16606" rel="bookmark" title="Permanent link to this comment by Jeff Walden"><abbr class="published" title="2014-12-12">December 12th, 2014</abbr> at 15:07</a> <p class="comment__util"> </p> 
+              <ol class="children"> 
+               <li id="comment-16607" class="comment odd alt depth-5"> <b class="comment__title vcard"> <cite class="author fn">V</cite> </b> 
+                <blockquote class="comment__body"> 
+                 <p>16×16 or 32×32<br> <a href="https://github.com/serratus/quaggaJS/blob/master/dist/quagga.js#L5737" rel="nofollow">https://github.com/serratus/quaggaJS/blob/master/dist/quagga.js#L5737</a></p> 
+                </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16607" rel="bookmark" title="Permanent link to this comment by V"><abbr class="published" title="2014-12-13">December 13th, 2014</abbr> at 02:07</a> <p class="comment__util"> </p> </li>
+               <!-- #comment-## --> 
+               <li id="comment-16617" class="comment byuser comment-author-jwaldenmozilla-com even depth-5"> <b class="comment__title vcard"> <cite class="author fn">Jeff Walden</cite> </b> 
+                <blockquote class="comment__body"> 
+                 <p>…that small, really? That’s well below the size where I’d be confident in predicting any transition costs would be eaten up by asm.js speedups. (They might still be, just that I wouldn’t bet on it.) Heck, that’s small enough I wouldn’t even consider manual asm.js until I’d profiled and determined I needed any extra speed.</p> 
+                </blockquote> <a class="comment__meta" href="https://hacks.mozilla.org/2014/12/quaggajs-building-a-barcode-scanner-for-the-web/#comment-16617" rel="bookmark" title="Permanent link to this comment by Jeff Walden"><abbr class="published" title="2014-12-14">December 14th, 2014</abbr> at 14:23</a> <p class="comment__util"> </p> </li>
+               <!-- #comment-## --> 
+              </ol>
+              <!-- .children --> </li>
+             <!-- #comment-## --> 
+            </ol>
+            <!-- .children --> </li>
+           <!-- #comment-## --> 
+          </ol>
+          <!-- .children --> </li>
+         <!-- #comment-## --> 
+        </ol>
+        <!-- .children --> </li>
+       <!-- #comment-## --> 
+      </ol> 
+     </div> 
+     <p class="comments__closed"><b>Comments are closed for this article.</b></p> 
+     <!-- /#content-main --> 
+     <footer class="footer section section--fullwidth"> 
+      <div class="row"> 
+       <p class="block block--1"> Except where otherwise noted, content on this site is licensed under the <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="license external">Creative Commons Attribution Share-Alike License v3.0</a> or any later version. </p> 
+       <img class="footer__logo" alt="the Mozilla dino logo" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/themes/Hax/img/dino.svg"> 
+      </div> 
+     </footer> 
+    </section>
+   </main>
+  </div> 
+  <link rel="stylesheet" id="hljstheme-css" href="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/plugins/wp-code-highlightjs/styles/default.css?ver=0.6.2" type="text/css" media="all"> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/plugins/wp-syntax/js/wp-syntax.js?ver=1.1"></script> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-includes/js/wp-embed.min.js?ver=4.8.1"></script> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/plugins/wp-code-highlightjs/highlight.common.pack.js?ver=0.6.2"></script> 
+  <script type="text/javascript" src="https://2r4s9p1yi1fa2jd7j43zph8r-wpengine.netdna-ssl.com/wp-content/plugins/wp-code-highlightjs/highlight.custom.pack.js?ver=0.6.2"></script> 
+  <style>pre.hljs {padding: 5px;}
+pre.hljs code {}</style> 
+  <script type="text/javascript">
+    (function($, window) {
+        var init_fn_flag = false;
+        var init_fn = (function() {
+            if (init_fn_flag)
+                return;
+            init_fn_flag = true;
+             hljs.configure({"tabReplace":"    "});
+            $('pre code').each(function(i, block) {
+                hljs.highlightBlock(block);
+            });
+        });
+        $(document).ready(init_fn);
+        $(window).on("load", init_fn);
+    })(jQuery, window);
+    </script> 
+  <script>
+    // External links should open in a new tab.
+    (function () {
+      var postLinks = document.querySelectorAll('#content-main a');
+
+      var origin = location.origin;
+
+      for (var i = 0; i < postLinks.length; i++) {
+        var link = postLinks[i];
+        if (link.origin !== origin && !link.getAttribute('target')) {
+          link.setAttribute('target', '_blank');
+        }
+      }
+    })();
+
+    window.addEventListener('load', function () {
+      if (document.querySelector('#newsletterForm')) {
+        var script = document.createElement('script');
+        var path = document.head.getAttribute('data-template-path');
+        script.setAttribute('src', path + '/js/newsletter.js');
+        document.head.appendChild(script);
+      }
+    });
+  </script>   
+ </body>
+</html>

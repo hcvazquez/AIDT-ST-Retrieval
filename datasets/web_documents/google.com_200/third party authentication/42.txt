@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <link rel="stylesheet" type="text/css" href="/styles.css"> 
+  <title data-react-helmet="true">Implementing JWT using Passport | Jscramber Blog</title> 
+  <meta data-react-helmet="true" charset="UTF-8">
+  <meta data-react-helmet="true" name="viewport" content="width=device-width, initial-scale=1">
+  <meta data-react-helmet="true" name="author" content="Jscrambler Code">
+  <meta data-react-helmet="true" http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta data-react-helmet="true" property="og:locale" content="en_US">
+  <meta data-react-helmet="true" property="og:site_name" content="Jscrambler Blog">
+  <meta data-react-helmet="true" property="fb:admins" content="1834350701">
+  <meta data-react-helmet="true" name="twitter:card" content="summary_large_image">
+  <meta data-react-helmet="true" name="twitter:site" content="@jscrambler">
+  <meta data-react-helmet="true" name="twitter:creator" content="@jscrambler">
+  <meta data-react-helmet="true" property="og:type" content="article">
+  <meta data-react-helmet="true" name="description" content="In this post, we’ll explore the main concepts and implementations of user's authentication using the mechanism called JWT via a Passport module.">
+  <meta data-react-helmet="true" name="twitter:image" content="https://blog.jscrambler.com/content/images/2016/12/jwt_passport-1.png">
+  <meta data-react-helmet="true" name="og:image" content="https://blog.jscrambler.com/content/images/2016/12/jwt_passport-1.png">
+  <meta data-react-helmet="true" property="og:title" content="Implementing JWT using Passport | Jscrambler Blog">
+  <meta data-react-helmet="true" property="og:description" content="In this post, we’ll explore the main concepts and implementations of user's authentication using the mechanism called JWT via a Passport module.">
+  <meta data-react-helmet="true" name="twitter:title" content="Implementing JWT using Passport | Jscrambler Blog">
+  <meta data-react-helmet="true" name="twitter:description" content="In this post, we’ll explore the main concepts and implementations of user's authentication using the mechanism called JWT via a Passport module."> 
+  <link data-react-helmet="true" rel="publisher" href="https://plus.google.com/+Jscrambler"> 
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico"> 
+  <link rel="stylesheet" type="text/css" href="/css/normalize.min.css"> 
+  <link rel="stylesheet" type="text/css" href="/css/font-awesome.min.css"> 
+  <script type="text/javascript" src="/shared/ghost-url.min.js"></script> 
+ </head> 
+ <body> 
+  <div id="root">
+   <div class="root--3trTw" data-reactroot="" data-reactid="1" data-react-checksum="-1520279667">
+    <div class="navbarRoot--3F_uX white--1WDv_ fixed--2Be4n" data-reactid="2">
+     <nav class="navBar--10T8g" data-reactid="3">
+      <div class="leftMenu--18rk1" data-reactid="4">
+       <a class="navLogo--sFXoM" href="https://jscrambler.com/" action="Click" data-reactid="5"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iOTYiIGhlaWdodD0iMjgiIHZpZXdCb3g9IjAgMCA5NiAyOCI+CiAgICA8ZGVmcz4KICAgICAgICA8cGF0aCBpZD0iYSIgZD0iTTAgMjcuODk3aDk2VjBIMHoiLz4KICAgIDwvZGVmcz4KICAgIDxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZmlsbD0iIzA5RiIgZD0iTTcuMjc2IDIyLjIzMmMtLjYyNSAwLTEuMTYzLS4wNjctMS42MTEtLjJ2LTEuOTI0Yy4zNzQuMTAxLjc1Ni4xNTIgMS4xNDYuMTUyLjQxIDAgLjcxMi0uMTE1LjkwMi0uMzQ0LjE4OS0uMjMuMjg0LS41Ny4yODQtMS4wMTh2LTguMTU2aDIuNDQ2djguNTE2YzAgLjk1MS0uMjc2IDEuNjg1LS44MjYgMi4yMDEtLjU1MS41MTUtMS4zMzEuNzczLTIuMzQxLjc3M3pNMTguODUgMTcuMDQzYzAgLjkyLS4zMiAxLjYyLS45NTggMi4xLS42MzkuNDgxLTEuNTk0LjcyMi0yLjg2Ni43MjItLjY1MiAwLTEuMjA4LS4wNDQtMS42NjgtLjEzM2E2LjMwNSA2LjMwNSAwIDAgMS0xLjI5LS4zODh2LTIuMDJjLjQ1NC4yMTMuOTY2LjM5MiAxLjUzNS41MzYuNTcuMTQ1IDEuMDcuMjE3IDEuNTAzLjIxNy44ODcgMCAxLjMzMS0uMjU3IDEuMzMxLS43NjlhLjY0Ny42NDcgMCAwIDAtLjE3Ni0uNDdjLS4xMTgtLjEyLS4zMi0uMjU2LS42MS0uNDA4LS4yODgtLjE1My0uNjczLS4zMy0xLjE1NC0uNTMzLS42ODktLjI4OS0xLjE5Ni0uNTU2LTEuNTE5LS44MDJhMi4yNTQgMi4yNTQgMCAwIDEtLjcwNi0uODQ2Yy0uMTQ3LS4zMTgtLjIyLS43MDktLjIyLTEuMTc0IDAtLjc5Ny4zMS0xLjQxMi45MjYtMS44NDguNjE3LS40MzUgMS40OTItLjY1MyAyLjYyNS0uNjUzIDEuMDggMCAyLjEzLjIzNSAzLjE1MS43MDVsLS43MzggMS43NjRhMTMuNTQgMTMuNTQgMCAwIDAtMS4yNTgtLjQ3MyAzLjk1OSAzLjk1OSAwIDAgMC0xLjE5NS0uMTg1Yy0uNzIgMC0xLjA4Mi4xOTYtMS4wODIuNTg2IDAgLjIyLjExNi40MDguMzQ4LjU3LjIzMy4xNi43NDIuMzk3IDEuNTI4LjcxMi43LjI4NCAxLjIxMy41NDggMS41NC43OTQuMzI1LjI0Ni41NjUuNTMuNzIuODUuMTU1LjMyLjIzMy43MDIuMjMzIDEuMTQ2TTIzLjk4NyAxOS44NjVjLTIuNzkgMC00LjE4NS0xLjUzMS00LjE4NS00LjU5NCAwLTEuNTIzLjM4LTIuNjg2IDEuMTM5LTMuNDkuNzU4LS44MDUgMS44NDYtMS4yMDcgMy4yNjItMS4yMDcgMS4wMzcgMCAxLjk2Ny4yMDMgMi43OS42MDlsLS43MjEgMS44OTJhMTIuMzQyIDEyLjM0MiAwIDAgMC0xLjA3NS0uMzgxIDMuNDUgMy40NSAwIDAgMC0uOTk0LS4xNDhjLTEuMjcyIDAtMS45MDcuOTAzLTEuOTA3IDIuNzEgMCAxLjc1My42MzUgMi42MjkgMS45MDcgMi42MjkuNDcgMCAuOTA3LS4wNjMgMS4zMDctLjE4OGE0LjcxMiA0LjcxMiAwIDAgMCAxLjIwMy0uNTl2Mi4wOTJhMy45MTggMy45MTggMCAwIDEtMS4yLjUyMWMtLjQwMi4wOTctLjkxMi4xNDUtMS41MjYuMTQ1Ii8+CiAgICAgICAgPG1hc2sgaWQ9ImIiIGZpbGw9IiNmZmYiPgogICAgICAgICAgICA8dXNlIHhsaW5rOmhyZWY9IiNhIi8+CiAgICAgICAgPC9tYXNrPgogICAgICAgIDxwYXRoIGZpbGw9IiMwOUYiIGQ9Ik03MC42MTggMTkuNzA1aDIuNDQ1VjcuNDA4aC0yLjQ0NXpNNzguOTMgMTIuMzEzYy0uNTE4IDAtLjkyNC4xNjUtMS4yMTguNDkzLS4yOTQuMzMtLjQ2My43OTUtLjUwNSAxLjRoMy40M2MtLjAxLS42MDUtLjE2Ny0xLjA3LS40NzItMS40LS4zMDUtLjMyOC0uNzE2LS40OTMtMS4yMzUtLjQ5M20uMzQ1IDcuNTUyYy0xLjQ0MyAwLTIuNTcxLS4zOTgtMy4zODMtMS4xOTUtLjgxMy0uNzk2LTEuMjE4LTEuOTI0LTEuMjE4LTMuMzgzIDAtMS41LjM3NS0yLjY2MiAxLjEyNi0zLjQ4My43NS0uODIgMS43ODktMS4yMyAzLjExNC0xLjIzIDEuMjY3IDAgMi4yNTMuMzYxIDIuOTU4IDEuMDgyLjcwNS43MjEgMS4wNTggMS43MTggMS4wNTggMi45OXYxLjE4N2gtNS43OGMuMDI3LjY5NC4yMzMgMS4yMzcuNjE4IDEuNjI3LjM4NS4zOS45MjQuNTg1IDEuNjE5LjU4NS41NCAwIDEuMDUtLjA1NiAxLjUzLS4xNjlhNy42MTggNy42MTggMCAwIDAgMS41MDgtLjUzN3YxLjg5MmE1Ljc1OCA1Ljc1OCAwIDAgMS0xLjM3LjQ3OGMtLjQ4Ny4xMDQtMS4wOC4xNTYtMS43OC4xNTZNNTcuNzYgMTEuMzU1Yy0uNTIyLS41Mi0xLjI5LS43OC0yLjMwNi0uNzgtMS43NjUgMC0yLjg2MiAxLjMxMy0yLjg2MiAxLjMxMy0uNDc2LS44NzYtMS4zODQtMS4zMTQtMi43MjUtMS4zMTQtLjU4OCAwLTEuMTA5LjExNi0xLjU2NC4zNDhhMi40OTUgMi40OTUgMCAwIDAtMS4wNDIuOTY2di0xLjE0Nkg0NC45M3Y4Ljk2MmgyLjQ0NXYtNC4yMTZjMC0xLjA1My4xNDEtMS44MDkuNDI1LTIuMjY5LjI4My0uNDYuNzM3LS42ODkgMS4zNjItLjY4OS40NjUgMCAuODA2LjE2MSAxLjAyMi40ODUuMjE3LjMyMy4zMjUuODA4LjMyNSAxLjQ1NXY1LjIzNGgyLjQ0NXYtNC40OTdjMC0uOTMuMTQ4LTEuNjA4LjQ0NS0yLjAzNi4yOTctLjQyNy43NDQtLjY0IDEuMzQzLS42NC40NjUgMCAuODA2LjE2IDEuMDIyLjQ4NC4yMTYuMzIzLjMyNS44MDguMzI1IDEuNDU1djUuMjM0aDIuNDUzVjEzLjg2YzAtMS4xNDktLjI2LTEuOTg0LS43ODItMi41MDVNNjYuMDcgMTcuMTkyYy0uMjk2LjQ2Mi0uNjk1LjY5My0xLjE5OC42OTMtLjYyIDAtMS4wNzItLjIwOC0xLjM1OC0uNjI1LS4yODYtLjQxNy0uNDMtMS4xMDctLjQzLTIuMDY4di0uMjY1Yy4wMS0uODU1LjE1NS0xLjQ2OC40MzQtMS44NC4yNzgtLjM3MS43MTktLjU1NyAxLjMyMy0uNTU3LjUxOCAwIC45MjYuMjIgMS4yMjYuNjYyLjI5OS40NC40NDkgMS4xMDIuNDQ5IDEuOTgzIDAgLjg4Mi0uMTUgMS41NTUtLjQ0NSAyLjAxN20yLjA0LTUuMzljLS42LS44MjQtMS40MjctMS4yMzctMi40ODUtMS4yMzctMS4xMjIgMC0xLjk3LjQ0My0yLjU0MSAxLjMzVjcuNDA5SDYwLjY0djEyLjI5N2gyLjQ0NXYtLjk5NWMuNTk4Ljc2NCAxLjQyNCAxLjE0NiAyLjQ3NyAxLjE0NiAxLjA2MyAwIDEuOTA0LS40MDYgMi41Mi0xLjIyLjYxOC0uODExLjkyNy0xLjk1Ny45MjctMy40MzggMC0xLjQzNy0uMy0yLjU3LS44OTgtMy4zOTVNODkuNTEgMTAuNTc0Yy0uNTU2IDAtMS4wNy4xNTQtMS41NDMuNDYxYTMuMzYgMy4zNiAwIDAgMC0xLjEyNiAxLjIxNHYtMS41MDdoLTIuMzMzdjguOTYyaDIuNDQ1di00LjU2MWMwLS43MjEuMjE4LTEuMjgyLjY1My0xLjY4My40MzYtLjQwMSAxLjA0NC0uNjAxIDEuODI0LS42MDEuMjgzIDAgLjUyNC4wMjcuNzIyLjA4bC4xODQtMi4yOTNhMy45NTYgMy45NTYgMCAwIDAtLjgyNi0uMDcyTTQwLjM5MyAxNi4yOWMwIC41NC0uMTY5Ljk3My0uNTA5IDEuMjk4LS4zMzkuMzI3LS43OTIuNDktMS4zNTkuNDktLjc5IDAtMS4xODYtLjM0NS0xLjE4Ni0xLjAzNSAwLS40ODEuMTc0LS44MzguNTIxLTEuMDc0LjM0Ny0uMjM1Ljg3Ni0uMzYzIDEuNTg3LS4zODVsLjk0Ni0uMDMydi43Mzh6bTEuNDY3LTQuOTQ2Yy0uNjQtLjUyNC0xLjU2My0uNzg2LTIuNzY1LS43ODYtMS4yNTYgMC0yLjQuMjctMy40My44MWwuODA4IDEuNjVjLjk2Ny0uNDMyIDEuODEtLjY0OCAyLjUyNS0uNjQ4LjkzIDAgMS4zOTUuNDU0IDEuMzk1IDEuMzYydi4zOTNsLTEuNTU1LjA0OGMtMS4zNC4wNDktMi4zNDUuMjk5LTMuMDEuNzUtLjY2NS40NS0uOTk4IDEuMTUzLS45OTggMi4xMDQgMCAuOTA5LjI0NyAxLjYwOS43NDEgMi4xLjQ5NC40OTMgMS4xNzIuNzM4IDIuMDMyLjczOC43MDEgMCAxLjI2OC0uMSAxLjcwNC0uMzAxLjQzNi0uMi44Ni0uNTYgMS4yNzEtMS4wNzh2MS4yMTloMi4yNDR2LTUuOTczYzAtMS4wNjgtLjMyLTEuODY0LS45NjItMi4zODh6TTMzLjM4IDEwLjU3NGMtLjU1NiAwLTEuMDcuMTU0LTEuNTQzLjQ2MWEzLjM2IDMuMzYgMCAwIDAtMS4xMjYgMS4yMTR2LTEuNTA3aC0yLjMzM3Y4Ljk2MmgyLjQ0NXYtNC41NjFjMC0uNzIxLjIxOC0xLjI4Mi42NTMtMS42ODMuNDM2LS40MDEgMS4wNDQtLjYwMSAxLjgyNC0uNjAxLjI4MyAwIC41MjQuMDI3LjcyMi4wOGwuMTg0LTIuMjkzYTMuOTU2IDMuOTU2IDAgMCAwLS44MjYtLjA3Mk05LjIyIDBjLS42NC45MDItMS43NyAxLjc0My0zLjM4OCAxLjc0MyAwIDQuNDUzIDMuMzg4IDYuMTYzIDMuMzg4IDYuMTYzczMuMzg4LTEuNzEgMy4zODgtNi4xNjNDMTAuOTg4IDEuNzQzIDkuODYuOTAzIDkuMjIgMCIgbWFzaz0idXJsKCNiKSIvPgogICAgICAgIDxwYXRoIGZpbGw9IiMwOUYiIGQ9Ik0xNC41ODUgMS43NDNhMTAuMSAxMC4xIDAgMCAxLS4zMDIgMi40OUg5My41MXYyMS4xNzRIMi40OVY0LjIzM2gxLjY2NWExMC4xNSAxMC4xNSAwIDAgMS0uMy0yLjQ5SC4wMDJ2MjYuMTU0aDk2VjEuNzQzSDE0LjU4NXoiIG1hc2s9InVybCgjYikiLz4KICAgIDwvZz4KPC9zdmc+Cg==" alt="jscrambler logo" data-reactid="6"></a>
+       <a class="navLink--27bCm" href="https://jscrambler.com/code-integrity" action="Click" data-reactid="7">Code Integrity</a>
+       <a class="navLink--27bCm" href="https://jscrambler.com/webpage-integrity" action="Click" data-reactid="8">Webpage Integrity</a>
+       <a class="navLink--27bCm" href="https://jscrambler.com/compare-plans" action="Click" data-reactid="9">Pricing &amp; Plans</a>
+       <a class="navLink--27bCm" rel="noopener noreferrer" href="https://docs.jscrambler.com" action="Click" data-reactid="10">Docs</a>
+       <a class="navLink--27bCm" href="/" action="Click" data-reactid="11">Blog</a>
+      </div>
+      <div class="rightMenu--1onFV" data-reactid="12">
+       <a href="#" class="hamburgerButton--17VAz" data-reactid="13"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMiIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDIyIDE4Ij4KICAgIDxnIGZpbGw9IiMwOUYiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHJlY3Qgd2lkdGg9IjIyIiBoZWlnaHQ9IjIiIHJ4PSIxIi8+CiAgICAgICAgPHJlY3Qgd2lkdGg9IjIyIiBoZWlnaHQ9IjIiIHk9IjgiIHJ4PSIxIi8+CiAgICAgICAgPHJlY3Qgd2lkdGg9IjIyIiBoZWlnaHQ9IjIiIHk9IjE2IiByeD0iMSIvPgogICAgPC9nPgo8L3N2Zz4K" alt="open side menu" data-reactid="14"></a>
+      </div>
+     </nav>
+    </div>
+    <div class="layout--3cBof" data-reactid="15">
+     <div data-reactid="16">
+      <!-- react-empty: 17 -->
+      <div data-reactid="18">
+       <div data-reactid="19">
+        <!-- react-empty: 20 -->
+        <div data-reactid="21">
+         <div class="content" data-reactid="22">
+          <a href="/" class="link--2fQrx back--2pG1t back--10dtW" data-reactid="23">
+           <div data-reactid="24">
+            Back to Blog
+           </div><i class="fa fa-angle-left arrow--3jba9" aria-hidden="true" data-reactid="25"></i></a>
+         </div>
+         <section class="wrapper--25Nqe" data-reactid="26">
+          <div data-reactid="27">
+           <div class="header--1o1vd" data-reactid="28">
+            <div class="content" data-reactid="29">
+             <span class="normal--1221d date--2kWIK" data-reactid="30">March 31, 2016</span>
+             <h1 class="h1--2sOX7 title--P7-BL" data-reactid="31">Implementing JWT using Passport</h1>
+             <h6 class="h6--3dqPZ author--13iSL" data-reactid="32">
+              <!-- react-text: 33 -->by 
+              <!-- /react-text --><a href="/author/caio-pereira" data-reactid="34">Caio Ribeiro Pereira</a></h6>
+             <div class="tags--3xyax" data-reactid="35">
+              <span class="small--AllF_" data-reactid="36">Tags: </span>
+              <span class="small--AllF_ tag--3rEF-" data-reactid="37"><a href="/tag/javascript" data-reactid="38">JavaScript</a>
+               <!-- react-text: 39 -->, 
+               <!-- /react-text --></span>
+              <span class="small--AllF_ tag--3rEF-" data-reactid="40"><a href="/tag/json" data-reactid="41">JSON</a>
+               <!-- react-text: 42 -->, 
+               <!-- /react-text --></span>
+              <span class="small--AllF_ tag--3rEF-" data-reactid="43"><a href="/tag/jwt" data-reactid="44">JWT</a>
+               <!-- react-text: 45 -->, 
+               <!-- /react-text --></span>
+              <span class="small--AllF_ tag--3rEF-" data-reactid="46"><a href="/tag/node-js" data-reactid="47">Node.js</a>
+               <!-- react-text: 48 -->, 
+               <!-- /react-text --></span>
+              <span class="small--AllF_ tag--3rEF-" data-reactid="49"><a href="/tag/passport-js" data-reactid="50">Passport.js</a></span>
+             </div>
+            </div>
+           </div>
+          </div>
+          <div class="wrapper--QHsYy" data-reactid="51">
+           <article id="article" class="postContent--36Toi" data-reactid="52">
+            <p><img src="/content/images/2016/12/jwt_passport.png" alt="jwt_passport"></p> 
+            <p>In this post, we’ll explore the main concepts and implementations of user’s authentication using the mechanism called JWT <em>(JSON Web Token)</em> via a Passport module. After all, this is an important step to ensure that users can safely authenticate into a REST API.</p> 
+            <p>Before we start, let’s create a simple REST API, which will be used during this post. We are going to create an Express API to simplify our example. To start off, let’s setup our project, open the terminal and type this command:</p> 
+            <pre><code>mkdir my - api  
+cd my - api  
+npm init  
+</code></pre> 
+            <p>The <code>npm init</code> shows a quick quiz to setup some descriptions and generate the <code>package.json</code> file, which is the main file that we will use to install some modules for our project. Feel free to answer each question in your own way. After this, install the <code>express</code> framework and <code>body-parser</code> module, by running this command:</p> 
+            <pre><code>npm install express body - parser--save  
+</code></pre> 
+            <p>Now that we have the Express module installed, let’s write our API code. To do it, let’s create the <code>index.js</code> with the code below:</p> 
+            <pre><code>// index.js
+var express = require("express");  
+var bodyParser = require("body-parser");  
+var app = express();
+
+app.use(bodyParser.json());
+
+app.get("/", function(req, res) {  
+    res.json({
+        status: "My API is alive!"
+    });
+});
+
+app.listen(3000, function() {  
+    console.log("My API is running...");
+});
+
+module.exports = app;  
+</code></pre> 
+            <p>In this post we will use a simple array of users data to facilitate the implementation of JWT auth. But, in real applications it’s highly recommended to use a database instead of a simple array of users. We will use this array only for sample purposes. We need a list of users data which will be used to verify if a request is from an authenticated user, to do it, create the <code>users.js</code> with the code below:</p> 
+            <pre><code>// users.js
+// Fake list of users to be used in the authentication
+var users = [{  
+    id: 1,
+    name: "John",
+    email: "john@mail.com",
+    password: "john123"
+}, {
+    id: 2,
+    name: "Sarah",
+    email: "sarah@mail.com",
+    password: "sarah123"
+}];
+
+module.exports = users;  
+</code></pre> 
+            <p>Now we have a simple API enough to explore in the next sections how to implement JWT authentication.</p> 
+            <h2 id="introductiontopassportjsandjwt">Introduction to Passport.js and JWT</h2> 
+            <h3 id="aboutpassportjs">About Passport.js</h3> 
+            <p>There is a Node.js module very cool and easy to work with user’s authentication, it’s called <strong>Passport</strong>.</p> 
+            <p>Passport is a framework that is extremely flexible and modular. It allows you to work with the main authentication strategies: <strong>Basic &amp; Digest</strong>, <strong>OpenID</strong>, <strong>OAuth</strong>, <strong>OAuth 2.0</strong> and <strong>JWT</strong>. And also allows you to work with external services authentication, such as <strong>Facebook</strong>, <strong>Google+</strong>, <strong>Twitter</strong> and more. By the way, in its official website, <strong>there is a list with +300 authentication strategies</strong>, created and maintained by 3rd-party.</p> 
+            <p><img src="/content/images/2016/12/site-passport.jpg" alt="site-passport"></p> 
+            <p>Its official website is: <a href="http://passportjs.org">passportjs.org</a>.</p> 
+            <h3 id="aboutjwt">About JWT</h3> 
+            <p>JWT <em>(JSON Web Tokens)</em> is a very simple and secure authentication’s strategy for REST APIs. It is an <em>open standard</em> for web authentications and is totally based in JSON token’s requests between client and server. Its authentication’s engine works like this:</p> 
+            <ol> 
+             <li>Client makes a request once by sending their login credentials and password; </li> 
+             <li>Server validates the credentials and, if everything is right, it returns to the client a JSON with a token that encodes data from a user logged into the system; </li> 
+             <li>Client, after receiving this token, can store it the way it wants, whether via LocalStorage, Cookie or other client-side storage mechanisms; </li> 
+             <li>Every time the client accesses a route that requires authentication, it will only send this token to the API to authenticate and release consumption data; </li> 
+             <li>Server always validate this token to allow or block a customer request.</li> 
+            </ol> 
+            <p>To specific details about JWT, go to <a href="http://jwt.io">jwt.io</a>.</p> 
+            <p><img src="/content/images/2016/12/site-jwt.jpg" alt="site-jwt"></p> 
+            <h2 id="installingpassportandjwt">Installing Passport and JWT</h2> 
+            <p>To start the fun, we’ll use the following modules:</p> 
+            <ul> 
+             <li><code>passport</code>: as authentication’s engine;</li> 
+             <li><code>passport-jwt</code>: as JWT authentication’s strategy for Passport;</li> 
+             <li><code>jwt-simple</code>: as encoder and decoder of JSON tokens;</li> 
+            </ul> 
+            <p>Now, let’s install them by running this command:</p> 
+            <pre><code>npm install passport passport-jwt jwt-simple --save  
+</code></pre> 
+            <p>To start this implementation, first we are going to create a <code>config.js</code> file to add two settings items for JWT (<code>jwtSecret</code> and <code>jwtSession</code>):</p> 
+            <pre><code>// config.js
+module.exports = {  
+    jwtSecret: "MyS3cr3tK3Y",
+    jwtSession: {
+        session: false
+    }
+};
+</code></pre> 
+            <p>The field <code>jwtSecret</code> keeps a secret key string that serves as a base to <strong>encode</strong> and <strong>decode</strong> the tokens. It’s highly advisable to use a complex string with many different characters and <strong>never share this secret key in public</strong>, because, if it leaks, you will let your application vulnerable, allowing any bad intentioned person to access the system and manages the tokens from logged users without informing the correctly credentials in the authentication process.</p> 
+            <p>To finish, the last included field is <code>jwtSession</code> that has the object <code>{session: false}</code>. This item is used to inform Passport that the API won’t manage session.</p> 
+            <h2 id="implementingjwtauthentication">Implementing JWT authentication</h2> 
+            <p>Now that we have the Passport and JWT settings ready, let’s implement the main rules on how the client will be authenticated in our API. To start, we are going to implement the authentication rules, that will also have middleware functions provided by Passport to use into the API’s routes. This code is going to have a middleware and two main functions. The middleware will be executed in the moment it starts the application, and it basically receive in his callback a <code>payload</code> that contains a <strong>decoded JSON</strong> which was decoded using the secret key <code>cfg.jwtSecret</code>. This <code>payload</code> will have the attribute <code>id</code> that will be a user <code>id</code> to be used as argument to search a user in the database, in our case, this <code>id</code> will be used to get a user data from the array of users from <code>users.js</code> file. As this middleware is going to be frequently accessed, to avoid some overheads, we are going to send a simple object containing only the <code>id</code> of a user, using the callback function:</p> 
+            <pre><code>done(null, {  
+    id: user.id
+});
+</code></pre> 
+            <p>This middleware will be injected via <code>passport.use(strategy)</code> function. To finish, two functions will be included from Passport to be used on the application. They are the <code>initialize()</code> function which starts the Passport and <code>authenticate()</code> which is used to authenticate the access for a route.</p> 
+            <p>To understand better this implementation, let’s create in the root folder the <code>auth.js</code> file, using this code:</p> 
+            <pre><code>// auth.js
+var passport = require("passport");  
+var passportJWT = require("passport-jwt");  
+var users = require("./users.js");  
+var cfg = require("./config.js");  
+var ExtractJwt = passportJWT.ExtractJwt;  
+var Strategy = passportJWT.Strategy;  
+var params = {  
+    secretOrKey: cfg.jwtSecret,
+    jwtFromRequest: ExtractJwt.fromAuthHeader()
+};
+
+module.exports = function() {  
+    var strategy = new Strategy(params, function(payload, done) {
+        var user = users[payload.id] || null;
+        if (user) {
+            return done(null, {
+                id: user.id
+            });
+        } else {
+            return done(new Error("User not found"), null);
+        }
+    });
+    passport.use(strategy);
+    return {
+        initialize: function() {
+            return passport.initialize();
+        },
+        authenticate: function() {
+            return passport.authenticate("jwt", cfg.jwtSession);
+        }
+    };
+};
+</code></pre> 
+            <p>The JWT validation starts when a new strategy is instantiated via <code>new Strategy()</code>. This object receives two important arguments:</p> 
+            <ul> 
+             <li><code>secretOrKey</code>: the JWT secret key.</li> 
+             <li><code>jwtFromRequest</code>: defines where the tokens will be sent in the response (header, querystring, body), see more in this link: <a href="https://www.npmjs.com/package/passport-jwt#extracting-the-jwt-from-the-request">npmjs.com/package/passport-jwt#extracting-the-jwt-from-the-request</a>.</li> 
+            </ul> 
+            <p>Inside the strategy callbacks, you can do any validation you want it, in our case, we are just searching for the right user if the request sends the right <code>payload.id</code>. <strong>In real world, you can write authentications to find users into a database.</strong></p> 
+            <p>To load the <code>auth.js</code> during the server boot time and initiate the Passport middleware via <code>app.use(auth.initialize())</code>. Edit the <code>index.js</code> to be like this:</p> 
+            <pre><code>// index.js
+var express = require("express");  
+var bodyParser = require("body-parser");  
+var auth = require("./auth.js")();  
+var app = express();
+
+app.use(bodyParser.json());  
+app.use(auth.initialize());
+
+app.get("/", function(req, res) {  
+    res.json({
+        status: "My API is alive!"
+    });
+});
+
+app.listen(3000, function() {  
+    console.log("My API is running...");
+});
+
+module.exports = app;  
+</code></pre> 
+            <h2 id="generatingtokensforauthenticatedusers">Generating tokens for authenticated users</h2> 
+            <p>To finish the JWT authentication, we are going to create a route to generate tokens users who are going to authenticate themselves using their email and password on the system, and we’ll do a refactoring in the main route so that their access properly render the authenticated user’s data. Doing this, we finish this authentication step, making our application reliable and safer.</p> 
+            <p>Now let’s create the endpoint <code>/token</code>. This route will be responsible for generating an encoded token with a <code>payload</code>, given to the user that sends the right e-mail and password via <code>req.body.email</code> and <code>req.body.password</code> in the request.</p> 
+            <p>The <code>payload</code> is going to have only the user <code>id</code>. The token generation occurs via <code>jwt-simple</code> module using the function <code>jwt.encode(payload, cfg.jwtSecret)</code> that mandatorily, will use the same secret key <code>jwtSecret</code> which was created on the <code>config.js</code> file. To simplify the error handler of this endpoint, any error will be treated using the HTTP <code>401 - Unauthorized</code> status code using the <code>res.sendStatus(401)</code> function.</p> 
+            <p>To include this rule of tokens generation, let’s edit the <code>index.js</code> file using the following code:</p> 
+            <pre><code>// index.js
+var express = require("express");  
+var bodyParser = require("body-parser");  
+var jwt = require("jwt-simple");  
+var auth = require("./auth.js")();  
+var users = require("./users.js");  
+var cfg = require("./config.js");  
+var app = express();
+
+app.use(bodyParser.json());  
+app.use(auth.initialize());
+
+app.get("/", function(req, res) {  
+    res.json({
+        status: "My API is alive!"
+    });
+});
+
+app.post("/token", function(req, res) {  
+    if (req.body.email &amp;&amp; req.body.password) {
+        var email = req.body.email;
+        var password = req.body.password;
+        var user = users.find(function(u) {
+            return u.email === email &amp;&amp; u.password === password;
+        });
+        if (user) {
+            var payload = {
+                id: user.id
+            };
+            var token = jwt.encode(payload, cfg.jwtSecret);
+            res.json({
+                token: token
+            });
+        } else {
+            res.sendStatus(401);
+        }
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+app.listen(3000, function() {  
+    console.log("My API is running...");
+});
+
+module.exports = app;  
+</code></pre> 
+            <p>To finish our API, let’s create a private route, which will output the authenticated user’s data, this route must use the <code>auth.authenticate()</code> middleware running before the route <code>app.get("/user")</code> function. This private route will only run for authenticated token and you can use the <code>req.user.id</code> object inside this route, because this data will be available if you send the right token, and with this <code>id</code> we will output a JSON with the authenticated user via <code>res.json(users[req.user.id])</code> function. To create this route, let’s edit the <code>index.js</code> again, take a look:</p> 
+            <pre><code>// index.js
+var express = require("express");  
+var bodyParser = require("body-parser");  
+var jwt = require("jwt-simple");  
+var auth = require("./auth.js")();  
+var users = require("./users.js");  
+var cfg = require("./config.js");  
+var app = express();
+
+app.use(bodyParser.json());  
+app.use(auth.initialize());
+
+app.get("/", function(req, res) {  
+    res.json({
+        status: "My API is alive!"
+    });
+});
+
+app.get("/user", auth.authenticate(), function(req, res) {  
+    res.json(users[req.user.id]);
+});
+
+app.post("/token", function(req, res) {  
+    if (req.body.email &amp;&amp; req.body.password) {
+        var email = req.body.email;
+        var password = req.body.password;
+        var user = users.find(function(u) {
+            return u.email === email &amp;&amp; u.password === password;
+        });
+        if (user) {
+            var payload = {
+                id: user.id
+            };
+            var token = jwt.encode(payload, cfg.jwtSecret);
+            res.json({
+                token: token
+            });
+        } else {
+            res.sendStatus(401);
+        }
+    } else {
+        res.sendStatus(401);
+    }
+});
+
+app.listen(3000, function() {  
+    console.log("My API is running...");
+});
+
+module.exports = app;  
+</code></pre> 
+            <h3 id="conclusion">Conclusion</h3> 
+            <p>Congratulations! We have finished an extremely important implementation for a lot of kind of applications, <strong>the authentication process</strong>. Thanks to JWT, now we have a safe mechanism for user’s authentication between client and server using only JSON data.</p>
+           </article>
+          </div>
+          <!-- react-empty: 53 -->
+         </section>
+        </div>
+        <section class="section--DH70G" data-reactid="54">
+         <div class="content" data-reactid="55"></div>
+         <div class="content section--2Gi8L" data-reactid="56">
+          <h4 class="h4--QYlq5 title--2e1eE" data-reactid="57">Recommended Posts</h4>
+          <div data-reactid="58">
+           <div class="wrapper---qOrZ" data-reactid="59">
+            <div class="wrapper--13EDG twoPerRow--2ETE6" data-reactid="60">
+             <a class="postTile--2ufZQ" href="/node-js-io-js-merge-node-foundation-2/" action="Click" data-reactid="61">
+              <div data-reactid="62">
+               <div class="postImage--tb-3h" data-reactid="63">
+                <img src="/content/images/2016/12/io_node-min-1.png" alt="post" data-reactid="64">
+               </div>
+               <div class="postInfo--uSP3X" data-reactid="65">
+                <span class="small--AllF_ date--jJYQ6" data-reactid="66">May 28, 2015</span>
+                <h4 class="h4--QYlq5 title--eBSXA" data-reactid="67">Node.js and io.js Merge Under the Node Foundation</h4>
+                <span class="small--AllF_ description--3SQB4" data-reactid="68">The technical committee in charge of the Io.js group, voted to join the Node.js Foundation.</span>
+               </div>
+              </div></a>
+            </div>
+            <div class="wrapper--13EDG twoPerRow--2ETE6" data-reactid="69">
+             <a class="postTile--2ufZQ" href="/jscramble-and-js13kgames/" action="Click" data-reactid="70">
+              <div data-reactid="71">
+               <div class="postImage--tb-3h" data-reactid="72">
+                <img src="/content/images/2017/07/js13k-2017.png" alt="post" data-reactid="73">
+               </div>
+               <div class="postInfo--uSP3X" data-reactid="74">
+                <span class="small--AllF_ date--jJYQ6" data-reactid="75">July 13, 2017</span>
+                <h4 class="h4--QYlq5 title--eBSXA" data-reactid="76">Jscrambler and Js13kGames</h4>
+                <span class="small--AllF_ description--3SQB4" data-reactid="77">Be sure not to miss this year's edition of Js13kGames, a JavaScript coding competition for HTML5 Game Developers.</span>
+               </div>
+              </div></a>
+            </div>
+           </div>
+          </div>
+         </div>
+        </section>
+       </div>
+      </div>
+     </div>
+     <footer class="content" data-reactid="78">
+      <div class="wrapper--3DcMj" data-reactid="79">
+       <div class="column---GEgt" data-reactid="80">
+        <nav class="navigation--2Vwo8" data-reactid="81">
+         <h6 class="h6--3dqPZ" data-reactid="82"><a href="https://jscrambler.com/enterprise" action="Click" data-reactid="83">Enterprise</a></h6>
+         <h6 class="h6--3dqPZ" data-reactid="84"><a href="https://jscrambler.com/about" action="Click" data-reactid="85">About Us</a></h6>
+         <h6 class="h6--3dqPZ" data-reactid="86"><a href="https://jscrambler.com/contact" action="Click" data-reactid="87">Contact Us</a></h6>
+        </nav>
+        <nav class="navigation--2Vwo8" data-reactid="88">
+         <h6 class="h6--3dqPZ" data-reactid="89"><a rel="noopener noreferrer" href="https://docs.jscrambler.com" action="Click" data-reactid="90">Help Center</a></h6>
+         <h6 class="h6--3dqPZ" data-reactid="91"><a href="https://jscrambler.com/privacy-and-security" action="Click" data-reactid="92">Privacy &amp; Security</a></h6>
+         <h6 class="h6--3dqPZ" data-reactid="93"><a href="https://jscrambler.com/careers" action="Click" data-reactid="94">Careers</a></h6>
+        </nav>
+       </div>
+       <div class="column---GEgt" data-reactid="95">
+        <div class="socialNetworks--2wUXj" data-reactid="96">
+         <a target="_blank" class="buttonHighlight--2ekeN" href="https://www.facebook.com/Jscrambler.AppSec" action="Click" data-reactid="97"><i class="fa fa-facebook" data-reactid="98"></i></a>
+         <a target="_blank" class="buttonHighlight--2ekeN" href="https://twitter.com/jscrambler" action="Click" data-reactid="99"><i class="fa fa-twitter" data-reactid="100"></i></a>
+         <a target="_blank" class="buttonHighlight--2ekeN" href="https://www.linkedin.com/company/jscrambler" action="Click" data-reactid="101"><i class="fa fa-linkedin" data-reactid="102"></i></a>
+         <a target="_blank" class="buttonHighlight--2ekeN" href="https://plus.google.com/+Jscrambler" action="Click" data-reactid="103"><i class="fa fa-google-plus" data-reactid="104"></i></a>
+        </div>
+       </div>
+      </div>
+      <div class="copyright--3pBgh" data-reactid="105">
+       <!-- react-text: 106 -->Copyright © 
+       <!-- /react-text -->
+       <b data-reactid="107">Jscrambler</b>
+       <!-- react-text: 108 --> 2017 
+       <!-- /react-text -->
+       <i data-reactid="109">All Rights Reserved</i>
+      </div>
+     </footer>
+     <div data-reactid="110">
+      <span data-reactid="111"></span>
+     </div>
+     <!-- react-empty: 112 -->
+    </div>
+    <div class="sideMenu--2H30V" data-reactid="113">
+     <div data-reactid="114">
+      <div class="icon--2dpI_" data-reactid="115">
+       <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDE4IDE4Ij4KICAgIDxnIGZpbGw9IiMwOUYiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHJlY3Qgd2lkdGg9IjIyIiBoZWlnaHQ9IjIiIHg9Ii0yIiB5PSI4IiByeD0iMSIgdHJhbnNmb3JtPSJyb3RhdGUoNDUgOSA5KSIvPgogICAgICAgIDxyZWN0IHdpZHRoPSIyMiIgaGVpZ2h0PSIyIiB4PSItMiIgeT0iOCIgcng9IjEiIHRyYW5zZm9ybT0ic2NhbGUoLTEgMSkgcm90YXRlKDQ1IDAgLTEyLjcyOCkiLz4KICAgIDwvZz4KPC9zdmc+Cg==" alt="Close Icon" data-reactid="116">
+      </div>
+      <a class="link--2R0r8" href="https://jscrambler.com/code-integrity" action="Click" data-reactid="117">Code Integrity</a>
+      <a class="link--2R0r8" href="https://jscrambler.com/webpage-integrity" action="Click" data-reactid="118">Webpage Integrity</a>
+      <a class="link--2R0r8" href="https://jscrambler.com/compare-plans" action="Click" data-reactid="119">Pricing &amp; Plans</a>
+      <a class="link--2R0r8" rel="noopener noreferrer" href="https://docs.jscrambler.com" action="Click" data-reactid="120">Docs</a>
+      <a class="link--2R0r8" href="/" action="Click" data-reactid="121">Blog</a>
+     </div>
+    </div>
+   </div>
+  </div> 
+  <script>
+          window.__INITIAL_STATE__ = {"posts":[],"meta":{"pagination":{"page":null,"limit":null,"pages":null,"total":null,"next":null,"prev":null}},"featuredPost":{},"post":{"slug":"implementing-jwt-using-passport","status":"published","id":38,"uuid":"c7e3051b-1cfd-4907-8c50-d2d4e54bf2a4","title":"Implementing JWT using Passport","markdown":"![jwt_passport](/content/images/2016/12/jwt_passport.png)\n\nIn this post, we’ll explore the main concepts and implementations of user’s authentication using the mechanism called JWT *(JSON Web Token)* via a Passport module. After all, this is an important step to ensure that users can safely authenticate into a REST API.\n  \n Before we start, let’s create a simple REST API, which will be used during this post. We are going to create an Express API to simplify our example. To start off, let’s setup our project, open the terminal and type this command:\n\n```\nmkdir my - api\ncd my - api\nnpm init\n```\n\nThe `npm init` shows a quick quiz to setup some descriptions and generate the `package.json` file, which is the main file that we will use to install some modules for our project. Feel free to answer each question in your own way. After this, install the `express` framework and `body-parser` module, by running this command:\n\n```\nnpm install express body - parser--save\n```\n\nNow that we have the Express module installed, let’s write our API code. To do it, let’s create the `index.js` with the code below:\n\n```\n// index.js\nvar express = require(\"express\");\nvar bodyParser = require(\"body-parser\");\nvar app = express();\n\napp.use(bodyParser.json());\n\napp.get(\"/\", function(req, res) {\n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.listen(3000, function() {\n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;\n```\n\nIn this post we will use a simple array of users data to facilitate the implementation of JWT auth. But, in real applications it’s highly recommended to use a database instead of a simple array of users. We will use this array only for sample purposes. We need a list of users data which will be used to verify if a request is from an authenticated user, to do it, create the `users.js` with the code below:\n\n```\n// users.js\n// Fake list of users to be used in the authentication\nvar users = [{\n    id: 1,\n    name: \"John\",\n    email: \"john@mail.com\",\n    password: \"john123\"\n}, {\n    id: 2,\n    name: \"Sarah\",\n    email: \"sarah@mail.com\",\n    password: \"sarah123\"\n}];\n\nmodule.exports = users;\n```\n\nNow we have a simple API enough to explore in the next sections how to implement JWT authentication.\n\n## Introduction to Passport.js and JWT\n\n### About Passport.js\n\nThere is a Node.js module very cool and easy to work with user’s authentication, it’s called **Passport**.\n\nPassport is a framework that is extremely flexible and modular. It allows you to work with the main authentication strategies: **Basic & Digest**, **OpenID**, **OAuth**, **OAuth 2.0** and **JWT**. And also allows you to work with external services authentication, such as **Facebook**, **Google+**, **Twitter** and more. By the way, in its official website, **there is a list with +300 authentication strategies**, created and maintained by 3rd-party.\n\n![site-passport](/content/images/2016/12/site-passport.jpg)\n\nIts official website is: [passportjs.org](http://passportjs.org).\n\n### About JWT\n\nJWT *(JSON Web Tokens)* is a very simple and secure authentication’s strategy for REST APIs. It is an *open standard* for web authentications and is totally based in JSON token’s requests between client and server. Its authentication’s engine works like this:\n\n1. Client makes a request once by sending their login credentials and password;\n2. Server validates the credentials and, if everything is right, it returns to the client a JSON with a token that encodes data from a user logged into the system;\n3. Client, after receiving this token, can store it the way it wants, whether via LocalStorage, Cookie or other client-side storage mechanisms;\n4. Every time the client accesses a route that requires authentication, it will only send this token to the API to authenticate and release consumption data;\n5. Server always validate this token to allow or block a customer request.\n\nTo specific details about JWT, go to [jwt.io](http://jwt.io).\n\n![site-jwt](/content/images/2016/12/site-jwt.jpg)\n\n## Installing Passport and JWT\n\nTo start the fun, we’ll use the following modules:\n\n- `passport`: as authentication’s engine;\n- `passport-jwt`: as JWT authentication’s strategy for Passport;\n- `jwt-simple`: as encoder and decoder of JSON tokens;\n\nNow, let’s install them by running this command:\n\n```\nnpm install passport passport-jwt jwt-simple --save\n```\n\nTo start this implementation, first we are going to create a `config.js` file to add two settings items for JWT (`jwtSecret` and `jwtSession`):\n\n```\n// config.js\nmodule.exports = {\n    jwtSecret: \"MyS3cr3tK3Y\",\n    jwtSession: {\n        session: false\n    }\n};\n```\n\nThe field `jwtSecret` keeps a secret key string that serves as a base to **encode** and **decode** the tokens. It’s highly advisable to use a complex string with many different characters and **never share this secret key in public**, because, if it leaks, you will let your application vulnerable, allowing any bad intentioned person to access the system and manages the tokens from logged users without informing the correctly credentials in the authentication process.\n\nTo finish, the last included field is `jwtSession` that has the object `{session: false}`. This item is used to inform Passport that the API won’t manage session.\n\n## Implementing JWT authentication\n\nNow that we have the Passport and JWT settings ready, let’s implement the main rules on how the client will be authenticated in our API. To start, we are going to implement the authentication rules, that will also have middleware functions provided by Passport to use into the API’s routes. This code is going to have a middleware and two main functions. The middleware will be executed in the moment it starts the application, and it basically receive in his callback a `payload` that contains a **decoded JSON** which was decoded using the secret key `cfg.jwtSecret`. This `payload` will have the attribute `id` that will be a user `id` to be used as argument to search a user in the database, in our case, this `id` will be used to get a user data from the array of users from `users.js` file. As this middleware is going to be frequently accessed, to avoid some overheads, we are going to send a simple object containing only the `id` of a user, using the callback function:\n\n```\ndone(null, {\n    id: user.id\n});\n```\n\nThis middleware will be injected via `passport.use(strategy)` function. To finish, two functions will be included from Passport to be used on the application. They are the `initialize()` function which starts the Passport and `authenticate()` which is used to authenticate the access for a route.\n\nTo understand better this implementation, let’s create in the root folder the `auth.js` file, using this code:\n\n```\n// auth.js\nvar passport = require(\"passport\");\nvar passportJWT = require(\"passport-jwt\");\nvar users = require(\"./users.js\");\nvar cfg = require(\"./config.js\");\nvar ExtractJwt = passportJWT.ExtractJwt;\nvar Strategy = passportJWT.Strategy;\nvar params = {\n    secretOrKey: cfg.jwtSecret,\n    jwtFromRequest: ExtractJwt.fromAuthHeader()\n};\n\nmodule.exports = function() {\n    var strategy = new Strategy(params, function(payload, done) {\n        var user = users[payload.id] || null;\n        if (user) {\n            return done(null, {\n                id: user.id\n            });\n        } else {\n            return done(new Error(\"User not found\"), null);\n        }\n    });\n    passport.use(strategy);\n    return {\n        initialize: function() {\n            return passport.initialize();\n        },\n        authenticate: function() {\n            return passport.authenticate(\"jwt\", cfg.jwtSession);\n        }\n    };\n};\n```\n\nThe JWT validation starts when a new strategy is instantiated via `new Strategy()`. This object receives two important arguments:\n\n- `secretOrKey`: the JWT secret key.\n- `jwtFromRequest`: defines where the tokens will be sent in the response (header, querystring, body), see more in this link: [npmjs.com/package/passport-jwt#extracting-the-jwt-from-the-request](https://www.npmjs.com/package/passport-jwt#extracting-the-jwt-from-the-request).\n\nInside the strategy callbacks, you can do any validation you want it, in our case, we are just searching for the right user if the request sends the right `payload.id`. **In real world, you can write authentications to find users into a database.**\n\nTo load the `auth.js` during the server boot time and initiate the Passport middleware via `app.use(auth.initialize())`. Edit the `index.js` to be like this:\n\n```\n// index.js\nvar express = require(\"express\");\nvar bodyParser = require(\"body-parser\");\nvar auth = require(\"./auth.js\")();\nvar app = express();\n\napp.use(bodyParser.json());\napp.use(auth.initialize());\n\napp.get(\"/\", function(req, res) {\n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.listen(3000, function() {\n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;\n```\n\n## Generating tokens for authenticated users\n\nTo finish the JWT authentication, we are going to create a route to generate tokens users who are going to authenticate themselves using their email and password on the system, and we’ll do a refactoring in the main route so that their access properly render the authenticated user’s data. Doing this, we finish this authentication step, making our application reliable and safer.\n\nNow let’s create the endpoint `/token`. This route will be responsible for generating an encoded token with a `payload`, given to the user that sends the right e-mail and password via `req.body.email` and `req.body.password` in the request.\n\nThe `payload` is going to have only the user `id`. The token generation occurs via `jwt-simple` module using the function `jwt.encode(payload, cfg.jwtSecret)` that mandatorily, will use the same secret key `jwtSecret` which was created on the `config.js` file. To simplify the error handler of this endpoint, any error will be treated using the HTTP `401 - Unauthorized` status code using the `res.sendStatus(401)` function.\n\nTo include this rule of tokens generation, let’s edit the `index.js` file using the following code:\n\n```\n// index.js\nvar express = require(\"express\");\nvar bodyParser = require(\"body-parser\");\nvar jwt = require(\"jwt-simple\");\nvar auth = require(\"./auth.js\")();\nvar users = require(\"./users.js\");\nvar cfg = require(\"./config.js\");\nvar app = express();\n\napp.use(bodyParser.json());\napp.use(auth.initialize());\n\napp.get(\"/\", function(req, res) {\n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.post(\"/token\", function(req, res) {\n    if (req.body.email && req.body.password) {\n        var email = req.body.email;\n        var password = req.body.password;\n        var user = users.find(function(u) {\n            return u.email === email && u.password === password;\n        });\n        if (user) {\n            var payload = {\n                id: user.id\n            };\n            var token = jwt.encode(payload, cfg.jwtSecret);\n            res.json({\n                token: token\n            });\n        } else {\n            res.sendStatus(401);\n        }\n    } else {\n        res.sendStatus(401);\n    }\n});\n\napp.listen(3000, function() {\n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;\n```\n\nTo finish our API, let’s create a private route, which will output the authenticated user’s data, this route must use the `auth.authenticate()` middleware running before the route `app.get(\"/user\")` function. This private route will only run for authenticated token and you can use the `req.user.id` object inside this route, because this data will be available if you send the right token, and with this `id` we will output a JSON with the authenticated user via `res.json(users[req.user.id])` function. To create this route, let’s edit the `index.js` again, take a look:\n\n```\n// index.js\nvar express = require(\"express\");\nvar bodyParser = require(\"body-parser\");\nvar jwt = require(\"jwt-simple\");\nvar auth = require(\"./auth.js\")();\nvar users = require(\"./users.js\");\nvar cfg = require(\"./config.js\");\nvar app = express();\n\napp.use(bodyParser.json());\napp.use(auth.initialize());\n\napp.get(\"/\", function(req, res) {\n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.get(\"/user\", auth.authenticate(), function(req, res) {\n    res.json(users[req.user.id]);\n});\n\napp.post(\"/token\", function(req, res) {\n    if (req.body.email && req.body.password) {\n        var email = req.body.email;\n        var password = req.body.password;\n        var user = users.find(function(u) {\n            return u.email === email && u.password === password;\n        });\n        if (user) {\n            var payload = {\n                id: user.id\n            };\n            var token = jwt.encode(payload, cfg.jwtSecret);\n            res.json({\n                token: token\n            });\n        } else {\n            res.sendStatus(401);\n        }\n    } else {\n        res.sendStatus(401);\n    }\n});\n\napp.listen(3000, function() {\n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;\n```\n\n### Conclusion\n\nCongratulations! We have finished an extremely important implementation for a lot of kind of applications, **the authentication process**. Thanks to JWT, now we have a safe mechanism for user’s authentication between client and server using only JSON data.","mobiledoc":null,"html":"<p><img src=\"/content/images/2016/12/jwt_passport.png\" alt=\"jwt_passport\" /></p>\n\n<p>In this post, we’ll explore the main concepts and implementations of user’s authentication using the mechanism called JWT <em>(JSON Web Token)</em> via a Passport module. After all, this is an important step to ensure that users can safely authenticate into a REST API.</p>\n\n<p>Before we start, let’s create a simple REST API, which will be used during this post. We are going to create an Express API to simplify our example. To start off, let’s setup our project, open the terminal and type this command:</p>\n\n<pre><code>mkdir my - api  \ncd my - api  \nnpm init  \n</code></pre>\n\n<p>The <code>npm init</code> shows a quick quiz to setup some descriptions and generate the <code>package.json</code> file, which is the main file that we will use to install some modules for our project. Feel free to answer each question in your own way. After this, install the <code>express</code> framework and <code>body-parser</code> module, by running this command:</p>\n\n<pre><code>npm install express body - parser--save  \n</code></pre>\n\n<p>Now that we have the Express module installed, let’s write our API code. To do it, let’s create the <code>index.js</code> with the code below:</p>\n\n<pre><code>// index.js\nvar express = require(\"express\");  \nvar bodyParser = require(\"body-parser\");  \nvar app = express();\n\napp.use(bodyParser.json());\n\napp.get(\"/\", function(req, res) {  \n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.listen(3000, function() {  \n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;  \n</code></pre>\n\n<p>In this post we will use a simple array of users data to facilitate the implementation of JWT auth. But, in real applications it’s highly recommended to use a database instead of a simple array of users. We will use this array only for sample purposes. We need a list of users data which will be used to verify if a request is from an authenticated user, to do it, create the <code>users.js</code> with the code below:</p>\n\n<pre><code>// users.js\n// Fake list of users to be used in the authentication\nvar users = [{  \n    id: 1,\n    name: \"John\",\n    email: \"john@mail.com\",\n    password: \"john123\"\n}, {\n    id: 2,\n    name: \"Sarah\",\n    email: \"sarah@mail.com\",\n    password: \"sarah123\"\n}];\n\nmodule.exports = users;  \n</code></pre>\n\n<p>Now we have a simple API enough to explore in the next sections how to implement JWT authentication.</p>\n\n<h2 id=\"introductiontopassportjsandjwt\">Introduction to Passport.js and JWT</h2>\n\n<h3 id=\"aboutpassportjs\">About Passport.js</h3>\n\n<p>There is a Node.js module very cool and easy to work with user’s authentication, it’s called <strong>Passport</strong>.</p>\n\n<p>Passport is a framework that is extremely flexible and modular. It allows you to work with the main authentication strategies: <strong>Basic &amp; Digest</strong>, <strong>OpenID</strong>, <strong>OAuth</strong>, <strong>OAuth 2.0</strong> and <strong>JWT</strong>. And also allows you to work with external services authentication, such as <strong>Facebook</strong>, <strong>Google+</strong>, <strong>Twitter</strong> and more. By the way, in its official website, <strong>there is a list with +300 authentication strategies</strong>, created and maintained by 3rd-party.</p>\n\n<p><img src=\"/content/images/2016/12/site-passport.jpg\" alt=\"site-passport\" /></p>\n\n<p>Its official website is: <a href=\"http://passportjs.org\">passportjs.org</a>.</p>\n\n<h3 id=\"aboutjwt\">About JWT</h3>\n\n<p>JWT <em>(JSON Web Tokens)</em> is a very simple and secure authentication’s strategy for REST APIs. It is an <em>open standard</em> for web authentications and is totally based in JSON token’s requests between client and server. Its authentication’s engine works like this:</p>\n\n<ol>\n<li>Client makes a request once by sending their login credentials and password;  </li>\n<li>Server validates the credentials and, if everything is right, it returns to the client a JSON with a token that encodes data from a user logged into the system;  </li>\n<li>Client, after receiving this token, can store it the way it wants, whether via LocalStorage, Cookie or other client-side storage mechanisms;  </li>\n<li>Every time the client accesses a route that requires authentication, it will only send this token to the API to authenticate and release consumption data;  </li>\n<li>Server always validate this token to allow or block a customer request.</li>\n</ol>\n\n<p>To specific details about JWT, go to <a href=\"http://jwt.io\">jwt.io</a>.</p>\n\n<p><img src=\"/content/images/2016/12/site-jwt.jpg\" alt=\"site-jwt\" /></p>\n\n<h2 id=\"installingpassportandjwt\">Installing Passport and JWT</h2>\n\n<p>To start the fun, we’ll use the following modules:</p>\n\n<ul>\n<li><code>passport</code>: as authentication’s engine;</li>\n<li><code>passport-jwt</code>: as JWT authentication’s strategy for Passport;</li>\n<li><code>jwt-simple</code>: as encoder and decoder of JSON tokens;</li>\n</ul>\n\n<p>Now, let’s install them by running this command:</p>\n\n<pre><code>npm install passport passport-jwt jwt-simple --save  \n</code></pre>\n\n<p>To start this implementation, first we are going to create a <code>config.js</code> file to add two settings items for JWT (<code>jwtSecret</code> and <code>jwtSession</code>):</p>\n\n<pre><code>// config.js\nmodule.exports = {  \n    jwtSecret: \"MyS3cr3tK3Y\",\n    jwtSession: {\n        session: false\n    }\n};\n</code></pre>\n\n<p>The field <code>jwtSecret</code> keeps a secret key string that serves as a base to <strong>encode</strong> and <strong>decode</strong> the tokens. It’s highly advisable to use a complex string with many different characters and <strong>never share this secret key in public</strong>, because, if it leaks, you will let your application vulnerable, allowing any bad intentioned person to access the system and manages the tokens from logged users without informing the correctly credentials in the authentication process.</p>\n\n<p>To finish, the last included field is <code>jwtSession</code> that has the object <code>{session: false}</code>. This item is used to inform Passport that the API won’t manage session.</p>\n\n<h2 id=\"implementingjwtauthentication\">Implementing JWT authentication</h2>\n\n<p>Now that we have the Passport and JWT settings ready, let’s implement the main rules on how the client will be authenticated in our API. To start, we are going to implement the authentication rules, that will also have middleware functions provided by Passport to use into the API’s routes. This code is going to have a middleware and two main functions. The middleware will be executed in the moment it starts the application, and it basically receive in his callback a <code>payload</code> that contains a <strong>decoded JSON</strong> which was decoded using the secret key <code>cfg.jwtSecret</code>. This <code>payload</code> will have the attribute <code>id</code> that will be a user <code>id</code> to be used as argument to search a user in the database, in our case, this <code>id</code> will be used to get a user data from the array of users from <code>users.js</code> file. As this middleware is going to be frequently accessed, to avoid some overheads, we are going to send a simple object containing only the <code>id</code> of a user, using the callback function:</p>\n\n<pre><code>done(null, {  \n    id: user.id\n});\n</code></pre>\n\n<p>This middleware will be injected via <code>passport.use(strategy)</code> function. To finish, two functions will be included from Passport to be used on the application. They are the <code>initialize()</code> function which starts the Passport and <code>authenticate()</code> which is used to authenticate the access for a route.</p>\n\n<p>To understand better this implementation, let’s create in the root folder the <code>auth.js</code> file, using this code:</p>\n\n<pre><code>// auth.js\nvar passport = require(\"passport\");  \nvar passportJWT = require(\"passport-jwt\");  \nvar users = require(\"./users.js\");  \nvar cfg = require(\"./config.js\");  \nvar ExtractJwt = passportJWT.ExtractJwt;  \nvar Strategy = passportJWT.Strategy;  \nvar params = {  \n    secretOrKey: cfg.jwtSecret,\n    jwtFromRequest: ExtractJwt.fromAuthHeader()\n};\n\nmodule.exports = function() {  \n    var strategy = new Strategy(params, function(payload, done) {\n        var user = users[payload.id] || null;\n        if (user) {\n            return done(null, {\n                id: user.id\n            });\n        } else {\n            return done(new Error(\"User not found\"), null);\n        }\n    });\n    passport.use(strategy);\n    return {\n        initialize: function() {\n            return passport.initialize();\n        },\n        authenticate: function() {\n            return passport.authenticate(\"jwt\", cfg.jwtSession);\n        }\n    };\n};\n</code></pre>\n\n<p>The JWT validation starts when a new strategy is instantiated via <code>new Strategy()</code>. This object receives two important arguments:</p>\n\n<ul>\n<li><code>secretOrKey</code>: the JWT secret key.</li>\n<li><code>jwtFromRequest</code>: defines where the tokens will be sent in the response (header, querystring, body), see more in this link: <a href=\"https://www.npmjs.com/package/passport-jwt#extracting-the-jwt-from-the-request\">npmjs.com/package/passport-jwt#extracting-the-jwt-from-the-request</a>.</li>\n</ul>\n\n<p>Inside the strategy callbacks, you can do any validation you want it, in our case, we are just searching for the right user if the request sends the right <code>payload.id</code>. <strong>In real world, you can write authentications to find users into a database.</strong></p>\n\n<p>To load the <code>auth.js</code> during the server boot time and initiate the Passport middleware via <code>app.use(auth.initialize())</code>. Edit the <code>index.js</code> to be like this:</p>\n\n<pre><code>// index.js\nvar express = require(\"express\");  \nvar bodyParser = require(\"body-parser\");  \nvar auth = require(\"./auth.js\")();  \nvar app = express();\n\napp.use(bodyParser.json());  \napp.use(auth.initialize());\n\napp.get(\"/\", function(req, res) {  \n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.listen(3000, function() {  \n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;  \n</code></pre>\n\n<h2 id=\"generatingtokensforauthenticatedusers\">Generating tokens for authenticated users</h2>\n\n<p>To finish the JWT authentication, we are going to create a route to generate tokens users who are going to authenticate themselves using their email and password on the system, and we’ll do a refactoring in the main route so that their access properly render the authenticated user’s data. Doing this, we finish this authentication step, making our application reliable and safer.</p>\n\n<p>Now let’s create the endpoint <code>/token</code>. This route will be responsible for generating an encoded token with a <code>payload</code>, given to the user that sends the right e-mail and password via <code>req.body.email</code> and <code>req.body.password</code> in the request.</p>\n\n<p>The <code>payload</code> is going to have only the user <code>id</code>. The token generation occurs via <code>jwt-simple</code> module using the function <code>jwt.encode(payload, cfg.jwtSecret)</code> that mandatorily, will use the same secret key <code>jwtSecret</code> which was created on the <code>config.js</code> file. To simplify the error handler of this endpoint, any error will be treated using the HTTP <code>401 - Unauthorized</code> status code using the <code>res.sendStatus(401)</code> function.</p>\n\n<p>To include this rule of tokens generation, let’s edit the <code>index.js</code> file using the following code:</p>\n\n<pre><code>// index.js\nvar express = require(\"express\");  \nvar bodyParser = require(\"body-parser\");  \nvar jwt = require(\"jwt-simple\");  \nvar auth = require(\"./auth.js\")();  \nvar users = require(\"./users.js\");  \nvar cfg = require(\"./config.js\");  \nvar app = express();\n\napp.use(bodyParser.json());  \napp.use(auth.initialize());\n\napp.get(\"/\", function(req, res) {  \n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.post(\"/token\", function(req, res) {  \n    if (req.body.email &amp;&amp; req.body.password) {\n        var email = req.body.email;\n        var password = req.body.password;\n        var user = users.find(function(u) {\n            return u.email === email &amp;&amp; u.password === password;\n        });\n        if (user) {\n            var payload = {\n                id: user.id\n            };\n            var token = jwt.encode(payload, cfg.jwtSecret);\n            res.json({\n                token: token\n            });\n        } else {\n            res.sendStatus(401);\n        }\n    } else {\n        res.sendStatus(401);\n    }\n});\n\napp.listen(3000, function() {  \n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;  \n</code></pre>\n\n<p>To finish our API, let’s create a private route, which will output the authenticated user’s data, this route must use the <code>auth.authenticate()</code> middleware running before the route <code>app.get(\"/user\")</code> function. This private route will only run for authenticated token and you can use the <code>req.user.id</code> object inside this route, because this data will be available if you send the right token, and with this <code>id</code> we will output a JSON with the authenticated user via <code>res.json(users[req.user.id])</code> function. To create this route, let’s edit the <code>index.js</code> again, take a look:</p>\n\n<pre><code>// index.js\nvar express = require(\"express\");  \nvar bodyParser = require(\"body-parser\");  \nvar jwt = require(\"jwt-simple\");  \nvar auth = require(\"./auth.js\")();  \nvar users = require(\"./users.js\");  \nvar cfg = require(\"./config.js\");  \nvar app = express();\n\napp.use(bodyParser.json());  \napp.use(auth.initialize());\n\napp.get(\"/\", function(req, res) {  \n    res.json({\n        status: \"My API is alive!\"\n    });\n});\n\napp.get(\"/user\", auth.authenticate(), function(req, res) {  \n    res.json(users[req.user.id]);\n});\n\napp.post(\"/token\", function(req, res) {  \n    if (req.body.email &amp;&amp; req.body.password) {\n        var email = req.body.email;\n        var password = req.body.password;\n        var user = users.find(function(u) {\n            return u.email === email &amp;&amp; u.password === password;\n        });\n        if (user) {\n            var payload = {\n                id: user.id\n            };\n            var token = jwt.encode(payload, cfg.jwtSecret);\n            res.json({\n                token: token\n            });\n        } else {\n            res.sendStatus(401);\n        }\n    } else {\n        res.sendStatus(401);\n    }\n});\n\napp.listen(3000, function() {  \n    console.log(\"My API is running...\");\n});\n\nmodule.exports = app;  \n</code></pre>\n\n<h3 id=\"conclusion\">Conclusion</h3>\n\n<p>Congratulations! We have finished an extremely important implementation for a lot of kind of applications, <strong>the authentication process</strong>. Thanks to JWT, now we have a safe mechanism for user’s authentication between client and server using only JSON data.</p>","amp":null,"image":"/content/images/2016/12/jwt_passport-1.png","featured":false,"page":false,"language":"en_US","visibility":"public","meta_title":"Implementing JWT using Passport","meta_description":"In this post, we’ll explore the main concepts and implementations of user's authentication using the mechanism called JWT via a Passport module.","created_at":"2016-03-31T17:16:27.000Z","created_by":12,"updated_at":"2016-12-13T13:59:39.000Z","updated_by":1,"published_at":"2016-03-31T17:16:27.000Z","published_by":12,"author":{"id":4,"uuid":"3ec3077d-a630-444a-a590-bab1d746928c","name":"Caio Ribeiro Pereira","slug":"caio-pereira","image":null,"cover":null,"bio":"0","website":"","location":null,"facebook":null,"twitter":null,"accessibility":null,"status":"locked","language":"en_US","visibility":"public","meta_title":null,"meta_description":null,"tour":null,"last_login":null,"created_at":"2016-12-01T01:04:42.000Z","created_by":1,"updated_at":"2016-12-06T14:23:20.000Z","updated_by":1},"tags":[{"id":45,"uuid":"a8143711-4bbb-4dbd-846b-3b236a3827a2","name":"JavaScript","slug":"javascript","description":"","image":null,"visibility":"public","meta_title":null,"meta_description":null,"created_at":"2016-12-01T01:04:43.000Z","created_by":1,"updated_at":"2016-12-06T13:42:23.000Z","updated_by":1,"parent":null},{"id":57,"uuid":"a01f3b3a-c6b1-43d7-9b59-7824580d620a","name":"JSON","slug":"json","description":"","image":null,"visibility":"public","meta_title":null,"meta_description":null,"created_at":"2016-12-01T01:04:43.000Z","created_by":1,"updated_at":"2016-12-14T11:48:21.000Z","updated_by":1,"parent":null},{"id":68,"uuid":"285a7e00-7940-43ec-8cd3-d5f4be5a0775","name":"JWT","slug":"jwt","description":"","image":null,"visibility":"public","meta_title":null,"meta_description":null,"created_at":"2016-12-01T01:04:43.000Z","created_by":1,"updated_at":"2016-12-01T01:04:43.000Z","updated_by":1,"parent":null},{"id":62,"uuid":"0420b4d5-6078-4acd-b4d0-1f62d5350dc3","name":"Node.js","slug":"node-js","description":"","image":null,"visibility":"public","meta_title":null,"meta_description":null,"created_at":"2016-12-01T01:04:43.000Z","created_by":1,"updated_at":"2016-12-01T01:04:43.000Z","updated_by":1,"parent":null},{"id":65,"uuid":"c448f84d-f199-47a9-ac05-559e6cbc737a","name":"Passport.js","slug":"passport-js","description":"","image":null,"visibility":"public","meta_title":null,"meta_description":null,"created_at":"2016-12-01T01:04:43.000Z","created_by":1,"updated_at":"2016-12-01T01:04:43.000Z","updated_by":1,"parent":null}],"url":"/implementing-jwt-using-passport/","feature_image":"/content/images/2016/12/jwt_passport-1.png"},"recommendedPosts":[{"id":19,"uuid":"81b80df2-2e4e-49cb-943f-207b05609750","title":"Node.js and io.js Merge Under the Node Foundation","slug":"node-js-io-js-merge-node-foundation-2","markdown":"![io_node-min](/content/images/2016/12/io_node-min.png)\n\nInteresting news in the past weeks about Node.js and io.js convergence. This is important for us at JScrambler because it allows us to simplify our build process. Most of our modules are already coded using ES 2015 (former ES6), which requires us to transpile the source code using babel.\n\nNow, with all io.js features to support the newest ES we can simply drop babel usage. This also improves the performance of our software because many of the features have great impact on it (arrows, generators, etc).\n\nSource: [Node project spinoff Io.js is moving to the Node.js Foundation, with a merge in progress](http://venturebeat.com/2015/05/13/node-project-spinoff-io-js-is-moving-to-the-node-js-foundation-with-a-merge-in-progress/)","mobiledoc":null,"html":"<p><img src=\"/content/images/2016/12/io_node-min.png\" alt=\"io_node-min\" /></p>\n\n<p>Interesting news in the past weeks about Node.js and io.js convergence. This is important for us at JScrambler because it allows us to simplify our build process. Most of our modules are already coded using ES 2015 (former ES6), which requires us to transpile the source code using babel.</p>\n\n<p>Now, with all io.js features to support the newest ES we can simply drop babel usage. This also improves the performance of our software because many of the features have great impact on it (arrows, generators, etc).</p>\n\n<p>Source: <a href=\"http://venturebeat.com/2015/05/13/node-project-spinoff-io-js-is-moving-to-the-node-js-foundation-with-a-merge-in-progress/\">Node project spinoff Io.js is moving to the Node.js Foundation, with a merge in progress</a></p>","amp":null,"image":"/content/images/2016/12/io_node-min-1.png","featured":false,"page":false,"status":"published","language":"en_US","visibility":"public","meta_title":"Node.js and io.js Merge Under the Node Foundation","meta_description":"The technical committee in charge of the Io.js group, voted to join the Node.js Foundation.","created_at":"2015-05-28T15:05:20.000Z","created_by":12,"updated_at":"2016-12-13T15:45:40.000Z","updated_by":1,"published_at":"2015-05-28T15:05:20.000Z","published_by":12,"author":15,"url":"/node-js-io-js-merge-node-foundation-2/","feature_image":"/content/images/2016/12/io_node-min-1.png"},{"id":142,"uuid":"3a77674d-4ed9-4914-a258-5b6029d99fd6","title":"Jscrambler and Js13kGames","slug":"jscramble-and-js13kgames","markdown":"![JS13KGAMES_Competition](/content/images/2017/07/js13k-2017-1.png)\n\nJscrambler will be sponsoring Js13kGames, a JavaScript coding competition for HTML5 Game Developers. The fun part of the compo is the file size limit set to 13 kilobytes. The competition will start at 13:00 CEST, 13th August and will end at 13:00 CEST, 13th September 2017. Theme for 2017 will be announced on August 13th.\n\nThe Js13kGames is a competition where developers need to build a game and are limited to a maximum game size of 13 kilobytes. This includes all assets like images and sounds. The challenge in this competition is to make the coolest game in only 13 kilobytes. You have exactly one month to develop your game, win the cool prizes and the admiration of other game devs and sympathizers!\n\nAll the source codes have to be hosted open source on GitHub, so other developers can learn from your coding skills. You will have to provide both the compressed and the uncompressed versions of the game source files. External libraries are not allowed which means that your game should be able to run offline without the need of loading any external resources. It should also be kept in mind that only pure JavaScript code can be submitted.\n\nThere are 3 different categories and they are desktop, mobile, and server. You can submit your game in any of these categories to be part of the competition.\n\n## **Judges**\n\nAll the participating HTML5 games will be reviewed by experienced people in the HTML5 game industry and JavaScript development. Among the major renowned personalities are Andrzej Mazur, Jupiter Hadley, Christer Kaitila, Lee Reilly, Tomasz Wesolowski and of course our CTO Pedro Fortuna, who has been participating as a judge since 2015.\n\n## **How can I know if I won?**\n\nJudges will review and vote for the games after September 13th and the winners will be announced on September 28th.\n\n## **How can I join?!**\n\nJust click on [this link](http://js13kgames.com/), and follow the details on the Js13kGames website. And please let us know if you are planning to join! We know there are a lot of HTML5 game developers in our community of users, don’t be shy, grab this chance of sharing the love for HTML5 games!\n\n## Still have some doubts?\n- Read [Tuts+ Gamedev intro article](http://gamedevelopment.tutsplus.com/articles/how-to-minify-your-html5-game-for-the-js13kgames-competition--cms-21883)\n-Check the [Resources](http://js13kgames.github.io/resources/) page for useful tools\n- See the [Rules](http://2016.js13kgames.com/#rules) for details\n\nJscrambler wishes you good luck and loads of fun!","mobiledoc":null,"html":"<p><img src=\"/content/images/2017/07/js13k-2017-1.png\" alt=\"JS13KGAMES_Competition\" /></p>\n\n<p>Jscrambler will be sponsoring Js13kGames, a JavaScript coding competition for HTML5 Game Developers. The fun part of the compo is the file size limit set to 13 kilobytes. The competition will start at 13:00 CEST, 13th August and will end at 13:00 CEST, 13th September 2017. Theme for 2017 will be announced on August 13th.</p>\n\n<p>The Js13kGames is a competition where developers need to build a game and are limited to a maximum game size of 13 kilobytes. This includes all assets like images and sounds. The challenge in this competition is to make the coolest game in only 13 kilobytes. You have exactly one month to develop your game, win the cool prizes and the admiration of other game devs and sympathizers!</p>\n\n<p>All the source codes have to be hosted open source on GitHub, so other developers can learn from your coding skills. You will have to provide both the compressed and the uncompressed versions of the game source files. External libraries are not allowed which means that your game should be able to run offline without the need of loading any external resources. It should also be kept in mind that only pure JavaScript code can be submitted.</p>\n\n<p>There are 3 different categories and they are desktop, mobile, and server. You can submit your game in any of these categories to be part of the competition.</p>\n\n<h2 id=\"judges\"><strong>Judges</strong></h2>\n\n<p>All the participating HTML5 games will be reviewed by experienced people in the HTML5 game industry and JavaScript development. Among the major renowned personalities are Andrzej Mazur, Jupiter Hadley, Christer Kaitila, Lee Reilly, Tomasz Wesolowski and of course our CTO Pedro Fortuna, who has been participating as a judge since 2015.</p>\n\n<h2 id=\"howcaniknowifiwon\"><strong>How can I know if I won?</strong></h2>\n\n<p>Judges will review and vote for the games after September 13th and the winners will be announced on September 28th.</p>\n\n<h2 id=\"howcanijoin\"><strong>How can I join?!</strong></h2>\n\n<p>Just click on <a href=\"http://js13kgames.com/\">this link</a>, and follow the details on the Js13kGames website. And please let us know if you are planning to join! We know there are a lot of HTML5 game developers in our community of users, don’t be shy, grab this chance of sharing the love for HTML5 games!</p>\n\n<h2 id=\"stillhavesomedoubts\">Still have some doubts?</h2>\n\n<ul>\n<li>Read <a href=\"http://gamedevelopment.tutsplus.com/articles/how-to-minify-your-html5-game-for-the-js13kgames-competition--cms-21883\">Tuts+ Gamedev intro article</a>\n-Check the <a href=\"http://js13kgames.github.io/resources/\">Resources</a> page for useful tools</li>\n<li>See the <a href=\"http://2016.js13kgames.com/#rules\">Rules</a> for details</li>\n</ul>\n\n<p>Jscrambler wishes you good luck and loads of fun!</p>","amp":null,"image":"/content/images/2017/07/js13k-2017.png","featured":true,"page":false,"status":"published","language":"en_US","visibility":"public","meta_title":"Jscrambler and Js13kGames","meta_description":"Be sure not to miss this year's edition of Js13kGames, a JavaScript coding competition for HTML5 Game Developers.","created_at":"2017-07-13T16:16:22.000Z","created_by":1,"updated_at":"2017-07-13T17:45:58.000Z","updated_by":1,"published_at":"2017-07-13T17:45:58.000Z","published_by":1,"author":1,"url":"/jscramble-and-js13kgames/","feature_image":"/content/images/2017/07/js13k-2017.png"}],"search":{"text":"","posts":[],"hints":[],"hasMore":true},"tag":{},"author":{}};
+        </script> 
+  <script src="/bundle.js"></script>   
+ </body>
+</html>

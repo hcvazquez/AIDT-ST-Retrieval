@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head> 
+  <title>
+  Java Practices -&gt; Validate email addresses
+ </title> 
+  <link rel="stylesheet" type="text/css" href="../stylesheet9.css" media="all"> 
+  <link rel="shortcut icon" href="/images/favicon.ico;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" type="image/vnd.microsoft.icon"> 
+  <meta name="description" content="Concise presentations of java programming practices, tasks, and conventions, amply illustrated with syntax highlighted code examples."> 
+  <meta name="keywords" content="InternetAddress,Mailer,email,JSP,servlet,java,java programming,java practices,java idiom,java style,java design patterns,java coding conventions,"> 
+ </head> 
+ <body> 
+  <div class="menu-bar"> 
+   <a href="/home/HomeAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" title="Table of Contents">Home</a> | 
+   <a href="/vote/VoteSummaryAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" title="View Poll Results">Poll</a> | 
+   <b><a href="/source/SourceAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" title="Grab Source Code">Source Code</a></b>
+   <img class="no-margin" SRC="../images/goldstar.gif" ALT=""> | 
+   <a href="https://ca.linkedin.com/in/johnohanley" title="Hire me"> <b>Hire Me</b></a> | 
+   <a href="http://www.web4j.com/Java_Web_Application_Framework_Overview.jsp?From=1" title="Free Download - Java Web Application Framework"><b>WEB4J</b></a> | 
+   <a href="http://www.formula4j.com/" title="Math expression parser"><b>Formula4J</b></a> | 
+   <a href="http://www.amazon.com/exec/obidos/ASIN/0321356683/ref=nosim/javapractices-20"><b>Effective Java</b></a> | 
+   <a href="/references/ReferencesAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" title="References">Links</a> 
+   <form action="/search/SearchAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" method="get" class="search-form"> 
+    <input type="text" name="SearchTerms" value="" size="12" maxlength="50" class="search"> 
+    <input type="submit" value="Search"> 
+   </form> 
+  </div> 
+  <p> </p>
+  <p class="display-messages"> </p> 
+  <div class="main-layout"> 
+   <div class="page-title">
+    Validate email addresses
+   </div> 
+   <div class="main-body"> 
+    <br>When a user inputs an email address, it may be validated by passing it to the constructor of 
+    <tt><a href="http://docs.oracle.com/javaee/7/api/javax/mail/internet/InternetAddress.html">InternetAddress</a></tt>. If it doesn't comply with RFC822, then a checked exception will be thrown. 
+    <p>Note that a simple local address, such as <tt>"joe"</tt>, complies with RFC822. If this type of address is undesired (and it usually is), then some extra validation will be needed. </p>
+    <p><b>Example</b> </p>
+    <p>Here's a class that validates email addresses through the static method <tt>isValidEmailAddress</tt>. Note that it treats local addresses as invalid (as implemented by the call to <tt>hasNameAndDomain</tt>). <br> </p>
+    <pre>
+
+<span class="keyword">package</span> hirondelle.web4j.util;
+
+<span class="keyword">import</span> java.util.regex.*;
+<span class="keyword">import</span> javax.mail.internet.AddressException;
+<span class="keyword">import</span> javax.mail.internet.InternetAddress;
+<span class="keyword">import</span> javax.servlet.http.HttpServletRequest;
+<span class="keyword">import</span> javax.servlet.http.HttpServletResponse;
+<span class="keyword">import</span> javax.servlet.http.HttpSession;
+
+<span class="comment">/**
+* Static convenience methods for common web-related tasks.
+*/</span>
+<span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">class</span> WebUtil {
+  
+  <span class="comment">/**
+  * Validate the form of an email address.
+  *
+  * &lt;P&gt;Return &lt;tt&gt;true&lt;/tt&gt; only if 
+  *&lt;ul&gt; 
+  * &lt;li&gt; &lt;tt&gt;aEmailAddress&lt;/tt&gt; can successfully construct an 
+  * {@link javax.mail.internet.InternetAddress} 
+  * &lt;li&gt; when parsed with "@" as delimiter, &lt;tt&gt;aEmailAddress&lt;/tt&gt; contains 
+  * two tokens which satisfy {@link hirondelle.web4j.util.Util#textHasContent}.
+  *&lt;/ul&gt;
+  *
+  *&lt;P&gt; The second condition arises since local email addresses, simply of the form
+  * "&lt;tt&gt;albert&lt;/tt&gt;", for example, are valid for 
+  * {@link javax.mail.internet.InternetAddress}, but almost always undesired.
+  */</span>
+  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> isValidEmailAddress(String aEmailAddress){
+    <span class="keyword">if</span> (aEmailAddress == <span class="keyword">null</span>) <span class="keyword">return</span> <span class="keyword">false</span>;
+    <span class="keyword">boolean</span> result = <span class="keyword">true</span>;
+    <span class="keyword">try</span> {
+      InternetAddress emailAddr = <span class="keyword">new</span> InternetAddress(aEmailAddress);
+      <span class="keyword">if</span> (! hasNameAndDomain(aEmailAddress)) {
+        result = <span class="keyword">false</span>;
+      }
+    }
+    <span class="keyword">catch</span> (AddressException ex){
+      result = <span class="keyword">false</span>;
+    }
+    <span class="keyword">return</span> result;
+  }
+
+  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> hasNameAndDomain(String aEmailAddress){
+    String[] tokens = aEmailAddress.split(<span class="literal">"@"</span>);
+    <span class="keyword">return</span> 
+      tokens.length == <span class="literal">2</span> &amp;&amp;
+      Util.textHasContent(tokens[<span class="literal">0</span>]) &amp;&amp; 
+      Util.textHasContent(tokens[<span class="literal">1</span>]) 
+    ;
+  }
+  
+  <span class="comment">//..elided
+</span>}
+ 
+</pre> 
+    <br> 
+    <br> 
+    <br> 
+   </div> 
+   <div class="topic-section">
+    See Also :
+   </div> 
+   <div class="main-body"> 
+    <a href="/topic/TopicAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E?Id=179">Send trouble-ticket emails</a> 
+    <br> 
+    <a href="/topic/TopicAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E?Id=188">A Web App Framework - WEB4J</a> 
+    <br> 
+    <a href="/topic/TopicAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E?Id=242">Launch other applications</a> 
+    <br> 
+   </div> 
+   <div class="topic-section">
+    Would you use this technique?
+   </div> 
+   <div class="main-body"> 
+    <form action="/vote/AddVoteAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E" method="post">
+      Yes
+     <input type="radio" name="Choice" value="Y"> &nbsp;&nbsp;No
+     <input type="radio" name="Choice" value="N"> &nbsp;&nbsp;Undecided
+     <input type="radio" name="Choice" value="?"> &nbsp;&nbsp;
+     <input type="submit" value="Vote"> 
+     <input type="hidden" name="Operation" value="Apply"> 
+     <input type="hidden" name="TopicId" value="180"> 
+    </form> 
+   </div> 
+   <div style="height:10.0em;"></div> 
+  </div> 
+  <div align="center" class="legalese">
+    © 2017 Hirondelle Systems | 
+   <a href="/source/SourceAction.do;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E"><b>Source Code</b></a>
+   <img class="no-margin" SRC="/images/goldstar.gif" ALT=""> | 
+   <a href="mailto:webmaster@javapractices.com">Contact</a> | 
+   <a href="http://creativecommons.org/licenses/by-nc-sa/1.0/">License</a> | 
+   <a href="/apps/cjp.rss;jsessionid=F62F5B52D7EF372E8785C5281C5A6D2E">RSS</a> 
+   <!-- ukey="2AC36CD2" --> 
+   <!-- ckey="16DF3D87" --> 
+   <br> Individual code snippets can be used under this 
+   <a href="../LICENSE.txt">BSD license</a> - Last updated on September 21, 2013.
+   <br> Over 2,000,000 unique IPs last year - 
+   <span title="Java Practices 2.6.5, Mon May 16 00:00:00 EDT 2011">Built with</span> 
+   <a href="http://www.web4j.com">WEB4J</a>.
+   <br> - In Memoriam : Bill Dirani - 
+  </div> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-2633428-1', 'auto');
+  ga('send', 'pageview');
+
+</script>   
+ </body>
+</html>

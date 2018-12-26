@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="description" content=""> 
+  <meta name="author" content=""> 
+  <base href="http://damionjunk.com/"> 
+  <title>Stanford's CoreNLP and Clojure: Sentiment Analysis</title> 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> 
+  <link href="/css/landing-page.css" rel="stylesheet"> 
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"> 
+  <link rel="stylesheet" href="/css/zenburn.css"> 
+  <link href="http://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic,700italic" rel="stylesheet" type="text/css"> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-4281839-3', 'auto');
+  ga('send', 'pageview');
+</script> 
+ </head> 
+ <body> 
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation"> 
+   <div class="container"> 
+    <div class="navbar-header"> 
+     <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> 
+     <a class="navbar-brand" href="#">(:damion @world-state)</a> 
+    </div> 
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1"> 
+     <ul class="nav navbar-nav navbar-right"> 
+      <li> <a href="post/">Blog</a> </li> 
+      <li> <a href="#about">About</a> </li> 
+      <li> <a href="#services">Services</a> </li> 
+      <li> <a href="#contact">Contact</a> </li> 
+     </ul> 
+    </div> 
+   </div> 
+  </nav> 
+  <div class="intro-header"> 
+   <div class="intro-header-gray"> 
+    <div class="container"> 
+     <div class="row"> 
+      <div class="col-xs-12"> 
+       <div class="intro-message"> 
+        <h1>(:damion @world-state)</h1> 
+        <h3>freelance software architect. artist. radio ham.</h3> 
+        <hr class="intro-divider"> 
+        <ul class="list-inline intro-social-buttons"> 
+         <li> <a href="https://twitter.com/damionjunk" class="btn btn-default btn-lg"><i class="fa fa-twitter fa-fw"></i></a> </li> 
+         <li> <a href="https://github.com/damionjunk" class="btn btn-default btn-lg"><i class="fa fa-github fa-fw"></i></a> </li> 
+         <li> <a href="https://instagram.com/moogatronic" class="btn btn-default btn-lg"><i class="fa fa-instagram fa-fw"></i></a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="post row spacer-bottom"> 
+   <div class="col-md-8 col-md-offset-2"> 
+    <div class="post"> 
+     <h1>Stanford's CoreNLP and Clojure: Sentiment Analysis</h1> 
+     <span class="post-date">Fri, May 15, 2015</span> 
+     <br> 
+     <span class="post-categories"> categories: &nbsp; <a href="http://damionjunk.com//categories/clojure">clojure</a> <a href="http://damionjunk.com//categories/sentimentanalysis">sentimentanalysis</a> <a href="http://damionjunk.com//categories/nlp">nlp</a> </span> 
+     <br> 
+     <span class="post-tags"> tags: &nbsp; <a href="http://damionjunk.com//tags/programming">programming</a> <a href="http://damionjunk.com//tags/clojure">clojure</a> <a href="http://damionjunk.com//tags/nlp">nlp</a> <a href="http://damionjunk.com//tags/sentimentanalysis">sentimentanalysis</a> </span> 
+     <h2 id="stanford-corenlp-java-library:47873d111ec6cae329b5fe33d24693b9">Stanford CoreNLP Java Library</h2> 
+     <p>This is <a href="http://nlp.stanford.edu/software/corenlp.shtml">Stanford CoreNLP</a> in its (their?) own words:</p> 
+     <blockquote> 
+      <p>Stanford CoreNLP provides a set of natural language analysis tools which can take raw text input and give the base forms of words, their parts of speech, whether they are names of companies, people, etc., normalize dates, times, and numeric quantities, and mark up the structure of sentences in terms of phrases and word dependencies, indicate which noun phrases refer to the same entities, indicate sentiment, etc. Stanford CoreNLP is an integrated framework. Its goal is to make it very easy to apply a bunch of linguistic analysis tools to a piece of text. Starting from plain text, you can run all the tools on it with just two lines of code. It is designed to be highly flexible and extensible. With a single option you can change which tools should be enabled and which should be disabled. Its analyses provide the foundational building blocks for higher-level and domain-specific text understanding applications.</p> 
+     </blockquote> 
+     <p>Ok sounds great, and since it’s a Java library, it’s also a Clojure one! If you’re reading this, you probably already know about the incredible interop between Clojure and Java, so I’ll move along to some code examples of this interop!</p> 
+     <h2 id="corenlp-fundamentals:47873d111ec6cae329b5fe33d24693b9">CoreNLP Fundamentals</h2> 
+     <p>CoreNLP works by using <a href="http://nlp.stanford.edu/software/corenlp.shtml#api">Annotators</a> to build Annotations over a stream of text using a CoreNLP pipeline. There are a lot of different annotators available, and for the purposes of this brief article, we’re using the <code>sentiment</code> annotator. In the next few days I’ll add support for the <code>ner</code> annotator as well, since named entity recognition is a pretty cool and useful feature.</p> 
+     <h2 id="sentiment-analysis:47873d111ec6cae329b5fe33d24693b9">Sentiment Analysis</h2> 
+     <p><a href="http://nlp.stanford.edu/sentiment/code.html">Sentiment Analysis</a> was added to CoreNLP at version <code>3.3.0</code>. You can read all about it at the Stanford site. The paper is available for download as well. To get going and use the CoreNLP sentiment annotator in your own projects, you can use my library, or yank out the useful bits of code for your own use.</p> 
+     <p>I created <a href="https://github.com/damionjunk/damionjunk.nlp">damionjunk.nlp</a> as a simple Clojure library to wrap the various NLP annotations provided by CoreNLP and return the annotations as sequences of maps. Something like: </p>
+     <div class="highlight">
+      <pre><span class="p">({</span><span class="ss">:sentiment</span> <span class="mi">0</span> <span class="ss">:text</span> <span class="s">"very angry text!"</span><span class="p">}</span> <span class="p">{</span><span class="ss">:sentiment</span> <span class="mi">4</span> <span class="ss">:text</span> <span class="s">"very happy text!"</span><span class="p">}</span> <span class="nv">...</span> <span class="p">{})</span>
+</pre>
+     </div> 
+     <p></p> 
+     <h2 id="quick-and-easy-sentiment-analysis-in-clojure:47873d111ec6cae329b5fe33d24693b9">Quick and Easy Sentiment Analysis in Clojure</h2> 
+     <h3 id="dependency:47873d111ec6cae329b5fe33d24693b9">Dependency</h3> 
+     <p>Add my library to your leiningen dependencies. I publish to Clojars so it’s easy: <code>[damionjunk/nlp "0.1.0"]</code></p> 
+     <p>The latest version is: <img src="http://clojars.org/damionjunk/nlp/latest-version.svg" alt="Clojars Project"> </p> 
+     <p>An example <code>project.clj</code>:</p> 
+     <p></p>
+     <div class="highlight">
+      <pre><span class="p">(</span><span class="kd">defproject </span><span class="nv">damionjunk/some-new-project</span> <span class="s">"0.1.0-SNAPSHOT"</span>
+  <span class="ss">:description</span> <span class="s">"FIXME: write description"</span>
+  <span class="ss">:url</span> <span class="s">"http://example.com/FIXME"</span>
+  <span class="ss">:license</span> <span class="p">{</span><span class="ss">:name</span> <span class="s">"Eclipse Public License"</span>
+           <span class="ss">:url</span> <span class="s">"http://www.eclipse.org/legal/epl-v10.html"</span><span class="p">}</span>
+  <span class="ss">:dependencies</span> <span class="p">[[</span><span class="nv">org.clojure/clojure</span> <span class="s">"1.6.0"</span><span class="p">]</span>
+              <span class="p">[</span><span class="nv">damionjunk/nlp</span> <span class="s">"0.1.0"</span><span class="p">]</span>
+                 <span class="p">])</span>
+</pre>
+     </div> 
+     <p></p> 
+     <p>You’ll need to run <code>lein deps</code> of course, to pull the CoreNLP code and provided language models.</p> 
+     <h3 id="measuring-sentiment-of-text:47873d111ec6cae329b5fe33d24693b9">Measuring Sentiment of Text</h3> 
+     <p>To use, just feed text to the function!</p> 
+     <p></p>
+     <div class="highlight">
+      <pre><span class="p">(</span><span class="nf">require</span> <span class="o">'</span><span class="p">[</span><span class="nv">damionjunk.nlp.stanford</span> <span class="ss">:as</span> <span class="nv">nlp</span><span class="p">])</span>
+
+<span class="p">(</span><span class="nf">nlp/sentiment-maps</span> <span class="s">"Hi there. I really hated that movie. Just kidding, I loved it!"</span><span class="p">)</span>
+
+<span class="c1">;; =&gt; ({:sentiment 2, :text "Hi there."}</span>
+<span class="c1">;;     {:sentiment 1, :text "I really hated that movie."}</span>
+<span class="c1">;;     {:sentiment 3, :text "Just kidding, I loved it!"})</span>
+</pre>
+     </div> 
+     <p></p> 
+     <p>The sentiment annotator measures sentiment on a 0 to 4 scale. 0 is very low sentiment, 1 is low, 2 is neutral, 3 is high, and 4 is very high.</p> 
+     <p>You can see that with the provided text we had fairly accurate results:</p> 
+     <blockquote> 
+      <p>Hi there.</p> 
+     </blockquote> 
+     <p>This measured <em>neutral</em>.</p> 
+     <blockquote> 
+      <p>I really hated that movie.</p> 
+     </blockquote> 
+     <p>This measured <em>negative</em>.</p> 
+     <blockquote> 
+      <p>Just kidding, I loved it!</p> 
+     </blockquote> 
+     <p>This measured <em>positive</em>.</p> 
+     <h2 id="conclusion:47873d111ec6cae329b5fe33d24693b9">Conclusion</h2> 
+     <p>Your results may vary. There is plenty of discussion to be found on the validity of sentiment analysis, and the various techniques that measure it. I believe sentiment analysis can be useful when trying to get a macro-level feel for the sentiment of a topic or set of topics.</p> 
+     <p>As I mentioned, I’ll be adding the other annotators to the library shortly, and plan to provide code for a simple <em>twitter</em> to <em>Stanford sentiment</em> data collector in Clojure.</p> 
+     <p>Stay tuned!</p> 
+    </div> 
+   </div> 
+  </div> 
+  <footer class="bg-bar-2"> 
+   <div class="container"> 
+    <div class="row"> 
+     <div class="col-md-8"> 
+      <ul class="list-inline"> 
+       <li> <a href="#about">Home</a> </li> 
+       <li class="footer-menu-divider">?</li> 
+       <li> <a href="post/">Blog</a> </li> 
+       <li class="footer-menu-divider">?</li> 
+       <li> <a href="#about">About</a> </li> 
+       <li class="footer-menu-divider">?</li> 
+       <li> <a href="#services">Services</a> </li> 
+       <li class="footer-menu-divider">?</li> 
+       <li> <a href="#contact">Contact</a> </li> 
+      </ul> 
+      <p class="copyright text-muted small">copyright © 2015 damion junk, all rights reserved</p> 
+     </div> 
+     <div class="col-md-4"> 
+     </div> 
+    </div> 
+   </div> 
+  </footer> 
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script> 
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>   
+ </body>
+</html>

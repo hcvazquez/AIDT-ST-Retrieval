@@ -1,0 +1,896 @@
+<html>
+ <head> 
+  <title>Concurrent Programming Using the Java Language</title> 
+  <link REV="OWNER" HREF="mailto:shartley@mcs.drexel.edu"> 
+ </head> 
+ <body bgcolor="#FFFFFF" text="#000000" link="#0000FF" alink="#FF0000" vlink="#000080"> 
+  <h1>Concurrent Programming Using Java</h1> 
+  <p> The material shown here will be covered in much more detail in the forthcoming book, <i>Concurrent Programming: The Java Programming Language</i>, to be published by Oxford University Press in 1998. </p> 
+  <h2>Table of Contents</h2> 
+  <p> <a href="#INTRO">Introduction</a> <br> </p>
+  <p> <a href="#SEQUE">Sequential Example Programs</a> <br> </p>
+  <ol> 
+   <a href="#SIMGA">A Simple Genetic Algorithm</a> 
+   <br> 
+   <a href="#ALGAN">Algorithm Animation</a> 
+   <br> 
+  </ol> 
+  <a href="#THREA">Threads</a> 
+  <br> 
+  <p> <a href="#SEMAP">Semaphores</a> <br> </p>
+  <p> <a href="#MONIT">Monitors</a> <br> </p>
+  <ol> 
+   <a href="#JAVAM">Java Monitors</a> 
+   <br> 
+  </ol> 
+  <a href="#MESSA">Message Passing</a> 
+  <br> 
+  <ol> 
+   <a href="#MESSC"><tt>Synchronization</tt> Package Classes</a> 
+   <br> 
+   <a href="#MESSE">Example Programs</a> 
+   <br> 
+  </ol> 
+  <a href="#RENDZ">Rendezvous</a> 
+  <br> 
+  <ol> 
+   <a href="#RENDC"><tt>Synchronization</tt> Package Classes</a> 
+   <br> 
+   <a href="#RENDE">Example Programs</a> 
+   <br> 
+   <a href="#CREND">Conditional Rendezvous</a> 
+   <br> 
+  </ol> 
+  <a href="#SURMI">Remote Method Invocation</a> 
+  <br> 
+  <p> <a href="#PARAP">Parallel Processing</a> <br> </p>
+  <ol> 
+   <a href="#PARAC"><tt>Synchronization</tt> Package Classes</a> 
+   <br> 
+   <a href="#PARAE">Example Programs</a> 
+   <br> 
+  </ol> 
+  <p></p> 
+  <a name="INTRO"><h2>Introduction</h2></a> 
+  <p> This is an introduction to using the <a href="http://www.javasoft.com">Java</a> programming language in concurrent or multithreaded applications. The context is the process synchronization material and related concurrent programming in operating systems courses as opposed to software engineering. Topics covered are race conditions when threads share data, critical sections, mutual exclusion, semaphores, monitors, message passing, the rendezvous, remote procedure calls, distributed or network programming, and parallel processing. Solutions to the classical problems talked about in operating systems courses (the dining philosophers, the bounded buffer producers and consumers, and the database readers and writers) are shown in Java. Also shown is how to animate algorithms using the command set of the <a href="http://www.cc.gatech.edu/gvu/softviz/algoanim/xtango.html"> Xtango</a> animation interpreter, <tt>animator</tt>. </p> 
+  <p> These example programs were developed and tested using Sun Microsystem's JDK version 1.0.2 and 1.1 for Solaris 2.x and Windows 95/NT (1996--97). They have been updated to remove all ``deprecated'' methods and constructors. The multimachine socket examples use the <tt>readObject()</tt> and <tt>writeObject()</tt> methods of the <tt>ObjectInputStream</tt> and <tt>ObjectOutPutStream</tt> classes, which are part of the RMI (remote method invocation) add-on for JDK 1.0.2 and included with JDK 1.1. </p> 
+  <p> All of the examples described and hyperlinked here may be <a href="ftp://ftp.mcs.drexel.edu/pub/shartley/concProgsJava.tar.gz"> retrieved</a> by anonymous ftp from site <tt>ftp.mcs.drexel.edu</tt> (144.118.40.9) in directory <tt>pub/shartley</tt> and file <tt>concProgsJava.tar.gz</tt>. A <a href="ftp://ftp.mcs.drexel.edu/pub/shartley/concProgsJava.zip">zipped</a> version is also available. Java is designed to be a platform-independent language, so all of these examples, including the animated ones, will run without change on Sun's Solaris 2.x UNIX for Sparc and Microsoft Windows 95/NT for Intel-based PCs. </p> 
+  <p> In this compressed (with GNU's <tt>gzip</tt>) <tt>tar</tt> archive, there is a directory <tt>lib</tt> that contains three subdirectories: <tt>Utilities</tt>, <tt>Synchronization</tt>, and <tt>XtangoAnimation</tt>. The path to the <tt>lib</tt> directory needs to be put into your <tt>CLASSPATH</tt> environment variable so that your Java programs can import the classes in the subdirectories of <tt>lib</tt>. For example, suppose you unpack the archive so that <tt>lib</tt> is in directory <tt>/home/you/Java</tt>. Then on a UNIX system, put the line </p>
+  <ol> 
+   <pre>
+setenv CLASSPATH /usr/local/JDK/lib/classes.zip:/home/you/Java/lib:.
+</pre> 
+  </ol> into your 
+  <tt>.cshrc</tt> or 
+  <tt>.login</tt> file. (Replace 
+  <tt>/usr/local/JDK/lib/classes.zip</tt> with wherever your system administrator has installed the Java system classes.) 
+  <p></p> 
+  <p> On a Windows 95/NT system, put the line </p>
+  <ol> 
+   <pre>
+SET CLASSPATH=C:\JAVA\JDK\LIB\CLASSES.ZIP;D:\LIB;.
+</pre> 
+  </ol> in your 
+  <tt>AUTOEXEC.BAT</tt> file (assuming you put 
+  <tt>lib</tt> into 
+  <tt>D:</tt> and the JDK into 
+  <tt>C:\JAVA</tt>). 
+  <p></p> 
+  <p> To test your <tt>CLASSPATH</tt> setting, try these commands. </p>
+  <ol> 
+   <pre>
+java Utilities.GetOpt
+java XtangoAnimation.XtangoAnimator
+</pre> 
+  </ol> These will execute the 
+  <tt>main()</tt> methods in those classes, which have been included for testing the classes. You should not get a ``class not found'' error message. 
+  <p></p> 
+  <a name="SEQUE"><h2>Sequential Example Programs</h2> </a>
+  <p><a name="SEQUE"> These examples illustrate some of the sequential features of the language. An on-line </a><a href="http://www.javasoft.com/doc/tutorial.html">tutorial</a> is available from Sun Microsystems for a more detailed discussion of the syntax and semantics of the Java language. </p> 
+  <p> These three examples show how to write a single-class program containing one or more <tt>static</tt> procedures or functions and a <tt>main()</tt> method where execution of the program begins. </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/fact.java">Compute Factorials.</a> 
+   <p> <a href="Sequential/sort.java">Sort Numbers.</a> </p>
+   <p> <a href="Sequential/nque.java">N-Queens Problem.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> This example shows how to access a <tt>static</tt> method defined in another class. </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/fct2.java">Two Class Factorial Program.</a> 
+  </ol> 
+  <p></p> 
+  <p> This example shows how to read numbers and words (strings) from the keyboard (or <tt>stdin</tt> in UNIX terminology). </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/tokn.java">Tokenizing Keyboard Input.</a> 
+  </ol> 
+  <p></p> 
+  <p> This example shows how to open a file and write binary floating-point numbers (not translated into ASCII) to the file. The numbers are read from the keyboard with a tokenizer as in the previous example. Then the file is read and the numbers printed out. The file is deleted in the <tt>finally</tt> block whether or not there is an IO error. </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/file.java">Writing and Reading a Data File.</a> 
+  </ol> 
+  <p></p> 
+  <p> This next example shows how to read and parse a text file containing some input data in a specific format. </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/name.java">Tokenizing File Input.</a> 
+   <p> <a href="Sequential/input.txt">The Input File.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> This example shows how to create objects from user-defined classes. </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/bank.java">Neighborhood Banking.</a> 
+  </ol> 
+  <p></p> 
+  <p> The <tt>GetOpt</tt> class can be used to process command line arguments when a Java program is run, like the following </p>
+  <ol> 
+   <pre>
+javac aClass.java
+java aClass -a -f theFile -w -80 -h3.33 arg1 arg2
+</pre> 
+  </ol> 
+  <p> </p>
+  <ol> 
+   <a href="lib/Utilities/GetOpt.java">Class <tt>GetOpt</tt> Helps Parse Command Line Options.</a> 
+  </ol> 
+  <p></p> 
+  <p> This last example shows how to subclass the <tt>Bank</tt> and <tt>Account</tt> example. </p>
+  <p> </p>
+  <ol> 
+   <a href="Sequential/cbnk.java">Commercial Banking.</a> 
+  </ol> 
+  <p></p> 
+  <a name="SIMGA"><h3>A Simple Genetic Algorithm</h3> <p> A <i>genetic algorithm</i> is an optimization technique that uses randomization instead of a deterministic search strategy. To maximize <i>f(x)</i> over some domain, the values of <i>x</i> in the domain are encoded in strings over some alphabet, usually {0,1}. A population of such strings, called <i>chromosomes</i>, is created at random. Then the genetic operators <i>selection</i> for reproduction, <i>crossover</i>, and <i>mutation</i> are applied to the population members. Selection is based on the <i>fitness</i> value of the chromosome, usually <i>f(x)</i>. After this is repeated many times, the population will contain mostly highly fit chromosomes, one of which (it is hoped) is close to the maximum value of the function <i>f(x)</i> over the domain. </p> <p> This example shows how to split a program up into <i>packages</i>. The <tt>Chromosome</tt> class is defined as a hierarchy of subclasses for each gene data type. </p><p> </p></a>
+  <ol>
+   <a name="SIMGA"> </a>
+   <a href="GA/README.TXT">README</a> file. 
+   <p> <a href="GA/Simple/sGA.java">sGA.java</a> </p>
+   <p> <a href="GA/Simple/GAutilities/Debug.java">Debug.java</a> </p>
+   <p> <a href="GA/Simple/GAutilities/Defaults.java">Defaults.java</a> </p>
+   <p> <a href="GA/Simple/GAutilities/Globals.java">Globals.java</a> </p>
+   <p> <a href="GA/Simple/GAutilities/MyRandom.java">MyRandom.java</a> </p>
+   <p> <a href="GA/Simple/GAutilities/ShellSort.java">ShellSort.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/Chromosome.java">Chromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/BitChromosome.java">BitChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/DoubleChromosome.java">DoubleChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/BitCountChromosome.java">BitCountChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/ByteCountChromosome.java">ByteCountChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/SinesChromosome.java">SinesChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/XtoTenthChromosome.java">XtoTenthChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Chromosomes/MyChromosome.java">MyChromosome.java</a> </p>
+   <p> <a href="GA/Simple/Crossovers/Crossover.java">Crossover.java</a> </p>
+   <p> <a href="GA/Simple/Crossovers/OnePointCrossover.java">OnePointCrossover.java</a> </p>
+   <p> <a href="GA/Simple/Crossovers/UniformCrossover.java">UniformCrossover.java</a> </p>
+   <p> <a href="GA/Simple/Crossovers/NPointCrossover.java">NPointCrossover.java</a> </p>
+   <p> <a href="GA/Simple/Selections/SelectionException.java">SelectionException.java</a> </p>
+   <p> <a href="GA/Simple/Selections/FitnessSumZeroException.java">FitnessSumZeroException.java</a> </p>
+   <p> <a href="GA/Simple/Selections/Selection.java">Selection.java</a> </p>
+   <p> <a href="GA/Simple/Selections/ProportionalSelection.java">ProportionalSelection.java</a> </p>
+  </ol> 
+  <p></p> 
+  <a name="ALGAN"><h3>Algorithm Animation</h3> </a>
+  <p><a name="ALGAN"> The <tt>XtangoAnimator</tt> class in the <tt>XtangoAnimation</tt> directory of the <tt>lib</tt> directory contains a collection of methods that implement the command set of the </a><a href="http://www.cc.gatech.edu/gvu/softviz/algoanim/xtango.html">Xtango</a> algorithm animation interpreter, <tt>animator</tt>. A Java program can create an instance of <tt>XtangoAnimator</tt> and call its methods to create graphical icons of various colors in a window and then move them around. </p> 
+  <p> The <tt>XtangoAnimator</tt> class is designed to be used in a stand-alone application for algorithm animation. In contrast, the Xtango <tt>animator</tt> program reads commands from a text file or UNIX pipe and interprets them. A group at Duke University has implemented a <a href="http://www.cc.gatech.edu/gvu/softviz/algoanim/samba.html">Samba</a> interpreter, called <a href="http://www.cs.duke.edu/~trevor/drool/lambada.html">lambada</a>. Samba is a superset of Xtango. The lambada interpreter also reads a text stream of commands from a file or pipe. The <tt>XtangoAnimator</tt> class defines methods that correspond to the Xtango <tt>animator</tt> commands and that can be called in a Java program. </p> 
+  <p> Here are two example programs. </p>
+  <p> </p>
+  <ol> 
+   <a href="Animations/ahlw.java">``Hello, world!'' using <tt>XtangoAnimator</tt>.</a> 
+   <p> <a href="Animations/asrt.java">Animated Bubble Sorting.</a> </p>
+  </ol> 
+  <p> A sorting screen snapshot: </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Animations/asrt.gif"> 
+  </ol> 
+  <p></p> 
+  <h3>Laboratory Exercises</h3> 
+  <p> </p>
+  <ol> 
+   <li>Write a Java program that generates prime numbers. Try both alternatives for getting input data into the program: command line arguments and keyboard input. Write the program first as one class, then as several classes. </li>
+   <li>Animate the <a href="Sequential/nque.java">N-Queens</a> program using the <tt>XtangoAnimator</tt> class. </li>
+   <li>Look up the ``Game of Life'' in <i>Scientific American</i> and write a Java program to simulate it. Is the issue available on the Web? Animate your program. </li>
+  </ol> 
+  <p></p> 
+  <a name="THREA"><h2>Threads</h2> <p> A <i>process</i> is an executing program. It has been allocated memory by the operating system. A thread is an execution or flow of control in the address space of a process; the program counter register points to the next instruction to be executed. A process is a program with one thread. A process can have more than one thread. All the threads in a process have their own program counter and their own stack for local (also called automatic) variables and return addresses of invoked procedures. </p> <p> In Java, a thread in the run-time interpreter calls the <tt>main()</tt> method of the class on the <tt>java</tt> command line. Each object created can have one or more threads, all sharing access to the data fields of the object. </p> </a>
+  <p><a name="THREA"> The article </a><a href="ftp://gatekeeper.dec.com/pub/DEC/SRC/research-reports/SRC-035.ps.Z"> <i>An Introduction to Programming with Threads</i></a> by Andrew D. Birrell (1989) motivates concurrent programming with threads: </p>
+  <ul> 
+   <li> shared memory multiprocessors are cheaper and more common so each thread can be allocated a CPU; </li>
+   <li> it is less expensive and more efficient to create several threads in one process that share data than to create several processes that share data; </li>
+   <li> IO on slow devices like networks, terminals, and disks can be done in one thread while another thread does useful computation in parallel; </li>
+   <li> multiple threads can handle the events (e.g., mouse clicks) in multiple windows in the windowing system on a workstation; </li>
+   <li> in a LAN cluster of workstations or in a distributed operating system environment, a server running on one machine can spawn a thread to handle an incoming request in parallel with the main thread continuing to accept additional incoming requests. </li>
+  </ul> 
+  <p></p> 
+  <p> The <tt>MyObject</tt> class contains some methods useful for multithreaded simulations: </p>
+  <ol> 
+   <tt>nap(</tt>
+   <i>milliseconds</i>
+   <tt>)</tt>, 
+   <br> 
+   <tt>age()</tt>, 
+   <br> 
+   <tt>random()</tt>, and 
+   <br> 
+   <tt>seed(</tt>
+   <i>number</i>
+   <tt>)</tt>. 
+   <br> 
+  </ol> A program can sleep for some number of milliseconds. The 
+  <tt>age()</tt> method returns, in milliseconds, the elapsed time since the program started. The random number generator can be seeded and returns a 
+  <tt>double</tt> in the range zero to one. It also contains some ``syntactic sugar'' for use with semaphores, described later. 
+  <p> </p>
+  <ol> 
+   <a href="lib/Utilities/MyObject.java">Utility methods in Class <tt>MyObject</tt>.</a> 
+  </ol> 
+  <p></p> 
+  <p> This is a skeleton (model or template) for a multithreaded simulation. </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/muls.java">A Multiple Thread Simulation.</a> 
+  </ol> 
+  <p></p> 
+  <p> In JDK 1.0.2 and 1.1 for Solaris 2.x, Java threads are not time sliced, as the following test program, <tt>Beeping</tt>, shows. Java threads are time sliced on Windows 95/NT, though. The first two sample runs show the difference. Use a <tt>Scheduler</tt> object to get pseudo time slicing of threads on Sun's Solaris 2.x. The third sample run of <tt>Beeping</tt> shows it working on Solaris. </p>
+  <p> </p>
+  <ol> 
+   <a href="lib/Utilities/Scheduler.java">A Class for Time Slicing Threads.</a> 
+   <p> <a href="Threads/beep.java">Testing for Time Sliced Threads.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> This program creates two windows, each a subclass of <tt>Frame</tt>, with some buttons to control the thread in each window that computes Fibonacci numbers. There is another thread in the Java virtual machine that is blocked, waiting for events like button clicks in the windows. When a button is clicked, the <tt>action()</tt> method is called by this thread to process the click. Meanwhile, the other two threads can be computing concurrently and displaying the Fibonacci numbers in their windows. Try coding this as a purely sequential program with only one thread or flow of control! </p>
+  <p> </p>
+  <ol> 
+   <a href="Animations/fibo.java">Fibonacci Numbers and Stop Button.</a> 
+  </ol> 
+  <p> A screen snapshot: </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Animations/fibo.gif"> 
+  </ol> 
+  <p></p> 
+  <p> This example shows how to send the output of each thread to a different file. This technique may be useful for debugging. </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/mout.java">Sending Each Thread Output to a Different File.</a> 
+  </ol> 
+  <p></p> 
+  <p> Two threads doing <tt>N=N+1</tt> at about the same time is called a <i>race condition</i> since one of the updates can get lost. In general, race conditions are possible when </p>
+  <ul> 
+   <li> two or more threads share data, </li>
+   <li> they are reading and writing the shared data concurrently, </li>
+   <li> and the final result depends on who does what when. </li>
+  </ul> 
+  <p></p> 
+  <p> Three different kinds of race conditions are illustrated with Java programs. </p> 
+  <p> Multiple threads doing <tt>sum=fn(sum,m)</tt> to the shared variable <tt>sum</tt> is a race condition like <tt>N=N+1</tt>. Note that one <tt>Racer</tt> object is created; then two threads are created in that object and the two threads share the <tt>sum</tt> variable. The Windows 95 sample runs show that if <tt>M</tt> is large enough, the threads run in pseudo parallel due to time slicing; the Solaris sample runs show there is no time slicing. </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/race.java">A Race Condition.</a> 
+  </ol> 
+  <p></p> 
+  <p> There is a fixed $10 million in this bank (10,000 accounts that each start out with $1000) but the auditor sometimes sees more, sometimes less. If the bank auditor is adding up the account balances while some funds are being moved from one account to another, an inaccurate total can be calculated. Can you explain how more money than is really there shows up sometimes in the sample output? </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/rac2.java">A Different Kind of Race Condition.</a> 
+  </ol> 
+  <p></p> 
+  <p> If two threads try to manipulate a queue at the same time, a node can get lost. Remember that the two threads may be executing in round-robin fashion on a shared CPU and that context switches can occur at any time. </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/qrac.java">A Queue Race Condition.</a> 
+  </ol> 
+  <p></p> 
+  <p> The following sequence of queue snapshots shows node 4 not in the queue even though thread A appended it. </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Threads/qrac.gif"> 
+  </ol> 
+  <p></p> 
+  <p> These examples show that concurrently executing threads that share data need to synchronize their operations and processing in order to avoid race conditions on shared data. Thread synchronization can be done with flag variables and <i>busy waiting</i>, as this example shows. Since it uses a lot of CPU cycles, busy waiting is inefficient. Blocking somehow would be better. </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/bwbb.java">Busy Waiting Bounded Buffer for a Producer and Consumer.</a> 
+   <p> <a href="Threads/bbpc.java">Producer and Consumer Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> We can try to remove busy waiting from the bounded buffer by using the thead <tt>suspend()</tt> and <tt>resume()</tt> methods, but we end up introducing race conditions. It is possible, if a context switch occurs at just the ``right'' time, for both the producer and the consumer to become suspended: the producer because the bounded buffer is full and the consumer waiting for a <tt>resume()</tt> that will never happen. Do you see how? </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/srbb.java">Suspend/Resume Bounded Buffer for a Producer and Consumer.</a> 
+  </ol> 
+  <p></p> 
+  <p> A <i>critical section</i> is a block of code in a thread that accesses one or more shared variables in a read-update-write fashion. In such a situation we want <i>mutual exclusion</i>: only one thread at a time can access (read-update-write) a shared variable at a time. The <i>mutual exclusion problem</i> is how to keep two or more threads from being in their critical sections at the same time, where we make no assumptions about the number of CPUs or their relative speeds A thread outside its critical section should not keep other threads outside their critical sections from entering, also called a ``safety'' property (absence of unnecessary delay). And no thread should have to wait forever to enter its critical section, also called a ``liveness'' property (eventual entry). </p> 
+  <p> An <i>atomic action</i> ``makes an indivisible state transition: any intermediate state that might exist in the implementation of the action must not be visible to other threads'' (p. 60 Andrews' Concurrent Programming book). This means that nothing from another thread can be interleaved in the implementation of the action for it to be atomic. Critical sections need to be done as if they were one atomic action to avoid race conditions. </p> 
+  <p> The mutual exclusion problem is to devise a pre-protocol and a post-protocol based on either hardware or software </p>
+  <ul> 
+   <li> that prevent two threads from being in their critical sections at the same time, </li>
+   <li> that have the desirable safety and liveness properties, </li>
+   <li> and that allow critical sections to be executed atomically. </li>
+  </ul> The ground rules are 
+  <ul> 
+   <li> a load/store register architecture, </li>
+   <li> multiple concurrently executing threads are sharing data, </li>
+   <li> single or multiple CPUs where we cannot make relative speed assumptions, </li>
+   <li> accesses to shared variables can be interleaved if two threads are in their critical sections at the same time, </li>
+   <li> threads may not halt in their pre- or post-protocols, </li>
+   <li> threads may not halt in their critical sections, </li>
+   <li> threads may halt outside their critical sections. </li>
+  </ul> 
+  <p></p> 
+  <p> Thread Ti, i = 1, 2, 3, ... </p>
+  <ol> 
+   <pre>
+while (true) {
+   outsideCS();
+   wantToEnterCS(i);   // pre-protocol
+   insideCS();
+   finishedInCS(i);    // post-protocol
+}
+</pre> 
+  </ol> 
+  <p></p> 
+  <p> This sequence of examples shows successful and unsuccessful attempts to solve the mutual exclusion problem in software without specialized hardware instructions like test-and-set. </p>
+  <p> </p>
+  <ol> 
+   <a href="Threads/atts.java">Testing the Attempts.</a> 
+   <p> <a href="Threads/att1.java">First Attempt: Strict Alternation.</a> </p>
+   <p> <a href="Threads/att2.java">Second Attempt: Check Other's Flag Variable, Then Set Own.</a> </p>
+   <p> <a href="Threads/att3.java">Third Attempt: Set Own Flag Variable, Then Check Other's.</a> </p>
+   <p> <a href="Threads/att4.java">Fourth Attempt: Back Off.</a> </p>
+   <p> <a href="Threads/attd.java">Dekker's Solution: Take Turns Backing Off.</a> </p>
+   <p> <a href="Threads/attp.java">Peterson's Shorter Solution.</a> </p>
+   <p> <a href="Threads/bak2.java">Lamport's Bakery Algorithm: Two Threads Only.</a> </p>
+   <p> <a href="Threads/bakn.java">Lamport's Bakery Algorithm: Arbitrary Number of Threads.</a> </p>
+  </ol> 
+  <p></p> 
+  <h3>Laboratory Exercises</h3> 
+  <p> </p>
+  <ol> 
+   <li>Use the <a href="Threads/beep.java">``beep''</a> program to determine if your platform time slices threads. </li>
+   <li>Try some other values for the <tt>-M</tt> command line argument of the <a href="Threads/race.java">``race''</a> program to determine the approximate time slice size on your system. </li>
+   <li>What can go wrong (race condition) in the <a href="Threads/bwbb.java">busy waiting bounded buffer</a> if there is more than one producer thread and/or more than one consumer thread? </li>
+  </ol> 
+  <p></p> 
+  <a name="SEMAP"><h2>Semaphores</h2> <p> <i>Semaphores</i> can be used for mutual exclusion and thread synchronization. Instead of busy waiting and wasting CPU cycles, a thread can block on a semaphore (the operating system removes the thread from the CPU scheduling or ``ready'' queue) if it must wait to enter its critical section or if the resource it wants is not available. </p> <p> Mutual exclusion pseudocode: <br> semaphore S = 1; ... P(S); N=N+1; V(S); </p> <p> Condition synchronization pseudocode (resource availability): <br> semaphore tapeDrives = 7; ... P(tapeDrives); useTapeDrive(); V(tapeDrives); </p> <p> Java has implicit <i>binary</i> semaphores of the form </p>
+   <ol> 
+    <pre>
+Object mutex = new Object();
+   /*...*/
+synchronized (mutex) {
+   /*...*/
+}
+</pre> 
+   </ol> that can be used for mutual exclusion. Only one thread at a time can be executing inside the <tt>synchronized</tt> block. <p> </p></a>
+  <ol>
+   <a name="SEMAP"> </a>
+   <a href="Semaphores/norc.java">An Implicit Binary Semaphore Prevents the Race Condition.</a> 
+   <p> <a href="Semaphores/nor2.java">An Implicit Binary Semaphore Prevents Another Race Condition.</a> </p>
+   <p> </p>
+   <ol>
+     Why is the semaphore 
+    <tt>mutex</tt> also used in the 
+    <tt>Auditor</tt> thread? Isn't it enough just to make the moving of money from one account to another in the 
+    <tt>ATM</tt> thread into a single atomic action? 
+   </ol> 
+   <p> </p>
+  </ol> 
+  <p></p> 
+  <p> Java does not have explicit binary and <i>counting</i> semaphores, so they are provided as classes in the <tt>Synchronization</tt> subdirectory of the <tt>lib</tt> directory. Their implementation will be shown later. Two explicit binary semaphores, one initialized to zero (impossible with an implicit binary semaphore), and one explicit counting semaphore are used to synchronized three threads so they obey the ``rules.'' The ``syntactic sugar'' in <a href="lib/Utilities/MyObject.java"><tt>MyObject.java</tt></a> lets us write <tt>P(S)</tt> instead of <tt>S.P()</tt> for a semaphore <tt>S</tt>. </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/ABCs.java">Explicit Binary and Counting Semaphores Synchronize Three Threads.</a> 
+  </ol> 
+  <p></p> 
+  <p> A producer thread deposits items and blocks if the bounded buffer fills up. A consumer thread fetches items and blocks if the bounded buffer is empty. </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Semaphores/bbou.gif"> 
+  </ol> 
+  <p> The implementation shown uses a circular array and can be used only with a single producer thread and a single consumer thread. Do you see why? </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/bbou.java">The Bounded Buffer for a Producer and Consumer.</a> 
+   <p> <a href="Semaphores/bbpc.java">The Producer and Consumer Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> A linked list can be used to implement a first-in-first-out buffer that is not bounded and can be used by multiple producer threads and multiple consumer threads. </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/unbb.java">The Unbounded Buffer for the Producers and Consumers.</a> 
+   <p> <a href="Semaphores/bbml.java">The Producers and Consumers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> Bounded buffers can be used to communicate information from one thread to another in a <i>pipeline</i>. </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/pipe.java">A Pipeline Using Bounded Buffers.</a> 
+  </ol> 
+  <p></p> 
+  <p> Semaphores can be used to solve the so-called ``classical'' synchronization problems found in many operating systems books: the <i>sleeping barber</i>, the five <i>dining philosophers</i>, and the database <i>readers and writers</i>. </p> 
+  <p> A barber waits to cut hair. Customers enter the waiting room and take a seat if one is available. If the waiting room is full, they try again later. Otherwise, they wait until their turn for a hair cut. </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Semaphores/slba.gif"> 
+   <p> <a href="Semaphores/slba.java">The Sleeping Barber.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> Five philosophers sit around a table and think until hungry. Interspersed between the philosophers are five forks. A hungry philosopher must have exclusive access to both its left and right forks in order to eat. If they are not both free, the philosopher waits. The following algorithm does not deadlock (it never happens that all philosophers are hungry, each holding one fork and waiting for the other), allows maximal parallelism (a philosopher never picks up and holds a fork while waiting for the other fork to become available when the fork it is holding could be used for eating by its neighbor), an advantage, but also allows starvation (a philosopher's two neighbors can collaborate and alternate their eating so the one in the middle never can use the forks). </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Semaphores/dphi.gif"> 
+   <p> <a href="Semaphores/dphi.java">The Server for the Dining Philosophers.</a> </p>
+   <p> <a href="Semaphores/dpdr.java">The Dining Philosophers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> If a philosopher can hold a fork while waiting for the other fork, deadlock is possible, an extreme case of not having maximal parallelism. However, starvation is not possible. Each fork is represented by a semaphore and each hungry philosopher will do a ``P'' on its left fork and then its right fork. </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/dphf.java">The Dining Philosophers Server Where Each Fork is a Semaphore.</a> 
+  </ol> 
+  <p></p> 
+  <p> We can fix the deadlock problem and retain no starvation, but we still do not have maximal parallelism. All philosophers pick up left then right except one designated philosopher who picks up right then left. </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/dpho.java">The Dining Philosophers Server Where One is ``Odd''.</a> 
+  </ol> 
+  <p></p> 
+  <p> A database can be accessed concurrently by threads that only want to read, but a writer thread must have exclusive access with respect to other readers and writers. The solution here allows writers to starve if enough readers keep coming along to read the database that the number of current readers is always above zero. </p>
+  <p> </p>
+  <ol> 
+   <img SRC="Semaphores/rdwr.gif"> 
+   <p> <a href="Semaphores/rdwr.java">The Database for the Readers and Writers.</a> </p>
+   <p> <a href="Semaphores/rwdr.java">The Readers and Writers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> This sequence of attempts to implement counting semaphores with binary semaphores illustrates some of the subtleties of pure binary semaphores and thread scheduling. The first two attempts have a problem if a context switch occurs at point <tt>A</tt> since then <tt>V</tt>'s on the binary semaphore <tt>blocked</tt> may get lost. The third solves that problem but introduces more context switching overhead. The last two are good solutions, with the latter being somewhat simpler. </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/bis1.java">Attempt 1.</a> 
+   <p> <a href="Semaphores/bis2.java">Attempt 2.</a> </p>
+   <p> <a href="Semaphores/bis3.java">Attempt 3.</a> </p>
+   <p> <a href="Semaphores/bis4.java">Attempt 4.</a> </p>
+   <p> <a href="Semaphores/bis5.java">Attempt 5.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> Jurassic Park consists of a safari area, a number of single-passenger safari cars, some number of people, and a museum. Each person in the park will visit the museum for a random amount of time, then line up to take a safari ride, waiting for an empty car. Each car will wait for a passenger, then go out on safari for a random amount of time. The following solution has a major flaw. What is it? How can the flaw be fixed? </p>
+  <p> </p>
+  <ol> 
+   <a href="Semaphores/Jura.java">Jurassic Park.</a> 
+  </ol> 
+  <p></p> 
+  <p> The <tt>XtangoAnimator</tt> class in the <tt>XtangoAnimation</tt> subdirectory of the <tt>lib</tt> directory can be used to animate the dining philosophers. </p>
+  <p> </p>
+  <ol> 
+   <a href="Animations/adph.java">Animated Dining Philosophers.</a> 
+   <p> A screen snapshot of the dining philosophers: </p>
+   <p> <img SRC="Animations/adph.gif"> </p>
+  </ol> 
+  <p></p> 
+  <h3>Laboratory Exercises</h3> 
+  <p> </p>
+  <ol> 
+   <li>Examine <a href="Semaphores/bbou.java">the bounded buffer</a> for race conditions if there are multiple producer and/or consumer threads. Fix any race conditions you find. </li>
+   <li>Look in some operating systems books for semaphore exercises and write the solutions in Java. Examples are classical problems like the cigarette smokers, the baboons crossing a canyon, the unisex bathroom, and the bakery. </li>
+   <li>Modify <a href="Semaphores/slba.java">the sleeping barber</a> program so there are multiple barbers. </li>
+   <li>Modify the <a href="Semaphores/dphi.java">dining philosophers server</a> so that two philosophers cannot collaborate to starve the one between them. </li>
+   <li>Modify the <a href="Semaphores/rdwr.java">readers and writers database</a> so that readers cannot starve writers. </li>
+   <li>Animate one or more of these programs. </li>
+  </ol> 
+  <p></p> 
+  <a name="MONIT"><h2>Monitors</h2> <p> Semaphores are like goto's and pointers: mistake prone, work okay but lack structure and ``discipline''. </p> <p> For example, a disastrous typo: </p><p> </p>
+   <ol>
+     V(S); criticalSection(); V(S) 
+   </ol> <p></p> <p> This leads to deadlock: </p><p> </p>
+   <ol>
+     P(S); criticalSection(); P(S) 
+   </ol> <p></p> <p> Nested critical sections can lead to deadlock: </p><p> </p>
+   <ol>
+     P1: P(Q); P(S); ... V(S); V(Q); 
+    <p> P2: P(S); P(Q); ... V(Q); V(S); </p>
+   </ol> <p></p> <p> A <i>monitor</i> is an object with some built-in mutual exclusion and thread synchronization capabilities. They are an integral part of the programming language so the compiler can generate the correct code to implement the monitor. Only one thread can be active at a time in the monitor, where ``active'' means executing a method of the monitor. Monitors also have <i>condition variables</i>, on which a thread can <i>wait</i> if conditions are not right for it to continue executing in the monitor. Some other thread can then get in the monitor and perhaps change the state of the monitor. If conditions are now right, that thread can <i>signal</i> a waiting thread, moving the latter to the ready queue to get back into the monitor when it becomes free. </p><p> </p>
+   <ol> 
+    <img SRC="Monitors/mqus.gif"> 
+   </ol> <p></p> <p> Monitors can use either <i>signal-and-exit</i> or <i>signal-and-continue</i> signaling discipline. In the former, a signaling thread must leave the monitor immediately, at which point it is guaranteed that the signaled thread is the next one in the monitor. In the latter, the signaled thread is not guaranteed to be the next one in the monitor. In fact, <i>barging</i> can take place: some thread that has called a monitor method and is blocked until the monitor is free can get into the monitor before a signaled thread. </p> <p> Here are monitors for the three ``classical'' problems using the signal-and-exit signaling discipline and condition variables. They are written in a Java-like <b>but not Java</b> pseudocode. The <tt>synchronized</tt> attribute in a method definition means that only one thread at a time can be active in any <tt>synchronized</tt> method. </p><p> </p></a>
+  <ol>
+   <a name="MONIT"> </a>
+   <a href="Monitors/bbse.java">Bounded Buffer Pseudocode Monitor.</a> 
+  </ol> 
+  <p></p> 
+  <p> Philosopher starvation is prevented by introducing a new state: very hungry. A philosopher is put into this state if it is hungry, if one of its neighbors puts down its forks, and if it cannot eat because the other fork is in use. A new rule is added: a hungry philosopher cannot eat if it has a very hungry neighbor. These changes will prevent a collaboration of two philosophers trying to starve the philosopher between them. Notice that signal-and-exit requires leaving and reentering the monitor to generate more than one signal. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/dpse.java">Starvation-Free Dining Philosophers Pseudocode Monitor.</a> 
+  </ol> 
+  <p></p> 
+  <p> Writer starvation is prevented by requiring readers that come along to read the database to wait if there is a waiting writer even if other readers are currently reading the database. When the current readers finish, the waiting writer writes the database and then signals into the database a waiting reader. Each entering reader signals another waiting reader into the database. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/rwse.java">Starvation-Free Readers and Writers Pseudocode Monitor.</a> 
+  </ol> 
+  <p></p> 
+  <a name="JAVAM"><h3>Java Monitors</h3> <p> Java uses the <tt>synchronized</tt> keyword to indicate that only one thread at a time can be executing in this or any other <tt>synchronized</tt> method of the object representing the monitor. A thread can call <tt>wait()</tt> to block and leave the monitor until a <tt>notify()</tt> or <tt>notifyAll()</tt> places the thread back in the ready queue to resume execution inside the monitor when scheduled. A thread that has been sent a signal is <b>not</b> guaranteed to be the next thread executing inside the monitor compared to one that is blocked on a call to one of the monitor's <tt>synchronized</tt> methods. Also, it is <b>not</b> guaranteed that the thread that has been waiting the longest will be the one woken up with a <tt>notify()</tt>; an arbitrary thead is chosen by the JVM. Finally, when a <tt>notifyAll()</tt> is called to move all waiting threads back into the ready queue, the first thread to get back into the monitor is <b>not</b> necessarily the one that has been waiting the longest. </p> <p> Each Java monitor has a single nameless anonymous condition variable on which a thread can <tt>wait()</tt> or signal one waiting thread with <tt>notify()</tt> or signal all waiting threads with <tt>notifyAll()</tt>. This nameless condition variable corresponds to a lock on the object that must be obtained whenever a thread calls a <tt>synchronized</tt> method in the object. Only inside a <tt>synchronized</tt> method may <tt>wait()</tt>, <tt>notify()</tt>, and <tt>notifyAll()</tt> be called. </p> <p> Methods that are <tt>static</tt> can also be <tt>synchronized</tt>. There is a lock associated with the class that must be obtained when a <tt>static</tt> <tt>synchronized</tt> method is called. </p> <p> Usually all the publicly accessible methods, the service or access methods, will be <tt>synchronized</tt>. But a Java monitor may be designed with some methods <tt>synchronized</tt> and some not. The non-<tt>synchronized</tt> methods may form the <tt>public</tt> access and call the <tt>synchronized</tt> methods, which will be <tt>private</tt>. </p> <p> An experiment was performed to determine if Java monitors are signal-and-exit or signal-and-continue. They use signal-and-continue. When a thread executes a <tt>notify()</tt>, Java does not necessarily move to the ready queue the thread that has been waiting the longest. Also, Java allows barging. </p><p> </p></a>
+  <ol>
+   <a name="JAVAM"> </a>
+   <a href="Monitors/sigd.java">Java Monitors Use Signal-and-Continue.</a> 
+  </ol> 
+  <p></p> 
+  <p> Here are Java monitors for the three ``classical'' problems. Two important things to be aware of because of signal-and-continue, the lack of named condition variables, and barging. Most of the time it will be necessary to use a <tt>while</tt> loop instead of an <tt>if</tt> when doing a <tt>wait()</tt>. </p>
+  <ol> 
+   <pre>
+while (condition) try {wait();} catch (InterruptedException e) {}
+</pre> 
+  </ol> It is possible that some other thread barged in and got the resource or whatever, requiring a recheck of the waiting condition. Most of the time it will be necessary to use 
+  <tt>notifyAll()</tt> instead of 
+  <tt>notify()</tt> in order to awaken all waiting threads and let them recheck their waiting condition. It is not possible to direct a signal to the particular thread for whom the resource is now available or whatever. 
+  <p></p> 
+  <p> The bounded buffer monitor can only be used by a single producer thread and a single consumer thread. The ``driver'' code is the same as that for the semaphore single-producer single-consumer bounded buffer. What could go wrong if more than one thread of each type used this monitor? How would you fix the monitor? </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/bbmo.java">The Bounded Buffer Monitor.</a> 
+   <p> <a href="Monitors/bbpc.java">The Producer and Consumer Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> Notice how inefficient the dining philosophers monitor is because a broadcast signal with <tt>notifyAll()</tt> must be sent whenever any philosopher puts down its forks due to Java's lack of named condition variables. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/dpmo.java">A Starvation-Free Dining Philosophers Monitor.</a> 
+   <p> <a href="Monitors/dpdr.java">The Dining Philosophers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> Since there are no named condition variables, another technique must be used to prevent starvation in the database readers and writers. The arrival times of readers forced to wait because of a waiting writer is maintained. When the waiting writer enters and then exits the database, all waiting readers that arrived <b>before</b> the time the writer just exiting finished writing are allowed to read the database. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/rwmo.java">A Starvation-Free Readers and Writers Monitor.</a> 
+   <p> <a href="Monitors/rwdr.java">The Readers and Writers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> As mentioned, Java does not have semaphores. Here is how they are implemented in the <tt>Synchronization</tt> package in the <tt>lib</tt> directory. </p>
+  <p> </p>
+  <ol> 
+   <a href="lib/Synchronization/Semaphore.java">Base Semaphore Class.</a> 
+   <p> <a href="lib/Synchronization/WouldBlockException.java"> An Exception.</a> </p>
+   <p> <a href="lib/Synchronization/BinarySemaphore.java">Binary Semaphore Monitor.</a> </p>
+   <p> <a href="lib/Synchronization/CountingSemaphore.java">Counting Semaphore Monitor.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> A binary semaphore can be implemented in other ways than the above, <a href="Monitors/b2sm.java">for example</a>. Compare and contrast the two implementations. Which do you prefer? </p> 
+  <p> A <i>lock</i> acts like a binary semaphore except only the locking thread can unlock the lock. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/lock.java">Lock Example.</a> 
+  </ol> 
+  <p></p> 
+  <p> It is possible to use an object somewhat like a condition variable in a Java monitor. We can pull the code for the <tt>elements</tt> and <tt>spaces</tt> semaphores of the bounded buffer semaphore version into the bounded buffer implementation. The resulting bounded buffer can be used with multiple producer and multiple consumer threads. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/bbcv.java">Multiple Producer and Consumer Bounded Buffer.</a> 
+   <p> <a href="Monitors/bbml.java">The Producers and Consumers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> A <i>callback</i> technique can be used to avoid waking up all the philosopher threads with a <tt>notifyAll()</tt>. An array of callback objects, <tt>convey</tt>, is used, one for each philosopher. If the forks are not available when the philosopher gets hungry, it waits inside its callback object for a <tt>notify()</tt>. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/dpcv.java">Dining Philosophers Callback.</a> 
+   <p> <a href="Monitors/dpdr.java">The Dining Philosophers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> The following implements a starvation-free synchronization algorithm for the readers and writers with a callback object for each thread to wait inside until it can access the database. </p>
+  <p> </p>
+  <ol> 
+   <a href="Monitors/rwcv.java">Readers and Writers Callback.</a> 
+   <p> <a href="Monitors/rwdr.java">The Readers and Writers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> In contrast to named condition variables, it is not possible with this callback technique to wait in the middle of a monitor service method for a signal and then continue executing inside the monitor service method at that point after receiving the signal. The signaled thread has to reenter the monitor via a service method. </p> 
+  <p> A skeleton class for implementing named condition variables (exercise for the reader): </p>
+  <p> </p>
+  <ol> 
+   <a href="lib/Synchronization/ConditionVariable.java">Named Condition Variable.</a> 
+  </ol> 
+  <p></p> 
+  <p> Here is the code for the <a href="lib/XtangoAnimation/XtangoAnimator.java"> <tt>XtangoAnimator</tt> Class.</a> </p> 
+  <h3>Laboratory Exercises</h3> 
+  <p> </p>
+  <ol> 
+   <li>Write a Java monitor for the baboons crossing a canyon (unisex bathroom) that is fair, that is, prevents starvation. </li>
+   <li>Write a Java monitor for the single sleeping barber. Then modify it for multiple sleeping barbers. </li>
+   <li>Enhance the <a href="lib/XtangoAnimation/XtangoAnimator.java"> <tt>XtangoAnimator</tt></a> class so that there are commands for rotation, GIF image icons, grouping icons, lines with arrow heads, hiding, and unhiding icons. </li>
+   <li>Find all remaining race conditions, if any, in the <tt>XtangoAnimator</tt> class. </li>
+  </ol> 
+  <p></p> 
+  <a name="MESSA"><h2>Message Passing</h2> <p> Sometimes the phrase ``send a message to an object'' is used to describe a thread in one object calling a method in another object. Here, that phrase will be used to describe a thread in one object sending a message to a thread in another object, where the message is itself an object. </p> <p> This technique is used for thread communication and synchronization in a computing environment where the threads do not have shared memory (since the threads reside in different virtual or physical machines). Hence the threads cannot share semaphores or monitors and cannot use shared variables to communicate. Message passing can still be used, of course, in a shared memory platform. </p> <p> Messages are sent through a port or channel with an operation like <i>send(port, message)</i> and received from a port or channel with an operation like <i>receive(port, message)</i>. Messages can be passed <i>synchronously</i>, meaning the sender blocks until the received does a receive and the receiver blocks until the sender does a send. Since the sender and receiver are at specific known points in their code at a known specific instant of time, synchronous message passing is also called a <i>simple rendezvous</i> with a one-way flow of information from the sender to the receiver. </p> <p> In <i>asynchronous</i> message passing, the sender does not block. If there is not a receiver waiting to receive the message, the message is queued or buffered. The receiver still blocks if there is no queued or buffered message when a receive is executed. </p> <p> In <i>conditional</i> message passing, the message remains queued until some condition, specified by the receiver, becomes true. At that time, the message is passed to the receiver, unblocking it. </p> <p> A two-way flow of information, perhaps over the network, is called an <i>extended rendezvous</i> and can be implemented with a pair of sends and receives. Typically a <i>client</i> thread will use this technique to communicate with a <i>server</i> thread and request a service to be performed on its behalf. A similar situation is a <i>worker</i> thread contacting a <i>master</i> thread, asking for more work to do. </p><p> </p>
+   <ol>
+     client or worker: send request; receive reply 
+    <p> server or master: receive request; perform service; send reply </p>
+   </ol> <p></p> <p> Messages are objects and can be </p><p> </p>
+   <ol>
+     passed by reference within the same Java Virtual Machine, 
+    <p> or serialized through a pipe within the same JVM, </p>
+    <p> or serialized through a socket between JVMs that are on the same physical machine or on different physical machines. </p>
+   </ol> <p></p> <p> The base data types, <tt>int</tt>, <tt>double</tt>, etc., can be sent as messages in binary or raw data format through a pipe or socket using the <tt>DataInputStream</tt> and <tt>DataOutputStream</tt> methods. They can also be sent as objects using the wrapper classes <tt>Integer</tt>, <tt>Double</tt>, etc. </p> </a>
+  <a name="MESSC"><h3><tt>Synchronization</tt> Package Classes</h3> </a>
+  <p><a name="MESSC"> Here is a collection of Java message passing classes. All of the message passing port classes implement the methods in the </a><a href="lib/Synchronization/MessagePassing.java"> <tt>MessagePassing</tt></a> interface or the <a href="lib/Synchronization/ConditionalMessagePassing.java"> <tt>ConditionalMessagePassing</tt></a> interface. This <a href="lib/Synchronization/MessagePassingException.java"> exception</a> is thrown when an error occurs. This <a href="lib/Synchronization/NotImplementedMethodException.java"> exception</a> is used in implementing restricted rights ports (below). All classes except the conditional ones extend this <a href="lib/Synchronization/MessagePassingRoot.java"> base class</a>. </p>
+  <p> </p>
+  <ol> 
+   <a href="lib/Synchronization/SyncMessagePassing.java"> Synchronous Port.</a> 
+   <p> <a href="lib/Synchronization/AsyncMessagePassing.java"> Asynchronous Port.</a> A <tt>Vector</tt> is used to queue sent but not yet received messages. </p>
+   <p> <a href="lib/Synchronization/AsyncConditionalMessagePassing.java"> Asynchronous Conditional Port.</a> The receiver must pass an object that implements the <a href="lib/Synchronization/Condition.java"> <tt>Condition</tt></a> interface, that is the object must contain a <tt>checkCondition()</tt> method that is used to determine which messages sent are eligible to be received. </p>
+   <p> <a href="lib/Synchronization/SyncConditionalMessagePassing.java"> Synchronous Conditional Port.</a> </p>
+   <p> <a href="lib/Synchronization/BBMessagePassing.java"> Finite Buffer Asynchronous Port.</a> </p>
+   <p> <a href="lib/Synchronization/MessagePassingReceiveOnly.java"> Receive-Only Rights Port.</a> <a href="lib/Synchronization/MessagePassingSendOnly.java"> Send-Only Rights Port.</a> These two filter classes can be wrapped around a message passing port to permit only sending or receiving on the port. This is done by overriding the restricted method with one that throws <tt>NotImplementedMethodException</tt>. </p>
+   <p> <a href="lib/Synchronization/PipedMessagePassing.java"> Integers and Floating-Point Numbers as Messages in a Pipe or Socket Port.</a> The numbers are passed as binary or raw data types through a pipe within the same JVM or a socket between different JVMs. </p>
+   <p> <a href="lib/Synchronization/ObjPipedMessagePassing.java"> Serialized Objects as Messages in a Pipe or Socket Port.</a> The objects are serialized and deserialized using the <tt>writeObject()</tt> and <tt>readObject()</tt> methods through a pipe within the same JVM or a socket between different JVMs. </p>
+  </ol> 
+  <p></p> 
+  <a name="MESSE"><h3>Example Programs</h3> </a>
+  <p><a name="MESSE"> This is a </a><a href="Messaging/snrc.java">simple example</a> illustrating both synchronous and asynchronous message passing. </p> 
+  <p> We can implement the bounded buffer producer and consumer with a set of empty messages representing the buffer slots. </p>
+  <ol> 
+   <a href="Messaging/bbmp.java">Message Set Forms a Bounded Buffer.</a> 
+  </ol> 
+  <p></p> 
+  <p> This is a testing program for asynchronous, synchronous, finite buffer, and piped message passing within the same JVM. There are two types of threads in this collection of threads: those that produce work and those that perform or consume the produced work. A producer puts the work to be done into a message passing port that is called a <i>bag of tasks</i> because consumers reach into the bag to extract the next piece of work to do. If there is just a single thread producing work with many threads reaching into the bag, then this technique is called <i>master/worker</i> or <i>worker crew</i>. </p>
+  <ol> 
+   <a href="Messaging/bagt.java">``Bag of Tasks'' for Worker Crew.</a> 
+  </ol> 
+  <p></p> 
+  <p> Threads can use semaphores and monitors to handle mutual exclusion and condition synchronization. Suppose though the threads do not share memory but are in nodes that have private memories and CPUs on a LAN and suppose they still want to do condition synchronization to coordinate access to some shared resource. If all we have is message passing, can we implement some sort of <i>distributed mutual exclusion</i> algorithm? Suppose we also want to avoid a central server to avoid a bottleneck. We want to solve the <i>N</i> node mutual exclusion problem such that it </p>
+  <ul> 
+   <li> works in a distributed environment </li>
+   <li> does not involve a central server </li>
+  </ul> Assumptions: 
+  <ul> 
+   <li> error-free communication channels between all nodes, i.e., no lost or garbled messages, </li>
+   <li> but messages can arrive in a different order than they were sent, </li>
+   <li> nodes do not fail or halt, either inside or outside their critical sections. </li>
+  </ul> In other words, nodes eventually respond to all request messages. 
+  <p></p> 
+  <p> Basic Idea: </p>
+  <ol> 
+   <pre>
+while (true) {
+  outsideCS();
+  chooseNumber();
+  sendItToAllOtherNodes();
+  waitForMessageFromAllOtherNodes();
+  insideCS();
+  postProtocol();
+}
+</pre> 
+  </ol> Each of the 
+  <i>N</i> nodes is really three threads executing concurrently (the three threads are executing on the CPU/memory of the node). 
+  <ol> 
+   <li> One does the above <tt>while</tt> loop. </li>
+   <li> Another handles requests from other nodes. </li>
+   <li> Another one waits for replies from all other nodes. </li>
+  </ol> 
+  <p></p> 
+  <p> A node will send a ``reply'' or acknowledgement message to a node that has sent a request message, i.e., when ``asked'': </p>
+  <ul> 
+   <li> immediately if the other node has a lower number (higher priority) or if it is not trying to enter its critical section, </li>
+   <li> deferred (until it gets into then out of its critical section) if the other node has a higher sequence number (lower priority). </li>
+   <li> Ties are broken by node ID. </li>
+   <li> A node chooses its number by adding 1 to the highest number it has seen so far in incoming messages from other nodes. </li>
+  </ul> 
+  <p></p> 
+  <p> In the absence of shared memory, a collection of Java threads can use this technique to implement mutual exclusion. The threads send messages to all other threads, asking for permission to enter their critical sections. The threads are all in the same JVM, but we say memory is not shared here because the threads do not share any variables, semaphores, or monitors. </p>
+  <ol> 
+   <a href="Messaging/dimu.java">Distributed Mutual Exclusion.</a> 
+  </ol> 
+  <p></p> 
+  <p> The quick sort algorithm can be parallelized for a shared memory multiple CPU machine by dedicating each CPU to a worker thread and using a message passing port as a bag of tasks. The <tt>main()</tt> method puts the whole array to be sorted into the bag. A worker extracts the task, chooses a pivot point, and partitions the array. Each of the two partitions is then put back into the bag for one of the workers to perform. Even though message passing is being used for a bag of tasks, shared memory is still required because the array is being sorted ``in place'' and the work requests being put into the bag are array index pairs and not pieces of the array itself. </p>
+  <ol>
+    bag of tasks communication channel: 
+   <ol> 
+    <pre>
+AsyncMessagePassing task = new AsyncMessagePassing();
+</pre> 
+   </ol> 
+   <p> quicksort threads get work: </p>
+   <ol> 
+    <pre>
+while (true) {
+   m = (Task) receive(task);
+   quickSort(id, m.left, m.right);
+}
+</pre> 
+   </ol> 
+   <p> quicksort threads create work: </p>
+   <ol> 
+    <pre>
+if (right-(l+1) &gt; 0) send(task, new Task(l+1, right));
+if ((l-1)-left &gt; 0) send(task, new Task(left, l-1));
+</pre> 
+   </ol> 
+   <p> <a href="Animations/aqus.java">Animated Worker Crew Quick Sort.</a> </p>
+   <p> <img SRC="Animations/aqus.gif"> </p>
+  </ol> 
+  <p></p> 
+  <p> These consumers are picky and will only conditionally accept messages that are smaller than some limit. This program tests both synchronous and asynchronous conditional message passing. </p>
+  <ol> 
+   <a href="Messaging/mlpc.java">Conditional Consumers.</a> 
+  </ol> 
+  <p></p> 
+  <p> The <i>distributed dining philosophers</i> do not have a central server they can query for fork availability. Instead each philosopher has a servant who communicates with the two neighboring servants to negotiate the use of the forks. The servants pass <tt>needL</tt>, <tt>needR</tt>, <tt>passL</tt>, and <tt>passR</tt> messages back and forth. Each fork is always in the possession of some philosopher, one of the two on either side of the fork. When a philosopher finishes eating, it labels its two forks as dirty. A hungry philosopher's servant is required to give up a dirty fork in its possession, if asked for by its hungry neighbor's servant. This prevents starvation. Study carefully how conditional message passing is used. Does it matter if synchronous were used instead? </p>
+  <ol> 
+   <a href="Messaging/ddph.java">Distributed Dining Philosophers.</a> 
+   <p> Here is a screen snapshot of an <a href="Animations/addp.java">animated</a> version. </p>
+   <p> <img SRC="Animations/addp.gif"> </p>
+  </ol> 
+  <p></p> 
+  <a name="RENDZ"><h2>Rendezvous</h2> <p> An extended rendezvous is also called a <i>remote procedure call</i> from a client to a server (or a worker to the master) because it resembles (and syntactic sugar can make it nearly identical to) a call to a procedure on a remote machine that is executed there. Typically the call represents a request for service, such as reading a file that resides on the remote machine. The server may handle the request in its main thread or the server may spawn a new thread to handle the request while the server's main thread handles additional requests for service from other clients. The latter gives greater throughput and efficiency since a lengthy request would otherwise delay the handling of requests from the other clients. </p> <p> An addressing mechanism is needed so the client can contact an appropriate server. In the local case (everything in the same JVM), an object can be used as the place for the client and server to ``meet'' and establish a rendezvous. The server calls a method in the object and blocks until the client calls a method. At this point in time, both methods return a newly created object that the client and server subsequently use for the two-way flow of information. This object contains a message passing port shared by them. In the remote case, the client uses the server's machine name and a TCP/IP port number to address the server; the server ''listens'' on the TCP/IP port. </p> </a>
+  <a name="RENDC"><h3><tt>Synchronization</tt> Package Classes</h3> </a>
+  <p><a name="RENDC"> The extended rendezvous class implements this </a><a href="lib/Synchronization/Rendezvous.java"> <tt>interface</tt></a>. </p> 
+  <p> An object created from this <a href="lib/Synchronization/EstablishRendezvous.java">class</a> is used for the addressing described above. In the local case, one such object is used by both client and server. In the remote case, a client creates such an object using the server's machine name and port number in the object's constructor; the server uses just the port number. </p> 
+  <p> When the rendezvous occurs, and object constructed from this <a href="lib/Synchronization/ExtendedRendezvous.java">class</a> is returned to both the client and server. In the local case (within the same JVM), the client and server share this object and use it to transact (synchronous message passing of object references). In the remote case (between JVMs that might be on different physical machines), each gets its own object and the object contains a socket to the other JVM (and machine). Objects are serialized through the socket. The case of sending raw data types through a pipe (same JVM) or a socket (different JVMs) is not implemented and is an exercise for the reader. </p> 
+  <a name="RENDE"><h3>Example Programs</h3> <p> This is a local case example. A command line option controls whether or not the server spawns off a new thread to handle the request. The clients and server all share a <tt>EstablishRendezvous</tt> object for addressing. Each time a client wants to rendezvous with the server, it calls the <tt>clientToServer()</tt> method to get an <tt>ExtendedRendezvous</tt> object whose <tt>clientMakeRequestAwaitReply()</tt> method is used to transact with the server. The client passes a reference to a <tt>RendezvousRequestReply</tt> object to the server. The object contains the data and a method for the server to call. The <tt>ExtendedRendezvous</tt> object is only used once by the client; however, it could be reused for multiple <tt>clientMakeRequestAwaitReply()</tt> calls as is done in the next example. </p></a>
+  <ol>
+   <a name="RENDE"> </a>
+   <a href="Rendezvous/clsv.java">Client-Server Rendezvous.</a> 
+  </ol> 
+  <p></p> 
+  <p> This is a remote case example. Suppose there are workstations named <tt>client0</tt>, <tt>client1</tt>, <tt>client2</tt>, <tt>client3</tt>, and <tt>client4</tt> connected together on a local area network, along with a machine named <tt>server</tt>. The example compile and run shows for UNIX how to run each philosopher is in its own JVM on a different physical machine. Each philosopher sends an <tt>Integer</tt> object containing its ID value to the server when it is hungry. Since this is a rendezvous, the philosopher is blocked until it gets a reply indicating that its forks are available. The server spawns a new thread for each philosopher to handle the transactions. Each philosopher sends an <tt>Integer</tt> object containing its -ID-1 value when putting its forks down. Each philosopher has its own <tt>ExtendedRendezvous</tt> object whose <tt>clientMakeRequestAwaitReply()</tt> it calls over and over again (in contrast to the previous example, in which the clients obtained a new <tt>ExtendedRendezvous</tt> object for each transaction with the server). </p>
+  <ol> 
+   <a href="Rendezvous/dpmm.java">Multi-Machine Dining Philosophers.</a> 
+  </ol> 
+  <p></p> 
+  <p> This program attempts to measure the amount of time it takes to transact a rendezvous. A client sends a message containing an array of length <i>N</i> to the server. The server adds one to each entry of the array and sends it back. The client does this <i>M</i> times and calculates the number of bytes sent per millisecond. The program can be run in two ways. The local run passes the message as a reference from the client to the server within the same JVM. The remote run serializes the message containing the array through a socket over the network to the server running in a different JVM, possibly on another physical machine. </p>
+  <ol> 
+   <a href="Rendezvous/ping.java">Measure Rendezvous Time.</a> 
+  </ol> 
+  <p></p> 
+  <a name="CREND"><h3>Conditional Rendezvous</h3> </a>
+  <p><a name="CREND"> Synchronous conditional message passing corresponds to a conditional simple rendezvous, that is, once the condition is met there is a one-way flow of information in the form of a message object from the client to the server. This </a><a href="lib/Synchronization/ConditionalRendezvous.java"> <tt>class</tt></a> implements an extended <i>guarded</i> or <i>conditional</i> rendezvous in which there is a two-way flow of information once a server finds a client message meeting the condition. This class is a combination of <tt>EstablishRendezvous</tt> and <tt>ExtendedRendezvous</tt> with the condition added. The client calls the <tt>clientTransactServer()</tt> method of the <tt>ConditionalRendezvous</tt> object, while the server first calls <tt>serverGetClient()</tt> to get a client meeting the condition and then the server uses the <tt>Rendezvous</tt> object returned to interact with the client (<tt>serverGetRequest()</tt> and <tt>serverMakeReply()</tt>). The condition class has been <a href="lib/Synchronization/RendezvousCondition.java">enhanced</a> with more information passed to the <tt>checkCondition()</tt> method so the condition check can be based on information gathered about all outstanding messages. </p> 
+  <p> An example using a condition that depends only on the message passed and not on other messages is the dining philosophers classical problem. As an exercise, add code to prevent starvation. As another exercise, implement the bounded buffer multiple producers and consumers with a conditional rendezvous. Then implement the starvation-free database readers and writers with a conditional rendezvous. </p>
+  <ol> 
+   <a href="Rendezvous/dpre.java">Dining Philosophers Conditional Rendezvous.</a> 
+   <p> <a href="Monitors/dpdr.java">The Dining Philosophers Driver.</a> </p>
+  </ol> 
+  <p></p> 
+  <p> Multiple calls by servers to the <tt>serverGetClient()</tt> method can be outstanding, that is blocked, waiting for a client message meeting the condition. A server can call <tt>serverGetClient()</tt> and before completing the rendezvous with that client, the server can call it again, so a server can be handling several rendezvous with different clients simultaneously. This is illustrated with the following banking example. If <tt>starvationFree</tt> is false, a large withdrawal can sit in the queue, while later smaller withdrawals succeed. In contrast, if <tt>starvationFree</tt> is true, then the server (bank thread) will accept only deposits and no withdrawals until the bank balance is large enough to accept the waiting large withdrawal. The <tt>-a</tt> option sets the requirement that all deposits are processed before any withdrawals. The condition checking now depends not only on the message passed but also on the other messages in the queue. The <tt>-B</tt> option adds additional banks, which is not realistic, but was done to test simultaneously executing servers. </p>
+  <ol> 
+   <a href="Rendezvous/bnkr.java">Bank Deposits and Withdrawals.</a> 
+  </ol> 
+  <p></p> 
+  <a name="SURMI"><h2>Remote Method Invocation</h2> <p> Sun Microsystems has added a <i>remote method invocation</i> capability to Java, the ability to make remote procedure calls. The latter term we used above to describe an extended rendezvous between two threads in different JVMs, perhaps on different physical machines. Sun's RMI allows a thread in one JVM to invoke (call) a method in an object in another JVM that is perhaps on a different physical machine. A new thread is created in the other (remote) JVM to execute the called method. The following example shows how to use it. The <tt>ComputeServer</tt> remote object implements a <tt>Compute</tt> interface containing a <tt>compute()</tt> method that a local <tt>Client</tt> can call, passing a <tt>Work</tt> object whose <tt>doWork()</tt> method the server will call. The client is using the remote server to have work performed on its behalf (adding vectors). Presumably the server is running on a computer architecture that can perform the work more efficiently. Parameters to the remote method and the method's return result, if any, are passed from one JVM to the other using object serialization over the network. </p> <p> Two sample runs are attached as a comment to the end of the program file. The first was executed on a PC running Windows 95 using the default port for communication. The second was executed on two Sun workstations, each running Solaris 2.x, using a port other than the default specified by the user. </p></a>
+  <ol>
+   <a name="SURMI"> </a>
+   <a href="RMI/Compute.java">Remote Method Invocation Example.</a> 
+  </ol> 
+  <p></p> 
+  <h3>Laboratory Exercises</h3> 
+  <p> </p>
+  <ol> 
+   <li>Will the <a href="Messaging/bbmp.java">bounded buffer</a> formed from a set of empty messages work with multiple producers and/or consumers? </li>
+   <li>Modify the <a href="Rendezvous/dpre.java">dining philosophers conditional rendezvous</a> so that it prevents starvation. </li>
+   <li>Write a fair readers and writers database using a (conditional) rendezvous. </li>
+   <li>Write a fair unisex bathroom using a (conditional) rendezvous. </li>
+   <li>Write a fair dining philosophers, a fair readers and writers, or a fair unisex bathroom using RMI (remote method invocation). </li>
+  </ol> 
+  <p></p> 
+  <a name="PARAP"><h2>Parallel Processing</h2> </a>
+  <p><a name="PARAP"> We have seen one of example of parallelizing an algorithm to use multiple CPUs: the animated quick sort </a><a href="Animations/aqus.java">example</a>. The algorithm requires shared memory since the array is sorted ``in place'' and needs to be accessed by all the worker threads. A bag of tasks is used to distribute the work. </p> 
+  <p> We can categorize parallel algorithms along several lines, using the abbreviations shown in parentheses: </p>
+  <ol> 
+   <li> <i>coarse</i> (CG) versus <i>fine grain</i> (FG), determined by the frequency of thread synchronization or communication relative to the amount of computation being done; <p> </p></li>
+   <li> shared memory (SM) multiprocessor versus distributed memory (DM) CPUs, determined by the presence of shared data; <p> </p></li>
+   <li> message passing (MP) versus semaphores, monitors, barriers, or <tt>join()</tt> (SY), where the latter set requires shared memory but the first does not imply distributed memory; <p> </p></li>
+   <li> worker crew (WC) with a bag of tasks and a fixed number of workers, perhaps based on the number of CPUs, versus <i>data parallelism</i> (DP), where the amount of data or work to do determines the number of worker threads spawned and CPUs needed. </li>
+  </ol> 
+  <p></p> 
+  <p> In some cases the need for shared memory can be relaxed. If the shared data is read-only, it can be replicated or broadcast to each distributed memory and the copy stored there. In other situations, it might be possible to pass the shared data around as a message, to be updated by the currently owning thread. For example, it might be possible to replace </p>
+  <ol> 
+   <pre>
+/* shared */ int N;
+/* shared */ Object mutex = new Object();
+                     // ...
+synchronized (mutex) { N = N + 1; }
+</pre> 
+  </ol> with 
+  <ol> 
+   <pre>
+/* local */ int N;
+                     // ...
+N = receive(port);
+N = N + 1;
+send(port, N);
+</pre> 
+  </ol> 
+  <p></p> 
+  <p> There will be too much overhead and inefficiency with FG unless the communication and synchronization tools are highly optimized, perhaps with hardware support. DM can be a network of workstations (NOW) or a specialized parallel architecture in which each CPU has its own memory and there is some kind of fast interconnect or switch connecting them. </p> 
+  <a name="PARAC"><h3><tt>Synchronization</tt> Package Classes</h3> <p> On a shared memory platform, a <i>barrier</i> can be used for thread synchronization. It is an extension of the semaphore idea. No thread can continue past the barrier until all threads have arrived at the barrier; in other words, each thread arriving at the barrier blocks until all the other threads have arrived. There are two constructors and two versions of the <tt>gate()</tt> method: for a one-dimensional and a two-dimensional structure of the data and threads. </p></a>
+  <ol>
+   <a name="PARAC"> </a>
+   <a href="lib/Synchronization/Barrier.java"> A Barrier for Thread Synchronization.</a> 
+  </ol> 
+  <p></p> 
+  <a name="PARAE"><h3>Example Programs</h3> <p> These examples will be categorized according to CG or FG, SM or DM, MP or SY, WC or DP. </p> <p> Calculate the first <i>n</i> prime numbers. Start up <i>n</i> filter threads. FG, SM or DM, MP, DP. </p></a>
+  <ol>
+   <a name="PARAE"> </a>
+   <a href="Parallel/pasv.java">Prime Number Sieve.</a> 
+  </ol> 
+  <p></p> 
+  <p> Sort an array of length <i>n</i> by creating a pipeline of length <i>n</i>. FG, SM or DM, MP, DP. </p>
+  <ol> 
+   <a href="Parallel/psrt.java">Pipeline Sort.</a> 
+  </ol> 
+  <p></p> 
+  <p> Sort an array of length <i>n</i> by creating two sorting threads and a merge thread. Send half the array to each sorting thread. FG, SM or DM, MP, WC. Can you finish the code? </p>
+  <ol> 
+   <a href="Parallel/meso.java">Merge Sort Skeleton.</a> 
+  </ol> 
+  <p></p> 
+  <p> Sort an array of length <i>n</i> by creating <i>n/2</i> worker threads. FG, SM or DM, MP, DP. Can you finish the code? </p>
+  <ol> 
+   <a href="Parallel/cmpx.java">Compare-Exchange Sort Skeleton.</a> 
+  </ol> 
+  <p></p> 
+  <p> For an <i>N</i>-by-<i>N</i> chess board, start up a thread for each row in column one that a queen can be placed. The size of the board could be broadcast to each thread for DM. CG, SM or DM, MP, DP. </p>
+  <ol> 
+   <a href="Parallel/pque.java">Data Parallel N-Queens.</a> 
+  </ol> 
+  <p></p> 
+  <p> For each CPU, start up a worker thread that reads a row number for the column one queen from the bag of tasks. CG, SM or DM, MP, WC. </p>
+  <ol> 
+   <a href="Parallel/qumw.java">Master/Worker N-Queens.</a> 
+  </ol> 
+  <p></p> 
+  <p> Modify the previous example so each worker executes on a networked workstation. The rendezvous technique is used: each worker is like a client that asks the server for more work to do. The program can also be run entirely locally with the <tt>-w</tt> command line option. This tests the three kinds of <tt>EstablishRendezvous</tt> objects that can be constructed. CG, DM, MP, WC. </p>
+  <ol> 
+   <a href="Parallel/qumm.java">Multi-Machine Master/Worker N-Queens.</a> 
+  </ol> 
+  <p></p> 
+  <p> Sort an array of length <i>n</i>. In this example, every thread needs to communicate with every other thread, possible in SM, networked workstations, or a specialized DM architecture. FG, SM or DM, MP, DP. </p>
+  <ol> 
+   <a href="Parallel/rads.java">Radix Sort.</a> 
+  </ol> 
+  <p></p> 
+  <p> FG, SM, SY, DP. </p>
+  <ol> 
+   <a href="Parallel/matj.java">Matrix Multiply Threads Using <tt>join()</tt>.</a> 
+  </ol> 
+  <p></p> 
+  <p> FG, SM, SY, DP. </p>
+  <ol> 
+   <a href="Parallel/matt.java">Matrix Multiply Threads Using a Semaphore.</a> 
+  </ol> 
+  <p></p> 
+  <p> FG, SM, SY, DP. </p>
+  <ol> 
+   <a href="Parallel/grba.java">Laplace Grid Using a Barrier.</a> 
+  </ol> 
+  <p></p> 
+  <p> Create a new worker thread each time a section of the array is partitioned. CG, SM, SY, DP. </p>
+  <ol> 
+   <a href="Parallel/qsrt.java">Data Parallel Quick Sort.</a> 
+  </ol> 
+  <p></p> 
+  <p> FG, SM or DM, MP, DP. </p>
+  <ol> 
+   <a href="Parallel/mats.java">Systolic Array Matrix Multiply.</a> 
+  </ol> 
+  <p></p> 
+  <p> Replace the shared grid array and the barrier with message passing. FG, SM or DM, MP, DP. </p>
+  <ol> 
+   <a href="Parallel/gr4c.java">Laplace Grid Using Message Passing.</a> 
+  </ol> 
+  <p></p> 
+  <h3>Laboratory Exercises</h3> 
+  <p> </p>
+  <ol> 
+   <li>Implement one-way merge sort in Java using message passing. </li>
+   <li>Implement multi-way (binary tree) merge sort using message passing. </li>
+   <li>Write a pipeline sieve of Eratosthenes using message passing. </li>
+   <li>Complete the <a href="Parallel/cmpx.java"> compare-exchange sort skeleton</a> using message passing. </li>
+   <li>Convert the sequential ``Game of Life'' simulation program into a multithreaded one where each cell has its own thread. Use semaphores, a <a href="lib/Synchronization/Barrier.java"> barrier</a>, or message passing for synchronization. </li>
+   <li>Animate one or more of the above programs. </li>
+  </ol> 
+  <p></p> 
+  <p> Last modified 07 July 1997. </p> 
+  <p> <em>© 1997 Stephen J. Hartley<em> </em></em></p>
+  <em><em> <p> </p><address><a href="http://www.mcs.drexel.edu/~shartley">SJH</a></address> <address> <a href="mailto:shartley@mcs.drexel.edu">shartley@mcs.drexel.edu</a> </address> <p></p>   </em></em>
+ </body>
+</html>

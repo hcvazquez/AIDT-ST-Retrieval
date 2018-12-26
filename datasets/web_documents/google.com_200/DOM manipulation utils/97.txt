@@ -1,0 +1,417 @@
+<!doctype html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!-->
+<html class="no-js" lang="en">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <title>Utility functions in KnockoutJS - Knock Me Out</title> 
+  <meta name="author" content="Ryan Niemeyer"> 
+  <meta name="description" content="When working with KnockoutJS, there seem to be many common operations that you need to perform on your view model objects. Internally, Knockout has a …"> 
+  <!-- http://t.co/dKP3o1e --> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="canonical" href="http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html"> 
+  <link href="/favicon.png" rel="icon"> 
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css"> 
+  <script src="/javascripts/modernizr-2.0.js"></script> 
+  <script src="/javascripts/ender.js"></script> 
+  <script src="/javascripts/octopress.js" type="text/javascript"></script> 
+  <link href="http://feeds.feedburner.com/KnockMeOut" rel="alternate" title="Knock Me Out" type="application/atom+xml"> 
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts --> 
+  <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css"> 
+  <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css"> 
+ </head> 
+ <body> 
+  <header role="banner">
+   <hgroup> 
+    <h1 class="title"> <a href="http://www.knockmeout.net">Knock Me Out</a> </h1> 
+    <a class="banner" href="http://www.knockmeout.net"> <img src="/images/blog/banner.png" title="&quot;Knock Me Out&quot;" alt="&quot;Knock Me Out&quot;"> </a> 
+    <h2>Thoughts, ideas, and discussion about Knockout.js</h2> 
+   </hgroup> 
+  </header> 
+  <nav role="navigation">
+   <ul class="subscription" data-subscription="rss"> 
+    <li><a href="http://feeds.feedburner.com/KnockMeOut" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li> 
+   </ul> 
+   <form action="http://google.com/search" method="get"> 
+    <fieldset role="search"> 
+     <input type="hidden" name="sitesearch" value="www.knockmeout.net"> 
+     <input class="search" type="text" name="q" results="0" placeholder="Search"> 
+    </fieldset> 
+   </form> 
+   <ul class="main-navigation"> 
+    <li><a href="/">Blog</a></li> 
+    <li><a href="/blog/archives">Archives</a></li> 
+   </ul> 
+  </nav> 
+  <div id="main"> 
+   <div id="content"> 
+    <div> 
+     <article class="hentry" role="article"> 
+      <header> 
+       <h1 class="entry-title">Utility Functions in KnockoutJS</h1> 
+       <p class="meta"> <time datetime="2011-04-12T23:45:00-05:00" pubdate data-updated="true"></time> | <a href="/2011/04/utility-functions-in-knockoutjs.html#disqus_thread">Comments</a> </p> 
+      </header> 
+      <div class="entry-content">
+       <p>When working with <a href="http://knockoutjs.com">KnockoutJS</a>, there seem to be many common operations that you need to perform on your view model objects. Internally, Knockout has a number of utility functions used by the library itself, but many of these functions might actually be handy for anyone using the library. I wanted to build a sample that highlights a few of my favorite utilities.</p> 
+       <h2>Handling data from the server</h2> 
+       <p>One of the first tasks that you typically encounter is converting data from the server to a suitable format for use in Knockout. Suppose, we are provided a JSON string from the server that was not automatically turned into a JavaScript object:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="kd">var</span> <span class="nx">JSONdataFromServer</span> <span class="o">=</span> <span class="s1">'[{"name":"Peach","category":"Fruits","price":1},{"name":"Plum","category":"Fruits","price":0.75},{"name":"Donut","category":"Bread","price":1.5},{"name":"Milk","category":"Dairy","price":4.50}]'</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Knockout has a utility function <code>ko.utils.parseJson</code> that will attempt to do a <code>JSON.parse</code> if it is available or fall back to evaluating it as a function string for older browsers. So, we can turn our JSON string into an object like:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="kd">var</span> <span class="nx">dataFromServer</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">parseJson</span><span class="p">(</span><span class="nx">JSONdataFromServer</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now we have a JavaScript object, but in order to be useful in Knockout, we might need to convert some properties to observables and possibly add some computed observables. One option for doing this is Knockout’s <a href="http://knockoutjs.com/documentation/plugins-mapping.html">mapping</a> plugin. By default, it will convert all arrays into observableArrays and all other properties into observables. It also has hooks to control creation in more advanced scenarios. However, for fairly simple scenarios, it is easy enough to do the mapping yourself like:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="kd">function</span> <span class="nx">Item</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span> <span class="nx">category</span><span class="p">,</span> <span class="nx">price</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">observable</span><span class="p">(</span><span class="nx">name</span><span class="p">);</span> </span><span class="line"> <span class="k">this</span><span class="p">.</span><span class="nx">category</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">observable</span><span class="p">(</span><span class="nx">category</span><span class="p">);</span> </span><span class="line"> <span class="k">this</span><span class="p">.</span><span class="nx">price</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">observable</span><span class="p">(</span><span class="nx">price</span><span class="p">);</span> </span><span class="line"> <span class="k">this</span><span class="p">.</span><span class="nx">priceWithTax</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">dependentObservable</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">price</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1.05</span><span class="p">).</span><span class="nx">toFixed</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> </span><span class="line"> <span class="p">},</span> <span class="k">this</span><span class="p">);</span> </span><span class="line"><span class="p">}</span> </span><span class="line"> </span><span class="line"><span class="c1">//do some basic mapping (without mapping plugin)</span> </span><span class="line"><span class="kd">var</span> <span class="nx">mappedData</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayMap</span><span class="p">(</span><span class="nx">dataFromServer</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="k">new</span> <span class="nx">Item</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">item</span><span class="p">.</span><span class="nx">category</span><span class="p">,</span> <span class="nx">item</span><span class="p">.</span><span class="nx">price</span><span class="p">);</span> </span><span class="line"><span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>So, we have a constructor function for an <em>Item</em>, which creates our observables and adds a computed observable for showing the price with tax. We generate a mapped array of objects by using <code>ko.utils.arrayMap</code>, which executes a function for each item in an array and pushes the result of the function to a new array that is returned.</p> 
+       <h2>Dealing with arrays in your view model</h2> 
+       <p>Now we have an array of items that is ready for use in Knockout. When dealing with an array though, there seem to be several common scenarios where utility functions come in handy.</p> 
+       <h3>Looping through an array</h3> 
+       <p>Suppose we want to create a computed observable at the root view model level to track the grand total for all items. We will need to sum the <code>priceWithTax</code> value for all items. We could easily write a for loop to do this (or if we are using jQuery, <code>$.each</code>), but Knockout provides a utility function <code>ko.utils.arrayForEach</code> for this purpose. We can use this function to get our total by doing something like:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="nx">viewModel</span><span class="p">.</span><span class="nx">total</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">computed</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">total</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> </span><span class="line"> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayForEach</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">(),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">value</span> <span class="o">=</span> <span class="nb">parseFloat</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">priceWithTax</span><span class="p">());</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nb">isNaN</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span> <span class="p">{</span> </span><span class="line"> <span class="nx">total</span> <span class="o">+=</span> <span class="nx">value</span><span class="p">;</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="k">return</span> <span class="nx">total</span><span class="p">.</span><span class="nx">toFixed</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span> </span><span class="line"><span class="p">},</span> <span class="nx">viewModel</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Filtering an array</h3> 
+       <p>Next, say we want to allow a user to filter the list of items by name. We could create a computed observable that returns the matching subset of the original array of items. Knockout’s <code>ko.utils.arrayFilter</code> provides an implementation of this functionality that allows us to pass in an array and control which items are included based on the result of the function executed on each item. For example, suppose we bind a textbox to a filter observable and use it to get our filtered items:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="c1">//filter the items using the filter text</span> </span><span class="line"><span class="nx">viewModel</span><span class="p">.</span><span class="nx">filteredItems</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">computed</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">filter</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">filter</span><span class="p">().</span><span class="nx">toLowerCase</span><span class="p">();</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">filter</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">();</span> </span><span class="line"> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayFilter</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">(),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">stringStartsWith</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">name</span><span class="p">().</span><span class="nx">toLowerCase</span><span class="p">(),</span> <span class="nx">filter</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"><span class="p">},</span> <span class="nx">viewModel</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>We pass our array of items into <code>ko.utils.arrayFilter</code> and return true only when the item’s name starts with the value of the filter observable (<code>ko.utils.stringStartsWith</code> provides an easy way to do this). Now we can bind our display to <code>filteredItems</code> and it will react to changes in the filter textbox. We would most likely want the display to update on each keystroke, so on our input field we can specify the binding like:</p> 
+       <p><em>note: <code>ko.utils.stringStartsWith</code> is not exported in the minified KO file`. The code is simple enough though to replicate.</em></p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="html"><span class="line"><span class="nt">&lt;p&gt;</span>Filter: <span class="nt">&lt;input</span> <span class="na">data-bind=</span><span class="s">"value: filter, valueUpdate: 'afterkeydown'"</span> <span class="nt">/&gt;&lt;/p&gt;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Searching for an item in the array</h3> 
+       <p>Besides being able to filter the display, let’s say that we also want to be able to enter a search term and highlight the first matching entry by name. Knockout provides <code>ko.utils.arrayFirst</code> that will execute a function against each item in our array and return the first item where the function evaluates to true. Similar to the <code>filteredItems</code> computed observable, we can create one that returns the first match from our search field:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="c1">//identify the first matching item by name</span> </span><span class="line"><span class="nx">viewModel</span><span class="p">.</span><span class="nx">firstMatch</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">computed</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">search</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">search</span><span class="p">().</span><span class="nx">toLowerCase</span><span class="p">();</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">search</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="kc">null</span><span class="p">;</span> </span><span class="line"> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayFirst</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">filteredItems</span><span class="p">(),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">stringStartsWith</span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">name</span><span class="p">().</span><span class="nx">toLowerCase</span><span class="p">(),</span> <span class="nx">search</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"><span class="p">},</span> <span class="nx">viewModel</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now we can use <code>viewModel.firstMatch</code> in our template to compare it against the item (<code>$data</code>) that we are sending through our template and style the matching row appropriately.</p> 
+       <h3>Flattening an array</h3> 
+       <p>Suppose we needed an array that contains all of the categories currently being used in our items. Knockout’s <code>ko.utils.arrayMap</code> that we used earlier is a nice way to take an array of objects and generate a flattened structure.</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="c1">//get a list of used categories</span> </span><span class="line"><span class="nx">viewModel</span><span class="p">.</span><span class="nx">justCategories</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">computed</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">categories</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayMap</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">(),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">item</span><span class="p">.</span><span class="nx">category</span><span class="p">();</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="k">return</span> <span class="nx">categories</span><span class="p">.</span><span class="nx">sort</span><span class="p">();</span> </span><span class="line"><span class="p">},</span> <span class="nx">viewModel</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Our <code>justCategories</code> computed observable now contains an array of the used categories.</p> 
+       <h3>Getting just the unique values in an array</h3> 
+       <p>While we now have a list of categories in <code>justCategories</code>, what we might really want is a list of the unique categories represented in our items. Knockout’s <code>ko.utils.arrayGetDistinctValues</code> takes in an array and returns an array that contains only the unique values.</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="c1">//get a unique list of used categories</span> </span><span class="line"><span class="nx">viewModel</span><span class="p">.</span><span class="nx">uniqueCategories</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">dependentObservable</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayGetDistinctValues</span><span class="p">(</span><span class="nx">viewModel</span><span class="p">.</span><span class="nx">justCategories</span><span class="p">()).</span><span class="nx">sort</span><span class="p">();</span> </span><span class="line"><span class="p">},</span> <span class="nx">viewModel</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Comparing two arrays</h3> 
+       <p>We have a list of the available categories and we have a list of the unique categories that are being used. Suppose that we want to provide a list of the categories that are missing from our data. Knockout’s <code>ko.utils.compareArrays</code> provides functionality to compare two arrays and indicate which items are different. For example:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="c1">//find any unused categories</span> </span><span class="line"><span class="nx">viewModel</span><span class="p">.</span><span class="nx">missingCategories</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">dependentObservable</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="c1">//find out the categories that are missing from uniqueNames</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">differences</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">compareArrays</span><span class="p">(</span><span class="nx">viewModel</span><span class="p">.</span><span class="nx">categories</span><span class="p">,</span> <span class="nx">viewModel</span><span class="p">.</span><span class="nx">uniqueCategories</span><span class="p">());</span> </span><span class="line"> <span class="c1">//return a flat list of differences</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">results</span> <span class="o">=</span> <span class="p">[];</span> </span><span class="line"> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayForEach</span><span class="p">(</span><span class="nx">differences</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">difference</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">difference</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="s2">"deleted"</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">results</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">difference</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="k">return</span> <span class="nx">results</span><span class="p">;</span> </span><span class="line"><span class="p">},</span> <span class="nx">viewModel</span><span class="p">)</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>The result of <code>ko.utils.compareArrays</code> is an array that contains items with a <code>status</code> property (<code>added</code>, <code>deleted</code>, or <code>retained</code>) and a <code>value</code> property holding the original item.</p> 
+       <h2>Sending data back to the server</h2> 
+       <p>At some point, most applications will need to post data back to the server to persist changes to storage. Our view model is likely not quite in a suitable format for use on the server.</p> 
+       <h3>Converting our view model using ko.toJS or ko.toJSON</h3> 
+       <p>I hesitate to call <code>ko.toJS</code> and <code>ko.toJSON</code> utilities, because they seem to be a necessity as soon as you need to package up some or all of your view model for transporting it back to the server. Usually a first attempt at doing this would involve calling something like <code>JSON.stringify(viewModel)</code>. After seeing the result, you are immediately reminded that observables are actually functions and that JSON does not contain functions, so the observables are ignored by JSON serializers.</p> 
+       <p>Luckily, Knockout includes these helper functions to facilitate transforming all of your observables and computed observables into normal properties on a JavaScript object.</p> 
+       <p><code>ko.toJS</code> – this function creates a copy of the object that you pass to it with all observables and computed observables converted into normal properties that are set to the current value.</p> 
+       <p><code>ko.toJSON</code> – this function first does <code>ko.toJS</code> on your object and then converts that object to a JSON string representation that is suitable for transferring back to the server. <em>Note: this uses the browser’s native <code>JSON.stringify()</code> function, which is not available in some older browsers. One way to overcome this is by referencing a script from <a href="https://github.com/douglascrockford/JSON-js">here</a>.</em></p> 
+       <h3>Removing properties from our converted array</h3> 
+       <p>We can use <code>ko.toJS</code> to turn our observables into a plain object, but we may need to do some additional tweaking before it is ready to send to the server. A common scenario is that your view model contains various computed observables for display that are not expected by your server-side code. Again <code>ko.utils.arrayMap</code> is useful to trim the fat off of your objects:</p> 
+       <figure class="code">
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td>
+            <td class="code"><pre><code class="js"><span class="line"><span class="kd">var</span> <span class="nx">items</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">toJS</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">items</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">mappedItems</span> <span class="o">=</span> <span class="nx">ko</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">arrayMap</span><span class="p">(</span><span class="nx">items</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">item</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">delete</span> <span class="nx">item</span><span class="p">.</span><span class="nx">priceWithTax</span><span class="p">;</span> </span><span class="line"> <span class="k">return</span> <span class="nx">item</span><span class="p">;</span> </span><span class="line"><span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now our items are in a proper format for posting to our server.</p> 
+       <p>Knockout contains a number of utility functions that are useful for manipulating your view model. These were the ones that I find most useful. Check out the Knockout <a href="https://github.com/SteveSanderson/knockout/tree/master/build/output">source</a> to see all of the available utility functions.</p> 
+       <p>Here is a completed sample demonstrating these utility functions:</p> 
+       <iframe style="width: 100%; height: 800px" frameborder="0" seamless src="http://jsfiddle.net/vdcUA/embedded/result,js,html,css/light/"></iframe> 
+       <p><a href="http://jsfiddle.net/rniemeyer/vdcUA/">Link to full sample on jsFiddle.net</a></p> 
+      </div> 
+      <footer> 
+       <p class="meta"> <span class="byline author vcard">Posted by <span class="fn">Ryan Niemeyer</span></span> <time datetime="2011-04-12T23:45:00-05:00" pubdate data-updated="true"></time> </p> 
+       <div class="sharing"> 
+        <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html" data-via="rpniemeyer" data-counturl="http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html">Tweet</a> 
+       </div> 
+       <p class="meta"> <a class="basic-alignment left" href="/2011/03/are-your-templates-working-overtime.html" title="Previous Post: Are your Templates Working Overtime?">« Are your Templates Working Overtime?</a> <a class="basic-alignment right" href="/2011/04/knockoutjs-video-from-mix11.html" title="Next Post: KnockoutJS video from MIX11">KnockoutJS video from MIX11 »</a> </p> 
+      </footer> 
+     </article> 
+     <section> 
+      <h1>Comments</h1> 
+      <div id="disqus_thread" aria-live="polite">
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+      </div> 
+     </section> 
+    </div> 
+    <aside class="sidebar"> 
+     <section xmlns="http://www.w3.org/1999/html"> 
+      <h1>About Me</h1> 
+      <img class="left" src="/images/blog/rniemeyer.png"> 
+      <p>Father, husband, programmer and a positive guy. Never short on ideas. Love to learn and collaborate.</p> 
+      <ul> 
+       <li> <script src="/javascripts/twitter.js" type="text/javascript"> </script> <a href="http://twitter.com/rpniemeyer" class="twitter-follow-button" data-show-count="false">Follow @rpniemeyer</a> </li> 
+       <li> <a href="https://github.com/rniemeyer">rniemeyer</a> on Github </li> 
+       <li>email: ryan at knockmeout.net</li> 
+      </ul> 
+     </section> 
+     <section> 
+      <h1>Recent Posts</h1> 
+      <ul id="recent_posts"> 
+       <li class="post"> <a href="/2015/02/knockout-3-3-released.html">Knockout.js 3.3 Released</a> </li> 
+       <li class="post"> <a href="/2014/10/knockout-cleaning-up.html">Cleaning up after yourself in Knockout.js</a> </li> 
+       <li class="post"> <a href="/2014/06/knockout-3-2-preview-components.html">Knockout.js 3.2 Preview : Components</a> </li> 
+       <li class="post"> <a href="/2014/05/knockout-dependency-detection.html">How does dependency detection work in Knockout.js?</a> </li> 
+       <li class="post"> <a href="/2014/03/knockout-3-1-released.html">Knockout.js 3.1 Released</a> </li> 
+      </ul> 
+     </section> 
+     <section> 
+      <h1>Popular Posts</h1> 
+      <ul> 
+       <li class="post"> <a href="/2011/04/utility-functions-in-knockoutjs.html">Utility functions in KnockoutJS</a> </li> 
+       <li class="post"> <a href="/2011/06/10-things-to-know-about-knockoutjs-on.html">10 things to know about KnockoutJS on day one</a> </li> 
+       <li class="post"> <a href="/2011/07/another-look-at-custom-bindings-for.html">Another look at custom bindings for KnockoutJS</a> </li> 
+       <li class="post"> <a href="/2012/02/revisiting-dragging-dropping-and.html">Revisiting dragging, dropping, and sorting observableArrays</a> </li> 
+       <li class="post"> <a href="/2011/05/creating-smart-dirty-flag-in-knockoutjs.html">Creating a smart, dirty flag in KnockoutJS</a> </li> 
+       <li class="post"> <a href="/2011/08/simplifying-and-cleaning-up-views-in.html">Simplifying and cleaning up views in KnockoutJS</a> </li> 
+       <li class="post"> <a href="/2011/03/guard-your-model-accept-or-cancel-edits.html">Guard Your Model: Accept or Cancel Edits to Observables in KnockoutJS</a> </li> 
+       <li class="post"> <a href="/2011/06/lazy-loading-observable-in-knockoutjs.html">Lazy loading an observable in KnockoutJS</a> </li> 
+       <li class="post"> <a href="/2011/08/all-of-knockoutjscom-live-samples-in.html">All of the KnockoutJS.com live samples in jsFiddle</a> </li> 
+       <li class="post"> <a href="/2011/03/reacting-to-changes-in-knockoutjs.html">Reacting to Changes in KnockoutJS: Choosing the Right Tool for the Right Job</a> </li> 
+      </ul> 
+     </section>
+     <section> 
+      <h1>Links</h1> 
+      <ul> 
+       <li> <a href="http://knockoutjs.com">Knockout</a> </li> 
+       <li> <a href="https://github.com/rniemeyer/knockout-sortable">Knockout-Sortable</a> </li> 
+       <li> <a href="http://rniemeyer.github.com/knockout-kendo/">Knockout-Kendo</a> </li> 
+       <li> <a href="https://github.com/rniemeyer/knockout-postbox/">Knockout-Postbox</a> </li> 
+       <li> <a href="https://github.com/rniemeyer/knockout-classBindingProvider/">Knockout-ClassBindingProvider</a> </li> 
+       <li> <a href="https://github.com/rniemeyer/knockout-delegatedEvents/">Knockout-DelegatedEvents</a> </li> 
+       <li> <a href="https://groups.google.com/forum/#!forum/knockoutjs">KO Forums</a> </li> 
+       <li> <a href="http://stackoverflow.com/questions/tagged/knockoutjs">KO ?s on StackOverflow</a> </li> 
+      </ul> 
+     </section> 
+    </aside> 
+   </div> 
+  </div> 
+  <footer role="contentinfo">
+   <p> Copyright © 2015 - Ryan Niemeyer - <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span> </p> 
+   <script type="text/javascript">
+var clicky_site_ids = clicky_site_ids || [];
+clicky_site_ids.push(66522385);
+(function() {
+  var s = document.createElement('script');
+  s.type = 'text/javascript';
+  s.async = true;
+  s.src = '//static.getclicky.com/js';
+  ( document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0] ).appendChild( s );
+})();
+</script> 
+  </footer> 
+  <script type="text/javascript">
+    var disqus_shortname = 'knockmeout';
+    
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html';
+        var disqus_url = 'http://www.knockmeout.net/2011/04/utility-functions-in-knockoutjs.html';
+        var disqus_script = 'embed.js';
+        
+        (function () {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        }());
+</script> 
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>   
+ </body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <title>Image Filtering</title> 
+  <meta content="text/html; charset=us-ascii" http-equiv="content-type"> 
+  <link rel="stylesheet" type="text/css" href="stylesheet.css"> 
+ </head> 
+ <body> 
+  <h1>Lode's Computer Graphics Tutorial</h1> 
+  <h1>Image Filtering</h1> 
+  <h2>Table of Contents</h2> 
+  <ul> 
+   <li><a href="#Introduction_">Introduction</a></li> 
+   <li><a href="#Convolution">Convolution</a></li> 
+   <li><a href="#Blur">Blur</a></li> 
+   <li><a href="#Motion_Blur_">Motion Blur</a></li> 
+   <li><a href="#Find_Edges_">Find Edges</a></li> 
+   <li><a href="#Sharpen">Sharpen</a></li> 
+   <li><a href="#Emboss">Emboss</a></li> 
+   <li><a href="#Median">Mean and Median Filter</a></li> 
+   <li><a href="#Conclusion">Conclusion</a></li> 
+  </ul> 
+  <a href="index.html">Back to index</a>
+  <br> 
+  <h2><a name="Introduction_" id="Introduction_"></a>Introduction<br></h2> Image filtering allows you to apply various effects on photos. The type of image filtering described here uses a 2D filter similar to the one included in Paint Shop Pro as User Defined Filter and in Photoshop as Custom Filter.
+  <br> 
+  <h2><a name="Convolution" id="Convolution"></a>Convolution</h2> The trick of image filtering is that you have a 2D filter matrix, and the 2D image. Then, for every pixel of the image, take the sum of products. Each product is the color value of the current pixel or a neighbor of it, with the corresponding value of the filter matrix. The center of the filter matrix has to be multiplied with the current pixel, the other elements of the filter matrix with corresponding neighbor pixels.
+  <br> 
+  <br> This operation where you take the sum of products of elements from two 2D functions, where you let one of the two functions move over every element of the other function, is called Convolution or Correlation. The difference between Convolution and Correlation is that for Convolution you have to mirror the filter matrix, but usually it's symmetrical anyway so there's no difference.
+  <br> 
+  <br> The filters with convolution are relatively simple. More complex filters, that can use more fancy functions, exist as well, and can do much more complex things (for example the Colored Pencil filter in Photoshop), but such filters aren't discussed here.
+  <br> 
+  <br> The 2D convolution operation requires a 4-double loop, so it isn't extremely fast, unless you use small filters. Here we'll usually be using 3x3 or 5x5 filters.
+  <br> 
+  <br> There are a few rules about the filter:
+  <br> 
+  <ul> 
+   <li>Its size has to be uneven, so that it has a center, for example 3x3, 5x5 and 7x7 are ok.</li> 
+   <li>It doesn't have to, but the sum of all elements of the filter should be 1 if you want the resulting image to have the same brightness as the original.</li> 
+   <li>If the sum of the elements is larger than 1, the result will be a brighter image, and if it's smaller than 1, a darker image. If the sum is 0, the resulting image isn't necessarily completely black, but it'll be very dark.</li> 
+  </ul> The image has finite dimensions, and if you're for example calculating a pixel on the left side, there are no more pixels to the left of it while these are required for the convolution. You can either use value 0 here, or wrap around to the other side of the image. In this tutorial, the wrapping around is chosen because it can easily be done with a modulo division.
+  <br> 
+  <br> The resulting pixel values after applying the filter can be negative or larger than 255, if that happens you can truncate them so that values smaller than 0 are made 0 and values larger than 255 are set to 255. For negative values, you can also take the absolute value instead.
+  <br> 
+  <br> In the Fourier Domain or Frequency Domain, the convolution operation becomes a multiplication instead, which is faster. In the Fourier Domain, much more powerful and bigger filters can be applied faster, especially if you use the Fast Fourier Transform. More about this is in the Fourier Transform article. In this article, we'll look at a few very typical small filters, such as blur, edge detection and emboss.
+  <br> 
+  <br> Image filters aren't feasible for real time applications and games yet, but they're useful in image processing.
+  <br> 
+  <br> Digital audio and electronic filters work with convolution as well, but in 1D.
+  <br> 
+  <br> Here's the code that'll be used to try out different filters. Apart from using a filter matrix, it also has a multiplier factor and a bias. After applying the filter, the factor will be multiplied with the result, and the bias added to it. So if you have a filter with an element 0.25 in it, but the factor is set to 2, all elements of the filter are in theory multiplied by two so that element 0.25 is actually 0.5. The bias can be used if you want to make the resulting image brighter.
+  <br> 
+  <br> The result of one pixel is stored in floats red, green and blue, before converting it to the integer value in the result buffer. 
+  <br> 
+  <br> The filter calculation itself is a 4-double loop that has to go through every pixel of the image, and then through every element of the filter matrix. The location imageX and imageY is calculated so that for the center element of the filter it'll be x, y, but for the other elements it'll be a pixel from the image to the left, right, top or bottom of x, y. Its modulo divided through the width (w) or height (h) of the image so that pixels outside the image will be wrapped around. Before modulo dividing it, w or h are also added to it, because this modulo division doesn't work correctly for negative values. Now, pixel (-1, -1) will correctly become pixel (w-1, h-1).
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+   0, 0, 0,
+   0, 1, 0,
+   0, 0, 0
+};
+
+double factor = 1.0;
+double bias = 0.0;
+
+int main(int argc, char *argv[])
+{
+  //load the image into the buffer
+  unsigned long w = 0, h = 0;
+  std::vector&lt;ColorRGB&gt; image;
+  loadImage(image, w, h, "pics/photo3.png");
+  std::vector&lt;ColorRGB&gt; result(image.size());
+
+  //set up the screen
+  screen(w, h, 0, "Filters");
+
+  ColorRGB color; //the color for the pixels
+
+  //apply the filter
+  for(int x = 0; x &lt; w; x++)
+  for(int y = 0; y &lt; h; y++)
+  {
+    double red = 0.0, green = 0.0, blue = 0.0;
+
+    //multiply every value of the filter with corresponding image pixel
+    for(int filterY = 0; filterY &lt; filterHeight; filterY++)
+    for(int filterX = 0; filterX &lt; filterWidth; filterX++)
+    {
+      int imageX = (x - filterWidth / 2 + filterX + w) % w;
+      int imageY = (y - filterHeight / 2 + filterY + h) % h;
+      red += image[imageY * w + imageX].r * filter[filterY][filterX];
+      green += image[imageY * w + imageX].g * filter[filterY][filterX];
+      blue += image[imageY * w + imageX].b * filter[filterY][filterX];
+    }
+
+    //truncate values smaller than zero and larger than 255
+    result[y * w + x].r = min(max(int(factor * red + bias), 0), 255);
+    result[y * w + x].g = min(max(int(factor * green + bias), 0), 255);
+    result[y * w + x].b = min(max(int(factor * blue + bias), 0), 255);
+  }
+
+  //draw the result buffer to the screen
+  for(int y = 0; y &lt; h; y++)
+  for(int x = 0; x &lt; w; x++)
+  {
+    pset(x, y, result[y * w + x]);
+  }
+
+  //redraw &amp; sleep
+  redraw();
+  sleep();
+}</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> If you want to take the absolute value of values smaller than zero instead of truncating it, use this code instead:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">    //take absolute value and truncate to 255
+    result[y * w + x].r = min(abs(int(factor * red + bias)), 255);
+    result[y * w + x].g = min(abs(int(factor * green + bias)), 255);
+    result[y * w + x].b = min(abs(int(factor * blue + bias)), 255);</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> The filter filled in currently,
+  <br> 
+  <br> 
+  <tt>[ 0 0 0 ]<br> [ 0 1 0 ]<br> [ 0 0 0 ],</tt>
+  <br> 
+  <br> does nothing more than returning the original image, since only the center value is 1 so every pixel is multiplied with 1.
+  <br> 
+  <br> The code tries to load the image "pics/photo3.bmp". This image can be downloaded 
+  <a href="files/photos.zip">here</a>.
+  <br> 
+  <br> The original image looks like this:
+  <br> 
+  <br> 
+  <img alt="" src="images/photo3.jpg" style="width: 320px; height: 240px;">
+  <br> 
+  <br> Now we'll apply several filters to the image by changing the definition of the filter array and running the code.
+  <br> 
+  <h2><a name="Blur" id="Blur"></a>Blur</h2> Blurring is done for example by taking the average of the current pixel and its 4 neighbors. Take the sum of the current pixel and its 4 neighbors, and divide it through 5, or thus fill in 5 times the value 0.2 in the filter:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+   0.0, 0.2,  0.0,
+   0.2, 0.2,  0.2,
+   0.0, 0.2,  0.0
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> With such a small filter matrix, this gives only a very soft blur:
+  <br> 
+  <br> 
+  <img alt="" src="images/filterblur.jpg" style="width: 320px; height: 238px;">
+  <br> 
+  <br> With a bigger filter you can blur it a bit more (don't forget to change the filterWidth and filterHeight values):
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 5
+#define filterHeight 5
+
+double filter[filterHeight][filterWidth] =
+{
+  0, 0, 1, 0, 0,
+  0, 1, 1, 1, 0,
+  1, 1, 1, 1, 1,
+  0, 1, 1, 1, 0,
+  0, 0, 1, 0, 0,
+};
+
+double factor = 1.0 / 13.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> The sum of all elements of the filter should be 1, but instead of filling in some floating point value inside the filter, instead the factor is divided through the sum of all elements, which is 13.
+  <br> 
+  <br> This blurs it a bit more already:
+  <br> 
+  <br> 
+  <img alt="" src="images/filterblurmore.jpg" style="width: 318px; height: 238px;">
+  <br> 
+  <br> The more blur you want, the bigger the filter has to be, or you can apply the same small blur filter multiple times.
+  <br> 
+  <h2><a name="Motion_Blur_" id="Motion_Blur_"></a>Motion Blur<br></h2> Motion blur is achieved by blurring in only 1 direction. Here's a 9x9 motion blur filter:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 9
+#define filterHeight 9
+
+double filter[filterHeight][filterWidth] =
+{
+  <b>1</b>, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, <b>1</b>, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, <b>1</b>, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, <b>1</b>, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, <b>1</b>, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, <b>1</b>, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, <b>1</b>, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, <b>1</b>, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, <b>1</b>,
+};
+
+double factor = 1.0 / 9.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filtermotionblur.jpg" style="width: 317px; height: 238px;">
+  <br> 
+  <br> It's as if the camera is moving from the top left to the bottom right, hence the name.
+  <br> 
+  <h2><a name="Find_Edges_" id="Find_Edges_"></a>Find Edges<br></h2> A filter to find the horizontal edges can look like this:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 5
+#define filterHeight 5
+
+double filter[filterHeight][filterWidth] =
+{
+   0,  0, -1,  0,  0,
+   0,  0, -1,  0,  0,
+   0,  0,  2,  0,  0,
+   0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> A filter of 5x5 instead of 3x3 was chosen, because the result of a 3x3 filter is too dark on the current image. Note that the sum of all the elements is 0 now, which will result in a very dark image where only the edges it detected are colored.
+  <br> 
+  <br> 
+  <img alt="" src="images/filterhoredge.jpg" style="width: 319px; height: 239px;">
+  <br> 
+  <br> The reason why this filter can find horizontal edges, is that the convolution operation with this filter can be seen as a sort of discrete version of the derivative: you take the current pixel and subtract the value of the previous one from it, so you get a value that represents the difference between those two or the slope of the function.
+  <br> 
+  <br> Here's a filter that'll find vertical edges instead, and uses both pixel values below and above the current pixel:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 5
+#define filterHeight 5
+
+double filter[filterHeight][filterWidth] =
+{
+   0,  0, -1,  0,  0,
+   0,  0, -1,  0,  0,
+   0,  0,  4,  0,  0,
+   0,  0, -1,  0,  0,
+   0,  0, -1,  0,  0,
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filterveredge.jpg" style="width: 318px; height: 238px;">
+  <br> 
+  <br> Here's yet another possible filter, one that's good at finding edges of 45&deg;. The values '-2' were chosen for no particular reason at all, just make sure the sum of the values is 0.
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 5
+#define filterHeight 5
+
+double filter[filterHeight][filterWidth] =
+{
+  -1,  0,  0,  0,  0,
+   0, -2,  0,  0,  0,
+   0,  0,  6,  0,  0,
+   0,  0,  0, -2,  0,
+   0,  0,  0,  0, -1,
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filterslopededge.jpg" style="width: 318px; height: 237px;">
+  <br> 
+  <br> And here's a simple edge detection filter that detects edges in all directions:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+  -1, -1, -1,
+  -1,  8, -1,
+  -1, -1, -1
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filteredge.jpg" style="width: 319px; height: 236px;">
+  <br> 
+  <br> 
+  <h2><a name="Sharpen" id="Sharpen"></a>Sharpen</h2> To sharpen the image is very similar to finding edges, add the original image, and the image after the edge detection to each other, and the result will be a new image where the edges are enhanced, making it look sharper. Adding those two images is done by taking the edge detection filter from the previous example, and incrementing the center value of it with 1. Now the sum of the filter elements is 1 and the result will be an image with the same brightness as the original, but sharper.
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+  -1, -1, -1,
+  -1,  9, -1,
+  -1, -1, -1
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filtersharp.jpg" style="width: 318px; height: 238px;">
+  <br> 
+  <br> Here's a more subtle sharpen filter:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 5
+#define filterHeight 5
+
+double filter[filterHeight][filterWidth] =
+{
+  -1, -1, -1, -1, -1,
+  -1,  2,  2,  2, -1,
+  -1,  2,  8,  2, -1,
+  -1,  2,  2,  2, -1,
+  -1, -1, -1, -1, -1,
+};
+
+double factor = 1.0 / 8.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filtersharpen2.jpg" style="width: 318px; height: 238px;">
+  <br> 
+  <br> Here's a filter that shows the edges excessively:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+   1,  1,  1,
+   1, -7,  1,
+   1,  1,  1
+};
+
+double factor = 1.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filternotsharpen.jpg" style="width: 316px; height: 237px;">
+  <br> 
+  <h2><a name="Emboss" id="Emboss"></a>Emboss</h2> An emboss filter gives a 3D shadow effect to the image, the result is very useful for a bumpmap of the image. It can be achieved by taking a pixel on one side of the center, and subtracting one of the other side from it. Pixels can get either a positive or a negative result. To use the negative pixels as shadow and positive ones as light, for a bumpmap, a bias of 128 is added to the image. Now, most parts of the image will be gray, and the sides will be either dark gray/black or bright gray/white.
+  <br> 
+  <br> For example here's an emboss filter with an angle of 45&deg;:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+  -1, -1,  0,
+  -1,  0,  1,
+   0,  1,  1
+};
+
+double factor = 1.0;
+double bias = 128.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filteremboss.jpg" style="width: 315px; height: 239px;">
+  <br> 
+  <br> If you really want to use it as bumpmap, grayscale it:
+  <br> 
+  <br> 
+  <img alt="" src="images/filterembossgrey.jpg" style="width: 315px; height: 239px;">
+  <br> 
+  <br> Here's a much more exaggerated emboss filter:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 5
+#define filterHeight 5
+
+double filter[filterHeight][filterWidth] =
+{
+  -1, -1, -1, -1,  0,
+  -1, -1, -1,  0,  1,
+  -1, -1,  0,  1,  1,
+  -1,  0,  1,  1,  1,
+   0,  1,  1,  1,  1
+};
+
+double factor = 1.0;
+double bias = 128.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> 
+  <img alt="" src="images/filteremboss2.jpg" style="width: 314px; height: 236px;">
+  <br> 
+  <h2><a name="Median" id="Median"></a>Mean and Median Filter</h2> Both the Mean Filter and the Median Filter can be used to remove noise from an image. A Mean Filter is a filter that takes the average of the current pixel and its neighbors, for example if you use its 8 neighbors it becomes the filter with kernel:
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+double filter[filterHeight][filterWidth] =
+{
+  1, 1, 1,
+  1, 1, 1,
+  1, 1, 1
+};
+
+double factor = 1.0 / 9.0;
+double bias = 0.0;</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> This is an ordinary blur filter. We can test it on the following image with so called "Salt and Pepper" Noise:
+  <br> 
+  <br> 
+  <img alt="" src="images/horsesnoise.png" style="width: 319px; height: 239px;">
+  <br> 
+  <br> When applied, it gives a blurry result:
+  <br> 
+  <br> 
+  <img alt="" src="images/filtermean.jpg" style="width: 315px; height: 239px;">
+  <br> 
+  <br> The Median Filter does somewhat the same, but, instead of taking the mean or average, it takes the median. The median is gotten by sorting all the values from low to high, and then taking the value in the center. If there are two values in the center, the average of these two is taken. A median filter gives better results to remove salt and pepper noise, because it completely eliminates the the noise. With an average filter, the color value of the noise particles are still used in the average calculations, when taking the median you only keep the color value of one or two healthy pixels. The median filter also reduces the image quality however.
+  <br> 
+  <br> Such a median filter can't be done with a convolution, and a sorting algorithm is needed, in this case combsort was chosen, which is a relatively fast sorting algorithm.
+  <br> 
+  <br> To get the median of the current pixel and its 8 neighbors, set filterWidth and filterHeight to 3, but you can also make it higher to remove larger noise particles.
+  <br> 
+  <br>The arrays red, green and blue will contain the values of the current pixel and all of its neighbors, and these are the arrays that'll be sorted by the sorting algorithm to be able to take the median value. The main function applies the filter, calculates the medians and then draws the result.
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">#define filterWidth 3
+#define filterHeight 3
+
+//color arrays
+int red[filterWidth * filterHeight];
+int green[filterWidth * filterHeight];
+int blue[filterWidth * filterHeight];
+
+int selectKth(int* data, int s, int e, int k);
+
+int main(int argc, char *argv[])
+{
+  //load the image into the buffer
+  unsigned long w = 0, h = 0;
+  std::vector&lt;ColorRGB&gt; image;
+  loadImage(image, w, h, "pics/noise.png");
+  std::vector&lt;ColorRGB&gt; result(image.size());
+
+  //set up the screen
+  screen(w, h, 0, "Median Filter");
+
+  ColorRGB color; //the color for the pixels
+
+  //apply the filter
+  for(int y = 0; y &lt; h; y++)
+  for(int x = 0; x &lt; w; x++)
+  {
+    int n = 0;
+    //set the color values in the arrays
+    for(int filterY = 0; filterY &lt; filterHeight; filterY++)
+    for(int filterX = 0; filterX &lt; filterWidth; filterX++)
+    {
+      int imageX = (x - filterWidth / 2 + filterX + w) % w;
+      int imageY = (y - filterHeight / 2 + filterY + h) % h;
+      red[n] = image[imageY * w + imageX].r;
+      green[n] = image[imageY * w + imageX].g;
+      blue[n] = image[imageY * w + imageX].b;
+      n++;
+    }
+
+    int filterSize = filterWidth * filterHeight;
+    result[y * w + x].r = red[selectKth(red, 0, filterSize, filterSize / 2)];
+    result[y * w + x].g = green[selectKth(green, 0, filterSize, filterSize / 2)];
+    result[y * w + x].b = blue[selectKth(blue, 0, filterSize, filterSize / 2)];
+  }
+
+  //draw the result buffer to the screen
+  for(int y = 0; y &lt; h; y++)
+  for(int x = 0; x &lt; w; x++)
+  {
+    pset(x, y, result[y * w + x]);
+  }
+
+  //redraw &amp; sleep
+  redraw();
+  sleep();
+}</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> The array contains the value of every color in the rectangular area you're working on, but it's not sorted so you can't immediatly take the median of it. Sorting it and taking the center element is one way, but it's in theory faster to use a selection algorithm to select the k-th largest element, with k = size / 2. This is implemented below with a very simple selection algorithm. It's possible to use the standard C++ function nth_element instead, which would be simpler and faster, but we're implementing all algorithms ourselves in this tutorial. Note that, unlike the statistical definition of median this will not take the average of two elements in case of even array but just take one of them.
+  <br> 
+  <br> 
+  <center> 
+   <table class="codetable"> 
+    <tbody>
+     <tr> 
+      <td style="vertical-align: top;"> <pre>
+<span class="code">// selects the k-th largest element from the data between start and end (end exclusive)
+int selectKth(int* data, int s, int e, int k)
+{
+  // 5 or less elements: do a small insertion sort
+  if(e - s &lt;= 5)
+  {
+    for(int i = s + 1; i &lt; e; i++)
+      for(int j = i; j &gt; 0 &amp;&amp; data[j - 1] &gt; data[j]; j--) std::swap(data[j], data[j - 1]);
+    return s + k;
+  }
+
+  int p = (s + e) / 2; // choose simply center element as pivot
+
+  // partition around pivot into smaller and larger elements
+  std::swap(data[p], data[e - 1]); // temporarily move pivot to the end
+  int j = s;  // new pivot location to be calculated
+  for(int i = s; i + 1 &lt; e; i++)
+    if(data[i] &lt; data[e - 1]) std::swap(data[i], data[j++]);
+  std::swap(data[j], data[e - 1]);
+
+  // recurse into the applicable partition
+  if(k == j - s) return s + k;
+  else if(k &lt; j - s) return selectKth(data, s, j, k);
+  else return selectKth(data, j + 1, e, k - j + s - 1); // subtract amount of smaller elements from k
+}</span></pre> </td> 
+     </tr> 
+    </tbody>
+   </table> 
+  </center> 
+  <br> Here's again the noisy image:
+  <br> 
+  <br> 
+  <img alt="" src="images/horsesnoise.png" style="width: 319px; height: 239px;">
+  <br> 
+  <br> The 3x3 median filter removes its noise:
+  <br> 
+  <br> 
+  <img alt="" src="images/filtermedian3.jpg" style="width: 320px; height: 240px;">
+  <br> 
+  <br> Higher sizes of filters go pretty slow, because the code is very unoptimized. More specialized, much faster algorithms for 2D median filter exists but that's beyond the scope of this tutorial. The results of higher sizes are somewhat artistic, so here is the result of different sizes:
+  <br> 
+  <br> 5x5: 
+  <br> 
+  <img alt="" src="images/filtermedian5.jpg" style="width: 320px; height: 240px;">
+  <br> 
+  <br> 9x9: 
+  <br> 
+  <img alt="" src="images/filtermedian9.jpg" style="width: 320px; height: 240px;">
+  <br> 
+  <br> 15x15: 
+  <br> 
+  <img alt="" src="images/filtermedian15.jpg" style="width: 320px; height: 240px;">
+  <br> 
+  <br> 
+  <h2><a name="Conclusion" id="Conclusion"></a>Conclusion</h2> This article contained code to apply convolution filters on images, and showed a few different filters and their result. These are only the very basics of image filtering, with bigger filters and a lot of tweaking you can get much better filters.
+  <br> 
+  <br> The Fourier Transform article shows a different way to filter images, in the frequency domain. There Low Pass, High Pass and Band Pass filters are discussed.
+  <br> 
+  <hr> Last edited: 2004 
+  <br>
+  <br> Copyright (c) 2004-2007 by Lode Vandevenne. All rights reserved. 
+  <script language="javascript" src="colorcode.js"></script>   
+ </body>
+</html>

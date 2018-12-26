@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link rel="stylesheet" href="/theme/css/style.css">
+  <link rel="icon" href="/favicon.ico">
+  <title>How to write a web scraper in Node.js | Ionic? Biz?u</title>
+  <link rel="stylesheet" href="/api/plugin-file/lightbox/css/lightbox.css">
+  <script src="/theme/lib/instantclick.js"></script>
+  <script src="/theme/lib/xhr-form-submitter.min.js"></script>
+  <!--script(src=config.theme + "/lib/imagesloaded.js")-->
+  <script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'UA-34774185-1', 'ionicabizau.net');
+ga('send', 'pageview');</script>
+  <script src="/api/plugin-file/lightbox/js/lightbox.js"></script>
+  <script src="/api/plugin-file/lightbox/js/lightbox-handlers.js"></script>
+ </head>
+ <body>
+  <div class="top-header">
+   <a href="/"><img src="/images/me-s.png" class="rounded"><h1>Ionic? Biz?u</h1></a>
+  </div>
+  <div class="container">
+   <div class="content single-article">
+    <h1 class="article-title">How to write a web scraper in Node.js</h1>
+    <p class="article-date"><i class="fa fa-calendar"></i> Posted on Thursday, April 28 2016 by <a href="/">Ionic? Biz?u</a></p>
+    <p class="article-tags"><i class="fa fa-tags"></i> Tagged as: <span class="tag">nodejs, </span><span class="tag">scraper </span></p>
+    <div class="markdown">
+     <p>Sometimes we need to collect information from different web pages automagically. Obviously, a human is not needed for that. A smart script can do the job pretty good, especially if it's something repetitive. <img class="no-lightbox emoji" src="/api/plugin-file/emoji/images//dizzy.png" title="dizzy" alt=":dizzy:"></p> 
+     <p><img src="https://i.imgur.com/j3Z0rbN.png" alt="scrape-it"></p> 
+     <p>When there is no web based API to share the data with our app, and we still want to extract some data from that website, we have to fallback to scraping. <img class="no-lightbox emoji" src="/api/plugin-file/emoji/images//boom.png" title="boom" alt=":boom:"></p> 
+     <p>This means:</p> 
+     <ol> 
+      <li>We load the page (a <code>GET</code> request is often enough)</li> 
+      <li>Parse the HTML result</li> 
+      <li>Extract the needed data</li> 
+     </ol> 
+     <p>In Node.js, all these three steps are quite easy because the functionality is already made for us in different modules, by different developers.</p> 
+     <p>Because I often scrape random websites, I created yet another scraper: <a href="https://github.com/IonicaBizau/scrape-it"><code>scrape-it</code></a>–<em>a Node.js scraper for humans</em>. It's designed to be really simple to use and still is quite minimalist. <img class="no-lightbox emoji" src="/api/plugin-file/emoji/images//zap.png" title="zap" alt=":zap:"></p> 
+     <p>Here is how I did it:</p> 
+     <h3 id="1-load-the-page">1. Load the page</h3> 
+     <p>To load the web page, we need to use a library that makes HTTP(s) requests. There are a lot of modules doing that that. Like always I recommend choosing simple/small modules, I wrote a tiny package that does it: <a href="https://github.com/IonicaBizau/tinyreq"><code>tinyreq</code></a>.</p> 
+     <p>Using this module you can easily get the HTML rendered by the server from a web page:</p> 
+     <pre><code class="lang-js"><span class="keyword">const</span> request = <span class="built_in">require</span>(<span class="string">"tinyreq"</span>);
+
+request(<span class="string">"http://ionicabizau.net/"</span>, <span class="function"><span class="keyword">function</span> (<span class="params">err, body</span>) </span>{
+    <span class="built_in">console</span>.log(err || body); <span class="comment">// Print out the HTML</span>
+});
+</code></pre> 
+     <p><code>tinyreq</code> is actually a friendlier wrapper around the native <a href="https://nodejs.org/api/http.html#http_http_request_options_callback"><code>http.request</code></a> built-in solution.</p> 
+     <p>Once we have a piece of HTML, we need to parse it. How to do that? <img class="no-lightbox emoji" src="/api/plugin-file/emoji/images//thought_balloon.png" title="thought_balloon" alt=":thought_balloon:"></p> 
+     <h3 id="2-parsing-the-html">2. Parsing the HTML</h3> 
+     <p>Well, that's a complex thing. Other people did that for us already. I like very much the <a href="https://github.com/cheeriojs/cheerio"><code>cheerio</code></a> module. It provides a jQuery-like interface to interact with a piece of HTML you already have.</p> 
+     <pre><code class="lang-js"><span class="keyword">const</span> cheerio = <span class="built_in">require</span>(<span class="string">"cheerio"</span>);
+
+<span class="comment">// Parse the HTML</span>
+<span class="keyword">let</span> $ = cheerio.load(<span class="string">"&lt;h2 class="</span>title<span class="string">"&gt;Hello world&lt;/h2&gt;"</span>);
+
+<span class="comment">// Take the h2.title element and show the text</span>
+<span class="built_in">console</span>.log($(<span class="string">"h2.title"</span>).text());
+<span class="comment">// =&gt; Hello world</span>
+</code></pre> 
+     <p>Because I like to modularize all the things, I created <a href="https://github.com/IonicaBizau/cheerio-req"><code>cheerio-req</code></a> which is basically <code>tinyreq</code> combined with <code>cheerio</code> (basically the previous two steps put together):</p> 
+     <pre><code class="lang-js">const cheerioReq = require<span class="list">(<span class="string">"cheerio-req"</span>)</span><span class="comment">;</span>
+
+cheerioReq<span class="list">(<span class="string">"http://ionicabizau.net"</span>, <span class="list">(<span class="keyword">err</span>, $)</span> =&gt; { console.log<span class="list">($<span class="list">(<span class="string">".header h1"</span>)</span>.text<span class="list">()</span>)</span><span class="comment">;</span> // =&gt; Ionic? Biz?u })</span><span class="comment">;</span>
+</code></pre> 
+     <p>Since we already know how to parse the HTML, the next step is to build a nice public interface we can export into a module. <img class="no-lightbox emoji" src="/api/plugin-file/emoji/images//sparkles.png" title="sparkles" alt=":sparkles:"></p> 
+     <h3 id="3-extract-the-needed-data">3. Extract the needed data</h3> 
+     <p>Putting the previous steps together, we have this (follow the inline comments):</p> 
+     <pre><code class="lang-js"><span class="pi">"use strict"</span>
+
+<span class="comment">// Import the dependencies</span>
+<span class="keyword">const</span> cheerio = <span class="built_in">require</span>(<span class="string">"cheerio"</span>)
+    , req = <span class="built_in">require</span>(<span class="string">"tinyreq"</span>)
+    ;
+
+<span class="comment">// Define the scrape function</span>
+<span class="function"><span class="keyword">function</span> <span class="title">scrape</span>(<span class="params">url, data, cb</span>) </span>{
+    <span class="comment">// 1. Create the request</span>
+    req(url, (err, body) =&gt; {
+        <span class="keyword">if</span> (err) { <span class="keyword">return</span> cb(err); }
+
+        <span class="comment">// 2. Parse the HTML</span>
+        <span class="keyword">let</span> $ = cheerio.load(body)
+          , pageData = {}
+          ;
+
+        <span class="comment">// 3. Extract the data</span>
+        <span class="built_in">Object</span>.keys(data).forEach(k =&gt; {
+            pageData[k] = $(data[k]).text();
+        });
+
+        <span class="comment">// Send the data in the callback</span>
+        cb(<span class="literal">null</span>, pageData);
+    });
+}
+
+<span class="comment">// Extract some data from my website</span>
+scrape(<span class="string">"http://ionicabizau.net"</span>, {
+    <span class="comment">// Get the website title (from the top header)</span>
+    title: <span class="string">".header h1"</span>
+    <span class="comment">// ...and the description</span>
+  , description: <span class="string">".header h2"</span>
+}, (err, data) =&gt; {
+    <span class="built_in">console</span>.log(err || data);
+});
+</code></pre> 
+     <p>When running this code, we get the following output in the console:</p> 
+     <pre><code class="lang-js"><span class="rules">{ <span class="rule"><span class="attribute">title</span>:<span class="value"> <span class="string">'Ionic? Biz?u'</span>, description: <span class="string">'Web Developer, Linux geek and Musician'</span> </span></span></span>}
+</code></pre> 
+     <p>Hey! That's my website information, so it's working. We now have a small function that can get the text from any element on the page.</p> 
+     <hr> 
+     <p>In the <a href="https://github.com/IonicaBizau/scrape-it">module I have written</a> I made it possible to scrape lists of things (e.g. articles, pages etc).</p> 
+     <p>So, basically to get the latest 3 articles on my blog, you can do:</p> 
+     <pre><code class="lang-js">const scrapeIt = require(<span class="string">"scrape-it"</span>);
+
+<span class="comment">// Fetch the articles on the page (list)</span>
+scrapeIt(<span class="string">"http://ionicabizau.net"</span>, {
+<span class="label"> listItem:</span> <span class="string">".article"</span>
+  , <span class="string">name:</span> <span class="string">"articles"</span>
+  , <span class="string">data:</span> {
+<span class="label"> createdAt:</span> {
+<span class="label"> selector:</span> <span class="string">".date"</span>
+          , <span class="string">convert:</span> x =&gt; <span class="keyword">new</span> Date(x)
+        }
+      , <span class="string">title:</span> <span class="string">"a.article-title"</span>
+      , <span class="string">tags:</span> {
+<span class="label"> selector:</span> <span class="string">".tags"</span>
+          , <span class="string">convert:</span> x =&gt; x.split(<span class="string">"|"</span>).map(c =&gt; c.trim()).slice(<span class="number">1</span>)
+        }
+      , <span class="string">content:</span> {
+<span class="label"> selector:</span> <span class="string">".article-content"</span>
+          , <span class="string">how:</span> <span class="string">"html"</span>
+        }
+    }
+}, (err, page) =&gt; {
+    console.log(err || page);
+});
+<span class="comment">// { articles:</span>
+<span class="comment">// [ { createdAt: Mon Mar 14 2016 00:00:00 GMT+0200 (EET),</span>
+<span class="comment">// title: 'Pi Day, Raspberry Pi and Command Line',</span>
+<span class="comment">// tags: [Object],</span>
+<span class="comment">// content: '&lt;p&gt;Everyone knows (or should know)...a" alt=""&gt;&lt;/p&gt;\n' },</span>
+<span class="comment">// { createdAt: Thu Feb 18 2016 00:00:00 GMT+0200 (EET),</span>
+<span class="comment">// title: 'How I ported Memory Blocks to modern web',</span>
+<span class="comment">// tags: [Object],</span>
+<span class="comment">// content: '&lt;p&gt;Playing computer games is a lot of fun. ...' },</span>
+<span class="comment">// { createdAt: Mon Nov 02 2015 00:00:00 GMT+0200 (EET),</span>
+<span class="comment">// title: 'How to convert JSON to Markdown using json2md',</span>
+<span class="comment">// tags: [Object],</span>
+<span class="comment">// content: '&lt;p&gt;I love and ...' } ] }</span>
+</code></pre> 
+     <p><img src="https://i.imgur.com/vU1ve3s.png" alt=""></p> 
+     <p>Happy scraping! <img class="no-lightbox emoji" src="/api/plugin-file/emoji/images//grin.png" title="grin" alt=":grin:"></p> 
+    </div>
+    <div class="blog-feedback">
+     <p class="blog-feedback-header">Have feedback on this article? Let <a href="https://twitter.com/intent/tweet?text=@IonicaBizau%20&amp;amp;related=IonicaBizau&amp;url=https://ionicabizau.net/blog/30-how-to-write-a-web-scraper-in-node-js" target="blank">@IonicaBizau</a> know on Twitter.</p>
+     <p class="blog-feedback-description">Have any questions or suggestions? <a href="/contact">Contact me.</a> Found a bug? <a href="https://github.com/Bloggify/Bloggify/issues/new">Report it now</a></p>
+    </div>
+    <p></p>
+   </div>
+   <div class="footer text-center">
+    © 2017 • Ionic? Biz?u - Created with JavaScript and 
+    <i class="fa fa-heart pulse"></i> from Romania. Powered by 
+    <a href="http://bloggify.github.com">Bloggify</a>.
+    <br>Sponsored by 
+    <a href="http://brightbox.com/">Brightbox</a>.
+    <h1 class="text-center social"><a href="http://github.com/IonicaBizau" target="blank"><i class="fa fa-github-alt"></i></a><a href="http://bitbucket.com/IonicaBizau" target="blank"><i class="fa fa-bitbucket"></i></a><a href="http://twitter.com/IonicaBizau" target="blank"><i class="fa fa-twitter"></i></a><a href="http://youtube.com/IonicaBizau" target="blank"><i class="fa fa-youtube"></i></a></h1>
+   </div>
+  </div>
+  <!--script(src=config.theme + "/js/image-load.js")-->
+  <script>InstantClick.init()</script>
+  <style>a.mt-share-inline-square-sm img { width: 34px; height: auto; border: 0px; }a.mt-share-inline-square-sm { display: inline-block; width: 34px; height: 34px; border-radius: 2px; margin-right: 4px; }.mt-google:hover { background-color: rgb(225, 95, 79); }.mt-google { background-color: rgb(221, 75, 57); }.mt-linkedin:hover { background-color: rgb(16, 135, 192); }.mt-linkedin { background-color: rgb(14, 118, 168); }.mt-twitter:hover { background-color: rgb(8, 187, 255); }.mt-twitter { background-color: rgb(0, 172, 238); }.mt-facebook:hover { background-color: rgb(66, 100, 170); }.mt-facebook { background-color: rgb(59, 89, 152); }.mt-pinterest:hover { background-color: rgb(221, 42, 48); }.mt-pinterest { background-color: rgb(204, 33, 39); }
+div.social { position: fixed; right: 10px; bottom: 10px; }</style>
+  <div class="social">
+   <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fionicabizau.net%2Fblog%2F30-how-to-write-a-web-scraper-in-node-js" class="mt-facebook mt-share-inline-square-sm"><img src="https://mojotech-static.s3.amazonaws.com/facebook@2x.png"></a>
+   <a href="http://twitter.com/intent/tweet?text=How%20to%20write%20a%20web%20scraper%20in%20Node.js%20%23nodejs%20%23scraper&amp;url=https%3A%2F%2Fionicabizau.net%2Fblog%2F30-how-to-write-a-web-scraper-in-node-js" class="mt-twitter mt-share-inline-square-sm"><img src="https://mojotech-static.s3.amazonaws.com/twitter@2x.png"></a>
+   <a href="https://plus.google.com/share?url=https%3A%2F%2Fionicabizau.net%2Fblog%2F30-how-to-write-a-web-scraper-in-node-js" class="mt-google mt-share-inline-square-sm"><img src="https://mojotech-static.s3.amazonaws.com/google@2x.png"></a>
+  </div>
+ </body>
+</html>

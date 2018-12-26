@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width initial-scale=1"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <title>Using Passport.js and Mongoose for Local User Authentication | Hank Brekke</title> 
+  <link rel="stylesheet" href="/css/main.css"> 
+  <link rel="canonical" href="https://hnryjms.github.io/2014/04/authentication/"> 
+  <!-- Article SEO --> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:site" content="@hnryjms"> 
+  <meta name="og:site_name" content="Hank Brekke"> 
+  <meta name="og:type" content="article"> 
+  <meta name="twitter:title" content="Using Passport.js and Mongoose for Local User Authentication"> 
+  <meta name="og:title" content="Using Passport.js and Mongoose for Local User Authentication"> 
+  <meta name="og:url" content="https://hnryjms.github.io/2014/04/authentication/"> 
+  <meta name="twitter:description" content="Building an authentication system in Node.js can be challenging, especially for integrating OAuth2.0 and authenticated API-based endpoints. In this guide, you'll see the fastest and easiest way to integrate Mongoose and Passport.js for local user authentication."> 
+  <meta name="description" content="Building an authentication system in Node.js can be challenging, especially for integrating OAuth2.0 and authenticated API-based endpoints. In this guide, you'll see the fastest and easiest way to integrate Mongoose and Passport.js for local user authentication."> 
+  <meta name="og:description" content="Building an authentication system in Node.js can be challenging, especially for integrating OAuth2.0 and authenticated API-based endpoints. In this guide, you'll see the fastest and easiest way to integrate Mongoose and Passport.js for local user authentication."> 
+ </head> 
+ <body> 
+  <header class="site-header "> 
+   <div class="respond"> 
+    <div class="brand"> 
+     <h1><a href="/">Hank Brekke</a></h1> 
+    </div> 
+    <div class="navigation"> 
+     <ul> 
+      <li><a href="/">Articles</a></li> 
+      <li><a href="/projects/">Projects</a></li> 
+      <li><a href="/about/">About</a></li> 
+     </ul> 
+    </div> 
+   </div> 
+  </header> 
+  <article class="site-post"> 
+   <div class="respond"> 
+    <div class="respond-narrow"> 
+     <div class="post-meta"> 
+      <h5>April 09, 2014,</h5> 
+      <h2>Using Passport.js and Mongoose for Local User Authentication</h2> 
+     </div> 
+     <div class="post-body"> 
+      <p>Building an authentication system in Node.js can be challenging, especially for integrating OAuth2.0 and authenticated API-based endpoints. Passport.js is great for connecting services and for a base to integrate OAuth, but getting Passport.js set up for an existing Mongoose User model can be a little challenging. In this guide, you’ll see the fastest and easiest way to integrate Mongoose and Passport.js for local user authentication.</p> 
+      <h3 id="adding-libraries--the-user-schema">Adding Libraries &amp; the User Schema</h3> 
+      <p>For this tutorial, we’re assuming you already have an Express.js project set up. If you don’t, there are countless great guides for getting started with Express on various websites. After you’re set up in Express, you’ll need to install a few libraries that we’re going to be using in this project. The following command should get everything set up and saved into your <code class="highlighter-rouge">package.json</code> file:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code><span class="gp">$ </span>npm install mongoose password-hash passport passport-local connect-flash --save
+</code></pre> 
+      </div> 
+      <p>To start our app off, we need to create a user schema with Mongoose. If you’re adding Passport.js into an existing project, you probably already have a Mongoose schema for users, but make sure to add the <code class="highlighter-rouge">authenticate</code> static method into this schema to make implementing Passport a little easier later on. For this tutorial, we’re going to use email addresses rather than usernames (because in the end, it’s one less thing to make our users remember)—you’re free to replace <code class="highlighter-rouge">email</code> with <code class="highlighter-rouge">username</code> to ask for usernames instead. Here’s the schema we’re using (note that we’re automatically hashing the users password):</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code><span class="kd">var</span> <span class="nx">Mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">Hash</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'password-hash'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">Schema</span> <span class="o">=</span> <span class="nx">Mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="p">;</span>
+
+<span class="kd">var</span> <span class="nx">UserSchema</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Schema</span><span class="p">({</span>
+	<span class="na">email</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span> <span class="p">},</span>
+	<span class="na">password</span><span class="p">:</span> <span class="p">{</span> <span class="na">type</span><span class="p">:</span> <span class="nb">String</span><span class="p">,</span> <span class="na">set</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">Hash</span><span class="p">.</span><span class="nx">isHashed</span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span> <span class="p">?</span> <span class="nx">newValue</span> <span class="p">:</span> <span class="nx">Hash</span><span class="p">.</span><span class="nx">generate</span><span class="p">(</span><span class="nx">newValue</span><span class="p">);</span>
+	<span class="p">}</span> <span class="p">},</span>
+
+	<span class="c1">// ... add any other properties you want to save with users ...</span>
+<span class="p">});</span>
+
+<span class="nx">UserSchema</span><span class="p">.</span><span class="nx">statics</span><span class="p">.</span><span class="nx">authenticate</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">email</span><span class="p">,</span> <span class="nx">password</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">this</span><span class="p">.</span><span class="nx">findOne</span><span class="p">({</span> <span class="na">email</span><span class="p">:</span> <span class="nx">email</span> <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">user</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="nx">user</span> <span class="o">&amp;</span><span class="nx">amp</span><span class="p">;</span><span class="o">&amp;</span><span class="nx">amp</span><span class="p">;</span> <span class="nx">Hash</span><span class="p">.</span><span class="nx">verify</span><span class="p">(</span><span class="nx">password</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">password</span><span class="p">))</span> <span class="p">{</span>
+			<span class="nx">callback</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">);</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">user</span> <span class="o">||</span> <span class="o">!</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+			<span class="c1">// Email or password was invalid (no MongoDB error)</span>
+			<span class="nx">error</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s2">"Your email address or password is invalid. Please try again."</span><span class="p">);</span>
+			<span class="nx">callback</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="c1">// Something bad happened with MongoDB. You shouldn't run into this often.</span>
+			<span class="nx">callback</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="kc">null</span><span class="p">);</span>
+		<span class="p">}</span>
+	<span class="p">});</span>
+<span class="p">};</span>
+</code></pre> 
+      </div> 
+      <p>Because we want to keep our code organized, we’re adding that new static function <code class="highlighter-rouge">authenticate(email, password, callback)</code> to this model for checking if credentials match a user in our table. We’re going to use a callback function with two parameters, <code class="highlighter-rouge">error, user</code> (and they’ll translate nicely to Passport in that order).</p> 
+      <h3 id="configuring-a-passport-strategy">Configuring a Passport Strategy</h3> 
+      <p><a href="http://passportjs.org/ _blank">Passport.js</a> uses Strategies for serving different sources of users. For example, a Facebook strategy would let your users sign in with Facebook, and in our case, a <strong>local strategy</strong> will let us use our own database to store account info. We already have a Mongoose user schema set up from the last step, so we’re ready to write a strategy for Passport now. We’re also going to add a serializer and deserializer, which will tell Passport how to save the login credentials in the browser session and retrieve them later, and we’re adding the <code class="highlighter-rouge">connect-flash</code> module into Express so we can show error messages for invalid credentials.</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code><span class="c1">// ... set up &amp; connect mongoose here ...</span>
+
+<span class="kd">var</span> <span class="nx">User</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="p">(</span><span class="nx">UserSchema</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span>
+<span class="kd">var</span> <span class="nx">PassportLocalStrategy</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-local'</span><span class="p">);</span>
+
+<span class="kd">var</span> <span class="nx">authStrategy</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">PassportLocalStrategy</span><span class="p">({</span>
+	<span class="na">usernameField</span><span class="p">:</span> <span class="s1">'email'</span><span class="p">,</span>
+	<span class="na">passwordField</span><span class="p">:</span> <span class="s1">'password'</span>
+<span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">email</span><span class="p">,</span> <span class="nx">password</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">User</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="nx">email</span><span class="p">,</span> <span class="nx">password</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">user</span><span class="p">){</span>
+		<span class="c1">// You can write any kind of message you'd like.</span>
+		<span class="c1">// The message will be displayed on the next page the user visits.</span>
+		<span class="c1">// We're currently not displaying any success message for logging in.</span>
+		<span class="nx">done</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">user</span><span class="p">,</span> <span class="nx">error</span> <span class="p">?</span> <span class="p">{</span> <span class="na">message</span><span class="p">:</span> <span class="nx">error</span><span class="p">.</span><span class="nx">message</span> <span class="p">}</span> <span class="p">:</span> <span class="kc">null</span><span class="p">);</span>
+	<span class="p">});</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">authSerializer</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">user</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">done</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="kd">var</span> <span class="nx">authDeserializer</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">done</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">User</span><span class="p">.</span><span class="nx">findById</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">user</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">done</span><span class="p">(</span><span class="nx">error</span><span class="p">,</span> <span class="nx">user</span><span class="p">);</span>
+	<span class="p">});</span>
+<span class="p">};</span>
+
+<span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">authStrategy</span><span class="p">);</span>
+<span class="nx">passport</span><span class="p">.</span><span class="nx">serializeUser</span><span class="p">(</span><span class="nx">authSerializer</span><span class="p">);</span>
+<span class="nx">passport</span><span class="p">.</span><span class="nx">deserializeUser</span><span class="p">(</span><span class="nx">authDeserializer</span><span class="p">);</span>
+
+<span class="c1">// ... continue with Express.js app initialization ...</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">require</span><span class="p">(</span><span class="s1">'connect-flash'</span><span class="p">)());</span> <span class="c1">// see the next section</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">passport</span><span class="p">.</span><span class="nx">initialize</span><span class="p">());</span>
+</code></pre> 
+      </div> 
+      <h3 id="authenticating-users">Authenticating Users</h3> 
+      <p>By integrating Passport.js, authenticating users is now extremely simple. First, we’re going to need a form that sends an <code class="highlighter-rouge">HTTP-POST</code> request to our login route with a <code class="highlighter-rouge">email</code> field and a <code class="highlighter-rouge">password</code> field—if they’re named incorrectly, the form <strong>will not work</strong>. You can take care of that form page on your own. We’re going to handle that form with this route:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/login'</span><span class="p">,</span> <span class="nx">passport</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'local'</span><span class="p">,</span> <span class="p">{</span>
+	<span class="na">successRedirect</span><span class="p">:</span> <span class="s1">'/home'</span><span class="p">,</span>
+	<span class="na">failureRedirect</span><span class="p">:</span> <span class="s1">'/login'</span><span class="p">,</span>
+	<span class="na">failureFlash</span><span class="p">:</span> <span class="kc">true</span>
+<span class="p">}));</span>
+</code></pre> 
+      </div> 
+      <p>Also notice that we’re using Flash. We added <code class="highlighter-rouge">connect-flash</code> into our project, an extension for displaying one-time messages and objects. With Flash, we’re able to get error info during the next request (presumably for the login form again), as an array (either empty, or an array filled with a string error message). You can also use Flash for other kinds of messages, like success messages, or for persisting any Javascript object. Once a single Flash message is retrieved by your app with the code below, it will be removed and not redisplayed. With Flash, everything will be as an array (sometimes empty) for multiple messages.</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/login'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span>
+	<span class="kd">var</span> <span class="nx">errors</span> <span class="o">=</span> <span class="nx">req</span><span class="p">.</span><span class="nx">flash</span><span class="p">(</span><span class="s1">'error'</span><span class="p">);</span>
+
+	<span class="c1">// req.flash('success', 'You can add messages by including a second parameter with the function.');</span>
+	
+	<span class="c1">// ... respond to the request ...</span>
+<span class="p">});</span>
+</code></pre> 
+      </div> 
+      <h3 id="success">Success!</h3> 
+      <p>Congratulations on building a new Strategy for authenticating your users in Passport. Stay tuned for the next article on how to implement OAuth2.0 into a Mongoose local stategy with Passport. If you have any questions about this article or find any issues, just let me know on Twitter—<a href="https://twitter.com/hnryjms _blank">@hnryjms</a>.</p> 
+     </div> 
+     <div class="post-next"> 
+      <h5>Up Next</h5> 
+      <a href="/2014/05/codeblocks/">Codeblocks for WordPress</a> 
+     </div> 
+    </div> 
+   </div> 
+  </article> 
+  <footer class="site-footer "> 
+   <div class="respond"> 
+    <div class="copyright"> 
+     <p>This site is open source. <a href="https://github.com/hnryjms/hnryjms.github.io">Fork it</a> &amp; do something cool.</p> 
+    </div> 
+   </div> 
+  </footer> 
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-65264497-1', 'auto');
+  ga('send', 'pageview');
+</script>   
+ </body>
+</html>

@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta name="viewport" content="width=device-width"> 
+  <link rel="manifest" href="/manifest.json"> 
+  <link rel="icon" type="image/png" href="/favicon.png"> 
+  <meta name="theme-color" content="#333"> 
+  <link rel="stylesheet" href="/global.css"> 
+  <link rel="stylesheet" href="/main.css"> 
+  <link rel="stylesheet" href="/fontello/css/fontello.css"> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:site" content="@rollupjs"> 
+  <meta name="twitter:creator" content="@rollupjs"> 
+  <meta name="twitter:title" content="Rollup"> 
+  <meta name="twitter:description" content="The JavaScript module bundler"> 
+  <meta name="twitter:image" content="https://rollupjs.org/images/twitter-card.jpg"> 
+  <title>rollup.js</title> 
+  <script>
+		if ( 'serviceWorker' in navigator ) {
+			window.addEventListener( 'load', function () {
+				navigator.serviceWorker.register( '/service-worker.js' )
+					.then( function ( registration ) {
+						console.log( 'ServiceWorker registration successful' );
+					})
+					.catch( function ( err ) {
+						console.error( err.stack );
+					});
+			});
+		}
+	</script> 
+ </head> 
+ <body> 
+  <header>
+   <div class="closed mousecatcher" svelte-2555170411></div> 
+   <div class="container" svelte-2555170411> 
+    <span class="menu-link">Menu</span> 
+    <a href="/" class="logo">rollup.js</a> 
+   </div> 
+   <nav class="closed" svelte-2555170411> 
+    <ul class="primary"> 
+     <li><a class="active" href="/">guide</a></li> 
+     <li><a class="" href="/repl">repl</a></li> 
+     <li><a href="https://gitter.im/rollup/rollup">chat</a></li> 
+     <li><a href="https://github.com/rollup/rollup">github</a></li> 
+    </ul> 
+    <div class="secondary"> 
+    </div> 
+   </nav>
+  </header> 
+  <main>
+   <div class="content" svelte-1788363985> 
+    <div class="hero"> 
+     <strong>rollup.js</strong> 
+    </div> 
+    <section id="introduction"> 
+     <h2>Introduction</h2> 
+     <h3 id="overview">Overview</h3> 
+     <p>Rollup is a module bundler for JavaScript which compiles small pieces of code into something larger and more complex, such as a library or application. It uses the new standardized format for code modules included in the ES6 revision of JavaScript, instead of previous idiosyncratic solutions such as CommonJS and AMD. ES6 modules let you freely and seamlessly combine the most useful individual functions from your favorite libraries. This will eventually be possible natively, but Rollup lets you do it today.</p> 
+     <h3 id="quick-start">Quick start</h3> 
+     <p>Install with <code>npm install --global rollup</code>. Rollup can be used either through a <a href="https://github.com/rollup/rollup/wiki/Command-Line-Interface">command line interface</a> with an optional configuration file, or else through its <a href="https://github.com/rollup/rollup/wiki/JavaScript-API">JavaScript API</a>. Run <code>rollup --help</code> to see the available options and parameters.</p> 
+     <blockquote> 
+      <p>See <a href="https://github.com/rollup/rollup-starter-lib">rollup-starter-lib</a> and <a href="https://github.com/rollup/rollup-starter-app">rollup-starter-app</a> to see example library and application projects using Rollup</p> 
+     </blockquote> 
+     <p>These commands assume the entry point to your application is named main.js, and that you'd like all imports compiled into a single file named bundle.js.</p> 
+     <p>For browsers:</p> 
+     <pre><code><span class="hljs-comment"># compile to a &lt;script&gt; containing a self-executing function ('iife')</span>
+$ rollup main.js --o bundle.js --f iife
+</code></pre> 
+     <p>For Node.js:</p> 
+     <pre><code><span class="hljs-comment"># compile to a CommonJS module ('cjs')</span>
+$ rollup main.js --o bundle.js --f cjs
+</code></pre> 
+     <p>For both browsers and Node.js:</p> 
+     <pre><code><span class="hljs-comment"># UMD format requires a bundle name</span>
+$ rollup main.js --o bundle.js -f umd --name <span class="hljs-string">"myBundle"</span>
+</code></pre> 
+     <h3 id="why">Why</h3> 
+     <p>Developing software is usually easier if you break your project into smaller separate pieces, since that often removes unexpected interactions and dramatically reduces the complexity of the problems you'll need to solve, and simply writing smaller projects in the first place <a href="https://medium.com/@Rich_Harris/small-modules-it-s-not-quite-that-simple-3ca532d65de4">isn't necessarily the answer</a>. Unfortunately, JavaScript has not historically included this capability as a core feature in the language.</p> 
+     <p>This finally changed with the ES6 revision of JavaScript, which includes a syntax for importing and exporting functions and data so they can be shared between separate scripts. The specification is now fixed, but it is not yet implemented in browsers or Node.js. Rollup allows you to write your code using the new module system, and will then compile it back down to existing supported formats such as CommonJS modules, AMD modules, and IIFE-style scripts. This means that you get to <em>write future-proof code</em>, and you also get the tremendous benefits of...</p> 
+     <h3 id="tree-shaking">Tree-shaking</h3> 
+     <p>In addition to enabling the use of ES6 modules, Rollup also statically analyzes the code you are importing, and will exclude anything that isn't actually used. This allows you to build on top of existing tools and modules without adding extra dependencies or bloating the size of your project.</p> 
+     <p>For example, with CommonJS, the <em>entire tool or library must be imported</em>.</p> 
+     <pre><code><span class="hljs-comment">// import the entire utils object with CommonJS</span>
+<span class="hljs-keyword">var</span> utils = <span class="hljs-built_in">require</span>( <span class="hljs-string">'utils'</span> );
+<span class="hljs-keyword">var</span> query = <span class="hljs-string">'Rollup'</span>;
+<span class="hljs-comment">// use the ajax method of the utils object</span>
+utils.ajax( <span class="hljs-string">'https://api.example.com?search='</span> + query ).then( handleResponse );
+</code></pre> 
+     <p>But with ES6 modules, instead of importing the whole <code>utils</code> object, we can just import the one <code>ajax</code> function we need:</p> 
+     <pre><code><span class="hljs-comment">// import the ajax function with an ES6 import statement</span>
+<span class="hljs-keyword">import</span> { ajax } <span class="hljs-keyword">from</span> <span class="hljs-string">'utils'</span>;
+<span class="hljs-keyword">var</span> query = <span class="hljs-string">'Rollup'</span>;
+<span class="hljs-comment">// call the ajax function</span>
+ajax( <span class="hljs-string">'https://api.example.com?search='</span> + query ).then( handleResponse );
+</code></pre> 
+     <p>Because Rollup includes the bare minimum, it results in lighter, faster, and less complicated libraries and applications. Since this approach is based on explicit <code>import</code> and <code>export</code> statements, it is more effective than simply running an automated minifier to detect unused variables in the compiled output code.</p> 
+     <h3 id="compatibility">Compatibility</h3> 
+     <h4 id="importing-commonjs">Importing CommonJS</h4> 
+     <p>Rollup can import existing CommonJS modules <a href="https://github.com/rollup/rollup-plugin-commonjs">through a plugin</a>.</p> 
+     <h4 id="publishing-es6-modules">Publishing ES6 Modules</h4> 
+     <p>To make sure your ES6 modules are immediately usable by tools that work with CommonJS such as Node.js and webpack, you can use Rollup to compile to UMD or CommonJS format, and then point to that compiled version with the <code>main</code> property in your <code>package.json</code> file. If your <code>package.json</code> file also has a <code>module</code> field, ES6-aware tools like Rollup and <a href="https://webpack.js.org/">webpack 2</a> will <a href="https://github.com/rollup/rollup/wiki/pkg.module">import the ES6 module version</a> directly.</p> 
+     <h3 id="links">Links</h3> 
+     <ul> 
+      <li>step-by-step <a href="https://code.lengstorf.com/learn-rollup-js/">tutorial video series</a>, with accompanying written walkthrough</li> 
+      <li>miscellaneous issues in the <a href="https://github.com/rollup/rollup/wiki">wiki</a></li> 
+     </ul> 
+    </section>
+    <section id="faqs"> 
+     <h2>Frequently asked questions</h2> 
+     <h4 id="why-are-es-modules-better-than-commonjs-modules-">Why are ES modules better than CommonJS modules?</h4> 
+     <p>ES modules are an official standard and the clear path forward for JavaScript code structure, whereas CommonJS modules are an idiosyncratic legacy format that served as a stopgap solution before ES modules had been proposed. ES modules allow static analysis that enables optimizations like tree-shaking, and provide advanced features like circular references and live bindings.</p> 
+     <h4 id="what-is-tree-shaking-">What is "tree-shaking?"</h4> 
+     <p>Tree-shaking, also known as "live code inclusion," is the process of eliminating code that is not actually used in a given project. It is <a href="https://medium.com/@Rich_Harris/tree-shaking-versus-dead-code-elimination-d3765df85c80#.jnypozs9n">similar to dead code elimination</a> but can be much more efficient.</p> 
+     <h4 id="how-do-i-use-rollup-in-node-js-with-commonjs-modules-">How do I use Rollup in Node.js with CommonJS modules?</h4> 
+     <p>Rollup strives to implement the specification for ES modules, not necessarily the behaviors of Node.js, npm, <code>require()</code>, and CommonJS. Consequently, loading of CommonJS modules and use of Node's module location resolution logic are both implemented as optional plugins, not included by default in the Rollup core. Just <code>npm install</code> the <a href="https://github.com/rollup/rollup-plugin-commonjs">CommonJS</a> and <a href="https://github.com/rollup/rollup-plugin-node-resolve">node-resolve</a> plugins and then enable them using a <code>rollup.config.js</code> file and you should be all set.</p> 
+     <h4 id="is-rollup-meant-for-building-libraries-or-applications-">Is Rollup meant for building libraries or applications?</h4> 
+     <p>Rollup is already used by many major JavaScript libraries, and can also be used to build the vast majority of applications. However, Rollup doesn't yet support a few specific advanced features that can sometimes be useful when building applications, most notably code splitting and <a href="https://github.com/tc39/proposal-dynamic-import">dynamic imports at runtime</a>. If your project needs either of those, you may be better off with <a href="https://webpack.js.org/">Webpack</a>.</p> 
+     <h4 id="who-made-the-rollup-logo-it-s-lovely-">Who made the Rollup logo? It's lovely.</h4> 
+     <p><a href="https://twitter.com/jlmakes">Julian Lloyd</a>!</p> 
+    </section>
+    <section id="tutorial"> 
+     <h2>Tutorial</h2> 
+     <h3 id="creating-your-first-bundle">Creating your first bundle</h3> 
+     <p><em>Before we begin, you'll need to have <a href="https://nodejs.org">Node.js</a> installed so that you can use <a href="https://npmjs.com">npm</a>. You'll also need to know how to access the <a href="https://www.codecademy.com/learn/learn-the-command-line">command line</a> on your machine.</em></p> 
+     <p>The easiest way to use Rollup is via the Command Line Interface (or CLI). For now, we'll install it globally (later on we'll learn how to install it locally to your project so that your build process is portable, but don't worry about that yet). Type this into the command line:</p> 
+     <pre><code>npm install rollup --global <span class="hljs-comment"># or `npm i rollup -g` for short</span>
+</code></pre> 
+     <p>You can now run the <code>rollup</code> command. Try it!</p> 
+     <pre><code>rollup
+</code></pre> 
+     <p>Because no arguments were passed, Rollup prints usage instructions. This is the same as running <code>rollup --help</code>, or <code>rollup -h</code>.</p> 
+     <p>Let's create a simple project:</p> 
+     <pre><code>mkdir -p my-rollup-project/src
+<span class="hljs-built_in">cd</span> my-rollup-project
+</code></pre> 
+     <p>First, we need an <em>entry point</em>. Paste this into a new file called <code>src/main.js</code>:</p> 
+     <pre><code><span class="hljs-comment">// src/main.js</span>
+<span class="hljs-keyword">import</span> foo <span class="hljs-keyword">from</span> <span class="hljs-string">'./foo.js'</span>;
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(foo);
+}
+</code></pre> 
+     <p>Then, let's create the <code>foo.js</code> module that our entry point imports:</p> 
+     <pre><code><span class="hljs-comment">// src/foo.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-string">'hello world!'</span>;
+</code></pre> 
+     <p>Now we're ready to create a bundle:</p> 
+     <pre><code>rollup src/main.js -f cjs
+</code></pre> 
+     <p>The <code>-f</code> option (short for <code>--output.format</code>) specifies what kind of bundle we're creating — in this case, CommonJS (which will run in Node.js). Because we didn't specify an output file, it will be printed straight to <code>stdout</code>:</p> 
+     <pre><code><span class="hljs-meta">'use strict'</span>;
+
+<span class="hljs-keyword">var</span> foo = <span class="hljs-string">'hello world!'</span>;
+
+<span class="hljs-keyword">var</span> main = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(foo);
+};
+
+<span class="hljs-built_in">module</span>.exports = main;
+</code></pre> 
+     <p>You can save the bundle as a file like so:</p> 
+     <pre><code>rollup src/main.js -o bundle.js -f cjs
+</code></pre> 
+     <p>(You could also do <code>rollup src/main.js -f cjs &gt; bundle.js</code>, but as we'll see later, this is less flexible if you're generating sourcemaps.)</p> 
+     <p>Try running the code:</p> 
+     <pre><code>node
+&gt; var myBundle = require(<span class="hljs-string">'./bundle.js'</span>);
+&gt; myBundle();
+<span class="hljs-string">'hello world!'</span>
+</code></pre> 
+     <p>Congratulations! You've created your first bundle with Rollup.</p> 
+     <h3 id="using-config-files">Using config files</h3> 
+     <p>So far, so good, but as we start adding more options it becomes a bit of a nuisance to type out the command.</p> 
+     <p>To save repeating ourselves, we can create a config file containing all the options we need. A config file is written in JavaScript and is more flexible than the raw CLI.</p> 
+     <p>Create a file in the project root called <code>rollup.config.js</code>, and add the following code:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">input</span>: <span class="hljs-string">'src/main.js'</span>,
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'cjs'</span>
+  }
+};
+</code></pre> 
+     <p>To use the config file, we use the <code>--config</code> or <code>-c</code> flag:</p> 
+     <pre><code>rm bundle.js <span class="hljs-comment"># so we can check the command works!</span>
+rollup -c
+</code></pre> 
+     <p>You can override any of the options in the config file with the equivalent command line options:</p> 
+     <pre><code>rollup -c -o bundle-2.js <span class="hljs-comment"># `-o` is short for `--output.file`</span>
+</code></pre> 
+     <p>(Note that Rollup itself processes the config file, which is why we're able to use <code>export default</code> syntax – the code isn't being transpiled with Babel or anything similar, so you can only use ES2015 features that are supported in the version of Node.js that you're running.)</p> 
+     <p>You can, if you like, specify a different config file from the default <code>rollup.config.js</code>:</p> 
+     <pre><code>rollup --config rollup.config.dev.js
+rollup --config rollup.config.prod.js
+</code></pre> 
+     <h3 id="using-plugins">Using plugins</h3> 
+     <p>So far, we've created a simple bundle from an entry point and a module imported via a relative path. As you build more complex bundles, you'll often need more flexibility – importing modules installed with npm, compiling code with Babel, working with JSON files and so on.</p> 
+     <p>For that, we use <em>plugins</em>, which change the behaviour of Rollup at key points in the bundling process. A list of available plugins is maintained on <a href="https://github.com/rollup/rollup/wiki/Plugins">the Rollup wiki</a>.</p> 
+     <p>For this tutorial, we'll use <a href="https://github.com/rollup/rollup-plugin-json">rollup-plugin-json</a>, which allows Rollup to import data from a JSON file.</p> 
+     <p>Install rollup-plugin-json as a development dependency:</p> 
+     <pre><code>npm install --save-dev rollup-plugin-json
+</code></pre> 
+     <p>(We're using <code>--save-dev</code> rather than <code>--save</code> because our code doesn't actually depend on the plugin when it runs – only when we're building the bundle.)</p> 
+     <p>Update your <code>src/main.js</code> file so that it imports from your package.json instead of <code>src/foo.js</code>:</p> 
+     <pre><code><span class="hljs-comment">// src/main.js</span>
+<span class="hljs-keyword">import</span> { version } <span class="hljs-keyword">from</span> <span class="hljs-string">'../package.json'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'version '</span> + version);
+}
+</code></pre> 
+     <p>Edit your <code>rollup.config.js</code> file to include the JSON plugin:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">import</span> json <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-json'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">input</span>: <span class="hljs-string">'src/main.js'</span>,
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'cjs'</span>
+  },
+  <span class="hljs-attr">plugins</span>: [ json() ]
+};
+</code></pre> 
+     <p>Run Rollup with <code>npm run build</code>. The result should look like this:</p> 
+     <pre><code><span class="hljs-meta">'use strict'</span>;
+
+<span class="hljs-keyword">var</span> version = <span class="hljs-string">"1.0.0"</span>;
+
+<span class="hljs-keyword">var</span> main = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'version '</span> + version);
+};
+
+<span class="hljs-built_in">module</span>.exports = main;
+</code></pre> 
+     <p>(Notice that only the data we actually need gets imported – <code>name</code> and <code>devDependencies</code> and other parts of <code>package.json</code> are ignored. That's tree-shaking in action!)</p> 
+    </section>
+    <section id="command-line-reference"> 
+     <h2>Command Line Interface</h2> 
+     <p>Rollup should typically be used from the command line. You can provide an optional Rollup configuration file to simplify command line usage and enable advanced Rollup functionality.</p> 
+     <h3 id="configuration-files">Configuration files</h3> 
+     <p>Rollup configuration files are optional, but they are powerful and convenient and thus <strong>recommended</strong>.</p> 
+     <p>A config file is an ES6 module that exports a default object with the desired options. Typically, it is called <code>rollup.config.js</code> and sits in the root directory of your project.</p> 
+     <p>Consult the <a href="#big-list-of-options">big list of options</a> for details on each option you can include in your config file.</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-comment">// core input options</span>
+  input,     <span class="hljs-comment">// required</span>
+  external,
+  plugins,
+
+  <span class="hljs-comment">// advanced input options</span>
+  onwarn,
+
+  <span class="hljs-comment">// danger zone</span>
+  acorn,
+  context,
+  moduleContext,
+  legacy
+
+  output: {  <span class="hljs-comment">// required (can be an array, for multiple outputs)</span>
+    <span class="hljs-comment">// core output options</span>
+    file,    <span class="hljs-comment">// required</span>
+    format,  <span class="hljs-comment">// required</span>
+    name,
+    globals,
+
+    <span class="hljs-comment">// advanced output options</span>
+    paths,
+    banner,
+    footer,
+    intro,
+    outro,
+    sourcemap,
+    sourcemapFile,
+    interop,
+
+    <span class="hljs-comment">// danger zone</span>
+    exports,
+    amd,
+    indent
+    strict
+  },
+};
+</code></pre> 
+     <p>You <em>must</em> use a configuration file in order to do any of the following:</p> 
+     <ul> 
+      <li>bundle one project into multiple output files</li> 
+      <li>use Rollup plugins, such as <a href="https://github.com/rollup/rollup-plugin-node-resolve">rollup-plugin-node-resolve</a> and <a href="https://github.com/rollup/rollup-plugin-commonjs">rollup-plugin-commonjs</a> which let you load CommonJS modules from the Node.js ecosystem</li> 
+     </ul> 
+     <p>To use Rollup with a configuration file, pass the <code>--config</code> or <code>-c</code> flags.</p> 
+     <pre><code><span class="hljs-comment"># use Rollup with a rollup.config.js file</span>
+$ rollup --config
+
+<span class="hljs-comment"># alternatively, specify a custom config file location</span>
+$ rollup --config my.config.js
+</code></pre> 
+     <h3 id="command-line-flags">Command line flags</h3> 
+     <p>Many options have command line equivalents. Any arguments passed here will override the config file, if you're using one. See the <a href="#big-list-of-options">big list of options</a> for details.</p> 
+     <pre><code>-i, --input                 Input file (required)
+-o, --output.file           Output (<span class="hljs-keyword">if</span> absent, prints to stdout)
+-f, --output.format [es]    Type of output (amd, cjs, es, iife, umd)
+-e, --external              Comma-separate list of module IDs to exclude
+-g, --globals               Comma-separate list of `module ID:Global` pairs
+                              Any module IDs defined here are added to external
+-n, --name                  Name <span class="hljs-keyword">for</span> UMD <span class="hljs-built_in">export</span>
+-m, --sourcemap             Generate sourcemap (`-m inline` <span class="hljs-keyword">for</span> inline map)
+--amd.id                    ID <span class="hljs-keyword">for</span> AMD module (default is anonymous)
+--amd.define                Function to use <span class="hljs-keyword">in</span> place of `define`
+--no-strict                 Omit `<span class="hljs-string">"use strict"</span>;` <span class="hljs-keyword">in</span> the generated bundle
+--no-conflict               Generate a noConflict method <span class="hljs-keyword">for</span> UMD globals
+--intro                     Content to insert at top of bundle (inside wrapper)
+--outro                     Content to insert at end of bundle (inside wrapper)
+--banner                    Content to insert at top of bundle (outside wrapper)
+--footer                    Content to insert at end of bundle (outside wrapper)
+--interop                   Include interop block (<span class="hljs-literal">true</span> by default)
+</code></pre> 
+     <p>In addition, the following arguments can be used:</p> 
+     <h4 id="-h-help-"><code>-h</code>/<code>--help</code></h4> 
+     <p>Print the help document.</p> 
+     <h4 id="-v-version-"><code>-v</code>/<code>--version</code></h4> 
+     <p>Print the installed version number.</p> 
+     <h4 id="-w-watch-"><code>-w</code>/<code>--watch</code></h4> 
+     <p>Rebuild the bundle when its source files change on disk.</p> 
+     <h4 id="-silent-"><code>--silent</code></h4> 
+     <p>Don't print warnings to the console.</p> 
+    </section>
+    <section id="javascript-api"> 
+     <h2>JavaScript API</h2> 
+     <p>Rollup provides a JavaScript API which is usable from Node.js. You will rarely need to use this, and should probably be using the command line API unless you are extending Rollup itself or using it for something esoteric, such as generating bundles programmatically.</p> 
+     <h3 id="rollup-rollup">rollup.rollup</h3> 
+     <p>The <code>rollup.rollup</code> function returns a Promise that resolves to a <code>bundle</code> object with various properties and methods shown here:</p> 
+     <pre><code><span class="hljs-keyword">const</span> rollup = <span class="hljs-built_in">require</span>(<span class="hljs-string">'rollup'</span>);
+
+<span class="hljs-comment">// see below for details on the options</span>
+<span class="hljs-keyword">const</span> inputOptions = {...};
+<span class="hljs-keyword">const</span> outputOptions = {...};
+
+<span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">build</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-comment">// create a bundle</span>
+  <span class="hljs-keyword">const</span> bundle = <span class="hljs-keyword">await</span> rollup.rollup(inputOptions);
+
+  <span class="hljs-built_in">console</span>.log(bundle.imports); <span class="hljs-comment">// an array of external dependencies</span>
+  <span class="hljs-built_in">console</span>.log(bundle.exports); <span class="hljs-comment">// an array of names exported by the entry point</span>
+  <span class="hljs-built_in">console</span>.log(bundle.modules); <span class="hljs-comment">// an array of module objects</span>
+
+  <span class="hljs-comment">// generate code and a sourcemap</span>
+  <span class="hljs-keyword">const</span> { code, map } = <span class="hljs-keyword">await</span> bundle.generate(outputOptions);
+
+  <span class="hljs-comment">// or write the bundle to disk</span>
+  <span class="hljs-keyword">await</span> bundle.write(outputOptions);
+}
+
+build();
+</code></pre> 
+     <h4 id="inputoptions">inputOptions</h4> 
+     <p>The <code>inputOptions</code> object can contain the following properties (see the <a href="#big-list-of-options">big list of options</a> for full details on these):</p> 
+     <pre><code><span class="hljs-keyword">const</span> inputOptions = {
+  <span class="hljs-comment">// core options</span>
+  input, <span class="hljs-comment">// the only required option</span>
+  external,
+  plugins,
+
+  <span class="hljs-comment">// advanced options</span>
+  onwarn,
+  cache,
+
+  <span class="hljs-comment">// danger zone</span>
+  acorn,
+  context,
+  moduleContext,
+  legacy
+};
+</code></pre> 
+     <h4 id="outputoptions">outputOptions</h4> 
+     <p>The <code>outputOptions</code> object can contain the following properties (see the <a href="#big-list-of-options">big list of options</a> for full details on these):</p> 
+     <pre><code><span class="hljs-keyword">const</span> outputOptions = {
+  <span class="hljs-comment">// core options</span>
+  file,   <span class="hljs-comment">// required with bundle.write</span>
+  format, <span class="hljs-comment">// required</span>
+  name,
+  globals,
+
+  <span class="hljs-comment">// advanced options</span>
+  paths,
+  banner,
+  footer,
+  intro,
+  outro,
+  sourcemap,
+  sourcemapFile,
+  interop,
+
+  <span class="hljs-comment">// danger zone</span>
+  exports,
+  amd,
+  indent
+  strict
+};
+</code></pre> 
+     <h3 id="rollup-watch">rollup.watch</h3> 
+     <p>Rollup also provides a <code>rollup.watch</code> function that rebuilds your bundle when it detects that the individual modules have changed on disk. It is used internally when you run Rollup from the command line with the <code>--watch</code> flag.</p> 
+     <pre><code><span class="hljs-keyword">const</span> rollup = <span class="hljs-built_in">require</span>(<span class="hljs-string">'rollup'</span>);
+
+<span class="hljs-keyword">const</span> watchOptions = {...};
+<span class="hljs-keyword">const</span> watcher = rollup.watch(watchOptions);
+
+watcher.on(<span class="hljs-string">'event'</span>, event =&gt; {
+  <span class="hljs-comment">// event.code can be one of:</span>
+  <span class="hljs-comment">// START — the watcher is (re)starting</span>
+  <span class="hljs-comment">// BUNDLE_START — building an individual bundle</span>
+  <span class="hljs-comment">// BUNDLE_END — finished building a bundle</span>
+  <span class="hljs-comment">// END — finished building all bundles</span>
+  <span class="hljs-comment">// ERROR — encountered an error while bundling</span>
+  <span class="hljs-comment">// FATAL — encountered an unrecoverable error</span>
+});
+
+<span class="hljs-comment">// stop watching</span>
+watcher.close();
+</code></pre> 
+     <h4 id="watchoptions">watchOptions</h4> 
+     <p>The <code>watchOptions</code> argument is a config (or an array of configs) that you would export from a config file.</p> 
+     <pre><code><span class="hljs-keyword">const</span> watchOptions = {
+  ...inputOptions,
+  <span class="hljs-attr">output</span>: [outputOptions],
+  <span class="hljs-attr">watch</span>: {
+    chokidar,
+    include,
+    exclude
+  }
+};
+</code></pre> 
+     <p>See above for details on <code>inputOptions</code> and <code>outputOptions</code>, or consult the <a href="#big-list-of-options">big list of options</a> for info on <code>chokidar</code>, <code>include</code> and <code>exclude</code>.</p> 
+    </section>
+    <section id="tools"> 
+     <h2>Integrating Rollup with other tools</h2> 
+     <h3 id="npm-packages">npm packages</h3> 
+     <p>At some point, it's very likely that your project will depend on packages installed from npm into your <code>node_modules</code> folder. Unlike other bundlers like Webpack and Browserify, Rollup doesn't know 'out of the box' how to handle these dependencies - we need to add some configuration.</p> 
+     <p>Let's add a simple dependency called <a href="https://www.npmjs.com/package/the-answer">the-answer</a>, which exports the answer to the question of life, the universe and everything:</p> 
+     <pre><code>npm install the-answer <span class="hljs-comment"># or `npm i the-answer`</span>
+</code></pre> 
+     <p>If we update our <code>src/main.js</code> file...</p> 
+     <pre><code><span class="hljs-comment">// src/main.js</span>
+<span class="hljs-keyword">import</span> answer <span class="hljs-keyword">from</span> <span class="hljs-string">'the-answer'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'the answer is '</span> + answer);
+}
+</code></pre> 
+     <p>...and run Rollup...</p> 
+     <pre><code>npm run build
+</code></pre> 
+     <p>...we'll see a warning like this:</p> 
+     <pre><code>(!) Unresolved dependencies
+https://github.com/rollup/rollup/wiki/Troubleshooting<span class="hljs-comment">#treating-module-as-external-dependency</span>
+the-answer (imported by main.js)
+</code></pre> 
+     <p>The resulting <code>bundle.js</code> will still work in Node.js, because the <code>import</code> declaration gets turned into a CommonJS <code>require</code> statement, but <code>the-answer</code> does <em>not</em> get included in the bundle. For that, we need a plugin.</p> 
+     <h4 id="rollup-plugin-node-resolve">rollup-plugin-node-resolve</h4> 
+     <p>The <a href="https://github.com/rollup/rollup-plugin-node-resolve">rollup-plugin-node-resolve</a> plugin teaches Rollup how to find external modules. Install it...</p> 
+     <pre><code>npm install --save-dev rollup-plugin-node-resolve
+</code></pre> 
+     <p>...and add it to your config file:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">import</span> resolve <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-node-resolve'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">input</span>: <span class="hljs-string">'src/main.js'</span>,
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>
+    format: <span class="hljs-string">'cjs'</span>
+  },
+  <span class="hljs-attr">plugins</span>: [ resolve() ]
+};
+</code></pre> 
+     <p>This time, when you <code>npm run build</code>, no warning is emitted — the bundle contains the imported module.</p> 
+     <h4 id="rollup-plugin-commonjs">rollup-plugin-commonjs</h4> 
+     <p>Some libraries expose ES6 modules that you can import as-is — <code>the-answer</code> is one such module. But at the moment, the majority of packages on npm are exposed as CommonJS modules instead. Until that changes, we need to convert CommonJS to ES2015 before Rollup can process them.</p> 
+     <p>The <a href="https://github.com/rollup/rollup-plugin-commonjs">rollup-plugin-commonjs</a> plugin does exactly that.</p> 
+     <p>Note that <code>rollup-plugin-commonjs</code> should go <em>before</em> other plugins that transform your modules — this is to prevent other plugins from making changes that break the CommonJS detection.</p> 
+     <h3 id="peer-dependencies">Peer dependencies</h3> 
+     <p>Let's say that you're building a library that has a peer dependency, such as React or Lodash. If you set up externals as described above, your rollup will bundle <em>all</em> imports:</p> 
+     <pre><code><span class="hljs-keyword">import</span> answer <span class="hljs-keyword">from</span> <span class="hljs-string">'the-answer'</span>;
+<span class="hljs-keyword">import</span> _ <span class="hljs-keyword">from</span> <span class="hljs-string">'lodash'</span>;
+</code></pre> 
+     <p>You can finely tune which imports are bundled and which are treated as external. For this example, we'll treat <code>lodash</code> as external, but not <code>the-answer</code>.</p> 
+     <p>Here is the config file:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">import</span> resolve <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-node-resolve'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">input</span>: <span class="hljs-string">'src/main.js'</span>,
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'cjs'</span>
+  },
+  <span class="hljs-attr">plugins</span>: [resolve({
+    <span class="hljs-comment">// pass custom options to the resolve plugin</span>
+    customResolveOptions: {
+      <span class="hljs-attr">moduleDirectory</span>: <span class="hljs-string">'node_modules'</span>
+    }
+  })],
+  <span class="hljs-comment">// indicate which modules should be treated as external</span>
+  external: [<span class="hljs-string">'lodash'</span>]
+};
+</code></pre> 
+     <p>Voila, <code>lodash</code> will now be treated as external, and not be bundled with your library.</p> 
+     <p>The <code>external</code> key accepts either an array of module names or a function which takes the module name and returns true if it should be treated as external. For example:</p> 
+     <pre><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-comment">// ...</span>
+  external: <span class="hljs-function"><span class="hljs-params">id</span> =&gt;</span> /lodash/.test(id)
+}
+</code></pre> 
+     <p>You might use this form if you're using <a href="https://github.com/lodash/babel-plugin-lodash">babel-plugin-lodash</a> to cherry-pick lodash modules. In this case, Babel will convert your import statements to look like this:</p> 
+     <pre><code><span class="hljs-keyword">import</span> _merge <span class="hljs-keyword">from</span> <span class="hljs-string">'lodash/merge'</span>;
+</code></pre> 
+     <p>The array form of <code>external</code> does not handle wildcards, so this import will only be treated as external in the functional form.</p> 
+     <h3 id="babel">Babel</h3> 
+     <p>Many developers use <a href="https://babeljs.io/">Babel</a> in their projects, so that they can use futuristic JavaScript features that aren't yet supported by browsers and Node.js.</p> 
+     <p>The easiest way to use both Babel and Rollup is with <a href="https://github.com/rollup/rollup-plugin-babel">rollup-plugin-babel</a>. Install it:</p> 
+     <pre><code>npm i -D rollup-plugin-babel
+</code></pre> 
+     <p>Add it to <code>rollup.config.js</code>:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">import</span> resolve <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-node-resolve'</span>;
+<span class="hljs-keyword">import</span> babel <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-babel'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">input</span>: <span class="hljs-string">'src/main.js'</span>,
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'cjs'</span>
+  },
+  <span class="hljs-attr">plugins</span>: [
+    resolve(),
+    babel({
+      <span class="hljs-attr">exclude</span>: <span class="hljs-string">'node_modules/**'</span> <span class="hljs-comment">// only transpile our source code</span>
+    })
+  ]
+};
+</code></pre> 
+     <p>Before Babel will actually compile your code, it needs to be configured. Create a new file, <code>src/.babelrc</code>:</p> 
+     <pre><code>{
+  <span class="hljs-string">"presets"</span>: [
+    [<span class="hljs-string">"latest"</span>, {
+      <span class="hljs-string">"es2015"</span>: {
+        <span class="hljs-string">"modules"</span>: <span class="hljs-literal">false</span>
+      }
+    }]
+  ],
+  <span class="hljs-string">"plugins"</span>: [<span class="hljs-string">"external-helpers"</span>]
+}
+</code></pre> 
+     <p>There are a few unusual things about this setup. First, we're setting <code>"modules": false</code>, otherwise Babel will convert our modules to CommonJS before Rollup gets a chance to do its thing, causing it to fail.</p> 
+     <p>Secondly, we're using the <code>external-helpers</code> plugin, which allows Rollup to include any 'helpers' just once at the top of the bundle, rather than including them in every module that uses them (which is the default behaviour).</p> 
+     <p>Thirdly, we're putting our <code>.babelrc</code> file in <code>src</code>, rather than the project root. This allows us to have a different <code>.babelrc</code> for things like tests, if we need that later – it's generally a good idea to have separate configuration for separate tasks.</p> 
+     <p>Now, before we run rollup, we need to install the <code>latest</code> preset and the <code>external-helpers</code> plugin:</p> 
+     <pre><code>npm i -D babel-preset-latest babel-plugin-external-helpers
+</code></pre> 
+     <p>Running Rollup now will create a bundle... except we're not actually using any ES2015 features. Let's change that. Edit <code>src/main.js</code>:</p> 
+     <pre><code><span class="hljs-comment">// src/main.js</span>
+<span class="hljs-keyword">import</span> answer <span class="hljs-keyword">from</span> <span class="hljs-string">'the-answer'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> () =&gt; {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`the answer is <span class="hljs-subst">${answer}</span>`</span>);
+}
+</code></pre> 
+     <p>Run Rollup with <code>npm run build</code>, and check the bundle:</p> 
+     <pre><code><span class="hljs-meta">'use strict'</span>;
+
+<span class="hljs-keyword">var</span> index = <span class="hljs-number">42</span>;
+
+<span class="hljs-keyword">var</span> main = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'the answer is '</span> + index);
+});
+
+<span class="hljs-built_in">module</span>.exports = main;
+</code></pre> 
+     <h3 id="gulp">Gulp</h3> 
+     <p>Rollup returns promises which are understood by gulp so integration is easy.</p> 
+     <p>The syntax is very similar to the configuration file, but the properties are split across two different operations, corresponding to the <a href="#JavaScript-API">JavaScript API</a>:</p> 
+     <pre><code><span class="hljs-keyword">const</span> gulp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'gulp'</span>);
+<span class="hljs-keyword">const</span> rollup = <span class="hljs-built_in">require</span>(<span class="hljs-string">'rollup'</span>);
+<span class="hljs-keyword">const</span> rollupTypescript = <span class="hljs-built_in">require</span>(<span class="hljs-string">'rollup-plugin-typescript'</span>);
+
+gulp.task(<span class="hljs-string">'build'</span>, <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">const</span> bundle = <span class="hljs-keyword">await</span> rollup.rollup({
+    <span class="hljs-attr">input</span>: <span class="hljs-string">'./src/main.ts'</span>,
+    <span class="hljs-attr">plugins</span>: [
+      rollupTypescript()
+    ]
+  });
+
+  <span class="hljs-keyword">await</span> bundle.write({
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'./dist/library.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'umd'</span>,
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'library'</span>,
+    <span class="hljs-attr">sourcemap</span>: <span class="hljs-literal">true</span>
+  });
+});
+</code></pre> 
+    </section>
+    <section id="es-module-syntax"> 
+     <h2>ES module syntax</h2> 
+     <p>The following is intended as a lightweight reference for the module behaviors defined in the <a href="https://www.ecma-international.org/ecma-262/6.0/">ES2015 specification</a>, since a proper understanding of the import and export statements are essential to successful use of Rollup.</p> 
+     <h3 id="importing">Importing</h3> 
+     <p>Imported values cannot be reassigned, though imported objects and arrays <em>can</em> be mutated (and the exporting module, and any other importers, will be affected by the mutation). In that way, they behave similarly to <code>const</code> declarations.</p> 
+     <h4 id="named-imports">Named Imports</h4> 
+     <p>Import a specific item from a source module, with its original name.</p> 
+     <pre><code><span class="hljs-keyword">import</span> { something } <span class="hljs-keyword">from</span> <span class="hljs-string">'./module.js'</span>;
+</code></pre> 
+     <p>Import a specific item from a source module, with a custom name assigned upon import.</p> 
+     <pre><code><span class="hljs-keyword">import</span> { something <span class="hljs-keyword">as</span> somethingElse } <span class="hljs-keyword">from</span> <span class="hljs-string">'./module.js'</span>;
+</code></pre> 
+     <h4 id="namespace-imports">Namespace Imports</h4> 
+     <p>Import everything from the source module as an object which exposes all the source module's named exports as properties and methods. Default exports are excluded from this object.</p> 
+     <pre><code><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> <span class="hljs-built_in">module</span> <span class="hljs-keyword">from</span> <span class="hljs-string">'./module.js'</span>
+</code></pre> 
+     <p>The <code>something</code> example from above would then be attached to the imported object as a property, e.g. <code>module.something</code>.</p> 
+     <h4 id="default-import">Default Import</h4> 
+     <p>Import the <strong>default export</strong> of the source module.</p> 
+     <pre><code><span class="hljs-keyword">import</span> something <span class="hljs-keyword">from</span> <span class="hljs-string">'./module.js'</span>;
+</code></pre> 
+     <h4 id="empty-import">Empty Import</h4> 
+     <p>Load the module code, but don't make any new objects available.</p> 
+     <pre><code><span class="hljs-keyword">import</span> <span class="hljs-string">'./module.js'</span>;
+</code></pre> 
+     <p>This is useful for polyfills, or when the primary purpose of the imported code is to muck about with prototypes.</p> 
+     <h3 id="exporting">Exporting</h3> 
+     <h4 id="named-exports">Named exports</h4> 
+     <p>Export a value that has been previously declared:</p> 
+     <pre><code><span class="hljs-keyword">var</span> something = <span class="hljs-literal">true</span>;
+<span class="hljs-keyword">export</span> { something };
+</code></pre> 
+     <p>Rename on export:</p> 
+     <pre><code><span class="hljs-keyword">export</span> { something <span class="hljs-keyword">as</span> somethingElse };
+</code></pre> 
+     <p>Export a value immediately upon declaration:</p> 
+     <pre><code><span class="hljs-comment">// this works with `var`, `let`, `const`, `class`, and `function`</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">var</span> something = <span class="hljs-literal">true</span>;
+</code></pre> 
+     <h4 id="default-export">Default Export</h4> 
+     <p>Export a single value as the source module's default export:</p> 
+     <pre><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> something;
+</code></pre> 
+     <p>This practice is only recommended if your source module only has one export.</p> 
+     <p>It is bad practice to mix default and named exports in the same module, though it is allowed by the specification.</p> 
+     <h3 id="how-bindings-work">How bindings work</h3> 
+     <p>ES modules export <em>live bindings</em>, not values, so values can be changed after they are initially imported as per <a href="https://rollupjs.org/repl?shareable=JTdCJTIybW9kdWxlcyUyMiUzQSU1QiU3QiUyMm5hbWUlMjIlM0ElMjJtYWluLmpzJTIyJTJDJTIyY29kZSUyMiUzQSUyMmltcG9ydCUyMCU3QiUyMGNvdW50JTJDJTIwaW5jcmVtZW50JTIwJTdEJTIwZnJvbSUyMCcuJTJGaW5jcmVtZW50ZXIuanMnJTNCJTVDbiU1Q25jb25zb2xlLmxvZyhjb3VudCklM0IlNUNuaW5jcmVtZW50KCklM0IlNUNuY29uc29sZS5sb2coY291bnQpJTNCJTIyJTdEJTJDJTdCJTIybmFtZSUyMiUzQSUyMmluY3JlbWVudGVyLmpzJTIyJTJDJTIyY29kZSUyMiUzQSUyMmV4cG9ydCUyMGxldCUyMGNvdW50JTIwJTNEJTIwMCUzQiU1Q24lNUNuZXhwb3J0JTIwZnVuY3Rpb24lMjBpbmNyZW1lbnQoKSUyMCU3QiU1Q24lNUN0Y291bnQlMjAlMkIlM0QlMjAxJTNCJTVDbiU3RCUyMiU3RCU1RCUyQyUyMm9wdGlvbnMlMjIlM0ElN0IlMjJmb3JtYXQlMjIlM0ElMjJjanMlMjIlMkMlMjJnbG9iYWxzJTIyJTNBJTdCJTdEJTJDJTIybW9kdWxlSWQlMjIlM0ElMjIlMjIlMkMlMjJuYW1lJTIyJTNBJTIybXlCdW5kbGUlMjIlN0QlMkMlMjJleGFtcGxlJTIyJTNBbnVsbCU3RA==">this demo</a>:</p> 
+     <pre><code><span class="hljs-comment">// incrementer.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">increment</span>(<span class="hljs-params"></span>) </span>{
+  count += <span class="hljs-number">1</span>;
+}
+</code></pre> 
+     <pre><code><span class="hljs-comment">// main.js</span>
+<span class="hljs-keyword">import</span> { count, increment } <span class="hljs-keyword">from</span> <span class="hljs-string">'./incrementer.js'</span>;
+
+<span class="hljs-built_in">console</span>.log(count); <span class="hljs-comment">// 0</span>
+increment();
+<span class="hljs-built_in">console</span>.log(count); <span class="hljs-comment">// 1</span>
+
+count += <span class="hljs-number">1</span>; <span class="hljs-comment">// Error — only incrementer.js can change this</span>
+</code></pre> 
+    </section>
+    <section id="big-list-of-options"> 
+     <h2>Big list of options</h2> 
+     <h3 id="core-functionality">Core functionality</h3> 
+     <h4 id="input-i-input-">input <em><code>-i</code>/<code>--input</code></em></h4> 
+     <p><code>String</code> The bundle's entry point (e.g. your <code>main.js</code> or <code>app.js</code> or <code>index.js</code>)</p> 
+     <h4 id="file-o-output-file-">file <em><code>-o</code>/<code>--output.file</code></em></h4> 
+     <p><code>String</code> The file to write to. Will also be used to generate sourcemaps, if applicable</p> 
+     <h4 id="format-f-output-format-">format <em><code>-f</code>/<code>--output.format</code></em></h4> 
+     <p><code>String</code> The format of the generated bundle. One of the following:</p> 
+     <ul> 
+      <li><code>amd</code> – Asynchronous Module Definition, used with module loaders like RequireJS</li> 
+      <li><code>cjs</code> – CommonJS, suitable for Node and Browserify/Webpack</li> 
+      <li><code>es</code> – Keep the bundle as an ES module file</li> 
+      <li><code>iife</code> – A self-executing function, suitable for inclusion as a <code>&lt;script&gt;</code> tag. (If you want to create a bundle for your application, you probably want to use this, because it leads to smaller file sizes.)</li> 
+      <li><code>umd</code> – Universal Module Definition, works as <code>amd</code>, <code>cjs</code> and <code>iife</code> all in one</li> 
+     </ul> 
+     <h4 id="name-n-name-">name <em><code>-n</code>/<code>--name</code></em></h4> 
+     <p><code>String</code> The variable name, representing your <code>iife</code>/<code>umd</code> bundle, by which other scripts on the same page can access it.</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'iife'</span>,
+    <span class="hljs-attr">name</span>: <span class="hljs-string">'MyBundle'</span>
+  }
+};
+
+<span class="hljs-comment">// -&gt; var MyBundle = (function () {...</span>
+</code></pre> 
+     <h4 id="plugins">plugins</h4> 
+     <p><code>Array</code> of plugin objects (or a single plugin object) – see <a href="#getting-started-with-plugins">Getting started with plugins</a> for more information. Remember to call the imported plugin function (i.e. <code>commonjs()</code>, not just <code>commonjs</code>).</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">import</span> resolve <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-node-resolve'</span>;
+<span class="hljs-keyword">import</span> commonjs <span class="hljs-keyword">from</span> <span class="hljs-string">'rollup-plugin-commonjs'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">entry</span>: <span class="hljs-string">'main.js'</span>,
+  <span class="hljs-attr">plugins</span>: [
+    resolve(),
+    commonjs()
+  ]
+};
+</code></pre> 
+     <h4 id="external-e-external-">external <em><code>-e</code>/<code>--external</code></em></h4> 
+     <p>Either a <code>Function</code> that takes an <code>id</code> and returns <code>true</code> (external) or <code>false</code> (not external), or an <code>Array</code> of module IDs that should remain external to the bundle. The IDs should be either:</p> 
+     <ol> 
+      <li>the name of an external dependency</li> 
+      <li>a resolved ID (like an absolute path to a file)</li> 
+     </ol> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">import</span> path <span class="hljs-keyword">from</span> <span class="hljs-string">'path'</span>;
+
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">external</span>: [
+    <span class="hljs-string">'some-externally-required-library'</span>,
+    path.resolve( <span class="hljs-string">'./src/some-local-file-that-should-not-be-bundled.js'</span> )
+  ]
+};
+</code></pre> 
+     <p>When given as a command line argument, it should be a comma-separated list of IDs:</p> 
+     <pre><code>rollup -i src/main.js ... -e foo,bar,baz
+</code></pre> 
+     <h4 id="globals-g-globals-">globals <em><code>-g</code>/<code>--globals</code></em></h4> 
+     <p><code>Object</code> of <code>id: name</code> pairs, used for <code>umd</code>/<code>iife</code> bundles. For example, in a case like this...</p> 
+     <pre><code><span class="hljs-keyword">import</span> $ <span class="hljs-keyword">from</span> <span class="hljs-string">'jquery'</span>;
+</code></pre> 
+     <p>...we want to tell Rollup that the <code>jquery</code> module ID equates to the global <code>$</code> variable:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">format</span>: <span class="hljs-string">'iife'</span>,
+  <span class="hljs-attr">moduleName</span>: <span class="hljs-string">'MyBundle'</span>,
+  <span class="hljs-attr">globals</span>: {
+    <span class="hljs-attr">jquery</span>: <span class="hljs-string">'$'</span>
+  }
+};
+
+<span class="hljs-comment">/* var MyBundle = (function ($) { // code goes here }(window.jQuery)); */</span>.
+</code></pre> 
+     <p>Alternatively, supply a function that will turn an external module ID into a global.</p> 
+     <p>When given as a command line argument, it should be a comma-separated list of <code>id:name</code> pairs:</p> 
+     <pre><code>rollup -i src/main.js ... -g jquery:$,underscore:_
+</code></pre> 
+     <h3 id="advanced-functionality">Advanced functionality</h3> 
+     <h4 id="paths">paths</h4> 
+     <p><code>Function</code> that takes an ID and returns a path, or <code>Object</code> of <code>id: path</code> pairs. Where supplied, these paths will be used in the generated bundle instead of the module ID, allowing you to (for example) load dependencies from a CDN:</p> 
+     <pre><code><span class="hljs-comment">// app.js</span>
+<span class="hljs-keyword">import</span> { selectAll } <span class="hljs-keyword">from</span> <span class="hljs-string">'d3'</span>;
+selectAll(<span class="hljs-string">'p'</span>).style(<span class="hljs-string">'color'</span>, <span class="hljs-string">'purple'</span>);
+<span class="hljs-comment">// ...</span>
+
+<span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  <span class="hljs-attr">input</span>: <span class="hljs-string">'app.js'</span>,
+  <span class="hljs-attr">external</span>: [<span class="hljs-string">'d3'</span>],
+  <span class="hljs-attr">output</span>: {
+    <span class="hljs-attr">file</span>: <span class="hljs-string">'bundle.js'</span>,
+    <span class="hljs-attr">format</span>: <span class="hljs-string">'amd'</span>,
+    <span class="hljs-attr">paths</span>: {
+      <span class="hljs-attr">d3</span>: <span class="hljs-string">'https://d3js.org/d3.v4.min'</span>
+    }
+  }
+};
+
+<span class="hljs-comment">// bundle.js</span>
+define([<span class="hljs-string">'https://d3js.org/d3.v4.min'</span>], <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">d3</span>) </span>{
+
+  d3.selectAll(<span class="hljs-string">'p'</span>).style(<span class="hljs-string">'color'</span>, <span class="hljs-string">'purple'</span>);
+  <span class="hljs-comment">// ...</span>
+
+});
+</code></pre> 
+     <h4 id="banner-footer">banner/footer</h4> 
+     <p><code>String</code> A string to prepend/append to the bundle. (Note: <code>banner</code> and <code>footer</code> options will not break sourcemaps)</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">banner</span>: <span class="hljs-string">'/* my-library version '</span> + version + <span class="hljs-string">' */'</span>,
+  <span class="hljs-attr">footer</span>: <span class="hljs-string">'/* follow me on Twitter! @rich_harris */'</span>
+};
+</code></pre> 
+     <h4 id="intro-outro">intro/outro</h4> 
+     <p><code>String</code> Similar to <code>banner</code> and <code>footer</code>, except that the code goes <em>inside</em> any format-specific wrapper</p> 
+     <pre><code><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">intro</span>: <span class="hljs-string">'var ENVIRONMENT = "production";'</span>
+};
+</code></pre> 
+     <h4 id="cache">cache</h4> 
+     <p><code>Object</code> A previously-generated bundle. Use it to speed up subsequent builds — Rollup will only reanalyse the modules that have changed.</p> 
+     <h4 id="onwarn">onwarn</h4> 
+     <p><code>Function</code> that will intercept warning messages. If not supplied, warnings will be deduplicated and printed to the console.</p> 
+     <p>Warnings are objects with at minimum a <code>code</code> and a <code>message</code> property, meaning you can control how different kinds of warnings are handled:</p> 
+     <pre><code>onwarn (warning) {
+  <span class="hljs-comment">// skip certain warnings</span>
+  <span class="hljs-keyword">if</span> (warning.code === <span class="hljs-string">'UNUSED_EXTERNAL_IMPORT'</span>) <span class="hljs-keyword">return</span>;
+
+  <span class="hljs-comment">// throw on others</span>
+  <span class="hljs-keyword">if</span> (warning.code === <span class="hljs-string">'NON_EXISTENT_EXPORT'</span>) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(warning.message);
+
+  <span class="hljs-comment">// console.warn everything else</span>
+  <span class="hljs-built_in">console</span>.warn(warning.message);
+}
+</code></pre> 
+     <p>Many warnings also have a <code>loc</code> property and a <code>frame</code> allowing you to locate the source of the warning:</p> 
+     <pre><code>onwarn ({ loc, frame, message }) {
+  <span class="hljs-comment">// print location if applicable</span>
+  <span class="hljs-keyword">if</span> (loc) {
+    <span class="hljs-built_in">console</span>.warn(<span class="hljs-string">`<span class="hljs-subst">${loc.file}</span> (<span class="hljs-subst">${loc.line}</span>:<span class="hljs-subst">${loc.column}</span>) <span class="hljs-subst">${message}</span>`</span>);
+    <span class="hljs-keyword">if</span> (frame) <span class="hljs-built_in">console</span>.warn(frame);
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.warn(message);
+  }
+}
+</code></pre> 
+     <h4 id="sourcemap-m-sourcemap-">sourcemap <em><code>-m</code>/<code>--sourcemap</code></em></h4> 
+     <p>If <code>true</code>, a separate sourcemap file will be created. If <code>inline</code>, the sourcemap will be appended to the resulting <code>output</code> file as a data URI.</p> 
+     <h4 id="sourcemapfile">sourcemapFile</h4> 
+     <p><code>String</code> The location of the generated bundle. If this is an absolute path, all the <code>sources</code> paths in the sourcemap will be relative to it. The <code>map.file</code> property is the basename of <code>sourcemapFile</code>, as the location of the sourcemap is assumed to be adjacent to the bundle.</p> 
+     <p><code>sourcemapFile</code> is not required if <code>output</code> is specified, in which case an output filename will be inferred by adding ".map" to the output filename for the bundle.</p> 
+     <h4 id="interop">interop</h4> 
+     <p><code>Boolean</code> whether or not to add an 'interop block'. By default (<code>interop: true</code>), for safety's sake, Rollup will assign any external dependencies' <code>default</code> exports to a separate variable if it's necessary to distinguish between default and named exports. This generally only applies if your external dependencies were transpiled (for example with Babel) – if you're sure you don't need it, you can save a few bytes with <code>interop: false</code>.</p> 
+     <h3 id="danger-zone">Danger zone</h3> 
+     <p>You probably don't need to use these options unless you know what you're doing!</p> 
+     <h4 id="treeshake">treeshake</h4> 
+     <p>Whether or not to apply tree-shaking. It's recommended that you omit this option (defaults to <code>treeshake: true</code>), unless you discover a bug caused by the tree-shaking algorithm in which case use <code>treeshake: false</code> once you've filed an issue!</p> 
+     <h4 id="acorn">acorn</h4> 
+     <p>Any options that should be passed through to Acorn, such as <code>allowReserved: true</code>.</p> 
+     <h4 id="context">context</h4> 
+     <p>By default, the context of a module – i.e., the value of <code>this</code> at the top level – is <code>undefined</code>. In rare cases you might need to change this to something else, like <code>'window'</code>.</p> 
+     <h4 id="modulecontext">moduleContext</h4> 
+     <p>Same as <code>options.context</code>, but per-module – can either be an object of <code>id: context</code> pairs, or an <code>id =&gt; context</code> function.</p> 
+     <h4 id="legacy">legacy</h4> 
+     <p>Adds support for very old environments like IE8 by stripping out more modern code that might not work reliably, at the cost of deviating slightly from the precise specifications required of ES6 module environments.</p> 
+     <h4 id="exports">exports</h4> 
+     <p><code>String</code> What export mode to use. Defaults to <code>auto</code>, which guesses your intentions based on what the <code>entry</code> module exports:</p> 
+     <ul> 
+      <li><code>default</code> – suitable if you're only exporting one thing using <code>export default ...</code></li> 
+      <li><code>named</code> – suitable if you're exporting more than one thing</li> 
+      <li><code>none</code> – suitable if you're not exporting anything (e.g. you're building an app, not a library)</li> 
+     </ul> 
+     <p>The difference between <code>default</code> and <code>named</code> affects how other people can consume your bundle. If you use <code>default</code>, a CommonJS user could do this, for example:</p> 
+     <pre><code><span class="hljs-keyword">var</span> yourLib = <span class="hljs-built_in">require</span>( <span class="hljs-string">'your-lib'</span> );
+</code></pre> 
+     <p>With <code>named</code>, a user would do this instead:</p> 
+     <pre><code><span class="hljs-keyword">var</span> yourMethod = <span class="hljs-built_in">require</span>( <span class="hljs-string">'your-lib'</span> ).yourMethod;
+</code></pre> 
+     <p>The wrinkle is that if you use <code>named</code> exports but <em>also</em> have a <code>default</code> export, a user would have to do something like this to use the default export:</p> 
+     <pre><code><span class="hljs-keyword">var</span> yourMethod = <span class="hljs-built_in">require</span>( <span class="hljs-string">'your-lib'</span> ).yourMethod;
+<span class="hljs-keyword">var</span> yourLib = <span class="hljs-built_in">require</span>( <span class="hljs-string">'your-lib'</span> )[<span class="hljs-string">'default'</span>];
+</code></pre> 
+     <h4 id="amd-amd-id-and-amd-define-">amd <em><code>--amd.id</code> and <code>--amd.define</code></em></h4> 
+     <p><code>Object</code> Can contain the following properties:</p> 
+     <p><strong>amd.id</strong> <code>String</code> An ID to use for AMD/UMD bundles:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">format</span>: <span class="hljs-string">'amd'</span>,
+  <span class="hljs-attr">amd</span>: {
+    <span class="hljs-attr">id</span>: <span class="hljs-string">'my-bundle'</span>
+  }
+};
+
+<span class="hljs-comment">// -&gt; define('my-bundle', ['dependency'], ...</span>
+</code></pre> 
+     <p><strong>amd.define</strong> <code>String</code> A function name to use instead of <code>define</code>:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">format</span>: <span class="hljs-string">'amd'</span>,
+  <span class="hljs-attr">amd</span>: {
+    <span class="hljs-attr">define</span>: <span class="hljs-string">'def'</span>
+  }
+};
+
+<span class="hljs-comment">// -&gt; def(['dependency'],...</span>
+</code></pre> 
+     <h4 id="indent">indent</h4> 
+     <p><code>String</code> the indent string to use, for formats that require code to be indented (<code>amd</code>, <code>iife</code>, <code>umd</code>). Can also be <code>false</code> (no indent), or <code>true</code> (the default – auto-indent)</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">indent</span>: <span class="hljs-literal">false</span>
+};
+</code></pre> 
+     <h4 id="strict">strict</h4> 
+     <p><code>true</code> or <code>false</code> (defaults to <code>true</code>) – whether to include the 'use strict' pragma at the top of generated non-ES6 bundles. Strictly-speaking (geddit?), ES6 modules are <em>always</em> in strict mode, so you shouldn't disable this without good reason.</p> 
+     <h3 id="watch-options">Watch options</h3> 
+     <p>These options only take effect when running Rollup with the <code>--watch</code> flag, or using <code>rollup.watch</code>.</p> 
+     <h4 id="watch-chokidar">watch.chokidar</h4> 
+     <p>A <code>Boolean</code> indicating that <a href="https://github.com/paulmillr/chokidar">chokidar</a> should be used instead of the built-in <code>fs.watch</code>, or an <code>Object</code> of options that are passed through to chokidar.</p> 
+     <p>You must install chokidar separately if you wish to use it.</p> 
+     <h4 id="watch-include">watch.include</h4> 
+     <p>Limit the file-watching to certain files:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">watch</span>: {
+    <span class="hljs-attr">include</span>: <span class="hljs-string">'src/**'</span>
+  }
+};
+</code></pre> 
+     <h4 id="watch-exclude">watch.exclude</h4> 
+     <p>Prevent files from being watched:</p> 
+     <pre><code><span class="hljs-comment">// rollup.config.js</span>
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> {
+  ...,
+  <span class="hljs-attr">watch</span>: {
+    <span class="hljs-attr">exclude</span>: <span class="hljs-string">'node_modules/**'</span>
+  }
+};
+</code></pre> 
+    </section> 
+   </div> 
+   <div class="sidebar" svelte-1788363985> 
+    <ul class="guide-toc" svelte-2254903749> 
+     <li> <a class="section " href="/#introduction">Introduction</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#overview">Overview</a> </li>
+       <li> <a class="subsection " href="/#quick-start">Quick start</a> </li>
+       <li> <a class="subsection " href="/#why">Why</a> </li>
+       <li> <a class="subsection " href="/#tree-shaking">Tree-shaking</a> </li>
+       <li> <a class="subsection " href="/#compatibility">Compatibility</a> </li>
+       <li> <a class="subsection " href="/#links">Links</a> </li> 
+      </ul> </li>
+     <li> <a class="section " href="/#faqs">Frequently asked questions</a> 
+      <ul class="subsections"> 
+      </ul> </li>
+     <li> <a class="section " href="/#tutorial">Tutorial</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#creating-your-first-bundle">Creating your first bundle</a> </li>
+       <li> <a class="subsection " href="/#using-config-files">Using config files</a> </li>
+       <li> <a class="subsection " href="/#using-plugins">Using plugins</a> </li> 
+      </ul> </li>
+     <li> <a class="section " href="/#command-line-reference">Command Line Interface</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#configuration-files">Configuration files</a> </li>
+       <li> <a class="subsection " href="/#command-line-flags">Command line flags</a> </li> 
+      </ul> </li>
+     <li> <a class="section " href="/#javascript-api">JavaScript API</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#rollup-rollup">rollup.rollup</a> </li>
+       <li> <a class="subsection " href="/#rollup-watch">rollup.watch</a> </li> 
+      </ul> </li>
+     <li> <a class="section " href="/#tools">Integrating Rollup with other tools</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#npm-packages">npm packages</a> </li>
+       <li> <a class="subsection " href="/#peer-dependencies">Peer dependencies</a> </li>
+       <li> <a class="subsection " href="/#babel">Babel</a> </li>
+       <li> <a class="subsection " href="/#gulp">Gulp</a> </li> 
+      </ul> </li>
+     <li> <a class="section " href="/#es-module-syntax">ES module syntax</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#importing">Importing</a> </li>
+       <li> <a class="subsection " href="/#exporting">Exporting</a> </li>
+       <li> <a class="subsection " href="/#how-bindings-work">How bindings work</a> </li> 
+      </ul> </li>
+     <li> <a class="section " href="/#big-list-of-options">Big list of options</a> 
+      <ul class="subsections"> 
+       <li> <a class="subsection " href="/#core-functionality">Core functionality</a> </li>
+       <li> <a class="subsection " href="/#advanced-functionality">Advanced functionality</a> </li>
+       <li> <a class="subsection " href="/#danger-zone">Danger zone</a> </li>
+       <li> <a class="subsection " href="/#watch-options">Watch options</a> </li> 
+      </ul> </li> 
+    </ul> 
+   </div>
+  </main> 
+  <script src="/curl.js"></script> 
+  <script>
+		curl.config({
+			dontAddFileExt: /./,
+			paths: {
+				'magic-string': '/magic-string.umd.js'
+			}
+		});
+
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+		ga('create', 'UA-5602942-9', 'auto');
+		ga('send', 'pageview');
+	</script> 
+  <script src="/bundle.js"></script>  
+ </body>
+</html>

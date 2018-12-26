@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="icon" href="//www.ibm.com/favicon.ico"> 
+  <link rel="canonical" href="http://www.ibm.com/developerworks/cloud/library/cl-openwhisk-node-bluemix-user-facing-app/index.html"> 
+  <meta name="geo.country" content="ZZ"> 
+  <meta name="dcterms.rights" content="© Copyright&nbsp;IBM Corporation&nbsp;2016,&nbsp;2017"> 
+  <meta name="dcterms.date" content="2017-06-12"> 
+  <meta name="description" content="Learn how to use OpenWhisk to write user-facing applications. This tutorial covers the basics of OpenWhisk through a sample user-facing application, which uses a stub index.html to call OpenWhisk for the actual content."> 
+  <meta name="keywords" content="openwhisk, node, node.js, ori pomerantz, bluemix, tttosca"> 
+  <meta name="robots" content="index,follow"> 
+  <title>Build a user-facing OpenWhisk application with Bluemix and Node.js</title> 
+  <script> 
+    digitalData = {
+        "page":{
+            "category":{
+                "primaryCategory":"SOFDCCLDZZ"
+            },
+            "pageInfo":{
+                "effectiveDate":"2016-06-07",
+                "language":"en",
+                "publishDate":"2017-06-12",
+                "publisher":"IBM Corporation",
+                "version":"v18",
+                "ibm":{ 
+                    "contentDelivery":"IBM developerWorks template",
+                    "contentProducer":"IBM developerWorks",
+                    "country":"ZZ",
+                    "owner":"developerWorks Content/Raleigh/IBM",
+                    "subject":"SWU00",
+                    "type":"CT316",
+                    "topic":"Application deployment,Application development,Bluemix,Databases and data management,node.js",
+                    "topicId":"729,263,1237,41,1021",
+                    "contentArea":"cloud,opensource",
+                    "contentAreaId":"47,7",
+                    "contentType":"article",
+                    "contentId":"1033130",
+                },
+                "keywords":"openwhisk, node, node.js, ori pomerantz, bluemix, tttosca",
+                "description":"Learn how to use OpenWhisk to write user-facing applications. This tutorial covers the basics of OpenWhisk through a sample user-facing application, which uses a stub index.html to call OpenWhisk for the actual content."
+            }
+        }
+    };
+    window._analytics = {
+        "segment_key":'HU3dbkAG5wE0F1IkRf9S1RexlAqo3jby'
+    };
+</script> 
+  <meta name="twitter:card" content="summary_large_image"> 
+  <meta name="twitter:site" content="@developerworks"> 
+  <meta property="og:title" content="Build a user-facing OpenWhisk application with Bluemix and Node.js"> 
+  <meta property="og:description" content="Learn how to implement a user interface with serverless lambda functions. This tutorial introduces OpenWhisk via a simple app that you can build and integrate with a Cloudant database. The app uses a small Node.js stub to allow it to be user-facing."> 
+  <meta property="og:image" content="http://dw1.s81c.com/developerworks/i/twitterdw-29333-buildopenwhisk.png"> 
+  <!-- Segment meta tag --> 
+  <meta name="segment" property="(developerWorks)" productTitle="developerWorks" value="Cloud English (developerWorks)"> 
+  <!-- SITE MON : START (DO NOT DELETE) --> 
+  <!-- developerWorks monitoring token --> 
+  <!-- SITE MON : END (DO NOT DELETE) --> 
+  <!-- HEADER_SCRIPTS_AND_CSS_INCLUDE --> 
+  <!-- <script src="//cdn.optimizely.com/js/5399420604.js"></script> --> 
+  <!-- BEGIN: Use this section to set page specific variables for the Page Tag --> 
+  <script language="JavaScript">var NTPT_PGEXTRA="ibmSkillLevel=2&ibmCmaId=1033130&ibmContentAreas=cloud,opensource";</script> 
+  <!--END --> 
+  <script src="//1.www.s81c.com/common/stats/ida_stats.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/www.css" rel="stylesheet"> 
+  <link href="//1.www.s81c.com/common/v18/css/syntaxhighlighter.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/www.js"></script> 
+  <script src="//1.www.s81c.com/common/v18/js/syntaxhighlighter.js"></script> 
+  <link href="//1.www.s81c.com/common/v18/css/tables.css" rel="stylesheet"> 
+  <script src="//1.www.s81c.com/common/v18/js/tables.js"></script> 
+  <!--  Masthead/footer  --> 
+  <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-v18.css?v=092117" rel="stylesheet"> 
+  <!-- <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/alt-signedin-ux.css" rel="stylesheet" /> --> 
+  <!--[if lt IE 9]>
+    <link href="//dw1.s81c.com/developerworks/css/dw-mf/v18/dw-mf-ie8fix.css?v=022216" rel="stylesheet" />
+<![endif]--> 
+  <link href="//dw1.s81c.com/developerworks/css/v18/dw-article.css?v=073117" rel="stylesheet"> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth-properties.js?v=041017"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auth.js?v=062717"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/dw-mf/v18/dw-mf.js?v=110316"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-include.js"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-article.js?v=051817"></script> 
+  <script src="//dw1.s81c.com/developerworks/js/v18/dw-auto-links.js?v=091217"></script> 
+  <script src="//www.ibm.com/software/info/js/tactic.js"></script> 
+  <script src="//www.ibm.com/software/info/js/tacticbindlinks.js"></script> 
+  <!-- Segment --> 
+  <script src="//console.ng.bluemix.net/analytics/build/bluemix-analytics.min.js"></script> 
+  <!-- 
+<PageMap>
+    <DataObject type="document">
+        <Attribute name="topic">Application deployment,Application development,Bluemix,Databases and data management,node.js</Attribute>
+        <Attribute name="topicId">729,263,1237,41,1021</Attribute>
+        <Attribute name="contentArea">cloud,opensource</Attribute>
+        <Attribute name="contentAreaId">47,7</Attribute>
+        <Attribute name="abstract">Learn how to use OpenWhisk to write user-facing applications. This
+            tutorial covers the basics of OpenWhisk through a sample user-facing
+            application, which uses a stub index.html to call OpenWhisk for the actual
+            content.</Attribute>
+        <Attribute name="pub.date">2017-06-12</Attribute>
+        <Attribute name="contentType">article</Attribute>
+    </DataObject>
+</PageMap>
+--> 
+ </head> 
+ <body id="ibm-com" class="ibm-type dw-js-disabled"> 
+  <div id="ibm-top" class="ibm-landing-page"> 
+   <!-- MASTHEAD_BEGIN --> 
+   <div id="ibm-masthead" role="banner" aria-label="IBM"> 
+    <div id="ibm-mast-options"> 
+     <ul role="toolbar" aria-labelledby="ibm-masthead"> 
+      <li id="ibm-geo" role="presentation"><a href="http://www.ibm.com/planetwide/select/selector.html" role="button" aria-label="United States selected - Choose a country">United States</a></li> 
+     </ul> 
+    </div> 
+    <div id="ibm-universal-nav"> 
+     <nav role="navigation" aria-label="IBM"> 
+      <div id="ibm-home">
+       <a href="http://www.ibm.com/us/en/">IBM®</a>
+      </div> 
+      <ul id="ibm-menu-links" role="toolbar" aria-label="Site map"> 
+       <li><a href="http://www.ibm.com/sitemap/us/en/">Site map</a></li> 
+      </ul> 
+     </nav> 
+     <div id="ibm-search-module" role="search" aria-labelledby="ibm-masthead"> 
+      <form id="ibm-search-form" action="https://www.ibm.com/Search/" method="get"> 
+       <p> <label for="q">IBM</label> <input type="text" maxlength="100" value="" placeholder="Search" name="q" id="q" aria-label="Search developerWorks"> <input type="hidden" value="18" name="v"> <input type="hidden" value="utf" name="en"> <input type="hidden" value="en" name="lang"> <input type="hidden" value="us" name="cc"> <input type="hidden" name="sn" value="dw"> <input type="hidden" name="dws" value="dw"> <input type="hidden" name="hpp" value="20"> <input type="submit" id="ibm-search" class="ibm-btn-search" value="Submit"> </p> 
+      </form> 
+     </div> 
+    </div> 
+   </div>
+   <!-- MASTHEAD_END --> 
+   <!-- LAYOUT --> 
+   <div id="ibm-content-wrapper"> 
+    <!-- LEADSPACE_BEGIN --> 
+    <header role="banner" aria-labelledby="ibm-pagetitle-h1"> 
+     <!-- MASTHEAD_SITENAV_BEGIN --> 
+     <div class="ibm-sitenav-menu-container"> 
+      <div class="ibm-sitenav-menu-name"> 
+       <a href="//www.ibm.com/developerworks/"> <img width="186" height="24" alt="developerWorks®" src="//dw1.s81c.com/developerworks/i/mf/dw-mf-wordmark.svg"> </a> 
+      </div> 
+      <div class="ibm-sitenav-menu-list"> 
+       <ul role="menubar"> 
+        <li class="dw-navpage-learn ibm-haschildlist" role="presentation"> <span role="menuitem"><a href="//www.ibm.com/developerworks/learn/">Learn</a></span> 
+         <ul role="menu" aria-label="Learn" id="dw-mega-learn"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Learn with our tutorials and training</h2> 
+             <p class="dw-mega-main-p">developerWorks provides tutorials, articles and other technical resources to help you grow your development skills on a wide variety of topics and products. Learn about a specific product or take a course and get certified. So, what do you want to learn about?</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/learn/" class="ibm-btn-pri">Choose a topic</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured topics</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/mobile">Mobile development</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bigdata.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/analytics">Big data</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cognitive.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cognitive">Cognitive computing</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/learn/cloud">Cloud</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-develop ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/develop/">Develop</a></span> 
+         <ul role="menu" aria-label="Develop" id="dw-mega-develop"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Develop with our trials &amp; downloads</h2> 
+             <p class="dw-mega-main-p">Start developing with product trials, free downloads, and IBM Bluemix™ services. Sort by topic or product name and find everything we have to offer.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/develop/" class="ibm-btn-pri">View all downloads &amp; trials</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured products</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/sso/bmregistration">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-websphere.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/ws/was/">WebSphere Application Server</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-db2express.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//www.ibm.com/developerworks/downloads/im/db2express/">DB2 Express C</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-mobile.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//mobilefirstplatform.ibmcloud.com/">MobileFirst Platform Foundation</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dest.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <li role="presentation" class="dw-navpage-connect ibm-haschildlist"> <span role="menuitem"><a href="//www.ibm.com/developerworks/connect/">Connect</a></span> 
+         <ul role="menu" aria-label="Connect" id="dw-mega-connect"> 
+          <li role="presentation"> 
+           <div class="ibm-columns"> 
+            <div class="ibm-col-5-3 dw-mega-main"> 
+             <h2>Find a community and connect</h2> 
+             <p class="dw-mega-main-p">Learn from the experts and share with other developers in one of our dev centers. Ask questions and get answers with dW answers. Search for local events in your area. All in developerWorks communities.</p> 
+             <p class="ibm-button-link"> <a href="//www.ibm.com/developerworks/connect/" class="ibm-btn-pri">View communities</a> </p> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured Developer Centers</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-jazz-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//jazz.net/">Jazz.net</a> 
+              </div> 
+             </div> 
+             <!--<div class="dw-mega-nav-item">
+                                        <div class="dw-mega-nav-img">
+                                            <img width="30" height="30" alt=""
+                                                src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-cloud-dev.png">
+                                        </div>
+                                        <div class="dw-mega-nav-link">
+                                            <a href="//developer.ibm.com/cloud-analytics/">IBM Cloud Analytics DEV</a>
+                                        </div>
+                                    </div>--> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-bluemix-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/bluemix/">Bluemix</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-api-dev.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/api/">API Explorer</a> 
+              </div> 
+             </div> 
+            </div> 
+            <div class="ibm-col-5-1 dw-mega-nav"> 
+             <h3>Featured destinations</h3> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-swift.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/swift/?lnk=hm">Swift @ IBM</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-open.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/open/?lnk=hm">developerWorks Open</a> 
+              </div> 
+             </div> 
+             <div class="dw-mega-nav-item"> 
+              <div class="dw-mega-nav-img"> 
+               <img width="30" height="30" alt="" src="//dw1.s81c.com/developerworks/i/v18/mega/dw-mplist-arch.png"> 
+              </div> 
+              <div class="dw-mega-nav-link"> 
+               <a href="//developer.ibm.com/architecture/?lnk=hm">Architecture center</a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> </li> 
+         </ul> </li> 
+        <!-- dW featured --> 
+        <!-- <li role="presentation" class="dw-navpage-devcenter"><strong>Subheading</strong></li> --> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cognitive/">Cognitive</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/cloud/">Cloud</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/analytics/">Data</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/iot/">Internet of Things</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/java/">Java</a></li> 
+        <li role="presentation" class="dw-navpage-devcenter"><a role="menuitem" href="//www.ibm.com/developerworks/learn/">All topics</a></li> 
+       </ul> 
+      </div> 
+     </div> 
+     <!-- MASTHEAD_SITENAV_END --> 
+     <!-- NAVIGATION_TRAIL_BEGIN --> 
+     <div id="ibm-leadspace-head" class="ibm-alternate"> 
+      <div id="ibm-leadspace-body"> 
+       <nav aria-label="Breadcrumb" role="navigation"> 
+        <ul id="dw-navigation-trail" itemscope itemtype="http://schema.org/BreadcrumbList">
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/learn/"><span itemprop="name">Learn</span></a>
+          <meta itemprop="position" content="1"></li>
+         <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem"><a itemprop="item" href="http://www.ibm.com/developerworks/cloud/"><span itemprop="name">Cloud computing</span></a>
+          <meta itemprop="position" content="2"></li>
+        </ul> 
+       </nav> 
+      </div> 
+     </div> 
+     <!-- NAVIGATION_TRAIL_END --> 
+    </header> 
+    <!-- LEADSPACE_END --> 
+    <!-- MAIN_CONTENT_BEGIN --> 
+    <main role="main" aria-labelledby="ibm-pagetitle-h1"> 
+     <div id="ibm-pcon"> 
+      <!-- BEGIN_IBM-CONTENT --> 
+      <div id="ibm-content"> 
+       <!-- BEGIN_IBM-CONTENT-BODY --> 
+       <div id="ibm-content-body"> 
+        <!-- BEGIN_IBM-CONTENT-MAIN --> 
+        <div id="ibm-content-main" class="dw-article"> 
+         <!-- BEGIN_INTERIOR-COLUMNS --> 
+         <div class="ibm-columns dw-article-toc"> 
+          <!-- LEFT_6_2_CONTENT_COLUMN_BEGIN --> 
+          <div id="dw-article-toc-container" class="ibm-col-6-2"> 
+           <div id="dw-article-toc-body"> 
+            <h2>Contents</h2>
+            <div class="ibm-alternate-rule">
+             <hr>
+            </div>
+            <ul role="directory" aria-label="Table of contents" class="ibm-plain-list">
+             <li><a href="#ibm-pagetitle-h1">Introduction</a></li>
+             <li><a href="#N10070">What you'll need to build your OpenWhisk application</a></li>
+             <li><a href="#N100A0">A trivial app: "Hello OpenWhisk"</a></li>
+             <li><a href="#N101E9">A more useful app: Phrase translator</a></li>
+             <li><a href="#N1026A">Conclusion</a></li>
+             <li><a href="#artdownload">Downloadable resources</a></li>
+             <li><a href="#artrelatedtopics">Related topics</a></li>
+             <li><a href="#icomments">Comments</a></li>
+            </ul> 
+           </div> 
+          </div> 
+          <!-- LEFT_6_2_CONTENT_COLUMN_END --> 
+          <!-- CENTER_6_4_CONTENT_COLUMN_BEGIN --> 
+          <div class="ibm-col-6-4"> 
+           <h1 id="ibm-pagetitle-h1" class="ibm-h1">Build a user-facing OpenWhisk application with Bluemix and Node.js</h1>
+           <p class="dw-article-subhead">Implementing a user interface with serverless lambda functions</p> 
+           <!-- Article Top Bar --> 
+           <div class="ibm-columns dw-article-topbar"> 
+            <!-- Author and article info. --> 
+            <div class="ibm-col-6-2 ibm-col-medium-6-4 dw-article-metadata"> 
+             <div class="dw-article-avatar">
+              <img width="42" height="42" src="//www.ibm.com/developerworks/i/p-opomerantz60.jpg" alt="Author photo - Ori Pomerantz">
+             </div>
+             <div class="dw-article-authordate">
+              <span class="dw-article-author"><a href="https://www.linkedin.com/in/ori-pomerantz-34a915">Ori Pomerantz</a></span>
+              <br>
+              <span class="dw-article-pubdate">Published on June 07, 2016</span>
+              <span class="dw-article-divider">/</span>
+              <span class="dw-article-updated">Updated: June 12, 2017</span>
+             </div> 
+            </div> 
+            <!-- Social --> 
+            <div class="ibm-col-6-2 ibm-col-medium-6-4 ibm-col-small-6-2 dw-article-social"> 
+             <!-- Sharing links --> 
+             <div id="dw-article-share-inline"> 
+              <div class="dw-article-sharelink-inline"> 
+               <div class="ibm-sharethispage"></div> 
+              </div> 
+             </div> 
+             <!-- Number of comments and link to comments --> 
+             <div id="dw-article-cmts"> 
+              <div class="dw-article-cmtslink"> 
+               <a onclick="tocLink('#icomments')" href="#icomments" role="link" tabindex="0" aria-label="Comments"> <img src="//dw1.s81c.com/developerworks/i/v18/article/dw-article-cmt-icon.png" width="29" height="29" alt="Comments"> </a> 
+              </div> 
+              <div class="dw-article-cmtslink"> 
+               <a onclick="tocLink('#icomments')" href="#icomments" role="link" tabindex="0"> 
+                <div id="nCmts"></div> </a> 
+              </div> 
+             </div> 
+            </div> 
+           </div> 
+           <!-- Article Body --> 
+           <p>OpenWhisk is a cloud-first distributed event-based programming service that is integrated with <span data-widget="tooltip" title="IBM's Platform as a Service (PaaS) environment powered by
+                        Cloud Foundry">IBM Bluemix</span>®. OpenWhisk uses a <a href="https://developer.ibm.com/openwhisk/what-is-serverless-computing/">serverless deployment and operations model</a> that hides infrastructure complexity and lets you focus on the code you want to execute.</p>
+           <p>Even though OpenWhisk is designed for internal processing, it offers several benefits for user-facing applications. When you combine it with a static file, you can use it to serve applications that are relatively easy to debug. And because OpenWhisk applications are a lot less computationally intensive than running a server process on a PaaS platform, they are considerably cheaper, as well.</p>
+           <p>Another benefit of using OpenWhisk is its modular architecture, which lets you implement your application as a collection of microservices. You can easily modify parts of the user interface without changing the rest of it, or reuse panels in multiple applications.</p>
+           <p>In this tutorial, we'll start by writing a trivial "Hello OpenWhisk" application. Then we'll expand that application into the start of a more useful one, a multi-language phrase book.</p>
+           <p class="ibm-button-link"><a class="ibm-btn-pri dw-article-btn-pri" href="https://github.com/qbzzt/bluemix/tree/master/openwhisk/201706">Get the code on GitHub</a></p>
+           <h2 id="N10070" class="ibm-h2">What you'll need to build your OpenWhisk application</h2>
+           <div class="dw-article-sidebar ibm-background-cool-white-20">
+            <p><strong>New to Bluemix?</strong></p>
+            <p>Still getting your bearings with Bluemix? Stop by the <a href="https://developer.ibm.com/bluemix/">IBM Bluemix Developer Center</a> to learn more. And when you're ready to get your hands dirty, you can <a href="https://developer.ibm.com/sso/bmregistration">try it free for 30 days</a>!</p>
+           </div>
+           <ul class="ibm-bullet-list">
+            <li>A Bluemix account (register for your <a href="http://www.bluemix.net">free trial account</a> or <a href="http://www.bluemix.net" class="bluemix-home">log in to Bluemix</a> if you already have an account)<br>&nbsp;</li>
+            <li>A working knowledge of HTML and JavaScript<br>&nbsp;</li>
+            <li>A working knowledge of the MEAN application stack (at least Angular)<p><br>(If you're not familiar with MEAN, you can get started with "<a href="http://www.ibm.com/developerworks/library/?sort_by=&amp;show_abstract=true&amp;show_all=&amp;search_flag=&amp;contentarea_by=All+Zones&amp;search_by=Build+a+self-posting+Facebook+app&amp;product_by=-1&amp;topic_by=-1&amp;industry_by=-1&amp;type_by=All+Types&amp;ibm-search=Search">Build a self-posting Facebook application with Bluemix and the MEAN stack</a>," a three-part tutorial series on IBM developerWorks.)</p></li>
+           </ul>
+           <h2 id="N100A0" class="ibm-h2">A trivial app: "Hello OpenWhisk"</h2>
+           <p>To build a user-facing OpenWhisk application, let's first build a trivial OpenWhisk microservice and make it usable from a web browser. <a href="https://service.us.apiconnect.ibmcloud.com/gws/apigateway/api/ec74d9ee76d47d2a5f9c4dbae2510b0b8ae5912b542df3e2d6c8308843e70d59/api/userfacing/trivial">Click here to see it in action.</a></p>
+           <h3 id="N100AB" class="ibm-h3">Create a trivial OpenWhisk action</h3>
+           <p>To create an OpenWhisk action:</p>
+           <ol>
+            <li>Go to the <a href="https://new-console.ng.bluemix.net/openwhisk/">OpenWhisk console</a> in Bluemix.</li>
+            <li>Log in to Bluemix and click <strong>Start creating</strong> to use OpenWhisk from your browser and enter the editor.</li>
+            <li>Click <strong>Develop</strong> on the left sidebar.</li>
+            <li>Click <strong>Create Action</strong>.</li>
+            <li>Create a new action with these parameters: 
+             <table border="0" cellpadding="0" cellspacing="0" class="ibm-data-table" data-widget="datatable" summary="">
+              <thead xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+               <tr>
+                <th>Field</th>
+                <th>Value</th>
+               </tr>
+              </thead>
+              <tbody xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+               <tr>
+                <td>Name</td>
+                <td>trivial</td>
+               </tr>
+               <tr>
+                <td>Execution runtime</td>
+                <td>Node.js 6</td>
+               </tr>
+               <tr>
+                <td>Select a sample (or blank)</td>
+                <td>Start with a Blank Slate</td>
+               </tr>
+              </tbody>
+             </table></li>
+            <li>Click <strong>Create Action</strong>.<br><br> By default, OpenWhisk actions are JavaScript. They receive an associative array in their input and return another as their output. For our purposes, the response will have two fields: <code>html</code>, which contains HTML code to display, and <code>js</code>, which contains JavaScript code to run on the browser. </li>
+            <li><p>Replace the JavaScript code with this:</p><pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">	/**
+	  *
+	  * main() will be invoked when you Run This Action.
+	  *
+	  */
+	function main(params) {
+		var name;	
+		name = params.name;
+		if (name == undefined)
+			name = "";
+		
+		return {
+			html: "&lt;b&gt;" + JSON.stringify(params) + "&lt;/b&gt;",
+			js: "alert('hello " + name + "');"
+		};
+	}</pre></li>
+            <li>Click <strong>Run This Action</strong>.</li>
+            <li>Add a name field to the input: <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">	{
+	    "message": "choose a value to pass to My New Action",
+	    "name": "Ori"
+	}</pre></li>
+            <li>Click <strong>Make it Live</strong> and then <strong>Run with this Value</strong>.</li>
+            <li>See that the output contains HTML and JavaScript: <img src="Figure1.png" class="ibm-downsize" alt="Output with HTML and JavaScript" height="314" width="975"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N10111');return false;" href="#N10111">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N10111">
+              <img alt="Output with HTML and JavaScript" src="Figure1.png" width="975">
+             </div></li>
+            <li>Click <strong>Close</strong>.</li>
+           </ol>
+           <h3 id="N1011B" class="ibm-h3">Create an OpenWhisk API</h3>
+           <p>To make it easy to access the OpenWhisk action from the outside, for example from a web browser, we create a publicly accessible API:</p>
+           <ol>
+            <li>Click <strong>APIs</strong> on the left sidebar.</li>
+            <li>Click <strong>Create an OpenWhisk API</strong>.</li>
+            <li>Create an API with these parameters: 
+             <table border="0" cellpadding="0" cellspacing="0" class="ibm-data-table" data-widget="datatable" summary="">
+              <thead xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+               <tr>
+                <th>Field</th>
+                <th>Value</th>
+               </tr>
+              </thead>
+              <tbody xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+               <tr>
+                <td>API name</td>
+                <td>User-facing application</td>
+               </tr>
+               <tr>
+                <td>Base path for API</td>
+                <td>/api/userfacing</td>
+               </tr>
+               <tr>
+                <td>Enable CORS so that browser-based applications can call this API</td>
+                <td>Selected</td>
+               </tr>
+              </tbody>
+             </table></li>
+            <li>Click <strong>Save</strong>. We could have created operations during this step, but I prefer to explain how to do them independently because you need to do that later in the article.</li>
+            <li>Click <strong>Definition</strong> on the left sidebar.</li>
+            <li>Click <strong>Create operation</strong>.</li>
+            <li>Create a new operation with these parameters: 
+             <table border="0" cellpadding="0" cellspacing="0" class="ibm-data-table" data-widget="datatable" summary="">
+              <thead xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+               <tr>
+                <th>Field</th>
+                <th>Value</th>
+               </tr>
+              </thead>
+              <tbody xmlns:dw="http://www.ibm.com/developerWorks/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+               <tr>
+                <td>Path</td>
+                <td>/trivial</td>
+               </tr>
+               <tr>
+                <td>Verb</td>
+                <td>GET</td>
+               </tr>
+               <tr>
+                <td>Package containing action</td>
+                <td>Default</td>
+               </tr>
+               <tr>
+                <td>Action</td>
+                <td>Trivial</td>
+               </tr>
+               <tr>
+                <td>Response content type</td>
+                <td>application/json</td>
+               </tr>
+              </tbody>
+             </table></li>
+            <li>Click <strong>Save</strong>. Then, scroll down and click <strong>Save</strong>.</li>
+            <li>Click <strong>Summary</strong> on the left sidebar.</li>
+            <li>Click the URL under "Route." It should fail with this error message: <img src="Figure2.png" class="ibm-downsize" alt="Error message" height="95" width="975"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N10194');return false;" href="#N10194">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N10194">
+              <img alt="Error message" src="Figure2.png" width="975">
+             </div></li>
+            <li>Add <code>/trivial</code> to the end of the URL. You should get back a JSON structure with HTML and JavaScript: <img src="Figure3.png" class="ibm-downsize" alt="JSON structure with HTML and JavaScript" height="171" width="975"><p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N1019F');return false;" href="#N1019F">View image at full size</a></p>
+             <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N1019F">
+              <img alt="JSON structure with HTML and JavaScript" src="Figure3.png" width="975">
+             </div></li>
+            <li>Copy the URL under "Route" to a text file. You will need it soon.</li>
+           </ol>
+           <h3 id="N101A6" class="ibm-h3">Browser-side code</h3>
+           <p>In the past, it was necessary to use a Node.js application as a conduit to OpenWhisk. But now that APIs can have CORS (cross-origin resource sharing) enabled, all you need is an index.html file that can come from anywhere.</p>
+           <p>All you need to do is download the file from GitHub, modify the value of the owUrl variable in line 21 to the "Route" value, and open the file in a browser. It will call the trivial OpenWhisk action, display the HTML in the response, and run the JavaScript</p>
+           <p>The browser-side code uses the <a href="https://angularjs.org/">Angular library</a> (the "A" in MEAN stack). That library comes with a service called <code>$http</code> that allows the JavaScript code in the browser to act as a web client. </p>
+           <p>The function that performs most of the work is <code>$scope.getHtml</code>. This function appends the name of the action to the route URL and attempts to get it.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true;">$http.get(owUrl + "/" + action)</pre>
+           <p>If the request is successful, the result will be in <code>response.data</code>, already parsed (correctly, as JSON). This code uses jQuery. <code>$("# " + tag)</code> searches for an HTML tag whose id attribute is <code>tag</code>. Then, the <code>.html(&lt;string&gt;)</code> method sets that tag's HTML to the string, in this case <code>response.data.html</code>, the result from OpenWhisk. Note that this is normally a risky operation. But it's acceptable here as long as we make sure the HTML we send from OpenWhisk is safe.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">          		.then(function(response) {
+          			$("# " + tag).html(response.data.html);</pre>
+           <p>The <code>eval</code> function gets the JavaScript code in <code>response.data.js</code>, and executes it.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true;">        			eval(response.data.js);</pre>
+           <h2 id="N101E9" class="ibm-h2">A more useful app: Phrase translator</h2>
+           <p>Now that we have a trivial "Hello OpenWhisk" application running, let's turn it into a useful application. This application lets you select a word in English, and gives you that same word in multiple languages. The application's list of words is hard wired for the sake of simplicity. If you want to use a database, you do it the same way you would with a Node.js application.</p>
+           <h3 id="N101F2" class="ibm-h3">Create two panels</h3>
+           <p>In this application we use two panels—a side panel for navigation and a main panel to show information. These two panels are specified in the <code>panels</code> action in OpenWhisk. They are placed side-by-side using the <a href="http://getbootstrap.com/">Bootstrap framework</a>.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">function main(params) {// Store  the HTML to send in this variable
+	var html = "";
+
+	// The two main panels
+	html = '&lt;div class="col-md-3" id="side"&gt;&lt;/div&gt;' +
+		'&lt;div class="col-md-9" id="main"&gt;&lt;/div&gt;';
+		
+	// The row-fluid
+	html = '&lt;div class="row-fluid"&gt;' + html + "&lt;/div&gt;";
+	
+	// The container-fluid
+	html = '&lt;div class="container-fluid"&gt;' + html + "&lt;/div&gt;";</pre>
+           <p>Note that the two panels have <code>id</code> attributes. The JavaScript code returned by the action calls <code>getHtml</code> to fill those two panels.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">  return {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"html": html,
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"js": '$scope.getHtml("side", "sidepanel"); $scope.getHtml("main", "mainpanel");'
+&nbsp;&nbsp;&nbsp;&nbsp;};
+  }</pre>
+           <p>After you create the action and make it live, add to the API a new operation with the path <code>/panels</code> to call it.</p>
+           <img src="Figure4.png" class="ibm-downsize" alt="Add a new operation with the /panels path to the API" height="697" width="975">
+           <p class="ibm-ind-link"><a class="ibm-popup-link" onclick="IBMCore.common.widget.overlay.show('N10216');return false;" href="#N10216">View image at full size</a></p>
+           <div class="ibm-common-overlay ibm-overlay-alt-three" data-widget="overlay" id="N10216">
+            <img alt="Add a new operation with the /panels path to the API" src="Figure4.png" width="975">
+           </div>
+           <h3 id="N1021B" class="ibm-h3">Create the side panel</h3>
+           <p>The side panel displays a list of words as buttons. When any of them is pressed, it uses the <code>getHtml</code> function to fill the main panel with information about that word. This is the action:</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">function main(params) {
+
+	var words = ["Hello", "Goodbye", "Thanks", "You're welcome"];
+	var html = "";
+	
+	for (var i=0; i&lt;words.length; i++) {</pre>
+           <p>This code is outside the Angular scope, so it cannot call <code>$scope.getHtml</code>. To solve this, the stub creates a global variable called <code>scope</code> and assigns it the value of <code>$scope</code>. That function itself is within the Angular scope, so it can use <code>$http</code>. The word itself is escaped to allow for expressions that contain apostrophes, such as "You're welcome."</p>
+           <p>The query is used to as part of the action as an easy way to transfer a parameter to the main panel action. It appears in the input, as you will see in the next section.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">		var onClick = "scope.getHtml('main', 'mainpanel?word=" + escape(words[i]) + "')";
+		html += '&lt;p&gt;&lt;button type="button" class="btn btn-info" onClick="'
+			+ onClick + '"&gt;' + words[i] + '&lt;/button&gt;&lt;/p&gt;';
+	}</pre>
+           <p>The return value does not contain JavaScript, because there is no JavaScript we need to run when the HTML is displayed.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">	return { "html": html };
+}</pre>
+           <p>Add this action to the API as <code>/sidepanel</code>.</p>
+           <h3 id="N10245" class="ibm-h3">Create the main panel</h3>
+           <p>The main panel shows a word and all of the translations known to the program. It uses the parameter passed to <code>main</code> to get the word, and builds up the HTML based on a hash table. Again, it does not need to tell the browser to run any JavaScript.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">function main(params) {
+	var words = {
+		"Hello" : {
+			Hebrew: "Shalom",
+			Spanish: "Hola",
+			Arabic: "Marchaba"
+		}
+		// The full list of words is in GitHub
+	};
+	
+	var html = "";
+	
+	// Heading
+	html += "&lt;h2&gt;" + params.word + "&lt;/h2&gt;";</pre>
+           <p>This parameter comes from the query part of the URL that's used by the side panel.</p>
+           <pre data-widget="syntaxhighlighter" class="brush: js; html-script: true; gutter: true;">	var list = words[params.word];
+	
+	if (list == undefined)
+		html += "I am not familiar with this word, sorry";
+	else {
+		var langs = Object.keys(list);
+		
+		html += '&lt;table class="table table-striped"&gt;';
+		for (var i=0; i&lt;langs.length; i++)
+			html += '&lt;tr&gt;&lt;th&gt;' + langs[i] + '&lt;/th&gt;&lt;td&gt;' + list[langs[i]] + '&lt;/td&gt;&lt;/tr&gt;';
+		html += "&lt;/table&gt;";	
+	}
+
+	return { "html": html };
+}</pre>
+           <p>Add this action to the API as <code>/mainpanel</code>.</p>
+           <h3 id="N1025C" class="ibm-h3">Modify index.html</h3>
+           <p>Finally, change line 41 in index.html to get <code>panels</code> instead of <code>trivial</code>.</p>
+           <h2 id="N1026A" class="ibm-h2">Conclusion</h2>
+           <p>I hope these simple applications have given you a feel for the power of OpenWhisk. The OpenWhisk platform allows you to develop and execute logic in response to events in applications without having to worry about infrastructure.</p>
+           <p>OpenWhisk is available as a <a href="https://new-console.ng.bluemix.net/openwhisk/">Bluemix service</a> and as an <a href="https://github.com/openwhisk">open source project on GitHub</a> to encourage developers to accelerate its development and to generate a powerful ecosystem of event providers and consumers.</p>
+           <!--CMA ID: 1033130-->
+           <!--Site ID: 1-->
+           <!--XSLT stylesheet used to transform this file: dw-document-html-8.0.xsl--> 
+           <!-- Article Resources --> 
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div>
+           <h4 id="artdownload" class="ibm-h4">Downloadable resources</h4>
+           <ul class="ibm-link-list">
+            <li><a class="ibm-pdf-link" href="cl-openwhisk-node-bluemix-user-facing-app-pdf.pdf">PDF of this content</a></li>
+           </ul>
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div>
+           <h4 id="artrelatedtopics" class="ibm-h4">Related topics</h4>
+           <ul class="ibm-plain-list">
+            <li><a href="https://developer.ibm.com/openwhisk/">OpenWhisk Developer Center</a></li>
+            <li><a href="https://new-console.ng.bluemix.net/docs/openwhisk/openwhisk_about.html">How OpenWhisk works</a></li>
+            <li><a href="https://new-console.ng.bluemix.net/openwhisk/">Bluemix OpenWhisk console</a></li>
+           </ul> 
+           <!-- Commenting --> 
+           <!-- INLINE_COMMENTS_BEGIN: --> 
+           <div class="ibm-alternate-rule">
+            <hr>
+           </div> 
+           <div id="dw-article-cmts-top" class="ibm-columns"> 
+            <div class="ibm-col-6-2"> 
+             <h4 id="icomments" class="ibm-h4">Comments</h4> 
+             <div id="dw-article-cmts-login"> 
+              <p><a onclick="window.location=userLinks[0].url;" tabindex="0" role="link">Sign in</a> or <a onclick="window.location=userLinks[1].url;" tabindex="0" role="link">register</a> to add and subscribe to comments.</p> 
+             </div> 
+            </div> 
+            <div class="ibm-col-6-2" id="dw-notify"> 
+             <input type="checkbox" value="1" name="comment_notification" id="comment_notification" disabled> 
+             <label for="comment_notification">Subscribe me to comment notifications</label> 
+            </div> 
+           </div> 
+           <div class="dw-article-cmts-container"> 
+            <div class="ibm-no-print" id="dw-icomments-container"> 
+            </div> 
+           </div> 
+           <!-- INLINE_COMMENTS_END --> 
+           <!-- CENTER_6_4_CONTENT_COLUMN_END --> 
+          </div> 
+         </div> 
+         <!--Rating_Meta_BEGIN-->
+         <div class="metavalue">
+          static.content.url=http://www.ibm.com/developerworks/js/artrating/
+         </div>
+         <div class="metavalue">
+          SITE_ID=1
+         </div>
+         <div class="metavalue">
+          Zone=Cloud computing, Open source
+         </div>
+         <div class="metavalue">
+          ArticleID=1033130
+         </div>
+         <div class="metavalue">
+          ArticleTitle=Build a user-facing OpenWhisk application with Bluemix and Node.js
+         </div>
+         <div class="metavalue">
+          publish-date=06122017
+         </div>
+         <script language="javascript" type="text/javascript">document.write('<div class="metavalue">url='+location.href.replace(/</g,  '%3C')+'</div>');</script>
+         <!--Rating_Meta_END--> 
+        </div> 
+        <!-- END_IBM-CONTENT-MAIN --> 
+       </div> 
+       <!-- END_IBM-CONTENT-BODY --> 
+      </div> 
+      <!-- END_IBM-CONTENT --> 
+     </div> 
+     <!-- END_IBM-PCON --> 
+    </main> 
+    <!-- MAIN_CONTENT_END --> 
+    <!-- END_CONTENT-WRAPPER --> 
+   </div> 
+   <!-- FOOTER_BEGIN --> 
+   <footer role="contentinfo" aria-label="IBM developerWorks"> 
+    <div id="dw-footer-module" class="dw-footer-home"> 
+     <section aria-label="Resources" role="contentinfo"> 
+      <div class="ibm-columns"> 
+       <div class="ibm-col-6-1 dw-footer-col-1"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="developerWorks">developerWorks</li> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/">About</a></li> 
+         <li><a href="//www.ibm.com/developerworks/feedback">Help</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/ideas">Submit content</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/secure/report/">Report abuse</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/community/terms/thirdparty/">Third-party notice</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Community">Community</li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/rfe/">Product feedback</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/connect/">Developer Centers</a></li> 
+        </ul> 
+        <ul> 
+         <li class="dw-footer-heading dw-follow-us" aria-label="Follow us">Follow us</li> 
+        </ul> 
+        <p class="dw-footer-social"> <a href="//twitter.com/developerWorks"> <img width="28" height="27" alt="Twitter" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-twitter.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.facebook.com/developerworks"> <img width="28" height="27" alt="Facebook" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-facebook.png"> </a> </p> 
+        <br> 
+        <p class="dw-footer-social"> <a href="//www.linkedin.com/groups/IBM-developerWorks-8137234"> <img width="28" height="27" alt="LinkedIn" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-linkedin.png"> </a> </p> 
+        <p class="dw-footer-social-right"> <a href="//www.youtube.com/user/developerworks"> <img width="28" height="27" alt="YouTube" src="//dw1.s81c.com/developerworks/i/mf/dw-footer-icon-youtube.png"> </a> </p> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-2"> 
+        <ul> 
+         <li class="dw-footer-heading" aria-label="Join">Join</li> 
+         <li><a href="//developer.ibm.com/academic/">Faculty</a></li> 
+         <li><a href="//developer.ibm.com/students/">Students</a></li> 
+         <li><a href="//developer.ibm.com/startups/">Startups</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/isv/">Business Partners</a></li> 
+        </ul> 
+        <ul class="dw-footer-lang" aria-label="Select a language"> 
+         <li class="dw-footer-heading">Select a language</li> 
+         <li><a href="//www.ibm.com/developerworks/">English</a></li> 
+         <li><a href="//www.ibm.com/developerworks/cn/" lang="zh">??</a></li> 
+         <li><a href="//www.ibm.com/developerworks/jp/" lang="ja">???</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ru/" lang="ru">???????</a></li> 
+         <li class="dw-footer-newline"><a href="//www.ibm.com/developerworks/br/" lang="pt">Português (Brasil)</a></li> 
+         <li><a href="//www.ibm.com/developerworks/ssa/" lang="es">Español</a></li> 
+         <li><a href="//developer.ibm.com/kr/" lang="kr">??</a></li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-3"> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-4"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/learn/">Tutorials &amp; training</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/accelerate/">Demos &amp; sample code</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/answers">Q&amp;A forums</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/dwblog/">dW Blog</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/events/">Events</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-5"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/courses/">Courses</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/open/">Open source projects</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/tv/">Videos</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/recipes/">Recipes</a> </li> 
+        </ul> 
+       </div> 
+       <div class="ibm-col-6-1 dw-footer-col-6"> 
+        <ul class="dw-footer-categories"> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/develop/">Downloads</a> </li> 
+         <li class="dw-footer-category"> <a href="//developer.ibm.com/api/">APIs</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/newsletter/">Newsletters</a> </li> 
+         <li class="dw-footer-category"> <a href="//www.ibm.com/developerworks/feeds/">Feeds</a> </li> 
+        </ul> 
+       </div> 
+      </div> 
+     </section> 
+    </div> 
+    <div id="dw-footer" class="ibm-padding-normal ibm-alternate"> 
+     <div class="ibm-columns"> 
+      <div class="ibm-col-1-1"> 
+       <div class="dw-footer-corporate-links"> 
+        <ul> 
+         <li><a href="//www.ibm.com/developerworks/aboutdw/contacts.html">Contact</a></li> 
+         <li><a href="//www.ibm.com/privacy/us/en/">Privacy</a></li> 
+         <li><a href="//www.ibm.com/developerworks/community/terms/use/">Terms of use</a></li> 
+         <li><a href="//www.ibm.com/accessibility/us/en/">Accessibility</a></li> 
+         <li class="ibm-feedbacklink"><a href="#">Feedback</a></li> 
+         <li id="ibm-truste-cp"><a onclick="truste.eu.clickListener();return false;" href="#">Cookie Preferences</a></li> 
+        </ul> 
+       </div> 
+       <div id="ibm-footer-locale-selector"></div> 
+      </div> 
+     </div> 
+    </div> 
+   </footer> 
+   <!-- FOOTER_END --> 
+   <!-- END_IBM-TOP --> 
+  </div> 
+  <!-- SCRIPTS_INCLUDE_BEGIN --> 
+  <!-- Styles --> 
+  <link rel="stylesheet" type="text/css" href="/developerworks/maverick/css/plugin/comments/jquery-comments.css"> 
+  <link rel="stylesheet" href="/developerworks/maverick/fonts/awesome-4.5.0/css/font-awesome.min.css"> 
+  <!-- Libraries --> 
+  <script type="text/javascript" src="/developerworks/maverick/js/plugin/comments/jquery-comments.min.js"></script> 
+  <script type="text/javascript" src="/developerworks/maverick/js/plugin/formatter/moment-with-locales.js"></script> 
+  <script type="text/javascript" src="/developerworks/maverick/js/ContentComments.js"></script> 
+  <script type="text/javascript" src="/developerworks/js/v18/ContentCommentsFormatter.js"></script> 
+  <script type="text/javascript" language="JavaScript">
+
+	IBMCore.common.module.masthead.subscribe("ready", "customjs", setupCommentsPlugin).runAsap(setupCommentsPlugin);
+
+	function setupCommentsPlugin(){
+		//debugger;
+			//alert(userLinks);
+			var commentsInitInfo = {
+				contentId : $("div[class=metavalue]:contains('ArticleID=')").text().split("=")[1],
+				siteId :  $("div[class=metavalue]:contains('SITE_ID=')").text().split("=")[1],
+				pluginDivId : '#dw-icomments-container',
+				notifyElementId : "#comment_notification",
+				loginMessageDivId : "#dw-article-cmts-login",
+				totalCommentsDivId : "#nCmts"
+			};				
+								
+			ContentComments.Setup(commentsInitInfo);
+	}
+</script> 
+  <script type="text/javascript">(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-41146412-3','auto');ga('require','linkid','linkid.js');var dcdate="2017-06-12";var cmaid="1033130";ga('set','dimension1',dcdate);ga('set','dimension2',cmaid);var dw_canonical="http://www.ibm.com/developerworks/cloud/library/cl-openwhisk-node-bluemix-user-facing-app/index.html";dw_canonical=dw_canonical.substring(dw_canonical.indexOf(".ibm.com")+8);ga('send','pageview',{'page':dw_canonical,'dimension1':dcdate,'dimension2':cmaid});var trkOBL=function(url,id){id=id.split("-");var cat="v18 article";var act="Bluemix";if(id[2]=="dwpremium")act="Premium";if(id[2]=="dwopen")act="dWOpen";if(id[2]=="devops")act="Devops";act=act+' '+id[3];if(id[4]){var label=id[4];if(label=="btn")label="button";if(label=="txt")label="text link";if(label=="bnr")label="banner";if(label=="tl")label="tile";if(label=="regbar")label="registration bar";if(label=="vp")label="video promotion"}var ab=0;if(id[5]){if(id[5]=="ABa")ab=1;if(id[5]=="ABb")ab=2;if(id[5]=="ABc")ab=3;if(id[5]=="ABd")ab=4;if(id[5]=="ABe")ab=5;if(id[5]=="ABf")ab=6;if(id[5]=="ABg")ab=7;if(id[5]=="ABh")ab=8}ga('send','event',cat,act,label,ab,{'page':dw_canonical,'hitCallback':function(){document.location=url}})}</script>
+  <!-- Piwik --> 
+  <script type="text/javascript">
+    var _paq = _paq || [];
+    _paq.push(["setDomains", ["*.www.ibm.com/developerworks","*.www.ibm.com/developerworks"]]);
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+    var u="//developer.ibm.com/piwik/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', 7]);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+</script> 
+  <noscript>
+   <p><img src="//developer.ibm.com/piwik/piwik.php?idsite=7" style="border:0;" alt=""></p>
+  </noscript> 
+  <!-- End Piwik Code -->
+  <!-- Hotjar Tracking Code for ibm.com --> 
+  <script>
+    (function(h,o,t,j,a,r){
+    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+    h._hjSettings={hjid:42920,hjsv:5};
+    a=o.getElementsByTagName('head')[0];
+    r=o.createElement('script');r.async=1;
+    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+    a.appendChild(r);
+    })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+</script> 
+  <!-- SCRIPTS_INCLUDE_END -->   
+ </body>
+</html>

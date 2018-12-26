@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge"> 
+  <title>How to send transactional email in a NodeJS app using the Mailgun API</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> 
+  <link rel="alternate" type="application/rss+xml" title="Mailgun Blog" href="http://blog.mailgun.com/rss"> 
+  <meta name="description" content=""> 
+  <meta name="keywords" content=""> 
+  <meta name="author" content=""> 
+  <!-- For syntax highlighting --> 
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/highlight.min.js"></script> 
+  <link rel="stylesheet" href="/assets/css/monokai-sublime.css?v=a7f30895b9" type="text/css"> 
+  <link rel="shortcut icon" href="/assets/images/favicon.ico?v=a7f30895b9"> 
+  <link href="http://fonts.googleapis.com/css?family=Ubuntu+Mono|Open+Sans:400italic,600italic,400,700,600" rel="stylesheet" type="text/css"> 
+  <link rel="stylesheet" href="/assets/css/master.css?v=a7f30895b9" type="text/css"> 
+  <link rel="stylesheet" href="/assets/css/tipsy.css?v=a7f30895b9" type="text/css"> 
+  <link rel="canonical" href="http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/"> 
+  <meta name="referrer" content="no-referrer-when-downgrade"> 
+  <link rel="amphtml" href="http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/amp/"> 
+  <meta property="og:site_name" content="Mailgun Blog - Email Deliverability, Engineering, APIs, Code"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="How to send transactional email in a NodeJS app using the Mailgun API"> 
+  <meta property="og:description" content="Sending transactional emails nowadays is very important for establishing a healthy customer base. Not only you can get powerful re-engagement based on triggers, actions and patterns you can also communicate important information and most importantly, automatically between your platform and a customer. It's highly likely that during your life as"> 
+  <meta property="og:url" content="http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/"> 
+  <meta property="article:published_time" content="2014-07-31T08:01:00.000Z"> 
+  <meta property="article:modified_time" content="2014-09-02T21:42:08.000Z"> 
+  <meta property="article:tag" content="code"> 
+  <meta name="twitter:card" content="summary"> 
+  <meta name="twitter:title" content="How to send transactional email in a NodeJS app using the Mailgun API"> 
+  <meta name="twitter:description" content="Sending transactional emails nowadays is very important for establishing a healthy customer base. Not only you can get powerful re-engagement based on triggers, actions and patterns you can also communicate important information and most importantly, automatically between your platform and a customer. It's highly likely that during your life as"> 
+  <meta name="twitter:url" content="http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/"> 
+  <meta name="twitter:label1" content="Written by"> 
+  <meta name="twitter:data1" content="Orlando Kalossakas"> 
+  <meta name="twitter:label2" content="Filed under"> 
+  <meta name="twitter:data2" content="code"> 
+  <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Mailgun Blog - Email Deliverability, Engineering, APIs, Code",
+        "logo": "http://blog.mailgun.com/content/images/2014/Jun/Mailgun_Icon.png"
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Orlando Kalossakas",
+        "image": {
+            "@type": "ImageObject",
+            "url": "http://blog.mailgun.com/content/images/2014/11/circle_avvy.png",
+            "width": 217,
+            "height": 217
+        },
+        "url": "http://blog.mailgun.com/author/orlando/",
+        "sameAs": [
+            "http://twitter.com/orliesaurus"
+        ],
+        "description": "Javascript and Python, APIs and Startups, Emails and Ice-cream. \nTweets and Thoughts @orliesaurus"
+    },
+    "headline": "How to send transactional email in a NodeJS app using the Mailgun API",
+    "url": "http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/",
+    "datePublished": "2014-07-31T08:01:00.000Z",
+    "dateModified": "2014-09-02T21:42:08.000Z",
+    "keywords": "code",
+    "description": "Sending transactional emails nowadays is very important for establishing a healthy customer base. Not only you can get powerful re-engagement based on triggers, actions and patterns you can also communicate important information and most importantly, automatically between your platform and a customer. It&#x27;s highly likely that during your life as",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "http://blog.mailgun.com"
+    }
+}
+    </script> 
+  <meta name="generator" content="Ghost 0.11"> 
+  <link rel="alternate" type="application/rss+xml" title="Mailgun Blog - Email Deliverability, Engineering, APIs, Code" href="http://blog.mailgun.com/rss/"> 
+  <!-- HTML5 shim, for IE6-8 support of HTML5 elements --> 
+  <!--[if lt IE 9]>
+   <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+   <![endif]--> 
+ </head> 
+ <body class="post-template tag-code"> 
+  <header id="site-header"> 
+   <div class="container"> 
+    <div class="logo"> 
+     <a href="http://www.mailgun.com" class="hidden-xs desktop-logo"><img src="/assets/images/header-logo@2x.png?v=a7f30895b9" alt="Mailgun"></a> 
+     <a href="http://www.mailgun.com" class="visible-xs mobile-logo"><img src="/assets/images/mailgun-mark-red.svg?v=a7f30895b9" alt="Mailgun"></a> 
+    </div> 
+    <div class="site-description"> 
+     <div class="hidden-xs-min">
+      Musings and writings from the 
+      <a href="http://mailgun.com">Mailgun</a> team
+     </div> 
+     <div class="visible-xs-min">
+      Writings from the 
+      <a href="http://mailgun.com">Mailgun</a> team
+     </div> 
+    </div> 
+    <div class="search"> 
+     <div class="toggle-icon" data-toggle="search"> 
+      <i class="icon-search"></i> 
+      <i class="icon-close"></i> 
+     </div> 
+    </div> 
+    <div class="header-menu"> 
+     <form class="searchform clearfix"> 
+      <div class="input-container"> 
+       <input type="text" id="st-search-input" placeholder="Search for articles"> 
+      </div> 
+      <button class="submit"><i class="icon-search"></i></button> 
+     </form> 
+     <section id="st-results-container"></section> 
+     <a href="http://mailgun.com" class="return">Return to mailgun.com</a> 
+    </div> 
+   </div> 
+   <!-- .container --> 
+  </header> 
+  <div class="page-content"> 
+   <!--
+  <a href="#" class="post-nav prev">
+    <i class="icon-post-nav-carets"></i>
+    <span class="label">&lsaquo; Older</span>
+  </a>
+  <a href="#" class="post-nav next">
+    <i class="icon-post-nav-carets"></i>
+    <span class="label">Newer &rsaquo;</span>
+  </a>
+--> 
+   <div class="container"> 
+    <article class="blog-post"> 
+     <div class="category-icon"> 
+      <a href="http://blog.mailgun.com/tag/code/"> <i class="category-icon-code tipsy" title="Tagged as: code"></i> </a> 
+     </div> 
+     <h1 class="post-title smaller">How to send transactional email in a NodeJS app using the Mailgun API</h1> 
+     <div class="byline">
+       by Orlando Kalossakas on July 31 2014 
+     </div> 
+     <div class="clearfix"> 
+      <div class="post-body"> 
+       <!-- start post content --> 
+       <p>Sending transactional emails nowadays is very important for establishing a healthy customer base. Not only you can get powerful re-engagement based on triggers, actions and patterns you can also communicate important information and most importantly, <em>automatically</em> between your platform and a customer.</p> 
+       <p>It's highly likely that during your life as a developer you'll have to send automated transactional emails, if you haven't already, like:</p> 
+       <ul> 
+        <li>Confirmation emails</li> 
+        <li>Password reminders</li> 
+       </ul> 
+       <p>...and many other kinds of notifications.</p> 
+       <p>In this tutorial we’re going to learn how to send transactional emails using the Mailgun API using a NodeJS helper library.</p> 
+       <p><strong>We will cover different scenarios:</strong></p> 
+       <ul> 
+        <li>Sending a single transactional email</li> 
+        <li>Sending a newsletter to an email list</li> 
+        <li>Adding email addresses to a list</li> 
+        <li>Sending an invoice to a single email address</li> 
+       </ul> 
+       <h2 id="gettingstarted">Getting started</h2> 
+       <p>We will assume you have installed and know how to operate within the NodeJS environment.</p> 
+       <p>The first need we’re going to do is generate a <code>package.json</code> file in a <em>new</em> directory (<code>/mailgun_nodetut</code> in my case).</p> 
+       <p>This file contains details such as the project name and required dependencies.</p> 
+       <pre><code>{
+  "name": "mailgun-node-tutorial",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "4",
+    "jade": "*",
+    "mailgun-js":"0.5"
+
+  }
+}
+</code></pre> 
+       <p>As you can see, we’re going to use <code>expressjs</code> for our web-app scaffolding, with <code>jade</code> as a templating language and finally a community-contributed library for node by <a href="https://www.npmjs.org/~bojand">bojand</a></p> 
+       <p>In the same folder where you’ve created the <code>package.json</code> file create two additional folders:</p> 
+       <pre><code>views/
+js/
+</code></pre> 
+       <p>You’re set - now sign in to <a href="//Mailgun.com/signup">Mailgun</a>, it’s free, if you haven’t done it yet and get your API key (first page in the control panel).</p> 
+       <h2 id="setupasimpleexpressjsapp">Setup a simple ExpressJS app</h2> 
+       <p>Save the code below as <code>app.js</code> in the root directory of your app (where <code>package.json</code> is located)</p> 
+       <pre><code>//We're using the express framework and the mailgun-js wrapper
+var express = require('express');
+var Mailgun = require('mailgun-js');
+//init express
+var app = express();
+
+
+//Your api key, from Mailgun’s Control Panel
+var api_key = 'MAILGUN-API-KEY';
+
+//Your domain, from the Mailgun Control Panel
+var domain = 'YOUR-DOMAIN.com';
+
+//Your sending email address
+var from_who = 'your@email.com';
+
+//Tell express to fetch files from the /js directory
+app.use(express.static(__dirname + '/js'));
+//We're using the Jade templating language because it's fast and neat
+app.set('view engine', 'jade')
+
+//Do something when you're landing on the first page
+app.get('/', function(req, res) {
+    //render the index.jade file - input forms for humans
+    res.render('index', function(err, html) {
+        if (err) {
+            // log any error to the console for debug
+            console.log(err); 
+        }
+        else { 
+            //no error, so send the html to the browser
+            res.send(html)
+        };
+    });
+});
+
+
+// Send a message to the specified email address when you navigate to /submit/someaddr@email.com
+// The index redirects here
+app.get('/submit/:mail', function(req,res) {
+
+    //We pass the api_key and domain to the wrapper, or it won't be able to identify + send emails
+    var mailgun = new Mailgun({apiKey: api_key, domain: domain});
+
+    var data = {
+    //Specify email data
+      from: from_who,
+    //The email to contact
+      to: req.params.mail,
+    //Subject and text data  
+      subject: 'Hello from Mailgun',
+      html: 'Hello, This is not a plain-text email, I wanted to test some spicy Mailgun sauce in NodeJS! &lt;a href="http://0.0.0.0:3030/validate?' + req.params.mail + '"&gt;Click here to add your email address to a mailing list&lt;/a&gt;'
+    }
+
+    //Invokes the method to send emails given the above data with the helper library
+    mailgun.messages().send(data, function (err, body) {
+        //If there is an error, render the error page
+        if (err) {
+            res.render('error', { error : err});
+            console.log("got an error: ", err);
+        }
+        //Else we can greet    and leave
+        else {
+            //Here "submitted.jade" is the view file for this landing page 
+            //We pass the variable "email" from the url parameter in an object rendered by Jade
+            res.render('submitted', { email : req.params.mail });
+            console.log(body);
+        }
+    });
+
+});
+
+app.get('/validate/:mail', function(req,res) {
+    var mailgun = new Mailgun({apiKey: api_key, domain: domain});
+
+    var members = [
+      {
+        address: req.params.mail
+      }
+    ];
+//For the sake of this tutorial you need to create a mailing list on Mailgun.com/cp/lists and put its address below
+    mailgun.lists('NAME@MAILINGLIST.COM').members().add({ members: members, subscribed: true }, function (err, body) {
+      console.log(body);
+      if (err) {
+            res.send("Error - check console");
+      }
+      else {
+        res.send("Added to mailing list");
+      }
+    });
+
+})
+
+app.get('/invoice/:mail', function(req,res){
+    //Which file to send? I made an empty invoice.txt file in the root directory
+    //We required the path module here..to find the full path to attach the file!
+    var path = require("path");
+    var fp = path.join(__dirname, 'invoice.txt');
+    //Settings
+    var mailgun = new Mailgun({apiKey: api_key, domain: domain});
+
+    var data = {
+      from: from_who,
+      to: req.params.mail,
+      subject: 'An invoice from your friendly hackers',
+      text: 'A fake invoice should be attached, it is just an empty text file after all',
+      attachment: fp
+    };
+
+
+    //Sending the email with attachment
+    mailgun.messages().send(data, function (error, body) {
+        if (error) {
+            res.render('error', {error: error});
+        }
+            else {
+            res.send("Attachment is on its way");
+            console.log("attachment sent", fp);
+            }
+        });
+})
+
+
+app.listen(3030);
+</code></pre> 
+       <h2 id="howitworks">How it works</h2> 
+       <p>This above is a simple express app that will run on your local machine on port <code>3030</code>. We have defined it to use expressjs and the mailgun-js wrapper. These are pretty well known libraries that will help us quickly set up a small website that will allow users to trigger the sending of email addresses to their address.</p> 
+       <p><strong>First things first</strong></p> 
+       <p>We've defined 4 endpoints.</p> 
+       <ol> 
+        <li><code>/</code> </li> 
+        <li><code>/submit/:mail</code> </li> 
+        <li><code>/validate/:mail</code> </li> 
+        <li><code>/invoice/:mail</code></li> 
+       </ol> 
+       <p>Where :mail is your valid email address.</p> 
+       <p>When navigating to an endpoint, Express will send to the browser a different view.</p> 
+       <p>In the background Express will take the input provided by the browser and process it with the help of the <code>mailgun-js</code> library.</p> 
+       <p>In the first case we will navigate to the root that is <code>localhost:3030/</code></p> 
+       <p>You can see there's an input box requesting your email address. By doing this, you send yourself a nice transactional email.</p> 
+       <p>This is because expressjs takes your email address from the URL parameter and by using your API key and domain does an API call to the endpoint to send emails.</p> 
+       <p>Each endpoint will invoke a different layout, I've added the code of basic layouts below, feel free to add and remove stuff from it.</p> 
+       <h2 id="layouts">Layouts</h2> 
+       <p><em>Save the code below as <code>index.jade</code> within the /views directory</em></p> 
+       <pre><code>doctype html
+html
+    head
+        title Mailgun Transactional demo in NodeJS
+    body
+        p Welcome to a Mailgun form
+        form(id="mgform")
+            label(for="mail") Email
+            input(type="text" id="mail" placeholder="Youremail@address.com")
+            button(value="bulk" onclick="mgform.hid=this.value") Send transactional
+            button(value="list" onclick="mgform.hid=this.value") Add to list
+            button(value="inv" onclick="mgform.hid=this.value") Send invoice
+        script(type="text/javascript" src="main.js")
+</code></pre> 
+       <p><em>Save the code below as <code>submitted.jade</code> within the /views directory</em></p> 
+       <pre><code>doctype html
+html
+    head
+        title Mailgun Transactional
+    body
+        p thanks #{email} ! 
+</code></pre> 
+       <p><em>Save the code below as <code>error.jade</code> within the /views directory</em></p> 
+       <pre><code>doctype html
+html
+    head
+        title Mailgun Transactional
+    body
+        p Well that's awkward: #{error}
+</code></pre> 
+       <h2 id="javascript">Javascript</h2> 
+       <p>This code allows the browser to call a URL from the first form field with your specified email address appended to it. This way we can simply parse the email address from the URL with express' parametered route syntax.</p> 
+       <p><em>Save the code below as <code>main.js</code> within the /js directory</em></p> 
+       <pre><code>var vForm = document.getElementById('mgform');
+var vInput = document.getElementById('mail');
+
+vForm.onsubmit = function() {
+if (this.hid == "bulk") {
+    location = "/submit/" + encodeURIComponent(vInput.value);
+}
+if (this.hid == "list") {
+    location = "/validate/" + encodeURIComponent(vInput.value);
+}
+if (this.hid == "inv") {
+    location = "/invoice/" + encodeURIComponent(vInput.value);
+}
+
+return false;
+}
+</code></pre> 
+       <p>Finally create an empty <code>invoice.txt</code> file in your root folder. This file will be sent as an attachment.</p> 
+       <p>Now run <code>npm install</code> (or <code>sudo npm install</code> in some cases depending on your installation) to download dependencies, including Express.</p> 
+       <p>Once that’s done run <code>node app.js</code></p> 
+       <p>Navigate with your browser to <code>localhost:3030</code> (or <br> <code>0.0.0.0:3030</code>)</p> 
+       <p>And that's how you get started sending transactional email on demand!</p> 
+       <p>In our example, we've seen how you can send a transactional email automatically when the user triggers a specific action, in our specific case, submitting the form.</p> 
+       <p>There are thousands of applications that you could adapt this scenario to. Sending emails can be used for:</p> 
+       <ul> 
+        <li>Registering an account on a site and <em>Hello</em> message email</li> 
+        <li>Resetting a password</li> 
+        <li>Confirming purchases or critical actions (deleting an account)</li> 
+        <li>Two factor authentication with multiple email addresses</li> 
+       </ul> 
+       <p><strong>What do you use transactional emails for in your day-to-day business?</strong></p> 
+       <!-- end post content --> 
+       <div class="share-links"> 
+        <a href="http://twitter.com/share?text=How%20to%20send%20transactional%20email%20in%20a%20NodeJS%20app%20using%20the%20Mailgun%20API&amp;url=http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/" onclick="window.open(this.href, 'twitter-share', 'width=550,height=235');return false;"><i class="icon-twitter"></i> Share on Twitter</a> 
+        <a href="http://www.facebook.com/sharer/sharer.php?u=http://blog.mailgun.com/how-to-send-transactional-emails-in-a-nodejs-app-using-the-mailgun-api/"><i class="icon-facebook"></i> Share on Facebook</a> 
+       </div> 
+       <div class="post-author"> 
+        <a href="http://twitter.com/orliesaurus"><img src="/content/images/2014/11/circle_avvy.png" alt="Orlando Kalossakas" class="author-avatar"></a> 
+        <h3>Orlando Kalossakas</h3> 
+        <p>Javascript and Python, APIs and Startups, Emails and Ice-cream. Tweets and Thoughts @orliesaurus</p> 
+       </div> 
+      </div> 
+      <!-- .post-body --> 
+      <div class="post-sidebar"> 
+       <h4>About us</h4> 
+       <p>Mailgun is a simple and powerful API that enables you to send, receive, and track email effortlessly.</p> 
+       <p><a href="http://mailgun.com" class="rounded-block rounded-block-full">Visit Mailgun</a></p> 
+      </div> 
+     </div> 
+     <!-- .clearfix for two-column desktop blog layout --> 
+    </article> 
+    <div class="post-comments"> 
+     <!-- <div class="disqus-container"> put disqus code here </div> --> 
+     <div id="disqus_thread"></div> 
+     <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'mailgun'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script> 
+     <noscript>
+      Please enable JavaScript to view the 
+      <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+     </noscript> 
+     <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a> 
+    </div> 
+   </div> 
+   <!-- .container --> 
+  </div> 
+  <div id="email-subscribe-floater"> 
+   <h3> <img src="/assets/images/mailgun-mark-red.svg" alt="Mailgun"> Get posts by email </h3> 
+   <p>Like what you're reading? Get these posts delivered to your inbox.</p> 
+   <form accept-charset="UTF-8" action="https://www.sendicate.net/subscribe/8g7ku5" method="post" class="email-subscribe-form"> 
+    <input type="email" id="subscriber_email" name="subscriber[email]" placeholder="your@email.com"> 
+    <div id="mgsubscribe_validate_status"></div> 
+    <button type="submit" name="subscribe" id="mailgun_subscribe_btn" class="btn">Subscribe</button> 
+    <small>No spam, ever.</small> 
+   </form> 
+  </div> 
+  <footer id="site-footer"> 
+   <div class="container"> 
+    <p class="copyright">© 2017 Mailgun Technologies, Inc.</p> 
+   </div> 
+  </footer> 
+  <!-- You can safely delete this line if your theme does not require jQuery --> 
+  <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script> 
+  <script src="/assets/js/master.min.js?v=a7f30895b9"></script> 
+  <script type="text/javascript">
+ $(function() {
+   $('.tipsy').tipsy({fade: true, gravity: 's'});
+ });
+ $(document).ready(function() {
+   if($("body").hasClass("archive-template")) {
+    $(".index-all").hide();
+    $(".navigate-archives").show();
+   };
+ });
+</script> 
+  <!-- Google Tag Manager --> 
+  <noscript>
+   <iframe src="//www.googletagmanager.com/ns.html?id=GTM-KX86FZ" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript> 
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KX86FZ');</script> 
+  <!-- End Google Tag Manager --> 
+  <!-- Swiftype search --> 
+  <script type="text/javascript">
+  (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+  (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+  e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+  })(window,document,'script','//s.swiftypecdn.com/install/v1/st.js','_st');
+
+  _st('install','CZx41_WaXVwnryu-eJ5Y');
+</script> 
+  <!-- End Swiftype -->   
+ </body>
+</html>

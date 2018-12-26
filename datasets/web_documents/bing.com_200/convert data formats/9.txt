@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+ <head> 
+  <title>Date and Time Representation in Python</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <meta name="viewport" content="width=device-width"> 
+  <link rel="stylesheet" href="http://m.seehuhn.de/css/58716a62.css" type="text/css"> 
+  <script type="text/javascript" src="http://m.seehuhn.de/js/b7ca544c.js" async></script> 
+  <link href="https://plus.google.com/105824896728339699453" rel="publisher"> 
+  <meta name="Author" content="Jochen Voss"> 
+  <link rel="canonical" href="http://www.seehuhn.de/pages/pdate"> 
+  <meta name="description" content="understanding the different ways to represent date and time in Python"> 
+  <meta name="keywords" content="Python, date, time, type conversion"> 
+  <script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-5610669-1']);
+  _gaq.push(['_setDomainName', 'www.seehuhn.de']);
+  _gaq.push(['_trackPageview']);
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script> 
+ </head> 
+ <body> 
+  <ul class="nav"> 
+   <li class="trail"><a href="/">seehuhn.de</a> </li>
+   <li class="trail"><a href="/sitemap/categories/Tutorials">Tutorials</a> </li>
+   <li><a href="/blog/">blog</a> </li>
+   <li><a href="/photos/">photos</a> </li>
+   <li><a href="/sitemap.html">sitemap</a> </li>
+  </ul> 
+  <div class="side urlinfo" itemscope itemtype="http://schema.org/WPSideBar"> 
+   <p><a class="title" href="/pages/wisent">Wisent: a Python parser generator.</a> A Python LR(1) parser generator. <a class="tail" href="/pages/wisent">… read more</a> </p>
+  </div> 
+  <div class="side urlinfo" itemscope itemtype="http://schema.org/WPSideBar"> 
+   <p><a class="title" href="/pages/sanduhr">SandUhr.</a> The SandUhr alarm clock for the GNOME desktop environment. <a class="tail" href="/pages/sanduhr">… read more</a> </p>
+  </div> 
+  <div class="side ad" itemscope itemtype="http://schema.org/WPAdBlock"> 
+   <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script> 
+   <!-- 2011-10-27:red:160x600 --> 
+   <ins class="adsbygoogle" style="display:inline-block;width:160px;height:600px" data-ad-client="ca-pub-1728007349753951" data-ad-slot="6301845036"></ins> 
+   <script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script> 
+  </div> 
+  <div class="side urlinfo" itemscope itemtype="http://schema.org/WPSideBar"> 
+   <p><a class="title" href="/pages/timeline">What Happened Until Now?</a> A short description of what happened until now. <a class="tail" href="/pages/timeline">… read more</a> </p>
+  </div> 
+  <h1>Date and Time Representation in Python</h1> 
+  <p class="date"><span>By Jochen Voss, last updated 2012-02-18</span><span class="noprint"><span class="g-plusone" data-size="medium"></span></span></p> 
+  <script type="text/javascript">
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script> 
+  <p>There are many different ways to represent date and time in Python programs. This page gives an overview over the different methods and explains how to convert between different representations. The main focus of this page is on how to represent points in time often assuming some fixed, local time zone. This is used for example when analysing log files. I will not explain here how to convert between different time zones or between different calendars. </p>
+  <h2>Contents</h2>
+  <ul class="toc"> 
+   <li><a href="#sec:1.0.0">Date and Time representations</a> 
+    <ul class="toc"> 
+     <li><a href="#sec:1.1.0">ISO&nbsp;8601 Time Representation</a> </li>
+     <li><a href="#sec:1.2.0">Python <code>datetime</code> Objects</a> </li>
+     <li><a href="#sec:1.3.0">Unix Time</a> </li>
+     <li><a href="#sec:1.4.0">Broken Down Time</a> </li>
+     <li><a href="#sec:1.5.0">The Egenix <code>mxDateTime</code> Class</a> </li>
+     <li><a href="#sec:1.6.0">The Matplotlib Date Representation</a> </li>
+    </ul> </li>
+   <li><a href="#sec:2.0.0">Date Conversions</a> 
+    <ul class="toc"> 
+     <li><a href="#ISO">Conversion between ISO Time Representation and <code>datetime</code></a> </li>
+     <li><a href="#unix">Conversion between Unix times and <code>datetime</code></a> </li>
+     <li><a href="#struct">Conversion between <code>struct_time</code> and <code>datetime</code></a> </li>
+     <li><a href="#mx">Conversion between the Egenix mxDateTime class and <code>datetime</code></a> </li>
+     <li><a href="#matplotlib">Conversion between the matplotlib time representation and <code>datetime</code></a> </li>
+     <li><a href="#sec:2.6.0">Conversion Summary</a> </li>
+    </ul> </li>
+   <li><a href="#references">References</a> </li>
+  </ul> 
+  <h2 id="sec:1.0.0">Date and Time representations</h2> 
+  <h3 id="sec:1.1.0">ISO&nbsp;8601 Time Representation</h3> 
+  <p>The international standard ISO&nbsp;8601 describes a string representation for dates and times. Two simple examples of this format are </p>
+  <pre class="listing">
+2007-03-04 20:32:17
+20070304T203217
+</pre> 
+  <p>(which both stand for the 4th of March 2007, a bit after half past eight in the evening) but the format also allows for sub-second resolution times and to specify time zones. This format is of course not Python specific, but it is good for storing dates and times in a portable format. Details about this format can be found in the <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO&nbsp;8601 wikipedia entry</a> and on Markus Kuhn's <a href="http://www.cl.cam.ac.uk/~mgk25/iso-time.html">ISO&nbsp;8601 page</a>. </p>
+  <p>I recommend use of this format to store times in files. </p>
+  <p>One way to get the current time in this representation is to use <code>strftime</code> from the <code>time</code> module in the Python standard library: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from time import strftime
+&gt;&gt;&gt; strftime("%Y-%m-%d %H:%M:%S")
+'2007-03-03 22:14:39'
+</pre> 
+  <h3 id="sec:1.2.0">Python <code>datetime</code> Objects</h3> 
+  <p>The <a href="http://docs.python.org/lib/module-datetime.html"><code>datetime</code> module</a> of the Python standard library provides the <a href="http://docs.python.org/lib/datetime-datetime.html"><code>datetime</code> class</a>. </p>
+  <p>I recommend use of this format, when possible, to represent times in Python programs. </p>
+  <p>One way to get the current time in this representation is to use the <code>now</code> method of the <code>datetime</code> class in the Python standard library: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; datetime.now()
+datetime.datetime(2007, 3, 3, 22, 20, 11, 443849)
+</pre> 
+  <h3 id="sec:1.3.0">Unix Time</h3> 
+  <p>The traditional way to describe times on a Unix system is to give the number of seconds elapsed since the beginning of the year 1970. Sometimes this count includes leap seconds and sometimes it does not. Traditionally this number is an integer, but of course one can get sub-second resolution by using floating point numbers here. </p>
+  <p>One way to get the current time in this representation is to use <code>time</code> from the <code>time</code> module in the Python standard library. This function returns the number of seconds elapsed since the beginning of the year 1970 in UTC as a float: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from time import time
+&gt;&gt;&gt; time()
+1172960204.226908
+</pre> 
+  <h3 id="sec:1.4.0">Broken Down Time</h3> 
+  <p>This is what is represented by <code>struct_time</code> objects in Python (and similarly by <code>struct tm</code> in the C standard library). Time is represented as a tuple consisting of the following fields: </p>
+  <ol> 
+   <li>the year as a four-digit number, e.g. 2007 </li>
+   <li>the month (1, 2, …, 12) </li>
+   <li>the day of the month (1, 2, …, 31) </li>
+   <li>hour (0, 1, …, 23) </li>
+   <li>minutes (0, 1, …, 59) </li>
+   <li>seconds (0, 1, …, 61 where 60 and 61 are used for leap seconds) </li>
+   <li>week day (0=Monday, 1=Tuesday, …, 6=Sunday) </li>
+   <li>day of the year (1, 2, …, 366) </li>
+   <li>daylight saving time information (0, 1, or -1) </li>
+  </ol> 
+  <p>It is not possible to get sub-second resolution in this representation. For details see the <a href="http://docs.python.org/lib/module-time.html"><code>time</code> module</a> description of the Python standard library. </p>
+  <p>One way to get the current time in this representation is to use <code>localtime</code> from the <code>time</code> module in the Python standard library: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from time import localtime
+&gt;&gt;&gt; localtime()
+(2007, 3, 3, 22, 13, 27, 5, 62, 0)
+</pre> 
+  <h3 id="sec:1.5.0">The Egenix <code>mxDateTime</code> Class</h3> 
+  <p>Egenix provides the <a href="http://www.egenix.com/files/python/mxDateTime.html">mxDateTime class</a> as part of their <code>mx</code> extensions for Python. This class seems to be relatively similar to the standard <code>datetime</code> class, but it provides a parser for ISO&nbsp;8601 date strings. </p>
+  <p>One way to get the current time in this representation is to use the <code>now</code> constructor from the <code>mx.DateTime</code> module: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from mx.DateTime import now
+&gt;&gt;&gt; now()
+&lt;DateTime object for '2007-03-03 22:51:13.37' at 52a2c0&gt;
+</pre> 
+  <h3 id="sec:1.6.0">The Matplotlib Date Representation</h3> 
+  <p>The very nice <a href="http://matplotlib.sourceforge.net/">matplotlib</a> graphing library has support for using dates to locate data in plots. The library represents dates/times as single floating point numbers and provides functions <code>num2date</code> and <code>date2num</code> to convert between Python <code>datetime</code> objects and the matplotlib representation. The numbers represent days but I am not sure which day in time is matplotlib day&nbsp;0. </p>
+  <p>One way to get the current time in this representation is as follows: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from matplotlib.dates import date2num
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; date2num(datetime.now())
+732738.96073077701
+</pre> 
+  <h2 id="sec:2.0.0">Date Conversions</h2> 
+  <p>Since I recommend to normally use the standard Python <code>datetime</code> class to store times in Python programs, I only provide recipes here to convert between <code>datetime</code> and any of the other representations here. A summary of the described methods can be found in <a href="#table1">table&nbsp;1</a> below. </p>
+  <h3 id="ISO">Conversion between ISO Time Representation and <code>datetime</code></h3> 
+  <p>Unfortunately there is no easy way to parse full ISO&nbsp;8601 dates using the Python standard library. If you know the exact format of the date string in advance, you can use the <code>strptime</code> constructor of the <code>datetime</code> class (new in Python version&nbsp;2.5): </p>
+  <pre class="listing">
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; datetime.strptime("2007-03-04 21:08:12", "%Y-%m-%d %H:%M:%S")
+datetime.datetime(2007, 3, 4, 21, 8, 12)
+</pre> 
+  <p>There are several parsers available in external modules. The most robust one I found is contained in the Egenix mxDateTime module: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from mx.DateTime.ISO import ParseDateTimeUTC
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; x = ParseDateTimeUTC("2007-03-04 21:08:12")
+&gt;&gt;&gt; datetime.fromtimestamp(x)
+datetime.datetime(2007, 3, 4, 21, 8, 12)
+</pre> 
+  <p>Another parser is available in the <a href="http://labix.org/python-dateutil">dateutil</a> module: </p>
+  <pre class="listing">
+&gt;&gt;&gt; import dateutil.parser
+&gt;&gt;&gt; dateutil.parser.parse("2007-03-04 21:08:12")
+datetime.datetime(2007, 3, 4, 21, 8, 12)
+&gt;&gt;&gt; dateutil.parser.parse("2007-03-04 22:08:12-0100")
+datetime.datetime(2007, 3, 4, 22, 8, 12, tzinfo=tzoffset(None, -3600))
+&gt;&gt;&gt; dateutil.parser.parse("2001-11-12T12:13:00+01:00")
+datetime.datetime(2001, 11, 12, 12, 13, tzinfo=tzoffset(None, 3600))
+</pre> 
+  <p>Conversion from <code>datetime</code> objects to ISO time strings is easy using the <code>strftime</code> method: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; t = datetime.now()
+&gt;&gt;&gt; t.strftime("%Y-%m-%d %H:%M:%S")
+'2007-03-04 00:15:12'
+</pre> 
+  <h3 id="unix">Conversion between Unix times and <code>datetime</code></h3> 
+  <p>To convert a Unix time stamp to <code>datetime</code> use the <code>fromtimestamp</code> constructor: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; datetime.fromtimestamp(1172969203.1)
+datetime.datetime(2007, 3, 4, 0, 46, 43, 100000)
+</pre> 
+  <p>To convert a <code>datetime</code> object into a Unix time stamp, one has to first convert it into a <code>struct_time</code>: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; from time import mktime
+&gt;&gt;&gt; t=datetime.now()
+&gt;&gt;&gt; mktime(t.timetuple())+1e-6*t.microsecond
+1172970859.472672
+</pre> 
+  <h3 id="struct">Conversion between <code>struct_time</code> and <code>datetime</code></h3> 
+  <p><code>struct_time</code> objects can be converted to <code>datetime</code> objects using the normal <code>datetime</code> constructor: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from time import localtime
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; x = localtime()
+&gt;&gt;&gt; datetime(*x[:6])
+datetime.datetime(2007, 3, 4, 1, 0, 39)
+</pre> 
+  <p><code>datetime</code> objects can be converted back to <code>struct_time</code> using the <code>timetuple</code> class method: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; t = datetime.now()
+&gt;&gt;&gt; t.timetuple()
+(2007, 3, 4, 1, 3, 18, 6, 63, -1)
+</pre> 
+  <h3 id="mx">Conversion between the Egenix mxDateTime class and <code>datetime</code></h3> 
+  <p><code>mxDateTime</code> objects can be converted to <code>datetime</code> via the Unix time stamp format: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from mx.DateTime import now
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; x = now()
+&gt;&gt;&gt; datetime.fromtimestamp(x)
+datetime.datetime(2007, 3, 4, 1, 14, 19, 472672)
+</pre> 
+  <p>The reverse conversion is a bit awkward: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from mx.DateTime import DateTime
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; t = datetime.now()
+&gt;&gt;&gt; DateTime(t.year,t.month,t.day,t.hour,t.minute,t.second+1e-6*t.microsecond)
+&lt;DateTime object for '2007-03-04 01:14:19.47' at 104a368&gt;
+</pre> 
+  <h3 id="matplotlib">Conversion between the matplotlib time representation and <code>datetime</code></h3> 
+  <p>This conversion is straight-forward using the converter functions provided by matplotlib: </p>
+  <pre class="listing">
+&gt;&gt;&gt; from matplotlib.dates import num2date
+&gt;&gt;&gt; num2date(732738.96073077701)
+datetime.datetime(2007, 3, 3, 23, 3, 27, 139133, tzinfo=&lt;UTC&gt;)
+</pre> 
+  <p>and </p>
+  <pre class="listing">
+&gt;&gt;&gt; from matplotlib.dates import date2num
+&gt;&gt;&gt; from datetime import datetime
+&gt;&gt;&gt; t = datetime.now()
+&gt;&gt;&gt; date2num(t)
+732738.96073077701
+</pre> 
+  <h3 id="sec:2.6.0">Conversion Summary</h3> 
+  <p><a href="#table1">Table&nbsp;1</a> summarises the conversion methods discussed in this chapter. </p>
+  <div class="table" id="table1"> 
+   <table class="status"> 
+    <thead> 
+     <tr> 
+      <th>Time Representation </th>
+      <th>conversion to <code>datetime</code> </th>
+      <th>conversion from <code>datetime</code> </th>
+     </tr>
+    </thead>
+    <tbody> 
+     <tr> 
+      <td><a href="#ISO">ISO strings</a> </td>
+      <td>Difficult with the standard library, see <a href="#ISO">text</a>. </td>
+      <td><code>t.strftime("%Y-%m-%dT%H:%M:%S")</code> </td>
+     </tr>
+     <tr> 
+      <td><a href="#unix">Unix time</a> </td>
+      <td><code>datetime.fromtimestamp(x)</code> </td>
+      <td><code>mktime(t.timetuple())+1e-6*t.microsecond</code> </td>
+     </tr>
+     <tr> 
+      <td><a href="#struct">struct_time</a> </td>
+      <td><code>datetime(*x[:6])</code> </td>
+      <td><code>t.timetuple()</code> </td>
+     </tr>
+     <tr> 
+      <td><a href="#mx">mxDateTime</a> </td>
+      <td><code>datetime.fromtimestamp(x)</code> </td>
+      <td>see <a href="#mx">text</a> </td>
+     </tr>
+     <tr> 
+      <td><a href="#matplotlib">matplotlib</a> </td>
+      <td><code>num2date(x)</code> </td>
+      <td><code>date2num(t)</code> </td>
+     </tr>
+    </tbody>
+   </table> 
+   <p><span class="bf">Table&nbsp;1.</span> Summary of the different conversions to and from the Python standard library's <code>datetime</code> class. The value <code>t</code> always stands for a value in the representation given in the first column, <code>x</code> denotes <code>datetime</code> objects. </p>
+  </div> 
+  <h2 id="references">References</h2> 
+  <ul class="compact"> 
+   <li>The <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO&nbsp;8601 wikipedia entry</a>. </li>
+   <li>Markus Kuhn's <a href="http://www.cl.cam.ac.uk/~mgk25/iso-time.html">ISO&nbsp;8601 page</a>. </li>
+   <li>The Python <a href="http://docs.python.org/lib/module-time.html"><code>time</code> module</a> documentation. </li>
+   <li>The Python <a href="http://docs.python.org/lib/datetime-datetime.html"><code>datetime</code> class</a> documentation. </li>
+   <li>The Egenix <a href="http://www.egenix.com/files/python/mxDateTime.html">mxDateTime class</a>. </li>
+   <li>The <a href="http://pyxml.sourceforge.net/">PyXML package</a>. </li>
+   <li>The <a href="http://matplotlib.sourceforge.net/">matplotlib</a> library. </li>
+   <li>The <a href="http://www.python.org/">Python Website</a>. </li>
+  </ul> 
+  <p style="margin-top:4ex"><script type="text/javascript"><!--
+google_ad_client = "ca-pub-1728007349753951";
+/* 2012-01-26:green:728x15 */
+google_ad_slot = "0662784425";
+google_ad_width = 728;
+google_ad_height = 15;
+//-->
+</script> <script type="text/javascript" src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script> </p>
+  <p class="license">Copyright © 2012, Jochen Voss. All content on this website (including text, pictures, and any other original works), unless otherwise noted, is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/">Creative Commons Attribution-Share Alike 3.0 License</a>.   </p>
+ </body>
+</html>

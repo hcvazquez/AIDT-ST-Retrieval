@@ -1,0 +1,496 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <title>How we tuned Tesseract to perform as well as a commercial OCR package - vBridge</title> 
+  <meta name="generator" content="WordPress 3.2.1"> 
+  <meta name="robots" content="follow, all"> 
+  <meta name="description" content="vBridge Ltd is a Software Services firm based in UK, USA and India with clients across the globe. Specialists in java, php and open source packages, vBridge excels in Quality Assurance, minimal but productive and useful processes and stresses on high standards of communication to ensure customer satisfaction."> 
+  <meta name="keywords" content="PHP Web Development, MYSQL PHP development, Google adwords software development, Adwords product, OCR development, Microsoft Adcenter Product, Bing Adcenter Product, Adcenter product"> 
+  <link rel="stylesheet" href="http://vbridge.co.uk/wp-content/themes/vulcan/style.css" type="text/css" media="screen"> 
+  <link rel="shortcut icon" href="http://vbridge.co.uk/wp-content/themes/vulcan/favicon.ico"> 
+  <link rel="alternate" type="application/rss+xml" title="vBridge RSS Feed" href="http://vbridge.co.uk/feed/"> 
+  <link rel="pingback" href="http://vbridge.co.uk/xmlrpc.php"> 
+  <link rel="alternate" type="application/rss+xml" title="vBridge » How we tuned Tesseract to perform as well as a commercial OCR package Comments Feed" href="http://vbridge.co.uk/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/feed/"> 
+  <link rel="stylesheet" id="contactable-css" href="http://vbridge.co.uk/wp-content/plugins/rejected-magic-contact-rejected/contactable/contactable.css?ver=3.2.1" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-includes/js/l10n.js?ver=20101110"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-includes/js/jquery/jquery.js?ver=1.6.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/plugins/rejected-magic-contact-rejected/contactable/jquery.contactable.js?ver=3.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/plugins/rejected-magic-contact-rejected/contactable/jquery.validate.pack.js?ver=3.1"></script> 
+  <script type="text/javascript">
+/* <![CDATA[ */
+var MagicContact = {
+	name: "Name",
+	email: "E-Mail",
+	message: "Message",
+	subject: "A contactable message",
+	label_name: "Name",
+	label_email: "E-Mail",
+	label_website: "Subject",
+	label_feedback: "Message",
+	label_send: "SUBMIT",
+	recievedMsg: "Thank you for your message",
+	notRecievedMsg: "Sorry, your message could not be sent, try again later",
+	disclaimer: "We will get back to you at the earliest.",
+	hide_email: "false",
+	hide_website: "false",
+	fileMail: "http://vbridge.co.uk/wp-admin/admin-ajax.php",
+	side: "right",
+	action: "magic_contact_ajax"
+};
+/* ]]> */
+</script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/plugins/rejected-magic-contact-rejected/my.contactable.js?ver=3.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/themes/vulcan/js/jquery.cycle.all.js?ver=3.2.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/themes/vulcan/js/jquery.corner.js?ver=3.2.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/themes/vulcan/js/jqueryslidemenu.js?ver=3.2.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/themes/vulcan/js/jquery.prettyPhoto.js?ver=3.2.1"></script> 
+  <script type="text/javascript" src="http://vbridge.co.uk/wp-content/themes/vulcan/js/functions.js?ver=3.2.1"></script> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://vbridge.co.uk/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://vbridge.co.uk/wp-includes/wlwmanifest.xml"> 
+  <link rel="index" title="vBridge" href="http://vbridge.co.uk/"> 
+  <link rel="start" title="The importance of Search Phrase Report" href="http://vbridge.co.uk/2010/06/28/sample-blog-post-with-vimeo-video-shortcode/"> 
+  <link rel="prev" title="Comparing different OCR packages" href="http://vbridge.co.uk/2012/11/05/comparing-different-ocr-packages/"> 
+  <link rel="next" title="XML formatting using xmllint" href="http://vbridge.co.uk/2013/05/21/xml-formatting-using-xmllint/"> 
+  <meta name="generator" content="WordPress 3.2.1"> 
+  <link rel="canonical" href="http://vbridge.co.uk/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/"> 
+  <link rel="shortlink" href="http://vbridge.co.uk/?p=652"> 
+  <!--<link rel="stylesheet" href="http://vbridge.co.uk/wp-content/themes/vulcan/css/jqueryslidemenu.css" type="text/css" media="screen" />--> 
+  <link rel="stylesheet" href="http://vbridge.co.uk/wp-content/themes/vulcan/css/prettyPhoto.css" type="text/css" media="screen"> 
+  <link rel="stylesheet" href="http://vbridge.co.uk/wp-content/themes/vulcan/css/styles/blue.css" type="text/css" media="screen"> 
+  <!--[if IE 6]>    
+
+	<link href="http://vbridge.co.uk/wp-content/themes/vulcan/css/ie6.css" rel="stylesheet" type="text/css" />
+
+    <script type="text/javascript" src="http://vbridge.co.uk/wp-content/themes/vulcan/js/DD_belatedPNG.js"></script>
+
+	<script type="text/javascript"> 
+
+	   DD_belatedPNG.fix('img'); 
+
+       DD_belatedPNG.fix('#pager a, ul.list-bottom li');
+
+       DD_belatedPNG.fix('#footer-content, .dot-separator');
+
+       DD_belatedPNG.fix('blockquote');   
+
+	</script>    
+
+<![endif]--> 
+  <!--[if IE 7]>    
+
+	<style type="text/css">
+
+    #pager{top:260px;}
+
+    #slideshow ul, #slideshow li{margin:12px 0px 0px 6px;}
+
+    #content .front-box-content{padding-bottom:45px;}
+
+    </style>
+
+<![endif]--> 
+  <!--[if IE 8]>    
+
+	<style type="text/css">
+
+    #pager{top:260px;}
+
+    </style>
+
+<![endif]--> 
+  <!-- ////////////////////////////////// --> 
+  <!-- //      Javascript Files        // --> 
+  <!-- ////////////////////////////////// --> 
+  <script type="text/javascript">
+
+  jQuery(document).ready(function($) {
+     //added by arif
+	
+	 var elements = Array ('.long_h2');
+        $(elements.join(',')).each(function() {//alert($(this).text());
+	   
+            $(this).append(
+                '<div class="long-left" style="width:' +
+                $(this).position().left +
+                'px;height:' +
+                ($(this).height() + 22) +
+                'px;">&nbsp;</div>');
+           $(this).after('<br />');
+        });
+        $(window).resize(function() {
+            $('.long-left').each(function() {
+                var parent = $(this).parent();
+                $(this).width(parent.position().left);
+                $(this).height(parent.height() + 22);
+            });
+        }); 
+     });
+</script> 
+ </head> 
+ <body> 
+  <div id="container"> 
+   <!-- BEGIN OF HEADER --> 
+   <div id="top-container-inner"> 
+    <!-- begin of logo and mainmenu --> 
+    <div id="header"> 
+     <div id="logo"> 
+      <a href="http://vbridge.co.uk"><img src="http://vbridge.ampleqatar.com/wp-content/themes/vulcan/images/vbridge_logo.jpg" alt="vBridge"></a> 
+     </div> 
+     <div id="mainmenus" style="display: none; width: auto; float: left;"> 
+      <nav class="navbar"> 
+       <div class="container-fluid"> 
+        <div class="navbar-header"> 
+         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar" style="float: none"> <b>MENU</b> </button> 
+        </div> 
+        <div class="collapse navbar-collapse" id="myNavbar"> 
+         <ul id="menu-main" class="nav navbar-nav">
+          <li id="menu-item-375" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-375"><a class="dropdown-toggle" href="http://www.vbridge.co.uk/">Home</a></li> 
+          <li id="menu-item-422" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-422"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/">What we do ?</a> 
+           <ul class="sub-menu dropdown-menu"> 
+            <li id="menu-item-1812" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1812"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/web-applications/">Web Applications</a></li> 
+            <li id="menu-item-1811" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1811"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/mobile-applications/">Android and iOS Applications</a></li> 
+            <li id="menu-item-1810" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1810"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/database-applications/">Database Applications</a></li> 
+            <li id="menu-item-563" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-563"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/data-entry-services/">Data Entry Services</a></li> 
+            <li id="menu-item-605" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-605"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/software-quality-assurance/">Software Quality Assurance</a></li> 
+           </ul> </li> 
+          <li id="menu-item-429" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-429"><a class="dropdown-toggle" href="http://vbridge.co.uk/why-us/">Why us ?</a> 
+           <ul class="sub-menu dropdown-menu"> 
+            <li id="menu-item-503" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-503"><a class="dropdown-toggle" href="http://vbridge.co.uk/category/testimonials/">Testimonials</a></li> 
+            <li id="menu-item-815" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-815"><a class="dropdown-toggle" href="http://vbridge.co.uk/why-us/portfolio/">Portfolio</a></li> 
+           </ul> </li> 
+          <li id="menu-item-1883" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-1883"><a class="dropdown-toggle" href="http://vbridge.co.uk/category/solutions/">Solutions</a></li> 
+          <li id="menu-item-386" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-386"><a class="dropdown-toggle" href="http://vbridge.co.uk/blog/">Blog</a></li> 
+          <li id="menu-item-388" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-388"><a class="dropdown-toggle" href="http://vbridge.co.uk/contact/">Contact us</a></li> 
+          <li id="menu-item-1149" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1149"><a class="dropdown-toggle" href="http://vbridge.co.uk/careers/">Careers</a></li> 
+         </ul> 
+        </div> 
+       </div> 
+      </nav> 
+     </div> 
+     <div id="mainmenu"> 
+      <ul id="menu-main-1" class="navigation">
+       <li class="menu-item menu-item-type-custom menu-item-object-custom menu-item-375"><a class="dropdown-toggle" href="http://www.vbridge.co.uk/">Home</a></li> 
+       <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-422"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/">What we do ?</a> 
+        <ul class="sub-menu dropdown-menu"> 
+         <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1812"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/web-applications/">Web Applications</a></li> 
+         <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1811"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/mobile-applications/">Android and iOS Applications</a></li> 
+         <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1810"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/database-applications/">Database Applications</a></li> 
+         <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-563"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/data-entry-services/">Data Entry Services</a></li> 
+         <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-605"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/software-quality-assurance/">Software Quality Assurance</a></li> 
+        </ul> </li> 
+       <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-429"><a class="dropdown-toggle" href="http://vbridge.co.uk/why-us/">Why us ?</a> 
+        <ul class="sub-menu dropdown-menu"> 
+         <li class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-503"><a class="dropdown-toggle" href="http://vbridge.co.uk/category/testimonials/">Testimonials</a></li> 
+         <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-815"><a class="dropdown-toggle" href="http://vbridge.co.uk/why-us/portfolio/">Portfolio</a></li> 
+        </ul> </li> 
+       <li class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-1883"><a class="dropdown-toggle" href="http://vbridge.co.uk/category/solutions/">Solutions</a></li> 
+       <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-386"><a class="dropdown-toggle" href="http://vbridge.co.uk/blog/">Blog</a></li> 
+       <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-388"><a class="dropdown-toggle" href="http://vbridge.co.uk/contact/">Contact us</a></li> 
+       <li class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1149"><a class="dropdown-toggle" href="http://vbridge.co.uk/careers/">Careers</a></li> 
+      </ul> 
+     </div> 
+    </div> 
+    <!-- end of logo and mainmenu --> 
+    <!-- begin of welcome-slogan --> 
+    <!-- end of welcome-slogan --> 
+   </div> 
+   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"> 
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script> 
+   <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script> 
+   <script>
+$(document).ready(function(){
+	$("#menu-item-422>a").attr("data-toggle", "dropdown");
+	$("#menu-item-429>a").attr("data-toggle", "dropdown");
+});
+  </script> 
+   <!-- END OF HEADER --> 
+   <!-- BEGIN OF PAGE TITLE --> 
+   <div id="page-title"> 
+    <div id="page-title-inner"> 
+     <div class="title"> 
+      <h1> Blog </h1> 
+     </div> 
+    </div> 
+   </div> 
+   <!-- END OF PAGE TITLE --> 
+   <!-- BEGIN OF CONTENT --> 
+   <div id="content"> 
+    <div id="content-left"> 
+     <div class="maincontent"> 
+      <!-- begin of blog post  --> 
+      <div class="left-head"> 
+       <div class="date">
+        05
+       </div> 
+       <div class="month">
+        Nov
+       </div> 
+      </div> 
+      <div class="right-head"> 
+       <h3>How we tuned Tesseract to perform as well as a commercial OCR package</h3> 
+       <div class="post-info">
+        posted by : 
+        <a href="http://vbridge.co.uk/author/admin/" title="Posts by admin" rel="author">admin</a> &nbsp; | &nbsp; category : 
+        <a href="http://vbridge.co.uk/category/blog/" title="View all posts in Blog" rel="category tag">Blog</a> &nbsp; | &nbsp; comments : 
+        <a href="http://vbridge.co.uk/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/#comments" title="Comment on How we tuned Tesseract to perform as well as a commercial OCR package">5 Comments</a>
+       </div> 
+      </div> 
+      <div class="blog-posted"> 
+       <p><a title="OCR" href="http://vbridge.co.uk/2012/11/05/comparing-different-ocr-packages/en.wikipedia.org/wiki/Optical_character_recognition" target="_blank">Optical Character Recognition (OCR)</a>&nbsp;is a widely used technology for extracting text from the scanned or camera images containing text.</p> 
+       <p>&nbsp;</p> 
+       <p>One of our clients gave as a challenging task to see if we can improve the Tesseract Output somehow. They have been using Tesseract, but not with a satisfying performance or output. The challenge was to see if we can somehow improve the performance. After the steps outlined below, we were able to improve the accuracy by 52%.</p> 
+       <p>&nbsp;</p> 
+       <p>&nbsp;</p> 
+       <p>This technology is widely used for &nbsp;electronic conversion of scanned images of handwritten, typewritten or printed text into machine-encoded text. And there are many open source and commercial OCR softwares available. One of the best Open source software is <span style="color: #008000;"><strong><a href="http://code.google.com/p/tesseract-ocr/"><span style="color: #008000;">Tesseract OCR</span></a></strong></span> is comparable to commercial OCR softwares. That is why Tesseract is the best option for OCR Tasks when relying on Open source.</p> 
+       <p>&nbsp;</p> 
+       <p>For a neatly scanned document, the character recognition process would be easy as pie. But when the case is, a receipt which is captured using a camera device,<span style="text-decoration: underline; color: #000000;"> there would be problems like<span style="color: #008000; text-decoration: underline;"> <a href="http://en.wikipedia.org/wiki/Exposure_(photography)#Overexposure_and_underexposure" target="_blank"><span style="color: #008000; text-decoration: underline;">overexposure, underexposure</span></a></span>, lighting condition varied throughout the image and many other worse conditions</span>. In such images even the commercial OCR products won’t do well. After considering the conditions and comparing different OCR softwares, we found that no OCR software was good enough to give good results due to under exposure or over exposure of the images and to make the condition worse the unequal distribution of lighting over the image. Everyone should have come to experience this situation when taking a picture using a mobile camera.</p> 
+       <p>&nbsp;</p> 
+       <p id="internal-source-marker_0.9398585937215016" dir="ltr"><span style="text-decoration: underline; color: #000000;">The solution</span> that we came with is to process the image for various level of filtering of image and making the image OCR friendly. What we found is a script which makes use of imagemagick named <span style="color: #008000;"><a href="http://www.fmwconcepts.com/imagemagick/textcleaner/index.php"><span style="color: #008000;">Textcleaner</span></a></span> You can experiment with different options in this Script to find the best output.</p> 
+       <p><strong>What we did</strong> :</p> 
+       <ul> 
+        <li>Compared the output of Tesseract output with another<span style="color: #008000;"> <a href="http://www.cvisiontech.com/trapeze/general/trapeze-for-invoice-processing.html?lang=eng"><span style="color: #008000;">Commercial software</span></a></span>.</li> 
+        <li>Used Textcleaner with different options to enhance the image for making it more OCR friendly. (./textcleaner -g -e none -f 10 -o 5 Sample.jpg out.jpg)</li> 
+        <li>Run OCR after processing with textcleaner, Compare output for different versions of textcleaner outputs.</li> 
+        <li>Made 10 different versions of receipt image using <span style="color: #008000;"><a href="http://www.fmwconcepts.com/imagemagick/textcleaner/index.php"><span style="color: #008000;">Textcleaner</span></a></span>&nbsp;with different filter settings, extracted the text from the OCR output of all 10 variants, Compared the output and derived the desired output using an algorithm and <span style="color: #008000;"><a href="http://www.regular-expressions.info/"><span style="color: #008000;">REGEX</span></a></span>.</li> 
+        <li>You can rely on different algorithm on extracting text like :</li> 
+        <ol> 
+         <li>One with most number of charecters</li> 
+         <li>One with most number of numbers</li> 
+         <li>One with most number of characters and numbers</li> 
+         <li>Or do REGEX on OCR outputs of all 10 versions of textcleaner output and select the best match.</li> 
+        </ol> 
+       </ul> 
+       <p><strong>Result :</strong></p> 
+       <p>We were able to get a better OCR output using the open source Tesseract . Even if we had to perform extra processing, the end result is comparable to Commercial softwares.</p> 
+       <p>&nbsp;</p> 
+       <p>A sample of output obtained is compared in the table given below.</p> 
+       <p style="text-align: center;"><a href="http://vbridge.co.uk/wp-content/uploads/2012/10/OCR-test1.png"><img class="aligncenter size-large wp-image-678" title="OCR test" src="http://vbridge.co.uk/wp-content/uploads/2012/10/OCR-test1-1024x512.png" alt="" width="614" height="307"></a></p> 
+       <div class="clr"></div> 
+       <div class="clr"></div>
+       <br> 
+       <h3 class="comment-entry">5 Comments for this entry</h3> 
+       <div id="comment"> 
+        <div class="comment-502"> 
+         <div class="comment-post"> 
+          <div class="avatar">
+           <img alt="" src="http://0.gravatar.com/avatar/e0fd9631d8e542d76f9336c7f903a9bf?s=60&amp;d=http%3A%2F%2F0.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&amp;r=G" class="avatar avatar-60 photo" height="60" width="60">
+          </div> 
+          <div class="comment-text"> 
+           <h5><a href="http://techtinker.net" rel="external nofollow" class="url">Dan G</a></h5> 
+           <div class="comment-date">
+            May 26th, 2013 on 2:25 pm
+           </div> 
+           <p>Very nice article!<br> I’m looking to do large-scale OCR on thousands of JPEG scans of varying print quality, and this is exactly the kind of info I was looking for.<br> What I’m interested in knowing is if you found any one algorithm consistently more successful than the others? And which were the parameters of textcleaner that made more difference?<br> Because I have to automate tens of thousands of scans, I can’t do any manual string extraction to feed into REGEX matching. Of course I could use a dictionary for REGEX matches, leading to more complex, fuzzy solutions….<br> Any more advice (or code) appreciated!</p> 
+           <div class="clr"></div> 
+           <div class="reply"> 
+            <a class="comment-reply-link" href="/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/?replytocom=502#respond" onclick="return addComment.moveForm(&quot;comment-502&quot;, &quot;502&quot;, &quot;respond&quot;, &quot;652&quot;)">Reply</a> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+        <ul class="children"> 
+         <div class="comment-503"> 
+          <div class="comment-post"> 
+           <div class="avatar">
+            <img alt="" src="http://1.gravatar.com/avatar/33fee86342e6898b4a87b0d319e08805?s=60&amp;d=http%3A%2F%2F1.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&amp;r=G" class="avatar avatar-60 photo" height="60" width="60">
+           </div> 
+           <div class="comment-text"> 
+            <h5>admin</h5> 
+            <div class="comment-date">
+             May 27th, 2013 on 10:34 am
+            </div> 
+            <p>In our case, the answer was not a single option, but we had to use different options and use a test case to pick up the right option. So, it was like trial and error, for each input!</p> 
+            <p>The main thing we did is set the filter option in textcleaner. For every images we run filter value varying from 10 to 100 in addition of 10?s. No single parameter helped, in our case, as we were picking different values form different images. But using these options, we generated enough samples to pick the best ones.</p> 
+            <div class="clr"></div> 
+            <div class="reply"> 
+             <a class="comment-reply-link" href="/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/?replytocom=503#respond" onclick="return addComment.moveForm(&quot;comment-503&quot;, &quot;503&quot;, &quot;respond&quot;, &quot;652&quot;)">Reply</a> 
+            </div> 
+           </div> 
+          </div> 
+         </div>  
+        </ul>  
+        <div class="comment-507"> 
+         <div class="comment-post"> 
+          <div class="avatar">
+           <img alt="" src="http://0.gravatar.com/avatar/e0fd9631d8e542d76f9336c7f903a9bf?s=60&amp;d=http%3A%2F%2F0.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&amp;r=G" class="avatar avatar-60 photo" height="60" width="60">
+          </div> 
+          <div class="comment-text"> 
+           <h5><a href="http://techtinker.net" rel="external nofollow" class="url">Dan G</a></h5> 
+           <div class="comment-date">
+            May 29th, 2013 on 3:53 pm
+           </div> 
+           <p>Thanks for the response.<br> I will try the -f 10,20,30…100 as you suggest – and then I will do a round of tests using algorithm 1,2 and 3 from your article – and pick the algorithm which best represents what a human would choose most often. I will then apply that algorithm choice (1,2,3) to the full set of tens of thousands of docs.<br> Probably it will not be the ideal algorithm in every single case – but it will probably be a lot better than the default Tesseract output in many cases.</p> 
+           <p>(One other thing I was thinking about was applying some fuzzy regex matching to correct mis-spellings or at least give options …. but that’s another problem <img src="http://vbridge.co.uk/wp-includes/images/smilies/icon_wink.gif" alt=";)" class="wp-smiley"> </p> 
+           <div class="clr"></div> 
+           <div class="reply"> 
+            <a class="comment-reply-link" href="/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/?replytocom=507#respond" onclick="return addComment.moveForm(&quot;comment-507&quot;, &quot;507&quot;, &quot;respond&quot;, &quot;652&quot;)">Reply</a> 
+           </div> 
+          </div> 
+         </div> 
+        </div>  
+        <div class="comment-955"> 
+         <div class="comment-post"> 
+          <div class="avatar">
+           <img alt="" src="http://1.gravatar.com/avatar/1c3418846613290c6300016cea243ba9?s=60&amp;d=http%3A%2F%2F1.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&amp;r=G" class="avatar avatar-60 photo" height="60" width="60">
+          </div> 
+          <div class="comment-text"> 
+           <h5>sumeet</h5> 
+           <div class="comment-date">
+            December 20th, 2013 on 2:30 pm
+           </div> 
+           <p>Can you please provide me sample code(in context of android or java) of above pre-processing.</p> 
+           <div class="clr"></div> 
+           <div class="reply"> 
+            <a class="comment-reply-link" href="/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/?replytocom=955#respond" onclick="return addComment.moveForm(&quot;comment-955&quot;, &quot;955&quot;, &quot;respond&quot;, &quot;652&quot;)">Reply</a> 
+           </div> 
+          </div> 
+         </div> 
+        </div>  
+        <div class="comment-1615"> 
+         <div class="comment-post"> 
+          <div class="avatar">
+           <img alt="" src="http://0.gravatar.com/avatar/833fbd3f58a8ebbeb43756e8634334ed?s=60&amp;d=http%3A%2F%2F0.gravatar.com%2Favatar%2Fad516503a11cd5ca435acc9bb6523536%3Fs%3D60&amp;r=G" class="avatar avatar-60 photo" height="60" width="60">
+          </div> 
+          <div class="comment-text"> 
+           <h5><a href="http://blog.firsthand.ca" rel="external nofollow" class="url">Nicholas Henry</a></h5> 
+           <div class="comment-date">
+            January 21st, 2014 on 8:22 pm
+           </div> 
+           <p>Very helpful information! Did you vary the filter parameter, or were there other parameters such as sharpamt or bluramt that you found helpful? Thank you for sharing.</p> 
+           <div class="clr"></div> 
+           <div class="reply"> 
+            <a class="comment-reply-link" href="/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/?replytocom=1615#respond" onclick="return addComment.moveForm(&quot;comment-1615&quot;, &quot;1615&quot;, &quot;respond&quot;, &quot;652&quot;)">Reply</a> 
+           </div> 
+          </div> 
+         </div> 
+        </div>  
+       </div> 
+       <div class="navigation"> 
+        <div class="alignleft"></div> 
+        <div class="alignright"></div> 
+        <div class="cleared"></div> 
+       </div> 
+       <div class="clr"></div> 
+       <div class="related-comment-title">
+        <h3>Leave a comment</h3>
+       </div>
+       <br> 
+       <div id="comment-form"> 
+        <div id="commentFormArea"> 
+         <div id="cancel-comment-reply"> 
+          <small><a rel="nofollow" id="cancel-comment-reply-link" href="/2012/11/05/how-we-tuned-tesseract-to-perform-as-well-as-a-commercial-ocr-package/#respond" style="display:none;">Click here to cancel reply.</a></small> 
+         </div> 
+         <form action="http://vbridge.co.uk/wp-comments-post.php" method="post" id="cForm"> 
+          <fieldset> 
+           <input type="text" size="25" name="author" id="author" value="" tabindex="1" aria-required="true" class="input-comment"> 
+           <label for="posName" class="label-comment">Name <span>(required)</span></label>
+           <br>
+           <br> 
+           <input type="text" name="email" id="email" value="" tabindex="2" aria-required="true" class="input-comment"> 
+           <label for="email" class="label-comment">Mail <span>(required)</span></label>
+           <br>
+           <br> 
+           <input type="text" name="url" id="url" value="" tabindex="3" class="input-comment"> 
+           <label for="url" class="label-comment">Website</label>
+           <br>
+           <br> 
+           <textarea name="comment" id="comment" cols="80" rows="10" tabindex="4" class="textarea-comment"></textarea>
+           <br>
+           <br> 
+           <!--<p><small><strong>XHTML:</strong> You can use these tags: &lt;a href=&quot;&quot; title=&quot;&quot;&gt; &lt;abbr title=&quot;&quot;&gt; &lt;acronym title=&quot;&quot;&gt; &lt;b&gt; &lt;blockquote cite=&quot;&quot;&gt; &lt;cite&gt; &lt;code&gt; &lt;del datetime=&quot;&quot;&gt; &lt;em&gt; &lt;i&gt; &lt;q cite=&quot;&quot;&gt; &lt;strike&gt; &lt;strong&gt; </small></p>--> 
+           <input name="submit" type="submit" id="submit" tabindex="5" value="" class="input-submit-comment"> 
+           <input type="hidden" name="comment_post_ID" value="652"> 
+           <input type="hidden" name="comment_post_ID" value="652" id="comment_post_ID"> 
+           <input type="hidden" name="comment_parent" id="comment_parent" value="0"> 
+           <style>.ssc_notice_b07968e4369921fe strong {display:none;}.ssc_notice_b07968e4369921fe:after {content:'\2018\0031\0038\0038\0038\0062\0031\0039\0032\0065\0034\0034\0030\0063\0062\0034\0031\0062\0030\0037\0039\0036\0038\0065\0034\0033\0036\0039\0039\0032\0031\0066\0065\2019';font-weight:bold;}</style>
+           <noscript>
+            <p class="ssc_notice_b07968e4369921fe">Notice: It seems you have Javascript disabled in your Browser. In order to submit a comment to this post, please write this code along with your comment: <strong aria-hidden="true">81b8b64484e96ec413908290ef7b1129</strong></p>
+           </noscript> 
+          </fieldset> 
+         </form> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="content-right"> 
+     <!-- begin of sidebar --> 
+     <!-- end of sidebar --> 
+     <div class="sidebar"> 
+      <h3>Latest News</h3> 
+      <ul class="sidebar-list"> 
+       <!-- begin of company-news --> 
+       <li><a href="http://vbridge.co.uk/2016/06/22/batch-process-for-bulk-upload-digital-agency/">Batch process for bulk upload ? A Digital Agency US - <strong>22 June 2016</strong></a></li> 
+       <li><a href="http://vbridge.co.uk/2014/05/07/shardb-hyperdb-and-multi-db-part-2/">SharDB, HyperDB and Multi-DB = Part 2 - <strong>07 May 2014</strong></a></li> 
+       <li><a href="http://vbridge.co.uk/2014/01/22/shardb-hyperdb-and-multi-db-part-1/">SharDB, HyperDB and Multi-DB = Part 1 - <strong>22 January 2014</strong></a></li> 
+       <li><a href="http://vbridge.co.uk/2013/11/21/zendesk-api-integration-to-get-ticket-details-daily/">ZenDesk API Integration to get ticket details daily - <strong>21 November 2013</strong></a></li> 
+       <!-- end of company-news --> 
+      </ul> 
+     </div> 
+     <div class="sidebar-bottom"></div> 
+     <div class="sidebar-bottom"></div> 
+    </div> 
+   </div> 
+   <!-- END OF CONTENT --> 
+   <!-- BEGIN OF FOOTER --> 
+   <div id="bottom-container"> 
+    <div id="footer-content"> 
+     <!-- begin of footer-address --> 
+     <div id="footer-address"> 
+      <p>vBridge</p> 
+      <p>5 Halter Close, Borehamwood,</p> 
+      <p>Greater London, WD6 2SN, United Kingdom</p> 
+      <p>Phone : +44 208 207 2254, +44 7722197496<br>Email : info@vbridge.co.uk</p> 
+     </div> 
+     <!-- end of footer-address --> 
+     <div id="footer-news"> 
+      <div class="footer-widget">
+       <h3>Blogs</h3> 
+       <blockquote>
+        <p>A Digital Agency US This PHP application is a support tool for Google Adwords MCC account with the help of the Adwords API client library. This </p>
+       </blockquote> 
+       <strong>Batch process for bulk upload ? A Digital Agency US</strong>
+       <div class="clr"></div>
+       <br> 
+      </div> 
+     </div> 
+     <!-- begin of footer-menu and copyright --> 
+     <div id="footer-last"> 
+      <div id="footer-menu"> 
+       <ul id="menu-footer" class="navigation-footer">
+        <li id="menu-item-394" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-394"><a class="dropdown-toggle" href="http://vbridge.co.uk/">Home</a></li> 
+        <li id="menu-item-494" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-494"><a class="dropdown-toggle" href="http://vbridge.co.uk/what-we-do/">What we do?</a></li> 
+        <li id="menu-item-493" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-493"><a class="dropdown-toggle" href="http://vbridge.co.uk/why-us/">Why us?</a></li> 
+        <li id="menu-item-502" class="menu-item menu-item-type-taxonomy menu-item-object-category menu-item-502"><a class="dropdown-toggle" href="http://vbridge.co.uk/category/testimonials/">Testimonials</a></li> 
+        <li id="menu-item-396" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-396"><a class="dropdown-toggle" href="http://vbridge.co.uk/blog/">Blog</a></li> 
+        <li id="menu-item-397" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-397"><a class="dropdown-toggle" href="http://vbridge.co.uk/contact/">Contact us</a></li> 
+       </ul> 
+      </div> 
+      <div id="footer-copyright">
+        Copyright 2014 vBridge. All rights reserved 
+      </div> 
+     </div> 
+     <!-- end of footer-menu and copyright --> 
+    </div> 
+   </div> 
+   <!-- END OF FOOTER --> 
+  </div> 
+  <script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-26839876-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script> 
+  <div id="mycontactform"> 
+  </div>  
+ </body>
+</html>

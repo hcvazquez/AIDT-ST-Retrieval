@@ -1,0 +1,334 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <title>An R script for Sentiment Analysis Using Google Natural Language Processing API</title> 
+  <meta name="description" content="Sentiment analysis is the process of computationally identifying and categorizing texts. In this case, we will be categorizing them into positive and negativ..."> 
+  <link rel="stylesheet" href="/css/main.css"> 
+  <link rel="canonical" href="http://yourdomain.com/blog/Google_NLP_SentimentAnalysis"> 
+  <link rel="alternate" type="application/rss+xml" title="SOCIOCOMP" href="http://yourdomain.com/feed.xml"> 
+ </head> 
+ <body> 
+  <header class="site-header"> 
+   <div class="wrapper"> 
+    <a class="site-title" href="/">SOCIOCOMP</a> 
+    <nav class="site-nav"> 
+     <a href="#" class="menu-icon"> 
+      <svg viewbox="0 0 18 15"> 
+       <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z" /> 
+       <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z" /> 
+       <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z" /> 
+      </svg> </a> 
+     <div class="trigger"> 
+      <a class="page-link" href="/about/">About</a> 
+     </div> 
+    </nav> 
+   </div> 
+  </header> 
+  <div class="page-content"> 
+   <div class="wrapper"> 
+    <article class="post" itemscope itemtype="http://schema.org/BlogPosting"> 
+     <header class="post-header"> 
+      <h1 class="post-title" itemprop="name headline">An R script for Sentiment Analysis Using Google Natural Language Processing API</h1> 
+      <p class="post-meta"><time datetime="2016-09-25T14:13:25+00:00" itemprop="datePublished">Sep 25, 2016</time></p> 
+     </header> 
+     <div class="post-content" itemprop="articleBody"> 
+      <p><em>By</em>: <a href="http://www.taylorwhittenbrown.com/">Taylor W. Brown</a></p> 
+      <p><br><br></p> 
+      <p>Google recently released several APIs for their natural language processing (NLP) tools, including sentiment analysis, sentence annotation, and named-entity recognition. In a <a href="https://taylorwhitten.github.io/blog/Google_NLP_Tutorial">prior tutorial</a>, I walked you through the named-entity recognition API in R. In a future tutorial, I’ll walk you through sentence annotation. This time, let’s do sentiment analysis. <br><br> <strong><em>What does this tutorial entail?</em></strong></p> 
+      <ul> 
+       <li>A script for accessing the Google NLP Sentiment Analysis API <em>from R</em>, as opposed to using the commandline, python, or javascript processes. <br><br></li> 
+      </ul> 
+      <center>
+        *NOTE: As usual, the following tutorial assumes basic understanding of R.* 
+      </center> 
+      <p><br><br></p> 
+      <h3 id="what-is-google-cloud">What is Google Cloud?</h3> 
+      <p>I talked about this in <a href="https://taylorwhitten.github.io/blog/Google_NLP_Tutorial">my first</a> tutorial on the Google NLP APIs, so be sure you check that out and set up an a Google Cloud Platform account before moving on with this tutorial. <br><br></p> 
+      <h3 id="what-is-the-google-nlp-api">What is the Google NLP API</h3> 
+      <p>The Google Cloud Natural Language API (currently in beta form) is based on Google’s natural language understanding research. It lets you easily uncover the structure of your text (if that text is in English, Spanish, or Japanese). The tools available include:</p> 
+      <ul> 
+       <li> <p>Sentiment Analysis: detect sentiment of a block of text</p> </li> 
+       <li> <p>Syntax Analysis: identify parts of speech and create dependency parse trees for each sentence to uncover the structure. Here is a <a href="https://cloud.google.com/blog/big-data/2016/07/using-the-cloud-natural-language-api-to-analyze-harry-potter-and-the-new-york-times">demo</a>.</p> </li> 
+       <li> <p>Entity Recognition: identify entities in block of text and label them with types (person, organization, location, events, products, and media) <br><br></p> </li> 
+      </ul> 
+      <h3 id="sentiment-analysis">Sentiment Analysis</h3> 
+      <p>Sentiment analysis is the process of computationally identifying and categorizing texts. In this case, we will be categorizing them into positive and negative sentiment (polarity), as well as identifying the strength of that sentiment (magnitude), using Google’s API.</p> 
+      <ul> 
+       <li> <p>Polarity: ranges between -1.0 (negative) and 1.0 (positive) and corresponds to the overall emotional leaning of the text.</p> </li> 
+       <li> <p>Magnitude: indicates the overall strength of emotion (both positive and negative) within the given text, between 0.0 and +inf. Unlike polarity, magnitude is not normalized; each expression of emotion within the text (both positive and negative) contributes to the text’s magnitude (so longer text blocks may have greater magnitudes).</p> </li> 
+      </ul> 
+      <p>If you’ve successfully set up your Google Cloud account, then we’re ready to use the sentiment analysis tool via the NLP API. You can do this with the commandline, or using a javascript/python/etc script. In this tutorial, however, I’ll show you how to use it directly from R. <br><br></p> 
+      <h4 id="load-packages">Load packages</h4> 
+      <p>First, we need to load the necessary R packages. The <a href="https://cran.r-project.org/web/packages/RJSONIO/RJSONIO.pdf"><code class="highlighter-rouge">RJSONIO</code></a> package converts information to and from data in <a href="http://www.json.org/">Javascript object notation (JSON)</a> format. <a href="https://cran.r-project.org/web/packages/googleAuthR/googleAuthR.pdf"><code class="highlighter-rouge">googleAuthR</code></a> makes authentication with Google OAuth2 API easy, and <a href="https://cran.r-project.org/web/packages/RCurl/RCurl.pdf"><code class="highlighter-rouge">RCurl</code></a> is a wrapper for libcurl that allow users to compose general HTTP requests and provides convenient functions to fetch URIs, get &amp; post forms, etc. and process the results returned by the Web server. The rest are just for data manipulation and visualization.</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>library(RJSONIO)
+library(googleAuthR)
+library(httr)
+library(RCurl)
+library(ggplot2)
+library(gridExtra)
+library(psych)
+library(dplyr)
+</code></pre> 
+      </div> 
+      <p><br><br></p> 
+      <h4 id="authenticate">Authenticate</h4> 
+      <p>Next we need to authenticate. <strong>In order to this, you need to have already downloaded a “service account key file”</strong> (see step 2 under ‘Make an Entity Analysis Request’ in <a href="https://cloud.google.com/natural-language/docs/getting-started">this link</a>). Once that files is downloaded, all we need to do is point to it using the <code class="highlighter-rouge">googleAuthR</code> package, as follows:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>service_token &lt;- gar_auth_service(json_file="&lt;Path/to/your/local/Service account key file&gt;")
+</code></pre> 
+      </div> 
+      <p><br><br></p> 
+      <h4 id="construct-and-execute-a-curl-command-from-r">Construct and execute a curl command from R</h4> 
+      <p>Now we write the code to access the sentiment analysis API. As you can see in <a href="https://cloud.google.com/natural-language/docs/getting-started">this example</a>, it is possible to do this through the command-line using a curl command. So, all we need to do is re-create that curl command (http request) from within R! For this example, I’ll be analysing the lyrics to Queen’s ‘Under Pressure’ …because that’s what just came on my playlist (as sung by David Bowie):</p> 
+      <blockquote> 
+       <p><sub><em>“Pressure pushing down on me Pressing down on you, no man ask for Under pressure that burns a building down Splits a family in two Puts people on streets It’s the terror of knowing What this world is about Watching some good friends Screaming, ‘Let me out!’ Tomorrow gets me higher Pressure on people - people on streets Chippin’ around, kick my brains ‘round the floor These are the days - it never rains but it pours People on streets - people on streets It’s the terror of knowing What this world is about Watching some good friends Screaming, ‘Let me out!’ Tomorrow gets me higher, higher, higher… Pressure on people - people on streets Turned away from it all like a blind man Sat on a fence but it don’t work Keep coming up with love but it’s so slashed and torn Why, why, why? Love Insanity laughs under pressure we’re cracking Can’t we give ourselves one more chance? Why can’t we give love that one more chance? Why can’t we give love, give love, give love, give love, give love, give love, give love, give love?.. ‘Cause love’s such an old-fashioned word And love dares you to care for The people on the edge of the night And love dares you to change our way of Caring about ourselves This is our last dance This is our last dance This is ourselves Under pressure Under pressure Pressure”</em></sub></p> 
+      </blockquote> 
+      <p>There are two pieces of external information that you will need from the Google Console API Manager (under ‘Credentials’).:</p> 
+      <ol> 
+       <li> <p>Server key</p> </li> 
+       <li> <p>Service account key (stored)</p> </li> 
+      </ol> 
+      <p>If you don’t see a service account key, <a href="https://console.developers.google.com/apis/credentials/serviceaccountkey?project=practicing-1379">make one</a>. Once you have these two bits of information, follow my lead:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code># Define your key and the base URL of the API
+base_sentiment &lt;- "https://language.googleapis.com/v1beta1/documents:analyzeSentiment?key="
+key &lt;- "&lt;your server key&gt;"
+
+# Choose a text to assess.
+lyric &lt;- "Pressure pushing down on me Pressing down on you, no man ask for Under pressure that burns a building down Splits a family in two Puts people on streets It's the terror of knowing What this world is about Watching some good friends Screaming, 'Let me out!' Tomorrow gets me higher Pressure on people - people on streets Chippin' around, kick my brains 'round the floor These are the days - it never rains but it pours People on streets - people on streets It's the terror of knowing What this world is about Watching some good friends Screaming, 'Let me out!' Tomorrow gets me higher, higher, higher... Pressure on people - people on streets Turned away from it all like a blind man Sat on a fence but it don't work Keep coming up with love but it's so slashed and torn Why, why, why? Love Insanity laughs under pressure we're cracking Can't we give ourselves one more chance? Why can't we give love that one more chance? Why can't we give love, give love, give love, give love, give love, give love, give love, give love?.. 'Cause love's such an old-fashioned word And love dares you to care for The people on the edge of the night And love dares you to change our way of Caring about ourselves This is our last dance This is our last dance This is ourselves Under pressure Under pressure Pressure"
+
+# Build the http request
+API_resultJSON &lt;- getURL(paste0(base_sentiment, key),
+         .opts = curlOptions(postfields = toJSON(list(document=list(type ="PLAIN_TEXT", content = bowie_lyric), encodingType = "UTF8")),
+                      httpheader = c("Content-Type" = "application/json",
+                                     Authorization = service_token)))
+</code></pre> 
+      </div> 
+      <p>Broken down, this command is as follows:</p> 
+      <ul> 
+       <li> <p><code class="highlighter-rouge">getURL(paste0(base_APIurl, key))</code> : write the API url with your server key attached</p> </li> 
+       <li> <p><code class="highlighter-rouge">.opts</code> : define the following curlOptions…</p> </li> 
+       <li> <p><code class="highlighter-rouge">postfields</code> : a JSON formatted version of the text that you want to evaluate (where <code class="highlighter-rouge">toJSON(list(document=list(type ="PLAIN_TEXT", content = "&lt;Bowie Lyric&gt;"), encodingType = "UTF8"))</code> writes the JSON)</p> </li> 
+       <li> <p><code class="highlighter-rouge">httpheader</code> : the headers for the http request</p> </li> 
+      </ul> 
+      <p>I encourage you to read the <a href="https://cran.r-project.org/web/packages/RCurl/RCurl.pdf"><code class="highlighter-rouge">RCurl</code></a> package documentation if you’re not following at this point. <br><br></p> 
+      <h4 id="examine-the-results">Examine the results</h4> 
+      <p>What do the results of our API request look like?</p> 
+      <p>A JSON.</p> 
+      <p>Let’s parse this JSON into it’s parts:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>API_results &lt;- fromJSON(API_resultJSON)
+
+API_results
+
+## $documentSentiment
+##  polarity magnitude
+##      -0.4       4.7
+##
+## $language
+## [1] "en"
+</code></pre> 
+      </div> 
+      <p>I suppose we shouldn’t be surprised that the idea of “under pressure” is a bit negative.</p> 
+      <center>
+       <iframe src="//giphy.com/embed/YgmczzYWY4DTO" width="180" height="247" frameborder="0" class="giphy-embed" allowfullscreen></iframe>
+      </center> 
+      <p><br><br></p> 
+      <h4 id="neat-but-what-if-we-wanted-to-save-the-results-in-a-dataframe">Neat, but what if we wanted to save the results in a dataframe?</h4> 
+      <p>Say I had a dataframe with a bunch of texts (news articles? interview transcripts? journal entries?) that I wanted to analyze. How would I add the polarity and magnitude of each text as variables to this dataframe? Well, I’ll show you.</p> 
+      <p>I don’t know where I got it, but I found a dataset of movie reviews on my computer. Half of the reviews are positive, and half are negative.</p> 
+      <p>First, I load the data:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code>load('/Users/taylorbrown/Google Drive/Projects Working/Blog_Posts/Google_NLP/movie_reviews.Rdata')
+</code></pre> 
+      </div> 
+      <p>The data has two columns: one that is the text of the review, and one that indicates whether the review is positive or negative. Here is a look at the first 5 reviews:</p> 
+      <table> 
+       <thead> 
+        <tr class="header"> 
+         <th align="left">review_txt</th> 
+         <th align="left">rev_type</th> 
+        </tr> 
+       </thead> 
+       <tbody> 
+        <tr class="odd"> 
+         <td align="left">plot : two teen couples go to a church party , drink and then drive . they get into an accident . one of the guys dies , but his girlfriend continues to see him in her life , and has nightmares . what's the deal ? watch the movie and " sorta " find out . . . critique : a mind-fuck movie for the teen generation that touches on a very cool idea , but presents it in a very bad package . which is what makes this review an even harder one to write , since i generally applaud films which attempt to break the mold , mess with your head and such ( lost highway &amp; memento ) , but there are good and bad ways of making all types of films , and these folks just didn't snag this one correctly . they seem to have taken this pretty neat concept , but executed it terribly . so what are the problems with the movie ? well , its main problem is that it's simply too jumbled . it starts off " normal " but then downshifts into this " fantasy " world in which you , as an audience member , have no idea what's going on . there are dreams , there are characters coming back from the dead , there are others who look like the dead , there are strange apparitions , there are disappearances , there are a looooot of chase scenes , there are tons of weird things that happen , and most of it is simply not explained . now i personally don't mind trying to unravel a film every now and then , but when all it does is give me the same clue over and over again , i get kind of fed up after a while , which is this film's biggest problem . it's obviously got this big secret to hide , but it seems to want to hide it completely until its final five minutes . and do they make things entertaining , thrilling or even engaging , in the meantime ? not really . the sad part is that the arrow and i both dig on flicks like this , so we actually figured most of it out by the half-way point , so all of the strangeness after that did start to make a little bit of sense , but it still didn't the make the film all that more entertaining . i guess the bottom line with movies like this is that you should always make sure that the audience is " into it " even before they are given the secret password to enter your world of understanding . i mean , showing melissa sagemiller running away from visions for about 20 minutes throughout the movie is just plain lazy ! ! okay , we get it . . . there are people chasing her and we don't know who they are . do we really need to see it over and over again ? how about giving us different scenes offering further insight into all of the strangeness going down in the movie ? apparently , the studio took this film away from its director and chopped it up themselves , and it shows . there might've been a pretty decent teen mind-fuck movie in here somewhere , but i guess " the suits " decided that turning it into a music video with little edge , would make more sense . the actors are pretty good for the most part , although wes bentley just seemed to be playing the exact same character that he did in american beauty , only in a new neighborhood . but my biggest kudos go out to sagemiller , who holds her own throughout the entire film , and actually has you feeling her character's unraveling . overall , the film doesn't stick because it doesn't entertain , it's confusing , it rarely excites and it feels pretty redundant for most of its runtime , despite a pretty cool ending and explanation to all of the craziness that came before it . oh , and by the way , this is not a horror or teen slasher flick . . . it's just packaged to look that way because someone is apparently assuming that the genre is still hot with the kids . it also wrapped production two years ago and has been sitting on the shelves ever since . whatever . . . skip it ! where's joblo coming from ? a nightmare of elm street 3 ( 7/10 ) - blair witch 2 ( 7/10 ) - the crow ( 9/10 ) - the crow : salvation ( 4/10 ) - lost highway ( 10/10 ) - memento ( 10/10 ) - the others ( 9/10 ) - stir of echoes ( 8/10 )</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="even"> 
+         <td align="left">the happy bastard's quick movie review damn that y2k bug . it's got a head start in this movie starring jamie lee curtis and another baldwin brother ( william this time ) in a story regarding a crew of a tugboat that comes across a deserted russian tech ship that has a strangeness to it when they kick the power back on . little do they know the power within . . . going for the gore and bringing on a few action sequences here and there , virus still feels very empty , like a movie going for all flash and no substance . we don't know why the crew was really out in the middle of nowhere , we don't know the origin of what took over the ship ( just that a big pink flashy thing hit the mir ) , and , of course , we don't know why donald sutherland is stumbling around drunkenly throughout . here , it's just " hey , let's chase these people around with some robots " . the acting is below average , even from the likes of curtis . you're more likely to get a kick out of her work in halloween h20 . sutherland is wasted and baldwin , well , he's acting like a baldwin , of course . the real star here are stan winston's robot design , some schnazzy cgi , and the occasional good gore shot , like picking into someone's brain . so , if robots and body parts really turn you on , here's your movie . otherwise , it's pretty much a sunken ship of a movie .</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="odd"> 
+         <td align="left">it is movies like these that make a jaded movie viewer thankful for the invention of the timex indiglo watch . based on the late 1960's television show by the same name , the mod squad tells the tale of three reformed criminals under the employ of the police to go undercover . however , things go wrong as evidence gets stolen and they are immediately under suspicion . of course , the ads make it seem like so much more . quick cuts , cool music , claire dane's nice hair and cute outfits , car chases , stuff blowing up , and the like . sounds like a cool movie , does it not ? after the first fifteen minutes , it quickly becomes apparent that it is not . the mod squad is certainly a slick looking production , complete with nice hair and costumes , but that simply isn't enough . the film is best described as a cross between an hour-long cop show and a music video , both stretched out into the span of an hour and a half . and with it comes every single clich ? . it doesn't really matter that the film is based on a television show , as most of the plot elements have been recycled from everything we've already seen . the characters and acting is nothing spectacular , sometimes even bordering on wooden . claire danes and omar epps deliver their lines as if they are bored , which really transfers onto the audience . the only one to escape relatively unscathed is giovanni ribisi , who plays the resident crazy man , ultimately being the only thing worth watching . unfortunately , even he's not enough to save this convoluted mess , as all the characters don't do much apart from occupying screen time . with the young cast , cool clothes , nice hair , and hip soundtrack , it appears that the film is geared towards the teenage mindset . despite an american 'r' rating ( which the content does not justify ) , the film is way too juvenile for the older mindset . information on the characters is literally spoon-fed to the audience ( would it be that hard to show us instead of telling us ? ) , dialogue is poorly written , and the plot is extremely predictable . the way the film progresses , you likely won't even care if the heroes are in any jeopardy , because you'll know they aren't . basing the show on a 1960's television show that nobody remembers is of questionable wisdom , especially when one considers the target audience and the fact that the number of memorable films based on television shows can be counted on one hand ( even one that's missing a finger or two ) . the number of times that i checked my watch ( six ) is a clear indication that this film is not one of them . it is clear that the film is nothing more than an attempt to cash in on the teenage spending dollar , judging from the rash of really awful teen-flicks that we've been seeing as of late . avoid this film at all costs .</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="even"> 
+         <td align="left">" quest for camelot " is warner bros . ' first feature-length , fully-animated attempt to steal clout from disney's cartoon empire , but the mouse has no reason to be worried . the only other recent challenger to their throne was last fall's promising , if flawed , 20th century fox production " anastasia , " but disney's " hercules , " with its lively cast and colorful palate , had her beat hands-down when it came time to crown 1997's best piece of animation . this year , it's no contest , as " quest for camelot " is pretty much dead on arrival . even the magic kingdom at its most mediocre -- that'd be " pocahontas " for those of you keeping score -- isn't nearly as dull as this . the story revolves around the adventures of free-spirited kayley ( voiced by jessalyn gilsig ) , the early-teen daughter of a belated knight from king arthur's round table . kayley's only dream is to follow in her father's footsteps , and she gets her chance when evil warlord ruber ( gary oldman ) , an ex-round table member-gone-bad , steals arthur's magical sword excalibur and accidentally loses it in a dangerous , booby-trapped forest . with the help of hunky , blind timberland-dweller garrett ( carey elwes ) and a two-headed dragon ( eric idle and don rickles ) that's always arguing with itself , kayley just might be able to break the medieval sexist mold and prove her worth as a fighter on arthur's side . " quest for camelot " is missing pure showmanship , an essential element if it's ever expected to climb to the high ranks of disney . there's nothing here that differentiates " quest " from something you'd see on any given saturday morning cartoon -- subpar animation , instantly forgettable songs , poorly-integrated computerized footage . ( compare kayley and garrett's run-in with the angry ogre to herc's battle with the hydra . i rest my case . ) even the characters stink -- none of them are remotely interesting , so much that the film becomes a race to see which one can out-bland the others . in the end , it's a tie -- they all win . that dragon's comedy shtick is awfully cloying , but at least it shows signs of a pulse . at least fans of the early-'90s tgif television line-up will be thrilled to find jaleel " urkel " white and bronson " balki " pinchot sharing the same footage . a few scenes are nicely realized ( though i'm at a loss to recall enough to be specific ) , and the actors providing the voice talent are enthusiastic ( though most are paired up with singers who don't sound a thing like them for their big musical moments -- jane seymour and celine dion ? ? ? ) . but one must strain through too much of this mess to find the good . aside from the fact that children will probably be as bored watching this as adults , " quest for camelot " 's most grievous error is its complete lack of personality . and personality , we learn from this mess , goes a very long way .</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="odd"> 
+         <td align="left">synopsis : a mentally unstable man undergoing psychotherapy saves a boy from a potentially fatal accident and then falls in love with the boy's mother , a fledgling restauranteur . unsuccessfully attempting to gain the woman's favor , he takes pictures of her and kills a number of people in his way . comments : stalked is yet another in a seemingly endless string of spurned-psychos-getting-their-revenge type movies which are a stable category in the 1990s film industry , both theatrical and direct-to-video . their proliferation may be due in part to the fact that they're typically inexpensive to produce ( no special effects , no big name stars ) and serve as vehicles to flash nudity ( allowing them to frequent late-night cable television ) . stalked wavers slightly from the norm in one respect : the psycho never actually has an affair ; on the contrary , he's rejected rather quickly ( the psycho typically is an ex-lover , ex-wife , or ex-husband ) . other than that , stalked is just another redundant entry doomed to collect dust on video shelves and viewed after midnight on cable . stalked does not provide much suspense , though that is what it sets out to do . interspersed throughout the opening credits , for instance , a serious-sounding narrator spouts statistics about stalkers and ponders what may cause a man to stalk ( it's implicitly implied that all stalkers are men ) while pictures of a boy are shown on the screen . after these credits , a snapshot of actor jay underwood appears . the narrator states that " this is the story of daryl gleason " and tells the audience that he is the stalker . of course , really , this is the story of restauranteur brooke daniels . if the movie was meant to be about daryl , then it should have been called stalker not stalked . okay . so we know who the stalker is even before the movie starts ; no guesswork required . stalked proceeds , then , as it begins : obvious , obvious , obvious . the opening sequence , contrived quite a bit , brings daryl and brooke ( the victim ) together . daryl obsesses over brooke , follows her around , and tries to woo her . ultimately rejected by her , his plans become more and more desperate and elaborate . these plans include the all-time , psycho-in-love , cliche : the murdered pet . for some reason , this genre's films require a dead pet to be found by the victim stalked . stalked is no exception ( it's a cat this time -- found in the shower ) . events like these lead to the inevitable showdown between stalker and stalked , where only one survives ( guess who it invariably always is and you'll guess the conclusion to this turkey ) . stalked's cast is uniformly adequate : not anything to write home about but also not all that bad either . jay underwood , as the stalker , turns toward melodrama a bit too much . he overdoes it , in other words , but he still manages to be creepy enough to pass as the type of stalker the story demands . maryam d'abo , about the only actor close to being a star here ( she played the bond chick in the living daylights ) , is equally adequate as the " stalked " of the title , even though she seems too ditzy at times to be a strong , independent business-owner . brooke ( d'abo ) needs to be ditzy , however , for the plot to proceed . toward the end , for example , brooke has her suspicions about daryl . to ensure he won't use it as another excuse to see her , brooke decides to return a toolbox he had left at her place to his house . does she just leave the toolbox at the door when no one answers ? of course not . she tries the door , opens it , and wanders around the house . when daryl returns , he enters the house , of course , so our heroine is in danger . somehow , even though her car is parked at the front of the house , right by the front door , daryl is oblivious to her presence inside . the whole episode places an incredible strain on the audience's suspension of disbelief and questions the validity of either character's intelligence . stalked receives two stars because , even though it is highly derivative and somewhat boring , it is not so bad that it cannot be watched . rated r mostly for several murder scenes and brief nudity in a strip bar , it is not as offensive as many other thrillers in this genre are . if you're in the mood for a good suspense film , though , stake out something else .</td> 
+         <td align="left">negative</td> 
+        </tr> 
+       </tbody> 
+      </table> 
+      <p><br><br></p> 
+      <p>Let’s see how well the Google sentiment analysis does and detecing these positive and negative texts. We’ll analyze each text using the sentmient analysis API, and save the results as variables in the dataframe:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code># Keep the original data untouched
+movie_rev_wSentiment &lt;- movie_rev_df
+
+# Create new variables
+movie_rev_wSentiment$polarity &lt;- ''
+movie_rev_wSentiment$magnitude &lt;- ''
+
+# Loop through the dataframe and get the sentiment analysis for each text, saving the
+# results to the new columns
+for (i in 1:nrow(movie_rev_wSentiment)){
+  API_resultJSON &lt;- getURL(paste0(base_sentiment, key),
+         # define the curl options
+         .opts = curlOptions(postfields = toJSON(list(document=list(type ="PLAIN_TEXT", content = movie_rev_wSentiment$review_txt[i]), encodingType = "UTF8")),
+                      httpheader = c("Content-Type" = "application/json",
+                                     Authorization = service_token)))
+  API_results &lt;- fromJSON(API_resultJSON)
+  movie_rev_wSentiment$polarity[i] &lt;- API_results[1][[1]][1]
+  movie_rev_wSentiment$magnitude[i] &lt;- API_results[1][[1]][2]
+  print(i)
+  Sys.sleep(sample(1:3, 1))
+}
+
+# Make sure the variables are numeric
+movie_rev_wSentiment$polarity &lt;- as.numeric(movie_rev_wSentiment$polarity)
+movie_rev_wSentiment$magnitude &lt;- as.numeric(movie_rev_wSentiment$magnitude)
+
+# Save the results
+setwd('/Users/taylorbrown/Google Drive/Projects Working/Blog_Posts/Google_NLP/')
+save(movie_rev_wSentiment, file = 'movie_reviews_wSentiment.Rdata')
+</code></pre> 
+      </div> 
+      <p><br><br></p> 
+      <p>Here are the results:</p> 
+      <table> 
+       <thead> 
+        <tr class="header"> 
+         <th align="left">review_txt</th> 
+         <th align="right">polarity</th> 
+         <th align="right">magnitude</th> 
+         <th align="left">rev_type</th> 
+        </tr> 
+       </thead> 
+       <tbody> 
+        <tr class="odd"> 
+         <td align="left">plot : two teen couples go to a church party , drink and then drive . they get into an accident . one of the guys dies , but his girlfriend continues to see him in her life , and has nightmares . what's the deal ? watch the movie and " sorta " find out . . . critique : a mind-fuck movie for the teen generation that touches on a very cool idea , but presents it in a very bad package . which is what makes this review an even harder one to write , since i generally applaud films which attempt to break the mold , mess with your head and such ( lost highway &amp; memento ) , but there are good and bad ways of making all types of films , and these folks just didn't snag this one correctly . they seem to have taken this pretty neat concept , but executed it terribly . so what are the problems with the movie ? well , its main problem is that it's simply too jumbled . it starts off " normal " but then downshifts into this " fantasy " world in which you , as an audience member , have no idea what's going on . there are dreams , there are characters coming back from the dead , there are others who look like the dead , there are strange apparitions , there are disappearances , there are a looooot of chase scenes , there are tons of weird things that happen , and most of it is simply not explained . now i personally don't mind trying to unravel a film every now and then , but when all it does is give me the same clue over and over again , i get kind of fed up after a while , which is this film's biggest problem . it's obviously got this big secret to hide , but it seems to want to hide it completely until its final five minutes . and do they make things entertaining , thrilling or even engaging , in the meantime ? not really . the sad part is that the arrow and i both dig on flicks like this , so we actually figured most of it out by the half-way point , so all of the strangeness after that did start to make a little bit of sense , but it still didn't the make the film all that more entertaining . i guess the bottom line with movies like this is that you should always make sure that the audience is " into it " even before they are given the secret password to enter your world of understanding . i mean , showing melissa sagemiller running away from visions for about 20 minutes throughout the movie is just plain lazy ! ! okay , we get it . . . there are people chasing her and we don't know who they are . do we really need to see it over and over again ? how about giving us different scenes offering further insight into all of the strangeness going down in the movie ? apparently , the studio took this film away from its director and chopped it up themselves , and it shows . there might've been a pretty decent teen mind-fuck movie in here somewhere , but i guess " the suits " decided that turning it into a music video with little edge , would make more sense . the actors are pretty good for the most part , although wes bentley just seemed to be playing the exact same character that he did in american beauty , only in a new neighborhood . but my biggest kudos go out to sagemiller , who holds her own throughout the entire film , and actually has you feeling her character's unraveling . overall , the film doesn't stick because it doesn't entertain , it's confusing , it rarely excites and it feels pretty redundant for most of its runtime , despite a pretty cool ending and explanation to all of the craziness that came before it . oh , and by the way , this is not a horror or teen slasher flick . . . it's just packaged to look that way because someone is apparently assuming that the genre is still hot with the kids . it also wrapped production two years ago and has been sitting on the shelves ever since . whatever . . . skip it ! where's joblo coming from ? a nightmare of elm street 3 ( 7/10 ) - blair witch 2 ( 7/10 ) - the crow ( 9/10 ) - the crow : salvation ( 4/10 ) - lost highway ( 10/10 ) - memento ( 10/10 ) - the others ( 9/10 ) - stir of echoes ( 8/10 )</td> 
+         <td align="right">-0.9</td> 
+         <td align="right">17.0</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="even"> 
+         <td align="left">the happy bastard's quick movie review damn that y2k bug . it's got a head start in this movie starring jamie lee curtis and another baldwin brother ( william this time ) in a story regarding a crew of a tugboat that comes across a deserted russian tech ship that has a strangeness to it when they kick the power back on . little do they know the power within . . . going for the gore and bringing on a few action sequences here and there , virus still feels very empty , like a movie going for all flash and no substance . we don't know why the crew was really out in the middle of nowhere , we don't know the origin of what took over the ship ( just that a big pink flashy thing hit the mir ) , and , of course , we don't know why donald sutherland is stumbling around drunkenly throughout . here , it's just " hey , let's chase these people around with some robots " . the acting is below average , even from the likes of curtis . you're more likely to get a kick out of her work in halloween h20 . sutherland is wasted and baldwin , well , he's acting like a baldwin , of course . the real star here are stan winston's robot design , some schnazzy cgi , and the occasional good gore shot , like picking into someone's brain . so , if robots and body parts really turn you on , here's your movie . otherwise , it's pretty much a sunken ship of a movie .</td> 
+         <td align="right">-0.8</td> 
+         <td align="right">3.9</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="odd"> 
+         <td align="left">it is movies like these that make a jaded movie viewer thankful for the invention of the timex indiglo watch . based on the late 1960's television show by the same name , the mod squad tells the tale of three reformed criminals under the employ of the police to go undercover . however , things go wrong as evidence gets stolen and they are immediately under suspicion . of course , the ads make it seem like so much more . quick cuts , cool music , claire dane's nice hair and cute outfits , car chases , stuff blowing up , and the like . sounds like a cool movie , does it not ? after the first fifteen minutes , it quickly becomes apparent that it is not . the mod squad is certainly a slick looking production , complete with nice hair and costumes , but that simply isn't enough . the film is best described as a cross between an hour-long cop show and a music video , both stretched out into the span of an hour and a half . and with it comes every single clich ? . it doesn't really matter that the film is based on a television show , as most of the plot elements have been recycled from everything we've already seen . the characters and acting is nothing spectacular , sometimes even bordering on wooden . claire danes and omar epps deliver their lines as if they are bored , which really transfers onto the audience . the only one to escape relatively unscathed is giovanni ribisi , who plays the resident crazy man , ultimately being the only thing worth watching . unfortunately , even he's not enough to save this convoluted mess , as all the characters don't do much apart from occupying screen time . with the young cast , cool clothes , nice hair , and hip soundtrack , it appears that the film is geared towards the teenage mindset . despite an american 'r' rating ( which the content does not justify ) , the film is way too juvenile for the older mindset . information on the characters is literally spoon-fed to the audience ( would it be that hard to show us instead of telling us ? ) , dialogue is poorly written , and the plot is extremely predictable . the way the film progresses , you likely won't even care if the heroes are in any jeopardy , because you'll know they aren't . basing the show on a 1960's television show that nobody remembers is of questionable wisdom , especially when one considers the target audience and the fact that the number of memorable films based on television shows can be counted on one hand ( even one that's missing a finger or two ) . the number of times that i checked my watch ( six ) is a clear indication that this film is not one of them . it is clear that the film is nothing more than an attempt to cash in on the teenage spending dollar , judging from the rash of really awful teen-flicks that we've been seeing as of late . avoid this film at all costs .</td> 
+         <td align="right">-0.6</td> 
+         <td align="right">13.7</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="even"> 
+         <td align="left">" quest for camelot " is warner bros . ' first feature-length , fully-animated attempt to steal clout from disney's cartoon empire , but the mouse has no reason to be worried . the only other recent challenger to their throne was last fall's promising , if flawed , 20th century fox production " anastasia , " but disney's " hercules , " with its lively cast and colorful palate , had her beat hands-down when it came time to crown 1997's best piece of animation . this year , it's no contest , as " quest for camelot " is pretty much dead on arrival . even the magic kingdom at its most mediocre -- that'd be " pocahontas " for those of you keeping score -- isn't nearly as dull as this . the story revolves around the adventures of free-spirited kayley ( voiced by jessalyn gilsig ) , the early-teen daughter of a belated knight from king arthur's round table . kayley's only dream is to follow in her father's footsteps , and she gets her chance when evil warlord ruber ( gary oldman ) , an ex-round table member-gone-bad , steals arthur's magical sword excalibur and accidentally loses it in a dangerous , booby-trapped forest . with the help of hunky , blind timberland-dweller garrett ( carey elwes ) and a two-headed dragon ( eric idle and don rickles ) that's always arguing with itself , kayley just might be able to break the medieval sexist mold and prove her worth as a fighter on arthur's side . " quest for camelot " is missing pure showmanship , an essential element if it's ever expected to climb to the high ranks of disney . there's nothing here that differentiates " quest " from something you'd see on any given saturday morning cartoon -- subpar animation , instantly forgettable songs , poorly-integrated computerized footage . ( compare kayley and garrett's run-in with the angry ogre to herc's battle with the hydra . i rest my case . ) even the characters stink -- none of them are remotely interesting , so much that the film becomes a race to see which one can out-bland the others . in the end , it's a tie -- they all win . that dragon's comedy shtick is awfully cloying , but at least it shows signs of a pulse . at least fans of the early-'90s tgif television line-up will be thrilled to find jaleel " urkel " white and bronson " balki " pinchot sharing the same footage . a few scenes are nicely realized ( though i'm at a loss to recall enough to be specific ) , and the actors providing the voice talent are enthusiastic ( though most are paired up with singers who don't sound a thing like them for their big musical moments -- jane seymour and celine dion ? ? ? ) . but one must strain through too much of this mess to find the good . aside from the fact that children will probably be as bored watching this as adults , " quest for camelot " 's most grievous error is its complete lack of personality . and personality , we learn from this mess , goes a very long way .</td> 
+         <td align="right">-0.5</td> 
+         <td align="right">10.7</td> 
+         <td align="left">negative</td> 
+        </tr> 
+        <tr class="odd"> 
+         <td align="left">synopsis : a mentally unstable man undergoing psychotherapy saves a boy from a potentially fatal accident and then falls in love with the boy's mother , a fledgling restauranteur . unsuccessfully attempting to gain the woman's favor , he takes pictures of her and kills a number of people in his way . comments : stalked is yet another in a seemingly endless string of spurned-psychos-getting-their-revenge type movies which are a stable category in the 1990s film industry , both theatrical and direct-to-video . their proliferation may be due in part to the fact that they're typically inexpensive to produce ( no special effects , no big name stars ) and serve as vehicles to flash nudity ( allowing them to frequent late-night cable television ) . stalked wavers slightly from the norm in one respect : the psycho never actually has an affair ; on the contrary , he's rejected rather quickly ( the psycho typically is an ex-lover , ex-wife , or ex-husband ) . other than that , stalked is just another redundant entry doomed to collect dust on video shelves and viewed after midnight on cable . stalked does not provide much suspense , though that is what it sets out to do . interspersed throughout the opening credits , for instance , a serious-sounding narrator spouts statistics about stalkers and ponders what may cause a man to stalk ( it's implicitly implied that all stalkers are men ) while pictures of a boy are shown on the screen . after these credits , a snapshot of actor jay underwood appears . the narrator states that " this is the story of daryl gleason " and tells the audience that he is the stalker . of course , really , this is the story of restauranteur brooke daniels . if the movie was meant to be about daryl , then it should have been called stalker not stalked . okay . so we know who the stalker is even before the movie starts ; no guesswork required . stalked proceeds , then , as it begins : obvious , obvious , obvious . the opening sequence , contrived quite a bit , brings daryl and brooke ( the victim ) together . daryl obsesses over brooke , follows her around , and tries to woo her . ultimately rejected by her , his plans become more and more desperate and elaborate . these plans include the all-time , psycho-in-love , cliche : the murdered pet . for some reason , this genre's films require a dead pet to be found by the victim stalked . stalked is no exception ( it's a cat this time -- found in the shower ) . events like these lead to the inevitable showdown between stalker and stalked , where only one survives ( guess who it invariably always is and you'll guess the conclusion to this turkey ) . stalked's cast is uniformly adequate : not anything to write home about but also not all that bad either . jay underwood , as the stalker , turns toward melodrama a bit too much . he overdoes it , in other words , but he still manages to be creepy enough to pass as the type of stalker the story demands . maryam d'abo , about the only actor close to being a star here ( she played the bond chick in the living daylights ) , is equally adequate as the " stalked " of the title , even though she seems too ditzy at times to be a strong , independent business-owner . brooke ( d'abo ) needs to be ditzy , however , for the plot to proceed . toward the end , for example , brooke has her suspicions about daryl . to ensure he won't use it as another excuse to see her , brooke decides to return a toolbox he had left at her place to his house . does she just leave the toolbox at the door when no one answers ? of course not . she tries the door , opens it , and wanders around the house . when daryl returns , he enters the house , of course , so our heroine is in danger . somehow , even though her car is parked at the front of the house , right by the front door , daryl is oblivious to her presence inside . the whole episode places an incredible strain on the audience's suspension of disbelief and questions the validity of either character's intelligence . stalked receives two stars because , even though it is highly derivative and somewhat boring , it is not so bad that it cannot be watched . rated r mostly for several murder scenes and brief nudity in a strip bar , it is not as offensive as many other thrillers in this genre are . if you're in the mood for a good suspense film , though , stake out something else .</td> 
+         <td align="right">-0.7</td> 
+         <td align="right">16.5</td> 
+         <td align="left">negative</td> 
+        </tr> 
+       </tbody> 
+      </table> 
+      <p>Now, remember that half of these were positive reviews, and half were negative. Let’s see if the sentiment analysis picked up on that by plotting the histograms for these two groups against one another:</p> 
+      <div class="highlighter-rouge">
+       <pre class="highlight"><code># Create a plot
+density_polarity &lt;- ggplot(movie_rev_wSentiment,
+                      aes(x = polarity))
+
+plt &lt;- density_polarity + geom_density(aes(fill = factor(rev_type)), alpha = 0.5) +
+  xlab("Polarity") +
+  ggtitle(paste0("Polarity Score by Review Type"))
+
+
+# Create a table plot
+negative &lt;- as.data.frame(describeBy(movie_rev_wSentiment$polarity,movie_rev_wSentiment$rev_type)[1])
+positive &lt;- as.data.frame(describeBy(movie_rev_wSentiment$polarity,movie_rev_wSentiment$rev_type)[2])
+
+colnames(positive) &lt;- c('vars', 'n', 'mean', 'sd', 'median', 'trimmed',
+                        'mad', 'min', 'max', 'range', 'skew', 'kurtosis', 'se')
+colnames(negative) &lt;- c('vars', 'n', 'mean', 'sd', 'median', 'trimmed',
+                        'mad', 'min', 'max', 'range', 'skew', 'kurtosis', 'se')
+positive$vars &lt;- 'positive'
+negative$vars &lt;- 'negative'
+summary_stats &lt;- rbind(positive, negative)
+summary_stats &lt;- select(summary_stats, vars, n, mean, sd, median, min, max, skew, kurtosis)
+
+# Set theme to allow for plotmath expressions
+tt &lt;- ttheme_default(colhead=list(fg_params = list(parse=TRUE)))
+tbl &lt;- tableGrob(summary_stats, rows=NULL, theme=tt)
+
+
+# Plot chart and table into one object
+grid.arrange(plt, tbl,
+             nrow=2,
+             as.table=TRUE,
+             heights=c(3,1))
+</code></pre> 
+      </div> 
+      <p><img src="https://taylorwhitten.github.io/assets/Sentiment-1.png" alt=""> <br><br></p> 
+      <p>Interesting, it looks to me as though either the API is better at detecting negative reviews, or the so-called “positive” reviews are more accurately just “neutral,” given that they have a polarity mean close to</p> 
+      <ol> 
+       <li>I wonder if the bad reviews are more intense: <img src="https://taylorwhitten.github.io/assets/Sentiment-2.png" alt=""></li> 
+      </ol> 
+      <p>Evidently not. People writing positive and negative reviews are equally emphatic…though of course there are more rigorous tests for this sort of thing. Moreover, we have to remember that magnitude score doesn’t take into account text length. Perhaps controlling for this we would see a difference. I’ll leave that to you.</p> 
+      <p>Enjoy!</p> 
+     </div> 
+    </article> 
+   </div> 
+  </div> 
+  <footer class="site-footer"> 
+   <div class="wrapper"> 
+    <h2 class="footer-heading">SOCIOCOMP</h2> 
+    <div class="footer-col-wrapper"> 
+     <div class="footer-col footer-col-1"> 
+      <ul class="contact-list"> 
+       <li>SOCIOCOMP</li> 
+       <li><a href="mailto:"></a></li> 
+      </ul> 
+     </div> 
+     <div class="footer-col footer-col-2"> 
+      <ul class="social-media-list"> 
+       <li> <a href="https://github.com/taylorwhitten"><span class="icon icon--github">
+          <svg viewbox="0 0 16 16">
+           <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z" />
+          </svg> </span><span class="username">taylorwhitten</span></a> </li> 
+       <li> <a href="https://twitter.com/taywhitten"><span class="icon icon--twitter">
+          <svg viewbox="0 0 16 16">
+           <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z" />
+          </svg> </span><span class="username">taywhitten</span></a> </li> 
+      </ul> 
+     </div> 
+     <div class="footer-col footer-col-3"> 
+      <p>A blog exploring the use of computational methods in the social sciences. </p> 
+     </div> 
+    </div> 
+   </div> 
+  </footer>   
+ </body>
+</html>

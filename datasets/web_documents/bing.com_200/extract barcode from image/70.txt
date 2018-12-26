@@ -1,0 +1,727 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <meta http-equiv="X-UA-Compatible" content="chrome=1"> 
+  <title>QuaggaJS, an advanced barcode-reader written in JavaScript</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> 
+  <meta name="copyright" content="This project is maintained by Christoph Oberhofer"> 
+  <meta name="description" content="QuaggaJS is an advanced barcode-reader written in JavaScript"> 
+  <meta name="keywords" content="barcode, javascript, canvas, computer vision, image processing, ean, code128"> 
+  <meta name="robots" content="index,follow"> 
+  <link rel="canonical" href="https://serratus.github.io/"> 
+  <link rel="stylesheet" href="https://serratus.github.io/quaggaJS/stylesheets/styles.css"> 
+  <link rel="stylesheet" href="https://serratus.github.io/quaggaJS/stylesheets/example.css"> 
+  <link rel="stylesheet" href="https://serratus.github.io/quaggaJS/stylesheets/pygment_trac.css"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"> 
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]--> 
+  <script>
+        var host = "serratus.github.io";
+        if ((host == window.location.host) && (window.location.protocol != "https:")) {
+            window.location.protocol = "https";
+        }
+    </script> 
+  <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-56318310-1', 'auto');
+      ga('send', 'pageview');
+
+    </script> 
+ </head> 
+ <body> 
+  <div class="wrapper"> 
+   <header> 
+    <h1><a href="/quaggaJS/"><img src="/quaggaJS/assets/code128.png" alt="QuaggaJS"></a></h1> 
+    <p>An advanced barcode-reader written in JavaScript</p> 
+    <nav class="side-nav"> 
+     <ul class="pages"> 
+      <li><a href="/quaggaJS/">Project Home</a></li> 
+      <li><a href="/quaggaJS/examples">Examples</a></li> 
+      <li><a href="/quaggaJS/v1.0.0-beta.1/examples">Examples (v1.0.0-beta)</a></li> 
+     </ul> 
+    </nav> 
+    <p class="view"><a href="https://github.com/serratus/quaggaJS">View the Project on GitHub <small>serratus/quaggaJS</small></a></p> 
+    <ul class="github"> 
+     <li><a href="https://github.com/serratus/quaggaJS/zipball/master">Download <strong>ZIP File</strong></a></li> 
+     <li><a href="https://github.com/serratus/quaggaJS/tarball/master">Download <strong>TAR Ball</strong></a></li> 
+     <li><a href="https://github.com/serratus/quaggaJS">Fork On <strong>GitHub</strong></a></li> 
+    </ul> 
+   </header> 
+   <section> 
+    <h1 id="quaggajs">quaggaJS</h1> 
+    <ul> 
+     <li><a href="#changelog">Changelog</a> (2017-06-07)</li> 
+     <li><a href="#browser-support">Browser Support</a></li> 
+     <li><a href="#installing">Installing</a></li> 
+     <li><a href="#gettingstarted">Getting Started</a></li> 
+     <li><a href="#api">API</a></li> 
+     <li><a href="#configobject">Configuration</a></li> 
+     <li><a href="#tipsandtricks">Tips &amp; Tricks</a></li> 
+     <li><a href="#sponsors">Sponsors</a></li> 
+    </ul> 
+    <h2 id="what-is-quaggajs">What is QuaggaJS?</h2> 
+    <p>QuaggaJS is a barcode-scanner entirely written in JavaScript supporting real- time localization and decoding of various types of barcodes such as <strong>EAN</strong>, <strong>CODE 128</strong>, <strong>CODE 39</strong>, <strong>EAN 8</strong>, <strong>UPC-A</strong>, <strong>UPC-C</strong>, <strong>I2of5</strong>, <strong>2of5</strong>, <strong>CODE 93</strong> and <strong>CODABAR</strong>. The library is also capable of using <code class="highlighter-rouge">getUserMedia</code> to get direct access to the user’s camera stream. Although the code relies on heavy image-processing even recent smartphones are capable of locating and decoding barcodes in real-time.</p> 
+    <p>Try some <a href="https://serratus.github.io/quaggaJS/examples">examples</a> and check out the blog post (<a href="http://www.oberhofer.co/how-barcode-localization-works-in-quaggajs/">How barcode-localization works in QuaggaJS</a>) if you want to dive deeper into this topic.</p> 
+    <p><img src="https://raw.githubusercontent.com/serratus/quaggaJS/master/doc/img/mobile-located.png" alt="teaser"><img src="https://raw.githubusercontent.com/serratus/quaggaJS/master/doc/img/mobile-detected.png" alt="teaser"></p> 
+    <h2 id="yet-another-barcode-library">Yet another barcode library?</h2> 
+    <p>This is not yet another port of the great <a href="https://github.com/zxing/zxing">zxing</a> library, but more of an extension to it. This implementation features a barcode locator which is capable of finding a barcode-like pattern in an image resulting in an estimated bounding box including the rotation. Simply speaking, this reader is invariant to scale and rotation, whereas other libraries require the barcode to be aligned with the viewport.</p> 
+    <h2 id="browser-support"><a name="browser-support">Browser Support</a></h2> 
+    <p>Quagga makes use of many modern Web-APIs which are not implemented by all browsers yet. There are two modes in which Quagga operates: 1. analyzing static images and 2. using a camera to decode the images from a live-stream. The latter requires the presence of the MediaDevices API. You can track the compatibility of the used Web-APIs for each mode:</p> 
+    <ul> 
+     <li><a href="http://caniuse.com/#feat=webworkers,canvas,typedarrays,bloburls,blobbuilder">Static Images</a></li> 
+     <li><a href="http://caniuse.com/#feat=webworkers,canvas,typedarrays,bloburls,blobbuilder,stream">Live Stream</a></li> 
+    </ul> 
+    <h3 id="static-images">Static Images</h3> 
+    <p>The following APIs need to be implemented in your browser:</p> 
+    <ul> 
+     <li><a href="http://caniuse.com/#feat=webworkers">webworkers</a></li> 
+     <li><a href="http://caniuse.com/#feat=canvas">canvas</a></li> 
+     <li><a href="http://caniuse.com/#feat=typedarrays">typedarrays</a></li> 
+     <li><a href="http://caniuse.com/#feat=bloburls">bloburls</a></li> 
+     <li><a href="http://caniuse.com/#feat=blobbuilder">blobbuilder</a></li> 
+    </ul> 
+    <h3 id="live-stream">Live Stream</h3> 
+    <p>In addition to the APIs mentioned above:</p> 
+    <ul> 
+     <li><a href="http://caniuse.com/#feat=stream">MediaDevices</a></li> 
+    </ul> 
+    <h2 id="installing"><a name="installing">Installing</a></h2> 
+    <p>QuaggaJS can be installed using <strong>npm</strong>, <strong>bower</strong>, or by including it with the <strong>script</strong> tag.</p> 
+    <h3 id="npm">NPM</h3> 
+    <div class="language-console highlighter-rouge">
+     <pre class="highlight"><code>&gt; npm install quagga
+</code></pre> 
+    </div> 
+    <p>And then import it as dependency in your project:</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="kr">import</span> <span class="nx">Quagga</span> <span class="nx">from</span> <span class="s1">'quagga'</span><span class="p">;</span> <span class="c1">// ES6</span>
+<span class="kr">const</span> <span class="nx">Quagga</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'quagga'</span><span class="p">).</span><span class="k">default</span><span class="p">;</span> <span class="c1">// Common JS (important: default)</span>
+</code></pre> 
+    </div> 
+    <p>Currently, the full functionality is only available through the browser. When using QuaggaJS within <strong>node</strong>, only file-based decoding is available. See the example for <a href="#node-example">node_examples</a>.</p> 
+    <h3 id="bower">Bower</h3> 
+    <p>You can also install QuaggaJS through <strong>bower</strong>:</p> 
+    <div class="language-console highlighter-rouge">
+     <pre class="highlight"><code>&gt; bower install quagga
+</code></pre> 
+    </div> 
+    <h3 id="script-tag-anno-1998">Script-Tag Anno 1998</h3> 
+    <p>You can simply include <code class="highlighter-rouge">dist/quagga.min.js</code> in your project and you are ready to go. The script exposes the library on the global namespace under <code class="highlighter-rouge">Quagga</code>.</p> 
+    <h2 id="getting-started"><a name="gettingstarted">Getting Started</a></h2> 
+    <p>For starters, have a look at the <a href="https://serratus.github.io/quaggaJS/examples">examples</a> to get an idea where to go from here.</p> 
+    <h2 id="building"><a name="Building">Building</a></h2> 
+    <p>You can build the library yourself by simply cloning the repo and typing:</p> 
+    <div class="language-console highlighter-rouge">
+     <pre class="highlight"><code>&gt; npm install
+&gt; npm run build
+</code></pre> 
+    </div> 
+    <p>This npm script builds a non optimized version <code class="highlighter-rouge">quagga.js</code> and a minified version <code class="highlighter-rouge">quagga.min.js</code> and places both files in the <code class="highlighter-rouge">dist</code> folder. Additionally, a <code class="highlighter-rouge">quagga.map</code> source-map is placed alongside these files. This file is only valid for the non-uglified version <code class="highlighter-rouge">quagga.js</code> because the minified version is altered after compression and does not align with the map file any more.</p> 
+    <h3 id="node">Node</h3> 
+    <p>The code in the <code class="highlighter-rouge">dist</code> folder is only targeted to the browser and won’t work in node due to the dependency on the DOM. For the use in node, the <code class="highlighter-rouge">build</code> command also creates a <code class="highlighter-rouge">quagga.js</code> file in the <code class="highlighter-rouge">lib</code> folder.</p> 
+    <h2 id="api"><a name="api">API</a></h2> 
+    <p>You can check out the <a href="https://serratus.github.io/quaggaJS/examples">examples</a> to get an idea of how to use QuaggaJS. Basically the library exposes the following API:</p> 
+    <h3 id="quaggainitconfig-callback"><a name="quaggainit">Quagga.init(config, callback)</a></h3> 
+    <p>This method initializes the library for a given configuration <code class="highlighter-rouge">config</code> (see below) and invokes the <code class="highlighter-rouge">callback(err)</code> when Quagga has finished its bootstrapping phase. The initialization process also requests for camera access if real-time detection is configured. In case of an error, the <code class="highlighter-rouge">err</code> parameter is set and contains information about the cause. A potential cause may be the <code class="highlighter-rouge">inputStream.type</code> is set to <code class="highlighter-rouge">LiveStream</code>, but the browser does not support this API, or simply if the user denies the permission to use the camera.</p> 
+    <p>If you do not specify a target, QuaggaJS would look for an element that matches the CSS selector <code class="highlighter-rouge">#interactive.viewport</code> (for backwards compatibility). <code class="highlighter-rouge">target</code> can be a string (CSS selector matching one of your DOM node) or a DOM node.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="nx">Quagga</span><span class="p">.</span><span class="nx">init</span><span class="p">({</span>
+    <span class="na">inputStream</span> <span class="p">:</span> <span class="p">{</span>
+      <span class="na">name</span> <span class="p">:</span> <span class="s2">"Live"</span><span class="p">,</span>
+      <span class="na">type</span> <span class="p">:</span> <span class="s2">"LiveStream"</span><span class="p">,</span>
+      <span class="na">target</span><span class="p">:</span> <span class="nb">document</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">'#yourElement'</span><span class="p">)</span>    <span class="c1">// Or '#yourElement' (optional)</span>
+    <span class="p">},</span>
+    <span class="na">decoder</span> <span class="p">:</span> <span class="p">{</span>
+      <span class="na">readers</span> <span class="p">:</span> <span class="p">[</span><span class="s2">"code_128_reader"</span><span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+          <span class="k">return</span>
+      <span class="p">}</span>
+      <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Initialization finished. Ready to start"</span><span class="p">);</span>
+      <span class="nx">Quagga</span><span class="p">.</span><span class="nx">start</span><span class="p">();</span>
+  <span class="p">});</span>
+</code></pre> 
+    </div> 
+    <h3 id="quaggastart">Quagga.start()</h3> 
+    <p>When the library is initialized, the <code class="highlighter-rouge">start()</code> method starts the video-stream and begins locating and decoding the images.</p> 
+    <h3 id="quaggastop">Quagga.stop()</h3> 
+    <p>If the decoder is currently running, after calling <code class="highlighter-rouge">stop()</code> the decoder does not process any more images. Additionally, if a camera-stream was requested upon initialization, this operation also disconnects the camera.</p> 
+    <h3 id="quaggaonprocessedcallback">Quagga.onProcessed(callback)</h3> 
+    <p>This method registers a <code class="highlighter-rouge">callback(data)</code> function that is called for each frame after the processing is done. The <code class="highlighter-rouge">data</code> object contains detailed information about the success/failure of the operation. The output varies, depending whether the detection and/or decoding were successful or not.</p> 
+    <h3 id="quaggaondetectedcallback">Quagga.onDetected(callback)</h3> 
+    <p>Registers a <code class="highlighter-rouge">callback(data)</code> function which is triggered whenever a barcode- pattern has been located and decoded successfully. The passed <code class="highlighter-rouge">data</code> object contains information about the decoding process including the detected code which can be obtained by calling <code class="highlighter-rouge">data.codeResult.code</code>.</p> 
+    <h3 id="quaggadecodesingleconfig-callback">Quagga.decodeSingle(config, callback)</h3> 
+    <p>In contrast to the calls described above, this method does not rely on <code class="highlighter-rouge">getUserMedia</code> and operates on a single image instead. The provided callback is the same as in <code class="highlighter-rouge">onDetected</code> and contains the result <code class="highlighter-rouge">data</code> object.</p> 
+    <h3 id="quaggaoffprocessedhandler">Quagga.offProcessed(handler)</h3> 
+    <p>In case the <code class="highlighter-rouge">onProcessed</code> event is no longer relevant, <code class="highlighter-rouge">offProcessed</code> removes the given <code class="highlighter-rouge">handler</code> from the event-queue.</p> 
+    <h3 id="quaggaoffdetectedhandler">Quagga.offDetected(handler)</h3> 
+    <p>In case the <code class="highlighter-rouge">onDetected</code> event is no longer relevant, <code class="highlighter-rouge">offDetected</code> removes the given <code class="highlighter-rouge">handler</code> from the event-queue.</p> 
+    <h2 id="the-result-object"><a name="resultobject">The result object</a></h2> 
+    <p>The callbacks passed into <code class="highlighter-rouge">onProcessed</code>, <code class="highlighter-rouge">onDetected</code> and <code class="highlighter-rouge">decodeSingle</code> receive a <code class="highlighter-rouge">data</code> object upon execution. The <code class="highlighter-rouge">data</code> object contains the following information. Depending on the success, some fields may be <code class="highlighter-rouge">undefined</code> or just empty.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="p">{</span>
+  <span class="s2">"codeResult"</span><span class="err">:</span> <span class="p">{</span>
+    <span class="s2">"code"</span><span class="err">:</span> <span class="s2">"FANAVF1461710"</span><span class="p">,</span>  <span class="c1">// the decoded code as a string</span>
+    <span class="s2">"format"</span><span class="err">:</span> <span class="s2">"code_128"</span><span class="p">,</span> <span class="c1">// or code_39, codabar, ean_13, ean_8, upc_a, upc_e</span>
+    <span class="s2">"start"</span><span class="err">:</span> <span class="mi">355</span><span class="p">,</span>
+    <span class="s2">"end"</span><span class="err">:</span> <span class="mi">26</span><span class="p">,</span>
+    <span class="s2">"codeset"</span><span class="err">:</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="s2">"startInfo"</span><span class="err">:</span> <span class="p">{</span>
+      <span class="s2">"error"</span><span class="err">:</span> <span class="mf">1.0000000000000002</span><span class="p">,</span>
+      <span class="s2">"code"</span><span class="err">:</span> <span class="mi">104</span><span class="p">,</span>
+      <span class="s2">"start"</span><span class="err">:</span> <span class="mi">21</span><span class="p">,</span>
+      <span class="s2">"end"</span><span class="err">:</span> <span class="mi">41</span>
+    <span class="p">},</span>
+    <span class="s2">"decodedCodes"</span><span class="err">:</span> <span class="p">[{</span>
+      <span class="s2">"code"</span><span class="p">:</span> <span class="mi">104</span><span class="p">,</span>
+      <span class="s2">"start"</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>
+      <span class="s2">"end"</span><span class="p">:</span> <span class="mi">41</span>
+    <span class="p">},</span>
+    <span class="c1">// stripped for brevity</span>
+    <span class="p">{</span>
+      <span class="s2">"error"</span><span class="p">:</span> <span class="mf">0.8888888888888893</span><span class="p">,</span>
+      <span class="s2">"code"</span><span class="p">:</span> <span class="mi">106</span><span class="p">,</span>
+      <span class="s2">"start"</span><span class="p">:</span> <span class="mi">328</span><span class="p">,</span>
+      <span class="s2">"end"</span><span class="p">:</span> <span class="mi">350</span>
+    <span class="p">}],</span>
+    <span class="s2">"endInfo"</span><span class="err">:</span> <span class="p">{</span>
+      <span class="s2">"error"</span><span class="err">:</span> <span class="mf">0.8888888888888893</span><span class="p">,</span>
+      <span class="s2">"code"</span><span class="err">:</span> <span class="mi">106</span><span class="p">,</span>
+      <span class="s2">"start"</span><span class="err">:</span> <span class="mi">328</span><span class="p">,</span>
+      <span class="s2">"end"</span><span class="err">:</span> <span class="mi">350</span>
+    <span class="p">},</span>
+    <span class="s2">"direction"</span><span class="err">:</span> <span class="o">-</span><span class="mi">1</span>
+  <span class="p">},</span>
+  <span class="s2">"line"</span><span class="err">:</span> <span class="p">[{</span>
+    <span class="s2">"x"</span><span class="p">:</span> <span class="mf">25.97278706156836</span><span class="p">,</span>
+    <span class="s2">"y"</span><span class="p">:</span> <span class="mf">360.5616435369468</span>
+  <span class="p">},</span> <span class="p">{</span>
+    <span class="s2">"x"</span><span class="p">:</span> <span class="mf">401.9220519377024</span><span class="p">,</span>
+    <span class="s2">"y"</span><span class="p">:</span> <span class="mf">70.87524989906444</span>
+  <span class="p">}],</span>
+  <span class="s2">"angle"</span><span class="err">:</span> <span class="o">-</span><span class="mf">0.6565217179979483</span><span class="p">,</span>
+  <span class="s2">"pattern"</span><span class="err">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="cm">/* ... */</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="s2">"box"</span><span class="err">:</span> <span class="p">[</span>
+    <span class="p">[</span><span class="mf">77.4074243622672</span><span class="p">,</span> <span class="mf">410.9288668804402</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">0.050203235235130705</span><span class="p">,</span> <span class="mf">310.53619724086366</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">360.15706727788256</span><span class="p">,</span> <span class="mf">33.05711026051813</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">437.5142884049146</span><span class="p">,</span> <span class="mf">133.44977990009465</span><span class="p">]</span>
+  <span class="p">],</span>
+  <span class="s2">"boxes"</span><span class="err">:</span> <span class="p">[</span>
+    <span class="p">[</span>
+      <span class="p">[</span><span class="mf">77.4074243622672</span><span class="p">,</span> <span class="mf">410.9288668804402</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">0.050203235235130705</span><span class="p">,</span> <span class="mf">310.53619724086366</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">360.15706727788256</span><span class="p">,</span> <span class="mf">33.05711026051813</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">437.5142884049146</span><span class="p">,</span> <span class="mf">133.44977990009465</span><span class="p">]</span>
+    <span class="p">],</span>
+    <span class="p">[</span>
+      <span class="p">[</span><span class="mf">248.90769330706507</span><span class="p">,</span> <span class="mf">415.2041489551161</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">198.9532321622869</span><span class="p">,</span> <span class="mf">352.62160512937635</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">339.546160777576</span><span class="p">,</span> <span class="mf">240.3979259789976</span><span class="p">],</span>
+      <span class="p">[</span><span class="mf">389.5006219223542</span><span class="p">,</span> <span class="mf">302.98046980473737</span><span class="p">]</span>
+    <span class="p">]</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <h2 id="configuration"><a name="configobject">Configuration</a></h2> 
+    <p>The configuration that ships with QuaggaJS covers the default use-cases and can be fine-tuned for specific requirements.</p> 
+    <p>The configuration is managed by the <code class="highlighter-rouge">config</code> object defining the following high-level properties:</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">numOfWorkers</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="nx">locate</span><span class="err">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nx">inputStream</span><span class="err">:</span> <span class="p">{...},</span>
+  <span class="nx">frequency</span><span class="err">:</span> <span class="mi">10</span><span class="p">,</span>
+  <span class="nx">decoder</span><span class="err">:</span><span class="p">{...},</span>
+  <span class="nx">locator</span><span class="err">:</span> <span class="p">{...},</span>
+  <span class="nx">debug</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <h3 id="numofworkers">numOfWorkers</h3> 
+    <p>QuaggaJS supports web-workers out of the box and runs with <code class="highlighter-rouge">4</code> workers in its default configuration. The number should align with the number of cores available in your targeted devices.</p> 
+    <p>In case you don’t know the number upfront, or if the variety of devices is too big, you can either use <code class="highlighter-rouge">navigator.hardwareConcurrency</code> (see <a href="https://wiki.whatwg.org/wiki/Navigator_HW_Concurrency">here</a>) where available or make use of <a href="https://github.com/oftn/core-estimator">core-estimator</a>.</p> 
+    <h3 id="locate">locate</h3> 
+    <p>One of the main features of QuaggaJS is its ability to locate a barcode in a given image. The <code class="highlighter-rouge">locate</code> property controls whether this feature is turned on (default) or off.</p> 
+    <p>Why would someone turn this feature off? Localizing a barcode is a computationally expensive operation and might not work properly on some devices. Another reason would be the lack of auto-focus producing blurry images which makes the localization feature very unstable.</p> 
+    <p>However, even if none of the above apply, there is one more case where it might be useful to disable <code class="highlighter-rouge">locate</code>: If the orientation, and/or the approximate position of the barcode is known, or if you want to guide the user through a rectangular outline. This can increase performance and robustness at the same time.</p> 
+    <h3 id="inputstream">inputStream</h3> 
+    <p>The <code class="highlighter-rouge">inputStream</code> property defines the sources of images/videos within QuaggaJS.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">name</span><span class="p">:</span> <span class="s2">"Live"</span><span class="p">,</span>
+  <span class="nx">type</span><span class="err">:</span> <span class="s2">"LiveStream"</span><span class="p">,</span>
+  <span class="nx">constraints</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nl">width</span><span class="p">:</span> <span class="mi">640</span><span class="p">,</span>
+    <span class="nx">height</span><span class="err">:</span> <span class="mi">480</span><span class="p">,</span>
+    <span class="nx">facingMode</span><span class="err">:</span> <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="nx">deviceId</span><span class="err">:</span> <span class="s2">"7832475934759384534"</span>
+  <span class="p">},</span>
+  <span class="nx">area</span><span class="err">:</span> <span class="p">{</span> <span class="c1">// defines rectangle of the detection/localization area</span>
+    <span class="nl">top</span><span class="p">:</span> <span class="s2">"0%"</span><span class="p">,</span>    <span class="c1">// top offset</span>
+    <span class="nx">right</span><span class="err">:</span> <span class="s2">"0%"</span><span class="p">,</span>  <span class="c1">// right offset</span>
+    <span class="nx">left</span><span class="err">:</span> <span class="s2">"0%"</span><span class="p">,</span>   <span class="c1">// left offset</span>
+    <span class="nx">bottom</span><span class="err">:</span> <span class="s2">"0%"</span>  <span class="c1">// bottom offset</span>
+  <span class="p">},</span>
+  <span class="nx">singleChannel</span><span class="err">:</span> <span class="kc">false</span> <span class="c1">// true: only the red color-channel is read</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <p>First, the <code class="highlighter-rouge">type</code> property can be set to three different values: <code class="highlighter-rouge">ImageStream</code>, <code class="highlighter-rouge">VideoStream</code>, or <code class="highlighter-rouge">LiveStream</code> (default) and should be selected depending on the use-case. Most probably, the default value is sufficient.</p> 
+    <p>Second, the <code class="highlighter-rouge">constraint</code> key defines the physical dimensions of the input image and additional properties, such as <code class="highlighter-rouge">facingMode</code> which sets the source of the user’s camera in case of multiple attached devices. Additionally, if required, the <code class="highlighter-rouge">deviceId</code> can be set if the selection of the camera is given to the user. This can be easily achieved via <a href="https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/enumerateDevices">MediaDevices.enumerateDevices()</a></p> 
+    <p>Thirdly, the <code class="highlighter-rouge">area</code> prop restricts the decoding area of the image. The values are given in percentage, similar to the CSS style property when using <code class="highlighter-rouge">position: absolute</code>. This <code class="highlighter-rouge">area</code> is also useful in cases the <code class="highlighter-rouge">locate</code> property is set to <code class="highlighter-rouge">false</code>, defining the rectangle for the user.</p> 
+    <p>The last key <code class="highlighter-rouge">singleChannel</code> is only relevant in cases someone wants to debug erroneous behavior of the decoder. If set to <code class="highlighter-rouge">true</code> the input image’s red color-channel is read instead of calculating the gray-scale values of the source’s RGB. This is useful in combination with the <code class="highlighter-rouge">ResultCollector</code> where the gray-scale representations of the wrongly identified images are saved.</p> 
+    <h3 id="frequency">frequency</h3> 
+    <p>This top-level property controls the scan-frequency of the video-stream. It’s optional and defines the maximum number of scans per second. This renders useful for cases where the scan-session is long-running and resources such as CPU power are of concern.</p> 
+    <h3 id="decoder">decoder</h3> 
+    <p>QuaggaJS usually runs in a two-stage manner (<code class="highlighter-rouge">locate</code> is set to <code class="highlighter-rouge">true</code>) where, after the barcode is located, the decoding process starts. Decoding is the process of converting the bars into its true meaning. Most of the configuration options within the <code class="highlighter-rouge">decoder</code> are for debugging/visualization purposes only.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">readers</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s1">'code_128_reader'</span>
+  <span class="p">],</span>
+  <span class="nx">debug</span><span class="err">:</span> <span class="p">{</span>
+      <span class="nl">drawBoundingBox</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">showFrequency</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">drawScanline</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">showPattern</span><span class="err">:</span> <span class="kc">false</span>
+  <span class="p">}</span>
+  <span class="nl">multiple</span><span class="p">:</span> <span class="kc">false</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <p>The most important property is <code class="highlighter-rouge">readers</code> which takes an array of types of barcodes which should be decoded during the session. Possible values are:</p> 
+    <ul> 
+     <li>code_128_reader (default)</li> 
+     <li>ean_reader</li> 
+     <li>ean_8_reader</li> 
+     <li>code_39_reader</li> 
+     <li>code_39_vin_reader</li> 
+     <li>codabar_reader</li> 
+     <li>upc_reader</li> 
+     <li>upc_e_reader</li> 
+     <li>i2of5_reader</li> 
+     <li>2of5_reader</li> 
+     <li>code_93_reader</li> 
+    </ul> 
+    <p>Why are not all types activated by default? Simply because one should explicitly define the set of barcodes for their use-case. More decoders means more possible clashes, or false-positives. One should take care of the order the readers are given, since some might return a value even though it is not the correct type (EAN-13 vs. UPC-A).</p> 
+    <p>The <code class="highlighter-rouge">multiple</code> property tells the decoder if it should continue decoding after finding a valid barcode. If multiple is set to <code class="highlighter-rouge">true</code>, the results will be returned as an array of result objects. Each object in the array will have a <code class="highlighter-rouge">box</code>, and may have a <code class="highlighter-rouge">codeResult</code> depending on the success of decoding the individual box.</p> 
+    <p>The remaining properties <code class="highlighter-rouge">drawBoundingBox</code>, <code class="highlighter-rouge">showFrequency</code>, <code class="highlighter-rouge">drawScanline</code> and <code class="highlighter-rouge">showPattern</code> are mostly of interest during debugging and visualization.</p> 
+    <h4 id="enabling-extended-ean"><a name="ean_extended">Enabling extended EAN</a></h4> 
+    <p>The default setting for <code class="highlighter-rouge">ean_reader</code> is not capable of reading extensions such as <a href="https://en.wikipedia.org/wiki/EAN_2">EAN-2</a> or <a href="https://en.wikipedia.org/wiki/EAN_5">EAN-5</a>. In order to activate those supplements you have to provide them in the configuration as followed:</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="nx">decoder</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nl">readers</span><span class="p">:</span> <span class="p">[{</span>
+        <span class="na">format</span><span class="p">:</span> <span class="s2">"ean_reader"</span><span class="p">,</span>
+        <span class="na">config</span><span class="p">:</span> <span class="p">{</span>
+            <span class="na">supplements</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s1">'ean_5_reader'</span><span class="p">,</span> <span class="s1">'ean_2_reader'</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}]</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <p>Beware that the order of the <code class="highlighter-rouge">supplements</code> matters in such that the reader stops decoding when the first supplement was found. So if you are interested in EAN-2 and EAN-5 extensions, use the order depicted above.</p> 
+    <p>It’s important to mention that, if supplements are supplied, regular EAN-13 codes cannot be read any more with the same reader. If you want to read EAN-13 with and without extensions you have to add another <code class="highlighter-rouge">ean_reader</code> reader to the configuration.</p> 
+    <h3 id="locator">locator</h3> 
+    <p>The <code class="highlighter-rouge">locator</code> config is only relevant if the <code class="highlighter-rouge">locate</code> flag is set to <code class="highlighter-rouge">true</code>. It controls the behavior of the localization-process and needs to be adjusted for each specific use-case. The default settings are simply a combination of values which worked best during development.</p> 
+    <p>Only two properties are relevant for the use in Quagga (<code class="highlighter-rouge">halfSample</code> and <code class="highlighter-rouge">patchSize</code>) whereas the rest is only needed for development and debugging.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="p">{</span>
+  <span class="nl">halfSample</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nx">patchSize</span><span class="err">:</span> <span class="s2">"medium"</span><span class="p">,</span> <span class="c1">// x-small, small, medium, large, x-large</span>
+  <span class="nx">debug</span><span class="err">:</span> <span class="p">{</span>
+    <span class="nl">showCanvas</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">showPatches</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">showFoundPatches</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">showSkeleton</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">showLabels</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">showPatchLabels</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">showRemainingPatchLabels</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">boxFromPatches</span><span class="err">:</span> <span class="p">{</span>
+      <span class="nl">showTransformed</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">showTransformedBox</span><span class="err">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="nx">showBB</span><span class="err">:</span> <span class="kc">false</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <p>The <code class="highlighter-rouge">halfSample</code> flag tells the locator-process whether it should operate on an image scaled down (half width/height, quarter pixel-count ) or not. Turning <code class="highlighter-rouge">halfSample</code> on reduces the processing-time significantly and also helps finding a barcode pattern due to implicit smoothing. It should be turned off in cases where the barcode is really small and the full resolution is needed to find the position. It’s recommended to keep it turned on and use a higher resolution video-image if needed.</p> 
+    <p>The second property <code class="highlighter-rouge">patchSize</code> defines the density of the search-grid. The property accepts strings of the value <code class="highlighter-rouge">x-small</code>, <code class="highlighter-rouge">small</code>, <code class="highlighter-rouge">medium</code>, <code class="highlighter-rouge">large</code> and <code class="highlighter-rouge">x-large</code>. The <code class="highlighter-rouge">patchSize</code> is proportional to the size of the scanned barcodes. If you have really large barcodes which can be read close-up, then the use of <code class="highlighter-rouge">large</code> or <code class="highlighter-rouge">x-large</code> is recommended. In cases where the barcode is further away from the camera lens (lack of auto-focus, or small barcodes) then it’s advised to set the size to <code class="highlighter-rouge">small</code> or even <code class="highlighter-rouge">x-small</code>. For the latter it’s also recommended to crank up the resolution in order to find a barcode.</p> 
+    <h2 id="examples">Examples</h2> 
+    <p>The following example takes an image <code class="highlighter-rouge">src</code> as input and prints the result on the console. The decoder is configured to detect <em>Code128</em> barcodes and enables the locating-mechanism for more robust results.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="nx">Quagga</span><span class="p">.</span><span class="nx">decodeSingle</span><span class="p">({</span>
+    <span class="na">decoder</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">readers</span><span class="p">:</span> <span class="p">[</span><span class="s2">"code_128_reader"</span><span class="p">]</span> <span class="c1">// List of active readers</span>
+    <span class="p">},</span>
+    <span class="na">locate</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="c1">// try to locate the barcode in the image</span>
+    <span class="na">src</span><span class="p">:</span> <span class="s1">'/test/fixtures/code_128/image-001.jpg'</span> <span class="c1">// or 'data:image/jpg;base64,' + data</span>
+<span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">codeResult</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"result"</span><span class="p">,</span> <span class="nx">result</span><span class="p">.</span><span class="nx">codeResult</span><span class="p">.</span><span class="nx">code</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"not detected"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre> 
+    </div> 
+    <h3 id="using-node"><a name="node-example">Using node</a></h3> 
+    <p>The following example illustrates the use of QuaggaJS within a node environment. It’s almost identical to the browser version with the difference that node does not support web-workers out of the box. Therefore the config property <code class="highlighter-rouge">numOfWorkers</code> must be explicitly set to <code class="highlighter-rouge">0</code>.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="kd">var</span> <span class="nx">Quagga</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'quagga'</span><span class="p">);</span>
+
+<span class="nx">Quagga</span><span class="p">.</span><span class="nx">decodeSingle</span><span class="p">({</span>
+    <span class="na">src</span><span class="p">:</span> <span class="s2">"image-abc-123.jpg"</span><span class="p">,</span>
+    <span class="na">numOfWorkers</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1">// Needs to be 0 when used within node</span>
+    <span class="na">inputStream</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">size</span><span class="p">:</span> <span class="mi">800</span>  <span class="c1">// restrict input-size to be 800px in width (long-side)</span>
+    <span class="p">},</span>
+    <span class="na">decoder</span><span class="p">:</span> <span class="p">{</span>
+        <span class="na">readers</span><span class="p">:</span> <span class="p">[</span><span class="s2">"code_128_reader"</span><span class="p">]</span> <span class="c1">// List of active readers</span>
+    <span class="p">},</span>
+<span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">codeResult</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"result"</span><span class="p">,</span> <span class="nx">result</span><span class="p">.</span><span class="nx">codeResult</span><span class="p">.</span><span class="nx">code</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"not detected"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre> 
+    </div> 
+    <h2 id="tips--tricks"><a name="tipsandtricks">Tips &amp; Tricks</a></h2> 
+    <p>A growing collection of tips &amp; tricks to improve the various aspects of Quagga.</p> 
+    <h3 id="barcodes-too-small">Barcodes too small?</h3> 
+    <p>Barcodes too far away from the camera, or a lens too close to the object result in poor recognition rates and Quagga might respond with a lot of false-positives.</p> 
+    <p>Starting in Chrome 59 you can now make use of <code class="highlighter-rouge">capabilities</code> and directly control the zoom of the camera. Head over to the <a href="https://serratus.github.io/quaggaJS/examples/live_w_locator.html">web-cam demo</a> and check out the <strong>Zoom</strong> feature.</p> 
+    <p>You can read more about those <code class="highlighter-rouge">capabilities</code> in <a href="https://www.oberhofer.co/mediastreamtrack-and-its-capabilities">Let’s light a torch and explore MediaStreamTrack’s capabilities</a></p> 
+    <h3 id="video-too-dark">Video too dark?</h3> 
+    <p>Dark environments usually result in noisy images and therefore mess with the recognition logic.</p> 
+    <p>Since Chrome 59 you can turn on/off the <strong>Torch</strong> of our device and vastly improve the quality of the images. Head over to the <a href="https://serratus.github.io/quaggaJS/examples/live_w_locator.html">web-cam demo</a> and check out the <strong>Torch</strong> feature.</p> 
+    <p>To find out more about this feature <a href="https://www.oberhofer.co/mediastreamtrack-and-its-capabilities">read on</a>.</p> 
+    <h2 id="tests">Tests</h2> 
+    <p>Unit Tests can be run with <a href="http://karma-runner.github.io/">Karma</a> and written using <a href="https://github.com/mochajs/mocha">Mocha</a>, <a href="http://chaijs.com/">Chai</a> and <a href="http://sinonjs.org/">SinonJS</a>. Coverage reports are automatically generated in the coverage/ folder.</p> 
+    <div class="language-console highlighter-rouge">
+     <pre class="highlight"><code>&gt; npm install
+&gt; npm run test
+</code></pre> 
+    </div> 
+    <h2 id="image-debugging">Image Debugging</h2> 
+    <p>In case you want to take a deeper dive into the inner workings of Quagga, get to know the <em>debugging</em> capabilities of the current implementation. The various flags exposed through the <code class="highlighter-rouge">config</code> object give you the abilily to visualize almost every step in the processing. Because of the introduction of the web-workers, and their restriction not to have access to the DOM, the configuration must be explicitly set to <code class="highlighter-rouge">config.numOfWorkers = 0</code> in order to work.</p> 
+    <h2 id="resultcollector"><a name="resultcollector">ResultCollector</a></h2> 
+    <p>Quagga is not perfect by any means and may produce false positives from time to time. In order to find out which images produced those false positives, the built-in <code class="highlighter-rouge">ResultCollector</code> will support you and me helping squashing bugs in the implementation.</p> 
+    <h3 id="creating-a-resultcollector">Creating a <code class="highlighter-rouge">ResultCollector</code></h3> 
+    <p>You can easily create a new <code class="highlighter-rouge">ResultCollector</code> by calling its <code class="highlighter-rouge">create</code> method with a configuration.</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="kd">var</span> <span class="nx">resultCollector</span> <span class="o">=</span> <span class="nx">Quagga</span><span class="p">.</span><span class="nx">ResultCollector</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+    <span class="na">capture</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> <span class="c1">// keep track of the image producing this result</span>
+    <span class="na">capacity</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1">// maximum number of results to store</span>
+    <span class="na">blacklist</span><span class="p">:</span> <span class="p">[</span>   <span class="c1">// list containing codes which should not be recorded</span>
+        <span class="p">{</span><span class="na">code</span><span class="p">:</span> <span class="s2">"3574660239843"</span><span class="p">,</span> <span class="na">format</span><span class="p">:</span> <span class="s2">"ean_13"</span><span class="p">}],</span>
+    <span class="na">filter</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">codeResult</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// only store results which match this constraint</span>
+        <span class="c1">// returns true/false</span>
+        <span class="c1">// e.g.: return codeResult.format === "ean_13";</span>
+        <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">});</span>
+</code></pre> 
+    </div> 
+    <h3 id="using-a-resultcollector">Using a <code class="highlighter-rouge">ResultCollector</code></h3> 
+    <p>After creating a <code class="highlighter-rouge">ResultCollector</code> you have to attach it to Quagga by calling <code class="highlighter-rouge">Quagga.registerResultCollector(resultCollector)</code>.</p> 
+    <h3 id="reading-results">Reading results</h3> 
+    <p>After a test/recording session, you can now print the collected results which do not fit into a certain schema. Calling <code class="highlighter-rouge">getResults</code> on the <code class="highlighter-rouge">resultCollector</code> returns an <code class="highlighter-rouge">Array</code> containing objects with:</p> 
+    <div class="language-javascript highlighter-rouge">
+     <pre class="highlight"><code><span class="p">{</span>
+    <span class="nl">codeResult</span><span class="p">:</span> <span class="p">{},</span> <span class="c1">// same as in onDetected event</span>
+    <span class="nx">frame</span><span class="err">:</span> <span class="s2">"data:image/png;base64,iVBOR..."</span> <span class="c1">// dataURL of the gray-scaled image</span>
+<span class="p">}</span>
+</code></pre> 
+    </div> 
+    <p>The <code class="highlighter-rouge">frame</code> property is an internal representation of the image and therefore only available in gray-scale. The dataURL representation allows easy saving/rendering of the image.</p> 
+    <h3 id="comparing-results">Comparing results</h3> 
+    <p>Now, having the frames available on disk, you can load each single image by calling <code class="highlighter-rouge">decodeSingle</code> with the same configuration as used during recording . In order to reproduce the exact same result, you have to make sure to turn on the <code class="highlighter-rouge">singleChannel</code> flag in the configuration when using <code class="highlighter-rouge">decodeSingle</code>.</p> 
+    <h2 id="sponsors"><a name="sponsors">Sponsors</a></h2> 
+    <ul> 
+     <li><a href="http://maintenanceconnection.ca/">Maintenance Connection Canada (Asset Pro Solutions Inc.</a></li> 
+    </ul> 
+    <h2 id="changelog"><a name="changelog">Changelog</a></h2> 
+    <h3 id="2017-06-07">2017-06-07</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>added <code class="highlighter-rouge">muted</code> and <code class="highlighter-rouge">playsinline</code> to <code class="highlighter-rouge">&lt;video/&gt;</code> to make it work for Safari 11 Beta (even iOS)</li> 
+      </ul> </li> 
+     <li>Fixes 
+      <ul> 
+       <li>Fixed <a href="https://github.com/serratus/quaggaJS/blob/master/example/live_w_locator.js">example/live_w_locator.js</a></li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2017-06-06">2017-06-06</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Support for Standard 2of5 barcodes (See <a href="https://github.com/serratus/quaggaJS/issues/194">#194</a>)</li> 
+       <li>Support for Code 93 barcodes (See <a href="https://github.com/serratus/quaggaJS/issues/195">#194</a>)</li> 
+       <li>Exposing <code class="highlighter-rouge">Quagga.CameraAccess.getActiveTrack()</code> to get access to the currently used <code class="highlighter-rouge">MediaStreamTrack</code> 
+        <ul> 
+         <li>Example can be viewed here: <a href="https://github.com/serratus/quaggaJS/blob/master/example/live_w_locator.js">example/live_w_locator.js</a> and a <a href="https://serratus.github.io/quaggaJS/examples/live_w_locator.html">demo</a></li> 
+        </ul> </li> 
+      </ul> </li> 
+    </ul> 
+    <p>Take a look at the release-notes ( <a href="https://github.com/serratus/quaggaJS/releases/tag/v0.12.0">0.12.0</a>)</p> 
+    <h3 id="2017-01-08">2017-01-08</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Exposing <code class="highlighter-rouge">CameraAccess</code> module to get access to methods like <code class="highlighter-rouge">enumerateVideoDevices</code> and <code class="highlighter-rouge">getActiveStreamLabel</code> (see <code class="highlighter-rouge">example/live_w_locator</code>)</li> 
+       <li>Update to webpack 2.2 (API is still unstable)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2016-10-03">2016-10-03</h3> 
+    <ul> 
+     <li>Fixes 
+      <ul> 
+       <li>Fixed <code class="highlighter-rouge">facingMode</code> issue with Chrome &gt;= 53 (see <a href="https://github.com/serratus/quaggaJS/issues/128">#128</a>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2016-08-15">2016-08-15</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Proper handling of EXIF orientation when using <code class="highlighter-rouge">Quagga.decodeSingle</code> (see <a href="https://github.com/serratus/quaggaJS/issues/121">#121</a>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2016-04-24">2016-04-24</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>EAN-13 extended codes can now be decoded (See <a href="https://github.com/serratus/quaggaJS/issues/71">#71</a>)</li> 
+      </ul> </li> 
+    </ul> 
+    <p>Take a look at the release-notes ( <a href="https://github.com/serratus/quaggaJS/releases/tag/v0.11.0">0.11.0</a>)</p> 
+    <h3 id="2016-04-19">2016-04-19</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Reducing false-positives for Code 128 barcodes ( addresses <a href="https://github.com/serratus/quaggaJS/issues/104">#104</a>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2016-03-31">2016-03-31</h3> 
+    <p>Take a look at the release-notes ( <a href="https://github.com/serratus/quaggaJS/releases/tag/v0.10.0">0.10.0</a>)</p> 
+    <h3 id="2016-02-18">2016-02-18</h3> 
+    <ul> 
+     <li>Internal Changes 
+      <ul> 
+       <li>Restructuring into meaningful folders</li> 
+       <li>Removing debug-code in production build</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2016-02-15">2016-02-15</h3> 
+    <p>Take a look at the release-notes ( <a href="https://github.com/serratus/quaggaJS/releases/tag/v0.9.0">0.9.0</a>)</p> 
+    <h3 id="2015-11-22">2015-11-22</h3> 
+    <ul> 
+     <li>Fixes 
+      <ul> 
+       <li>Fixed inconsistencies for Code 128 decoding (See <a href="https://github.com/serratus/quaggaJS/issues/76">#76</a>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-11-15">2015-11-15</h3> 
+    <ul> 
+     <li>Fixes 
+      <ul> 
+       <li>Fixed inconsistency in Code 39 decoding</li> 
+       <li>added inline-source-map to quagga.js file</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-10-13">2015-10-13</h3> 
+    <p>Take a look at the release-notes ([0.8.0] (https://github.com/serratus/quaggaJS/releases/tag/v0.8.0))</p> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Replaced RequireJS with webpack</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-09-15">2015-09-15</h3> 
+    <p>Take a look at the release-notes ([0.7.0] (https://github.com/serratus/quaggaJS/releases/tag/v0.7.0))</p> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added basic support for running QuaggaJS inside <strong>node</strong> (see [example] (#node-example))</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-08-29">2015-08-29</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Added support for Internet Explorer (only Edge+ supports <code class="highlighter-rouge">getUserMedia</code>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-08-13">2015-08-13</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Added <code class="highlighter-rouge">offProcessed</code> and <code class="highlighter-rouge">offDetected</code> methods for detaching event- listeners from the event-queue.</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-07-29">2015-07-29</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added basic support for <a href="https://en.wikipedia.org/wiki/Interleaved_2_of_5">ITF</a> barcodes (<code class="highlighter-rouge">i2of5_reader</code>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-07-08">2015-07-08</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Parameter tweaking to reduce false-positives significantly (for the entire EAN and UPC family)</li> 
+       <li>Fixing bug in parity check for UPC-E codes</li> 
+       <li>Fixing bug in alignment for EAN-8 codes</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-07-06">2015-07-06</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Added <code class="highlighter-rouge">err</code> parameter to <a href="#quaggainit">Quagga.init()</a> callback function</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-06-21">2015-06-21</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added <code class="highlighter-rouge">singleChannel</code> configuration to <code class="highlighter-rouge">inputStream</code> (in [config] (#configobject))</li> 
+       <li>Added <code class="highlighter-rouge">ResultCollector</code> functionality (see [ResultCollector] (#resultcollector))</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-06-13">2015-06-13</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Added <code class="highlighter-rouge">format</code> property to <code class="highlighter-rouge">codeResult</code> (in <a href="#resultobject">result</a>)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-06-13-1">2015-06-13</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Added fixes for <code class="highlighter-rouge">Code39Reader</code> (trailing whitespace was missing)</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-06-09">2015-06-09</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Introduced the <code class="highlighter-rouge">area</code> property</li> 
+       <li>Ability to define a rectangle where localization/decoding should be applied</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-05-20">2015-05-20</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Making EAN and UPC readers even more restrictive</li> 
+       <li>Added example using requirejs</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-05-18">2015-05-18</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Making EAN and UPC readers more restrictive</li> 
+       <li>Added integration-tests for all barcode-readers</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-05-09">2015-05-09</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Odd image dimensions no longer cause problems</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-04-30">2015-04-30</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added support for <a href="http://en.wikipedia.org/wiki/Universal_Product_Code">UPC-A and UPC-E</a> barcodes</li> 
+       <li>Added support for <a href="http://en.wikipedia.org/wiki/EAN-8">EAN-8</a> barcodes</li> 
+      </ul> </li> 
+     <li>Improvements 
+      <ul> 
+       <li>Added extended configuration to the live-video example</li> 
+       <li>Releasing resources when calling <code class="highlighter-rouge">Quagga.stop()</code></li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-04-25">2015-04-25</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>Added extended configuration to the file-input example</li> 
+       <li>Configurable <code class="highlighter-rouge">patchSize</code> for better adjustment to small/medium/large barcodes</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-04-16">2015-04-16</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added support for <a href="http://en.wikipedia.org/wiki/Codabar">Codabar</a> barcodes</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-03-16">2015-03-16</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>now includes minified version (23.3KB gzipped)</li> 
+       <li>No need for configuration of script-name any more</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-03-12">2015-03-12</h3> 
+    <ul> 
+     <li>Improvements 
+      <ul> 
+       <li>removed dependency on async.js</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-03-04">2015-03-04</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added support for <a href="http://en.wikipedia.org/wiki/Code_39">Code 39</a> barcodes</li> 
+      </ul> </li> 
+    </ul> 
+    <h3 id="2015-01-21">2015-01-21</h3> 
+    <ul> 
+     <li>Features 
+      <ul> 
+       <li>Added support for web-worker (using 4 workers as default, can be changed through <code class="highlighter-rouge">config.numOfWorkers</code>)</li> 
+       <li>Due to the way how web-workers are created, the name of the script file (<code class="highlighter-rouge">config.scriptName</code>) should be kept in sync with your actual filename</li> 
+       <li>Removed canvas-overlay for decoding (boxes &amp; scanline) which can now be easily implemented using the existing API (see example)</li> 
+      </ul> </li> 
+     <li>API Changes In the course of implementing web-workers some breaking changes were introduced to the API. 
+      <ul> 
+       <li>The <code class="highlighter-rouge">Quagga.init</code> function no longer receives the callback as part of the config but rather as a second argument: <code class="highlighter-rouge">Quagga.init(config, cb)</code></li> 
+       <li>The callback to <code class="highlighter-rouge">Quagga.onDetected</code> now receives an object containing much more information in addition to the decoded code.(see <a href="#resultobject">data</a>)</li> 
+       <li>Added <code class="highlighter-rouge">Quagga.onProcessed(callback)</code> which provides a way to get information for each image processed. The callback receives the same <code class="highlighter-rouge">data</code> object as <code class="highlighter-rouge">Quagga.onDetected</code> does. Depending on the success of the process the <code class="highlighter-rouge">data</code> object might not contain any <code class="highlighter-rouge">resultCode</code> and/or <code class="highlighter-rouge">box</code> properties.</li> 
+      </ul> </li> 
+    </ul> 
+   </section> 
+   <footer> 
+    <p>This project is maintained by <a href="http://github.com/serratus">Christoph Oberhofer</a></p> 
+    <p><small>Hosted on GitHub Pages — Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p> 
+   </footer> 
+  </div> 
+  <script src="https://serratus.github.io/quaggaJS/javascripts/scale.fix.js"></script>   
+ </body>
+</html>

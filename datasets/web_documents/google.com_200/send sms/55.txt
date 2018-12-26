@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en-US" prefix="og: http://ogp.me/ns#">
+ <head> 
+  <meta charset="UTF-8"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="pingback" href="http://budiirawan.com/xmlrpc.php"> 
+  <title>Send Emails using Amazon SES and Node.js</title> 
+  <!-- This site is optimized with the Yoast SEO plugin v3.1.1 - https://yoast.com/wordpress/plugins/seo/ --> 
+  <meta name="description" content="Amazon SES (Simple Email Service) is one of solution that Amazon provides for sending emails. In this article, we setup Amazon SES with Node.js"> 
+  <meta name="robots" content="noodp"> 
+  <link rel="canonical" href="http://budiirawan.com/send-emails-using-amazon-ses-and-node-js/"> 
+  <meta property="og:locale" content="en_US"> 
+  <meta property="og:type" content="article"> 
+  <meta property="og:title" content="Send Emails using Amazon SES and Node.js"> 
+  <meta property="og:description" content="Amazon SES (Simple Email Service) is one of solution that Amazon provides for sending emails. In this article, we setup Amazon SES with Node.js"> 
+  <meta property="og:url" content="http://budiirawan.com/send-emails-using-amazon-ses-and-node-js/"> 
+  <meta property="og:site_name" content="Budi Irawan's Tech Blog"> 
+  <meta property="article:tag" content="amazon"> 
+  <meta property="article:tag" content="amazon ses"> 
+  <meta property="article:tag" content="node.js"> 
+  <meta property="article:tag" content="nodemailer"> 
+  <meta property="article:section" content="AWS"> 
+  <meta property="article:published_time" content="2015-09-02T22:55:20+00:00"> 
+  <meta property="article:modified_time" content="2015-09-02T23:07:35+00:00"> 
+  <meta property="og:updated_time" content="2015-09-02T23:07:35+00:00"> 
+  <meta property="og:image" content="http://budiirawan.com/wp-content/uploads/2015/08/aws-logo.png"> 
+  <meta property="og:image:width" content="600"> 
+  <meta property="og:image:height" content="300"> 
+  <!-- / Yoast SEO plugin. --> 
+  <link rel="alternate" type="application/rss+xml" title="Budi Irawan's Tech Blog » Feed" href="http://budiirawan.com/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Budi Irawan's Tech Blog » Comments Feed" href="http://budiirawan.com/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="Budi Irawan's Tech Blog » Send Emails using Amazon SES and Node.js Comments Feed" href="http://budiirawan.com/send-emails-using-amazon-ses-and-node-js/feed/"> 
+  <link rel="stylesheet" id="social-icons-widget-widget-css" href="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/css/social_icons_widget.css?ver=4.1.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="sapor-fonts-css" href="https://fonts.googleapis.com/css?family=PT+Sans%3A400%2C700%2C400italic%2C700italic%7CPT+Serif%3A400%2C700%2C400italic%2C700italic&amp;subset=latin%2Clatin-ext" type="text/css" media="all"> 
+  <link rel="stylesheet" id="sapor-style-css" href="http://budiirawan.com/wp-content/themes/bugan-2016/style.css?ver=4.1.1" type="text/css" media="all"> 
+  <link rel="stylesheet" id="genericons-css" href="http://budiirawan.com/wp-content/themes/bugan-2016/fonts/genericons.css" type="text/css" media="all"> 
+  <!-- This site uses the Google Analytics by MonsterInsights plugin v5.5.4 - Universal disabled - https://www.monsterinsights.com/ --> 
+  <script type="text/javascript">
+
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-10121406-20']);
+	_gaq.push(['_gat._forceSSL']);
+	_gaq.push(['_trackPageview']);
+
+	(function () {
+		var ga = document.createElement('script');
+		ga.type = 'text/javascript';
+		ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(ga, s);
+	})();
+
+</script> 
+  <!-- / Google Analytics by MonsterInsights --> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-includes/js/jquery/jquery.js?ver=1.11.1"></script> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1"></script> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://budiirawan.com/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://budiirawan.com/wp-includes/wlwmanifest.xml"> 
+  <meta name="generator" content="WordPress 4.1.1"> 
+  <link rel="shortlink" href="http://budiirawan.com/?p=322"> 
+  <style type="text/css" id="syntaxhighlighteranchor"></style> 
+ </head> 
+ <body class="single single-post postid-322 single-format-standard onesidebar"> 
+  <div id="small-devices" class="device-bar"> 
+   <button class="menu-toggle" aria-expanded="false"><span class="screen-reader-text">Show</span><span class="action-text">Show</span></button> 
+  </div> 
+  <div id="page" class="hfeed site"> 
+   <a class="skip-link screen-reader-text" href="#content">Skip to content</a> 
+   <header id="masthead" class="site-header" role="banner"> 
+    <div class="site-branding"> 
+     <h1 class="site-title"><a href="http://budiirawan.com/" rel="home">Budi Irawan's Tech Blog</a></h1> 
+     <h2 class="site-description">My knowledge and experience to share</h2> 
+    </div>
+    <!-- .site-branding --> 
+   </header>
+   <!-- #masthead --> 
+   <div id="content" class="site-content"> 
+    <div id="primary" class="content-area"> 
+     <main id="main" class="site-main" role="main"> 
+      <article id="post-322" class="post-322 post type-post status-publish format-standard has-post-thumbnail hentry category-aws category-node-js tag-amazon tag-amazon-ses tag-node-js-2 tag-nodemailer"> 
+       <div class="entry-wrapper"> 
+        <div class="featured-image"> 
+         <img width="600" height="300" src="http://budiirawan.com/wp-content/uploads/2015/08/aws-logo.png" class="attachment-sapor-featured-image wp-post-image" alt="aws-logo"> 
+        </div>
+        <!-- .post-thumbnail --> 
+        <header class="entry-header"> 
+         <h2 class="entry-title"><a href="http://budiirawan.com/send-emails-using-amazon-ses-and-node-js/" rel="bookmark">Send Emails using Amazon SES and Node.js</a></h2> 
+        </header>
+        <!-- .entry-header --> 
+        <div class="entry-meta"> 
+         <span class="posted-on"><a href="http://budiirawan.com/send-emails-using-amazon-ses-and-node-js/" rel="bookmark"><time class="entry-date published" datetime="2015-09-02T22:55:20+00:00">September 2, 2015</time><time class="updated" datetime="2015-09-02T23:07:35+00:00">September 2, 2015</time></a></span> 
+         <span class="cat-links">Posted in <a href="http://budiirawan.com/category/aws/" rel="category tag">AWS</a>, <a href="http://budiirawan.com/category/node-js/" rel="category tag">Node.js</a>. </span> 
+        </div>
+        <!-- .entry-meta --> 
+        <div class="entry-content"> 
+         <p><a href="https://aws.amazon.com/documentation/ses/" onclick="_gaq.push(['_trackEvent', 'outbound-article', 'https://aws.amazon.com/documentation/ses/', 'Amazon SES (Simple Email Service)']);" target="_blank">Amazon SES (Simple Email Service)</a> is a solution that Amazon provides for sending emails. This service encourages you to pay Amazon what you use, so you can use as much or as little email you like. The coding example below shows how to configure Amazon SES in Node.js.<br> <span id="more-322"></span></p> 
+         <p><a href="https://github.com/deerawan/node-amazon-ses-example" onclick="_gaq.push(['_trackEvent', 'outbound-article', 'https://github.com/deerawan/node-amazon-ses-example', 'Check Github']);" class="btn btn-primary" target="_blank">Check Github</a></p> 
+         <h2>Prerequisites</h2> 
+         <ul> 
+          <li>Node.js installed</li> 
+          <li>Amazon key and secret key. Refer to <a href="http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html" onclick="_gaq.push(['_trackEvent', 'outbound-article', 'http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html', 'how to get Amazon key and secret key']);" target="_blank">how to get Amazon key and secret key</a>.</li> 
+          <li>Verified email address in Amazon SES. Refer to&nbsp;<a href="http://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses.html" onclick="_gaq.push(['_trackEvent', 'outbound-article', 'http://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses.html', 'how to get valid email address']);" target="_blank">how to get valid email address</a></li> 
+          <li>Your existing node.js project. If not exist, you can create new node.js project</li> 
+         </ul> 
+         <h2>Install Node Mailer</h2> 
+         <p>Node Mailer is one of my favorite library to send email. Fortunately, It supports Amazon SES. Yeay!</p> 
+         <pre>$ npm install&nbsp;nodemailer
+</pre> 
+         <p>To use Amazon SES, we need one more step to install Node Mailer SES transport.</p> 
+         <pre>$ npm install&nbsp;nodemailer-ses-transport
+</pre> 
+         <h2>Setup Node Mailer</h2> 
+         <p>Add require node mailer lines in your file.</p> 
+         <pre>var nodemailer = require('nodemailer');
+var ses = require('nodemailer-ses-transport');
+</pre> 
+         <p>Then we must add SES transport in nodemailer then add our Amazon key and secret key.</p> 
+         <pre>var transporter = nodemailer.createTransport(ses({
+    accessKeyId: 'YOUR_AMAZON_KEY',
+    secretAccessKey: 'YOUR_AMAZON_SECRET_KEY'
+}));
+</pre> 
+         <h2>Send Simple Email</h2> 
+         <p>We almost finish. Next step is we can use our created transporter to send email.</p> 
+         <pre class="brush: jscript; title: ; notranslate" title="">
+transporter.sendMail({
+    from: 'noreply@youremail.com',
+    to: 'destination@gmail.com',
+    subject: 'My Amazon SES Simple Email',
+    text: 'Amazon SES is cool'
+  });
+</pre> 
+         <p>Please remember that you need to setup valid email address for <code>from</code>. If not, Amazon SES will not recognize the sender.</p> 
+         <figure id="attachment_325" style="width: 720px;" class="wp-caption alignnone">
+          <a href="http://budiirawan.com/wp-content/uploads/2015/09/amazon-ses-simple-email.jpg"><img class="wp-image-325 size-large" src="http://budiirawan.com/wp-content/uploads/2015/09/amazon-ses-simple-email-1024x206.jpg" alt="amazon-ses-simple-email" width="720" height="145"></a>
+          <figcaption class="wp-caption-text">
+           Result of sending simple email
+          </figcaption>
+         </figure> 
+         <p>&nbsp;</p> 
+         <h2>Send Email with CC and BCC</h2> 
+         <pre class="brush: jscript; title: ; notranslate" title="">
+transporter.sendMail({
+    from: 'noreply@youremail.com',
+    to: 'destination@gmail.com',
+    subject: 'My Amazon SES Email with CC and BCC',
+    text: 'Amazon SES CC and BCC is cool',
+    cc: 'superganteng@yopmail.com, supertampan@yopmail.com',
+    bcc: 'rampok@yopmail.com'
+  });
+</pre> 
+         <p>To configure multiple cc/bcc email addresses, the emails are separated by comma e.g <strong>‘email@domain.com, email2@haha.com’</strong>.</p> 
+         <figure id="attachment_324" style="width: 720px;" class="wp-caption alignnone">
+          <a href="http://budiirawan.com/wp-content/uploads/2015/09/amazon-ses-cc-bcc.jpg"><img class="wp-image-324 size-large" src="http://budiirawan.com/wp-content/uploads/2015/09/amazon-ses-cc-bcc-1024x134.jpg" alt="amazon-ses-cc-bcc" width="720" height="94"></a>
+          <figcaption class="wp-caption-text">
+           Result of sending email with cc and bcc
+          </figcaption>
+         </figure> 
+         <p>&nbsp;</p> 
+         <h2>Send Email with Attachment</h2> 
+         <p>You can also use Amazon SES for sending attachment.</p> 
+         <pre class="brush: jscript; title: ; notranslate" title="">
+transporter.sendMail({
+  from: 'noreply@youremail.com',
+  to: 'destination@gmail.com',
+  subject: 'My Amazon SES Email with Attachment',
+  text: 'Amazon SES Attachment is cool',
+  attachments: [
+    {
+      filename: 'My Cool Document',
+      path: 'https://path/to/cool-document.docx',
+      contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    }
+  ]
+});
+</pre> 
+         <p>For attachment, you should ensure that the attachment <code>path</code> can be accessed publicly. You also need to put the correct <code>contentType</code>. Please refer to <a href="http://www.freeformatter.com/mime-types-list.html" onclick="_gaq.push(['_trackEvent', 'outbound-article', 'http://www.freeformatter.com/mime-types-list.html', 'Mime Type List']);" target="_blank">Mime Type List</a> for complete reference.</p> 
+         <figure id="attachment_323" style="width: 720px;" class="wp-caption alignnone">
+          <a href="http://budiirawan.com/wp-content/uploads/2015/09/amazon-ses-attachment.jpg"><img class="wp-image-323 size-large" src="http://budiirawan.com/wp-content/uploads/2015/09/amazon-ses-attachment-1024x143.jpg" alt="amazon-ses-attachment" width="720" height="101"></a>
+          <figcaption class="wp-caption-text">
+           Result of sending email with attachment
+          </figcaption>
+         </figure> 
+         <h2>Conclusion</h2> 
+         <p>In this article, we have setup Amazon SES with Node.js for sending emails. We use nodemailer package that supports Amazon SES. Amazon SES can send email using cc, bcc and even attachment. </p> 
+        </div>
+        <!-- .entry-content --> 
+        <footer class="entry-footer"> 
+         <div class="footer-tags">
+          <span class="tags-links"><a href="http://budiirawan.com/tag/amazon/" rel="tag">amazon</a><a href="http://budiirawan.com/tag/amazon-ses/" rel="tag">amazon ses</a><a href="http://budiirawan.com/tag/node-js-2/" rel="tag">node.js</a><a href="http://budiirawan.com/tag/nodemailer/" rel="tag">nodemailer</a></span>
+         </div> 
+        </footer>
+        <!-- .entry-footer --> 
+       </div>
+       <!-- .entry-wrapper --> 
+      </article>
+      <!-- #post-## --> 
+      <nav class="navigation post-navigation" role="navigation"> 
+       <h2 class="screen-reader-text">Post navigation</h2> 
+       <div class="nav-links"> 
+        <div class="nav-previous">
+         <a href="http://budiirawan.com/ruby-the-different-between-each-map-and-collect/" rel="prev"><span class="post-nav" aria-hidden="true">Previous: </span> <span class="screen-reader-text">Previous post:</span> <span class="post-title">Ruby: The Different Between Each, Map and Collect</span></a>
+        </div>
+        <div class="nav-next">
+         <a href="http://budiirawan.com/javascript-es6-the-different-between-let-vs-const/" rel="next"><span class="post-nav" aria-hidden="true">Next: </span> <span class="screen-reader-text">Next post:</span> <span class="post-title">JavaScript ES6: The Different Between Let vs Const</span></a>
+        </div> 
+       </div>
+       <!-- .nav-links --> 
+      </nav>
+      <!-- .navigation --> 
+      <div id="disqus_thread"> 
+       <div id="dsq-content"> 
+        <ul id="dsq-comments"> 
+         <li class="comment even thread-even depth-1" id="dsq-comment-146"> 
+          <div id="dsq-comment-header-146" class="dsq-comment-header"> 
+           <cite id="dsq-cite-146"> <span id="dsq-author-user-146">Arun Srinivaas</span> </cite> 
+          </div> 
+          <div id="dsq-comment-body-146" class="dsq-comment-body"> 
+           <div id="dsq-comment-message-146" class="dsq-comment-message">
+            <p>Not working. Geeting Error – The request signature we calculated does not match the signature you provided . </p> 
+            <p>Session keys valid. For sandbox ses account, emails are verified.</p> 
+           </div> 
+          </div> </li>
+         <!-- #comment-## --> 
+         <li class="comment odd alt thread-odd thread-alt depth-1" id="dsq-comment-171"> 
+          <div id="dsq-comment-header-171" class="dsq-comment-header"> 
+           <cite id="dsq-cite-171"> <a id="dsq-author-user-171" href="http://www.dailydrudge.net" target="_blank" rel="nofollow">Rick Llewellyn</a> </cite> 
+          </div> 
+          <div id="dsq-comment-body-171" class="dsq-comment-body"> 
+           <div id="dsq-comment-message-171" class="dsq-comment-message">
+            <p>Your examples work very well. Thanks for posting this!</p> 
+            <p>I would like to say no problems at all except that when I set the JSON key to: to a variable send fails.</p> 
+           </div> 
+          </div> 
+          <ul class="children"> 
+           <li class="comment even depth-2" id="dsq-comment-203"> 
+            <div id="dsq-comment-header-203" class="dsq-comment-header"> 
+             <cite id="dsq-cite-203"> <span id="dsq-author-user-203">deerawan</span> </cite> 
+            </div> 
+            <div id="dsq-comment-body-203" class="dsq-comment-body"> 
+             <div id="dsq-comment-message-203" class="dsq-comment-message">
+              <p>awesome!</p> 
+             </div> 
+            </div> </li>
+           <!-- #comment-## --> 
+          </ul>
+          <!-- .children --> </li>
+         <!-- #comment-## --> 
+         <li class="comment odd alt thread-even depth-1" id="dsq-comment-193"> 
+          <div id="dsq-comment-header-193" class="dsq-comment-header"> 
+           <cite id="dsq-cite-193"> <span id="dsq-author-user-193">chetan kantharia</span> </cite> 
+          </div> 
+          <div id="dsq-comment-body-193" class="dsq-comment-body"> 
+           <div id="dsq-comment-message-193" class="dsq-comment-message">
+            <p>I am having issue It says ‘SignatureDoesNotMatch’</p> 
+           </div> 
+          </div> 
+          <ul class="children"> 
+           <li class="comment even depth-2" id="dsq-comment-197"> 
+            <div id="dsq-comment-header-197" class="dsq-comment-header"> 
+             <cite id="dsq-cite-197"> <span id="dsq-author-user-197">deerawan</span> </cite> 
+            </div> 
+            <div id="dsq-comment-body-197" class="dsq-comment-body"> 
+             <div id="dsq-comment-message-197" class="dsq-comment-message">
+              <p>Hi Chetan, </p> 
+              <p>As I remember, that issue may be caused by the access key and secret key. Have you solved the problem?</p> 
+             </div> 
+            </div> 
+            <ul class="children"> 
+             <li class="comment odd alt depth-3" id="dsq-comment-200"> 
+              <div id="dsq-comment-header-200" class="dsq-comment-header"> 
+               <cite id="dsq-cite-200"> <span id="dsq-author-user-200">chetan kantharia</span> </cite> 
+              </div> 
+              <div id="dsq-comment-body-200" class="dsq-comment-body"> 
+               <div id="dsq-comment-message-200" class="dsq-comment-message">
+                <p>Hi Deerawan,</p> 
+                <p>Problem is solved and you are right I was some problem with keys and zone which I was using.</p> 
+                <p>Thanks <img src="http://budiirawan.com/wp-includes/images/smilies/icon_smile.gif" alt=":)" class="wp-smiley"></p> 
+               </div> 
+              </div> 
+              <ul class="children"> 
+               <li class="comment even depth-4" id="dsq-comment-202"> 
+                <div id="dsq-comment-header-202" class="dsq-comment-header"> 
+                 <cite id="dsq-cite-202"> <span id="dsq-author-user-202">deerawan</span> </cite> 
+                </div> 
+                <div id="dsq-comment-body-202" class="dsq-comment-body"> 
+                 <div id="dsq-comment-message-202" class="dsq-comment-message">
+                  <p>sweet! Glad to hear that</p> 
+                 </div> 
+                </div> </li>
+               <!-- #comment-## --> 
+               <li class="comment odd alt depth-4" id="dsq-comment-232"> 
+                <div id="dsq-comment-header-232" class="dsq-comment-header"> 
+                 <cite id="dsq-cite-232"> <span id="dsq-author-user-232">Shubham Waghe</span> </cite> 
+                </div> 
+                <div id="dsq-comment-body-232" class="dsq-comment-body"> 
+                 <div id="dsq-comment-message-232" class="dsq-comment-message">
+                  <p>Can you please tell some steps in detail to solve the problem. Many people including me are facing the exact same problem. Thank you!</p> 
+                 </div> 
+                </div> </li>
+               <!-- #comment-## --> 
+              </ul>
+              <!-- .children --> </li>
+             <!-- #comment-## --> 
+            </ul>
+            <!-- .children --> </li>
+           <!-- #comment-## --> 
+          </ul>
+          <!-- .children --> </li>
+         <!-- #comment-## --> 
+         <li class="comment even thread-odd thread-alt depth-1" id="dsq-comment-213"> 
+          <div id="dsq-comment-header-213" class="dsq-comment-header"> 
+           <cite id="dsq-cite-213"> <a id="dsq-author-user-213" href="http://sowmayjain.com" target="_blank" rel="nofollow">Sowmay Jain</a> </cite> 
+          </div> 
+          <div id="dsq-comment-body-213" class="dsq-comment-body"> 
+           <div id="dsq-comment-message-213" class="dsq-comment-message">
+            <p>How can I solve this error: “The following identities failed the check in region US-WEST-2:”</p> 
+           </div> 
+          </div> </li>
+         <!-- #comment-## --> 
+        </ul> 
+       </div> 
+      </div> 
+      <script type="text/javascript">
+var disqus_url = 'http://budiirawan.com/send-emails-using-amazon-ses-and-node-js/';
+var disqus_identifier = '322 http://budiirawan.com/?p=322';
+var disqus_container_id = 'disqus_thread';
+var disqus_shortname = 'budiirawan';
+var disqus_title = "Send Emails using Amazon SES and Node.js";
+var disqus_config_custom = window.disqus_config;
+var disqus_config = function () {
+    /*
+    All currently supported events:
+    onReady: fires when everything is ready,
+    onNewComment: fires when a new comment is posted,
+    onIdentify: fires when user is authenticated
+    */
+    
+    
+    this.language = '';
+        this.callbacks.onReady.push(function () {
+
+        // sync comments in the background so we don't block the page
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = '?cf_action=sync_comments&post_id=322';
+
+        var firstScript = document.getElementsByTagName('script')[0];
+        firstScript.parentNode.insertBefore(script, firstScript);
+    });
+    
+    if (disqus_config_custom) {
+        disqus_config_custom.call(this);
+    }
+};
+
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript';
+    dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script> 
+     </main>
+     <!-- #main --> 
+    </div>
+    <!-- #primary --> 
+    <div id="secondary" class="sidebar" role="complementary"> 
+     <div class="widget-area"> 
+      <aside id="text-2" class="widget widget_text"> 
+       <div class="textwidget">
+        <p style="text-align: center;"><img src="http://budiirawan.com/wp-content/uploads/2014/07/profile-1-circle.png" alt="budi irawan" style="width: 150px; height: 150px; margin-bottom: 8px;"></p>
+        <p>I'm a web developer. My specialities are HTML, CSS, Javascript, PHP, Ruby on Rails, Node.js and Test Driven Development.</p>
+       </div> 
+      </aside>
+      <aside id="social-icons-widget-2" class="widget social-icons-widget"> 
+       <ul class="icons-large"> 
+        <li class="email"><a href="mailto:deerawan@gmail.com" target="_blank"><img class="site-icon" src="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/icons/large/email.jpg" alt="Email" title="Email" height="64" width="64"></a></li> 
+        <li class="facebook"><a href="http://facebook.com/masbugan" target="_blank"><img class="site-icon" src="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/icons/large/facebook.jpg" alt="Facebook" title="Facebook" height="64" width="64"></a></li> 
+        <li class="github"><a href="https://github.com/deerawan" target="_blank"><img class="site-icon" src="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/icons/large/github.jpg" alt="GitHub" title="GitHub" height="64" width="64"></a></li> 
+        <li class="googleplus"><a href="https://plus.google.com/u/0/116529851810714460450/" target="_blank"><img class="site-icon" src="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/icons/large/googleplus.jpg" alt="Google+" title="Google+" height="64" width="64"></a></li> 
+        <li class="linkedin"><a href="https://www.linkedin.com/in/masbugan" target="_blank"><img class="site-icon" src="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/icons/large/linkedin.jpg" alt="LinkedIn" title="LinkedIn" height="64" width="64"></a></li> 
+        <li class="twitter"><a href="http://twitter.com/masbugan" target="_blank"><img class="site-icon" src="http://budiirawan.com/wp-content/plugins/social-media-icons-widget/icons/large/twitter.jpg" alt="Twitter" title="Twitter" height="64" width="64"></a></li> 
+       </ul> 
+      </aside>
+      <aside id="categories-2" class="widget widget_categories">
+       <h2 class="widget-title">Categories</h2> 
+       <ul> 
+        <li class="cat-item cat-item-39"><a href="http://budiirawan.com/category/angular-js/">Angular Js</a> (4) </li> 
+        <li class="cat-item cat-item-60"><a href="http://budiirawan.com/category/aws/">AWS</a> (2) </li> 
+        <li class="cat-item cat-item-21"><a href="http://budiirawan.com/category/bootstrap/">Bootstrap</a> (1) </li> 
+        <li class="cat-item cat-item-36"><a href="http://budiirawan.com/category/clean-codes/">Clean Codes</a> (1) </li> 
+        <li class="cat-item cat-item-13"><a href="http://budiirawan.com/category/database/">Database</a> (1) </li> 
+        <li class="cat-item cat-item-24"><a href="http://budiirawan.com/category/editor/">Editor</a> (2) </li> 
+        <li class="cat-item cat-item-71"><a href="http://budiirawan.com/category/gitlab/">Gitlab</a> (1) </li> 
+        <li class="cat-item cat-item-51"><a href="http://budiirawan.com/category/ios/">iOS</a> (1) </li> 
+        <li class="cat-item cat-item-68"><a href="http://budiirawan.com/category/javascript/">JavaScript</a> (1) </li> 
+        <li class="cat-item cat-item-46"><a href="http://budiirawan.com/category/mac-osx/">Mac OSX</a> (2) </li> 
+        <li class="cat-item cat-item-37"><a href="http://budiirawan.com/category/database/mongodb/">MongoDB</a> (1) </li> 
+        <li class="cat-item cat-item-14"><a href="http://budiirawan.com/category/database/mysql/">MySQL</a> (1) </li> 
+        <li class="cat-item cat-item-2"><a href="http://budiirawan.com/category/node-js/">Node.js</a> (3) </li> 
+        <li class="cat-item cat-item-7"><a href="http://budiirawan.com/category/php/">PHP</a> (8) </li> 
+        <li class="cat-item cat-item-41"><a href="http://budiirawan.com/category/ruby/">Ruby</a> (3) </li> 
+        <li class="cat-item cat-item-55"><a href="http://budiirawan.com/category/sinatra/">Sinatra</a> (1) </li> 
+        <li class="cat-item cat-item-27"><a href="http://budiirawan.com/category/testing/">Testing</a> (1) </li> 
+        <li class="cat-item cat-item-25"><a href="http://budiirawan.com/category/text-editor/">Text Editor</a> (1) </li> 
+        <li class="cat-item cat-item-85"><a href="http://budiirawan.com/category/typescript/">Typescript</a> (2) </li> 
+        <li class="cat-item cat-item-8"><a href="http://budiirawan.com/category/php/yii2/">Yii2</a> (2) </li> 
+       </ul> 
+      </aside>
+      <aside id="archives-2" class="widget widget_archive">
+       <h2 class="widget-title">Archives</h2> 
+       <ul> 
+        <li><a href="http://budiirawan.com/2017/02/">February 2017</a></li> 
+        <li><a href="http://budiirawan.com/2017/01/">January 2017</a></li> 
+        <li><a href="http://budiirawan.com/2016/05/">May 2016</a></li> 
+        <li><a href="http://budiirawan.com/2016/03/">March 2016</a></li> 
+        <li><a href="http://budiirawan.com/2015/12/">December 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/10/">October 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/09/">September 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/08/">August 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/07/">July 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/06/">June 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/05/">May 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/04/">April 2015</a></li> 
+        <li><a href="http://budiirawan.com/2015/01/">January 2015</a></li> 
+        <li><a href="http://budiirawan.com/2014/12/">December 2014</a></li> 
+        <li><a href="http://budiirawan.com/2014/11/">November 2014</a></li> 
+        <li><a href="http://budiirawan.com/2014/09/">September 2014</a></li> 
+        <li><a href="http://budiirawan.com/2014/08/">August 2014</a></li> 
+        <li><a href="http://budiirawan.com/2014/07/">July 2014</a></li> 
+        <li><a href="http://budiirawan.com/2014/04/">April 2014</a></li> 
+       </ul> 
+      </aside>
+      <aside id="search-2" class="widget widget_search">
+       <form role="search" method="get" class="search-form" action="http://budiirawan.com/"> 
+        <label> <span class="screen-reader-text">Search for:</span> <input type="search" class="search-field" placeholder="Search …" value="" name="s" title="Search for:"> </label> 
+        <input type="submit" class="search-submit screen-reader-text" value="Search"> 
+       </form>
+      </aside> 
+     </div>
+     <!-- #secondary --> 
+    </div> 
+   </div>
+   <!-- #content --> 
+   <footer id="colophon" class="site-footer" role="contentinfo"> 
+    <div class="site-info"> 
+     <span class="footer-name"><a href="http://budiirawan.com/" rel="home">Budi Irawan's Tech Blog</a></span> 
+    </div>
+    <!-- .site-info --> 
+   </footer>
+   <!-- #colophon --> 
+  </div>
+  <!-- #page --> 
+  <script type="text/javascript">
+        // <![CDATA[
+        var disqus_shortname = 'budiirawan';
+        (function () {
+            var nodes = document.getElementsByTagName('span');
+            for (var i = 0, url; i < nodes.length; i++) {
+                if (nodes[i].className.indexOf('dsq-postid') != -1 && nodes[i].parentNode.tagName == 'A') {
+                    nodes[i].parentNode.setAttribute('data-disqus-identifier', nodes[i].getAttribute('data-dsqidentifier'));
+                    url = nodes[i].parentNode.href.split('#', 1);
+                    if (url.length == 1) { url = url[0]; }
+                    else { url = url[1]; }
+                    nodes[i].parentNode.href = url + '#disqus_thread';
+                }
+            }
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+        // ]]>
+        </script> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shCore.js?ver=3.0.9b"></script> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/scripts/shBrushJScript.js?ver=3.0.9b"></script> 
+  <script type="text/javascript">
+	(function(){
+		var corecss = document.createElement('link');
+		var themecss = document.createElement('link');
+		var corecssurl = "http://budiirawan.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shCore.css?ver=3.0.9b";
+		if ( corecss.setAttribute ) {
+				corecss.setAttribute( "rel", "stylesheet" );
+				corecss.setAttribute( "type", "text/css" );
+				corecss.setAttribute( "href", corecssurl );
+		} else {
+				corecss.rel = "stylesheet";
+				corecss.href = corecssurl;
+		}
+		document.getElementsByTagName("head")[0].insertBefore( corecss, document.getElementById("syntaxhighlighteranchor") );
+		var themecssurl = "http://budiirawan.com/wp-content/plugins/syntaxhighlighter/syntaxhighlighter3/styles/shThemeDefault.css?ver=3.0.9b";
+		if ( themecss.setAttribute ) {
+				themecss.setAttribute( "rel", "stylesheet" );
+				themecss.setAttribute( "type", "text/css" );
+				themecss.setAttribute( "href", themecssurl );
+		} else {
+				themecss.rel = "stylesheet";
+				themecss.href = themecssurl;
+		}
+		//document.getElementById("syntaxhighlighteranchor").appendChild(themecss);
+		document.getElementsByTagName("head")[0].insertBefore( themecss, document.getElementById("syntaxhighlighteranchor") );
+	})();
+	SyntaxHighlighter.config.strings.expandSource = '+ expand source';
+	SyntaxHighlighter.config.strings.help = '?';
+	SyntaxHighlighter.config.strings.alert = 'SyntaxHighlighter\n\n';
+	SyntaxHighlighter.config.strings.noBrush = 'Can\'t find brush for: ';
+	SyntaxHighlighter.config.strings.brushNotHtmlScript = 'Brush wasn\'t configured for html-script option: ';
+	SyntaxHighlighter.defaults['pad-line-numbers'] = false;
+	SyntaxHighlighter.defaults['toolbar'] = false;
+	SyntaxHighlighter.all();
+</script> 
+  <link rel="stylesheet" id="hljstheme-css" href="http://budiirawan.com/wp-content/plugins/wp-code-highlightjs/styles/monokai-sublime.css?ver=0.5.16" type="text/css" media="all"> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-content/themes/bugan-2016/js/skip-link-focus-fix.js?ver=20130115"></script> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-content/themes/bugan-2016/js/sapor.js?ver=20150730"></script> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-includes/js/comment-reply.min.js?ver=4.1.1"></script> 
+  <script type="text/javascript" src="http://budiirawan.com/wp-content/plugins/wp-code-highlightjs/highlight.common.pack.js?ver=0.5.16"></script> 
+  <style>pre.hljs {padding: 5px;}
+pre.hljs code {}</style> 
+  <script type="text/javascript">
+    (function($, window) {
+        var init_fn_flag = false;
+        var init_fn = (function() {
+            if (init_fn_flag)
+                return;
+            init_fn_flag = true;
+             hljs.configure({"tabReplace":"    "});
+            $('pre code').each(function(i, block) {
+                hljs.highlightBlock(block);
+            });
+            $('pre:not(:has(code))').each(function(i, block){
+                var class_desc = $(block).attr("class") || "";
+                var reg_mat = class_desc.match(/brush\s*:\s*([\w\d]+)/i);
+                if(!reg_mat || reg_mat.length < 2)
+                    return;
+                var code_content = $(block).removeClass("brush:").removeClass("ruler:").removeClass("first-line:").removeClass("highlight:")
+                    .removeClass("brush:" + reg_mat[1] + ";").removeClass(reg_mat[1] + ";").removeClass("true;").removeClass("false;").html();
+                $(block).empty().append($("<code class='hljs'></code>").html(code_content)).addClass('language-' + reg_mat[1]);
+                hljs.highlightBlock(block);
+            });
+        });
+        $(document).ready(init_fn);
+        $(window).on("load", init_fn);
+    })(jQuery, window);
+    </script>   
+  <!-- Performance optimized by W3 Total Cache. Learn more: https://www.w3-edge.com/products/
+
+ Served from: budiirawan.com @ 2017-09-18 01:16:19 by W3 Total Cache -->
+ </body>
+</html>

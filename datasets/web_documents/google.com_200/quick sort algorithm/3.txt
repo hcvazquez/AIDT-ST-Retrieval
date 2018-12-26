@@ -1,0 +1,286 @@
+<!doctype html>
+<html class="ocks-org do-not-copy">
+ <head>
+  <meta charset="utf-8"> 
+  <title>Fisher–Yates Shuffle</title> 
+  <style>
+
+@import url(../style.css?aea6f0a);
+
+line {
+  stroke: #000;
+  stroke-width: 1.5px;
+}
+
+line.conflict {
+  stroke: red !important;
+  stroke-width: 4px !important;
+}
+
+.play path {
+  stroke: #fff;
+  stroke-width: 6px;
+}
+
+.play:hover path {
+  fill: red;
+}
+
+.play rect {
+  fill: none;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+</style> 
+ </head>
+ <body>
+  <header> 
+   <aside>
+    January 14, 2012
+   </aside> 
+   <a href="../" rel="author">Mike Bostock</a> 
+  </header> 
+  <h1>Fisher–Yates Shuffle</h1> 
+  <script src="//d3js.org/d3.v2.min.js" charset="utf-8"></script> 
+  <script>
+
+var margin = {top: 0, right: 24, bottom: 0, left: 24},
+    width = 960,
+    height = 80 - margin.top - margin.bottom,
+    size = height * .4;
+
+var n = 200;
+
+var x = d3.scale.ordinal()
+    .domain(d3.range(n))
+    .rangePoints([0, width]);
+
+var y = d3.scale.linear()
+    .domain([0, n - 1])
+    .range([-Math.PI / 4, Math.PI / 4]);
+
+function chart(update) {
+  var m = 200;
+
+  var svg = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .style("margin-left", -margin.left + "px")
+      .style("margin-right", -margin.right + "px")
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  var line = svg.selectAll("line")
+      .data(d3.range(n))
+    .enter().append("line")
+      .attr("x2", function(d) { return size * Math.sin(y(d)); })
+      .attr("y2", function(d) { return -size * Math.cos(y(d)); })
+      .attr("transform", function(d, i) { return "translate(" + x(i) + "," + height + ")"; })
+      .style("stroke", "#666");
+
+  var play = svg.append("g")
+      .attr("class", "play")
+      .on("click", start);
+
+  play.append("path")
+      .attr("d", "M-30,-30L30,0L-30,30Z")
+      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")scale(.6)");
+
+  play.append("rect")
+      .attr("width", width)
+      .attr("height", height);
+
+  function start() {
+    play.style("display", "none");
+    var interval = setInterval(function() {
+      if (!(m = update(line, m))) {
+        m = n;
+        clearInterval(interval);
+        setTimeout(function() {
+          play.style("display", null);
+          line = svg.selectAll("line")
+              .attr("transform", function(d, i) { return "translate(" + x(i) + "," + height + ")"; })
+              .style("stroke", "#666");
+        }, 5000);
+      }
+    }, 50);
+  }
+
+  return svg;
+}
+</script> 
+  <p>Say you had a fresh pack of cards: <script>
+
+chart().select(".play").remove();
+
+</script> </p>
+  <p>If you want to play a game of Texas Hold ‘em with friends, you should shuffle the deck first to randomize the order and insure a fair game. <b>But how?</b> </p>
+  <aside>
+   A quick way of seeing an algorithm’s bias is a 
+   <a href="compare.html">matrix diagram</a>.
+  </aside> 
+  <p>A simple but effective way of doing this is to pull a random card from the deck repeatedly and set it aside, incrementally building a new stack. As long as you pick each remaining card from the deck with equal probability, you’ll have a perfectly-unbiased random stack when you’re done: <script>
+
+chart(function(line, m) {
+  var e = line[0].splice(~~(Math.random() * m), 1)[0];
+
+  d3.select(e)
+      .style("stroke", "#000")
+      .style("stroke-width", "4px")
+    .transition()
+      .duration(750)
+      .attr("transform", "translate(" + x(n - m) + "," + size + ")")
+      .style("stroke-width", "1.5px");
+
+  return --m;
+});
+
+</script> </p>
+  <aside>
+   <p>Click to shuffle!</p>
+  </aside> 
+  <p>But let’s say instead of a physical deck of cards, you wanted to write code to perform this same task with an in-memory array of <i>n</i> elements. Sounds straightforward (in part), but how would you pick a random remaining element from the original deck, exactly? </p>
+  <p>One slow option—gotta start somewhere: pick a random element from the array (in [0, <i>n</i> - 1]) and then check if you’ve shuffled that element already. This works, but it becomes increasingly slow as the remaining elements dwindle; you’ll keep randomly picking elements that have already been shuffled. Watch how those duplicate selections (in red) cause the shuffle to crawl to a halt: <script>
+
+chart(function(line, m) {
+  var e = line[0][~~(Math.random() * n)];
+
+  if (isNaN(e.__data__)) {
+    d3.select(e)
+        .attr("class", "conflict")
+      .transition()
+        .delay(750)
+        .duration(0)
+        .attr("class", null);
+  } else {
+    d3.select(e)
+        .style("stroke", "#000")
+        .style("stroke-width", "4px")
+      .transition()
+        .duration(750)
+        .attr("transform", "translate(" + x(n - m--) + "," + size + ")")
+        .style("stroke-width", "1.5px");
+    delete e.__data__;
+  }
+
+  return m;
+});
+
+</script> </p>
+  <p>Here’s what the implementation looks like in JavaScript, not that you should use it: </p>
+  <pre><code>function shuffle(array) {
+  var copy = [], n = array.length, i;
+
+  // While there remain elements to shuffle…
+  while (n) {
+
+    // Pick a remaining element…
+    i = Math.floor(Math.random() * array.length);
+
+    // If not already shuffled, move it to the new array.
+    if (i in array) {
+      copy.push(array[i]);
+      delete array[i];
+      n--;
+    }
+  }
+
+  return copy;
+}</code></pre> 
+  <p>This is bad, and we can do better. You can avoid duplicate selection by picking only remaining elements: pick a random number in the range [0, <i>m</i> - 1], where <i>m</i> starts at <i>n</i> and decreases by one with each iteration. In other words, <i>m</i> represents the number of <i>remaining</i> cards to shuffle. Compact the remaining deck as you move cards so that you can easily pick out the next card for shuffling: <script>
+
+chart(function(line, m) {
+  var e = line[0].splice(~~(Math.random() * m), 1)[0];
+
+  d3.select(e)
+      .style("stroke", "#000")
+      .style("stroke-width", "4px")
+    .transition()
+      .duration(750)
+      .attr("transform", "translate(" + x(n - m) + "," + size +")")
+      .style("stroke-width", "1.5px");
+
+  line
+      .attr("transform", function(d, i) { return "translate(" + x(i) + "," + height + ")"; });
+
+  return --m;
+});
+
+</script> </p>
+  <pre><code>function shuffle(array) {
+  var copy = [], n = array.length, i;
+
+  // While there remain elements to shuffle…
+  while (n) {
+
+    // Pick a remaining element…
+    i = Math.floor(Math.random() * n--);
+
+    // And move it to the new array.
+    copy.push(array.splice(i, 1)[0]);
+  }
+
+  return copy;
+}</code></pre> 
+  <p>This works pretty well, but it still has relatively poor <i>quadratic</i> performance. The problem is that when you remove each element from the original array (<code>array.splice</code>), you have to shift all the subsequent elements down to compact the array. On average, that’s <i>n</i> / 2 elements to shift per element to shuffle, giving O(<i>n</i><sup>2</sup>). </p>
+  <p>But here’s an interesting, if obvious, insight: the number of shuffled elements (<i>n</i> - <i>m</i>) plus the number of remaining elements (<i>m</i>) is always equal to <i>n</i>. This means we can do the entire shuffle in-place, without any extra space! We use the back of the array to store the shuffled elements, and the front of the array to store the remaining elements. We don’t care about the order of the remaining elements as long as we sample uniformly when picking! </p>
+  <p>To implement the in-place O(<i>n</i>) shuffle, then, pick a random remaining element (from the front) and place in its new location (in the back). The unshuffled element in the back is swapped to the front, where it waits for subsequent shuffling: <script>
+
+chart(function(line, m) {
+  var i = ~~(Math.random() * m--),
+      a = line[0][i],
+      b = line[0][m];
+
+  d3.select(line[0][i] = b).transition()
+      .duration(750)
+      .attr("transform", "translate(" + x(i) + "," + height + ")");
+
+  d3.select(line[0][m] = a)
+      .style("stroke", "#000")
+      .style("stroke-width", "4px")
+    .transition()
+      .duration(750)
+      .attr("transform", "translate(" + x(m) + "," + height + ")")
+      .style("stroke-width", "1.5px");
+
+  return m;
+});
+
+</script> </p>
+  <pre><code>function shuffle(array) {
+  var m = array.length, t, i;
+
+  // While there remain elements to shuffle…
+  while (m) {
+
+    // Pick a remaining element…
+    i = Math.floor(Math.random() * m--);
+
+    // And swap it with the current element.
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+
+  return array;
+}</code></pre> 
+  <p>For more about the Fisher–Yates shuffle, see the <a href="http://en.wikipedia.org/wiki/Fisher–Yates_shuffle">Wikipedia article</a> and Jeff Atwood’s post, <a href="http://www.codinghorror.com/blog/2007/12/the-danger-of-naivete.html">“The Danger of Naïveté”</a> (2007). The visualizations in this post were built with <a href="http://d3js.org/">d3.js</a> and inspired by sort algorithm visualizations in Robert Sedgewick’s <a href="http://www.cs.princeton.edu/~rs/"><i>Algorithms in C</i></a> (1998). See as well these visualizations of <a href="//bl.ocks.org/mbostock/1243323">merge sort</a> and <a href="//bl.ocks.org/mbostock/1582075">quicksort</a>. </p>
+  <p>Comments? <a href="http://news.ycombinator.com/item?id=3464607">Discuss on HN!</a> </p>
+  <footer> 
+   <aside>
+    January 14, 2012
+   </aside> 
+   <a href="../" rel="author">Mike Bostock</a> 
+  </footer> 
+  <script>
+
+GoogleAnalyticsObject = "ga", ga = function() { ga.q.push(arguments); }, ga.q = [], ga.l = +new Date;
+ga("create", "UA-48272912-3", "ocks.org");
+ga("send", "pageview");
+
+</script> 
+  <script async src="../highlight.min.js"></script> 
+  <script async src="//www.google-analytics.com/analytics.js"></script> 
+ </body>
+</html>

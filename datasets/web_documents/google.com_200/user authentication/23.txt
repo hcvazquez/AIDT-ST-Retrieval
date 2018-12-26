@@ -1,0 +1,920 @@
+<!doctype html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!-->
+<html class="no-js" lang="en">
+ <!--<![endif]-->
+ <head> 
+  <meta charset="utf-8"> 
+  <title>User Authentication With Passport and Express 4 - Michael Herman</title> 
+  <meta name="author" content="Michael Herman"> 
+  <meta name="description" content="This article details how to add user authentication to Node/Express 4 with Passport.js"> 
+  <meta name="keywords" content="node, express, passport, authentication"> 
+  <!-- http://t.co/dKP3o1e --> 
+  <meta name="HandheldFriendly" content="True"> 
+  <meta name="MobileOptimized" content="320"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <link rel="canonical" href="http://mherman.org/blog/2015/01/31/local-authentication-with-passport-and-express-4"> 
+  <link href="/favicon.png" rel="icon"> 
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css"> 
+  <link href="/atom.xml" rel="alternate" title="Michael Herman" type="application/atom+xml"> 
+  <script src="/javascripts/modernizr-2.0.js"></script> 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script> 
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script> 
+  <script src="/javascripts/octopress.js" type="text/javascript"></script> 
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts --> 
+  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css"> 
+  <link href="//fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css"> 
+  <link href="//fonts.googleapis.com/css?family=Fjalla+One" rel="stylesheet" type="text/css"> 
+  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css"> 
+  <!-- MathJax Configuration --> 
+  <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> 
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-37074204-1', 'auto');
+    ga('send', 'pageview');
+
+  </script> 
+ </head> 
+ <body class="collapse-sidebar sidebar-footer"> 
+  <header role="banner">
+   <hgroup> 
+    <h1><a href="/">Michael Herman</a></h1> 
+    <h2>Software Developer</h2> 
+   </hgroup> 
+  </header> 
+  <nav role="navigation">
+   <ul class="subscribe" data-subscription="rss"> 
+    <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS" target="_blank">
+      <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewbox="0 0 100 100">
+       <path class="social" d="M 13.310204,73.332654 C 5.967347,73.332654 0,79.322448 0,86.621428 c 0,7.338776 5.967347,13.262246 13.310204,13.262246 7.370408,0 13.328572,-5.92245 13.328572,-13.262246 0,-7.29898 -5.958164,-13.288774 -13.328572,-13.288774 z M 0.01530612,33.978572 V 53.143878 C 12.493878,53.143878 24.229592,58.02347 33.068368,66.865306 41.894898,75.685714 46.767346,87.47449 46.767346,100 h 19.25 C 66.017346,63.592858 36.4,33.979592 0.01530612,33.978572 l 0,0 z M 0.03877552,0 V 19.17449 C 44.54796,19.17551 80.77551,55.437756 80.77551,100 H 100 C 100,44.87653 55.15102,0 0.03877552,0 z"></path>
+      </svg></a></li> 
+   </ul> 
+   <form action="http://google.com/search" method="get"> 
+    <fieldset role="search"> 
+     <input type="hidden" name="sitesearch" value="mherman.org"> 
+     <input class="search" type="text" name="q" results="0" placeholder="Search"> 
+    </fieldset> 
+   </form> 
+   <ul class="main-navigation"> 
+    <li><a href="/">Blog</a></li> 
+    <li><a href="/about">About</a></li> 
+    <li><a href="/talks">Talks</a></li> 
+   </ul> 
+  </nav> 
+  <script async type="text/javascript" src="//cdn.carbonads.com/carbon.js?zoneid=1673&amp;serve=C6AILKT&amp;placement=mhermanorg" id="_carbonads_js" media="(min-width: 768px)"></script> 
+  <div id="main"> 
+   <div id="content"> 
+    <div> 
+     <article class="hentry" role="article"> 
+      <header> 
+       <h1 class="entry-title">User Authentication With Passport and Express 4</h1> 
+       <p class="meta"> <time class="entry-date" datetime="2015-01-31T07:07:00-07:00"><span class="date"><span class="date-month">Jan</span> <span class="date-day">31</span><span class="date-suffix">st</span>, <span class="date-year">2015</span></span> <span class="time">7:07 am</span></time> </p> 
+      </header> 
+      <div class="entry-content">
+       <p>This post demonstrate how to add user authentication to Node/Express with Passport.js.</p> 
+       <blockquote>
+        <p>If you’re interested in social authentication via Passport, please check out <a href="http://mherman.org/blog/2015/09/26/social-authentication-in-node-dot-js-with-passport/">this</a> blog post. Looking for an Express 3 authentication tutorial? Check out this <a href="http://mherman.org/blog/2013/11/11/user-authentication-with-passport-dot-js/">post</a>.</p>
+       </blockquote> 
+       <p>Before you start, make sure you have <a href="http://nodejs.org/download/">Node</a> installed for your specific operating system. This tutorial also uses the following tools/technologies:</p> 
+       <ul> 
+        <li><a href="https://www.npmjs.com/package/express">Express</a> v4.11.1</li> 
+        <li><a href="https://www.npmjs.com/package/mongoose">Mongoose</a> v4.4.1</li> 
+        <li><a href="https://www.npmjs.com/package/passport">Passport</a> v0.2.1</li> 
+        <li><a href="https://www.npmjs.com/package/passport-local">Passport-local</a>: v1.0.0</li> 
+        <li><a href="https://www.npmjs.com/package/passport-local-mongoose">Passport-local-mongoose</a>: v1.0.0</li> 
+       </ul> 
+       <h2>Project Setup</h2> 
+       <p>Start by installing the Express generator, which we’ll use to generate a basic project boilerplate:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>npm install -g express-generator@4 </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <blockquote>
+        <p>The <code>-g</code> flag means that we’re installing this globally, on our entire system.</p>
+       </blockquote> 
+       <p>Navigate to a convenient directory, like your “Desktop” or “Documents”, then create your app:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>express passport-local-express4 </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Check out the project structure:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line">??? app.js </span><span class="line">??? bin </span><span class="line">?&nbsp;&nbsp; ??? www </span><span class="line">??? package.json </span><span class="line">??? public </span><span class="line">?&nbsp;&nbsp; ??? images </span><span class="line">?&nbsp;&nbsp; ??? javascripts </span><span class="line">?&nbsp;&nbsp; ??? stylesheets </span><span class="line">?&nbsp;&nbsp; ??? style.css </span><span class="line">??? routes </span><span class="line">?&nbsp;&nbsp; ??? index.js </span><span class="line">?&nbsp;&nbsp; ??? users.js </span><span class="line">??? views </span><span class="line"> ??? error.jade </span><span class="line"> ??? index.jade </span><span class="line"> ??? layout.jade </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>This took care of the heavy lifting, adding common files and functions associated with all apps.</p> 
+       <h3>Install/Update Dependencies</h3> 
+       <p>Update the <em>package.json</em> file to reference the correct dependencies:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+</pre></td>
+            <td class="code"><pre><code class="json"><span class="line"><span class="p">{</span> </span><span class="line"> <span class="nt">"name"</span><span class="p">:</span> <span class="s2">"passport-local-express4"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"version"</span><span class="p">:</span> <span class="s2">"0.0.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"private"</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span> </span><span class="line"> <span class="nt">"scripts"</span><span class="p">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"start"</span><span class="p">:</span> <span class="s2">"node ./bin/www"</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nt">"repository"</span><span class="p">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"type"</span><span class="p">:</span> <span class="s2">"git"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"url"</span><span class="p">:</span> <span class="s2">"git@github.com:mjhea0/passport-local-express4.git"</span> </span><span class="line"> <span class="p">},</span> </span><span class="line"> <span class="nt">"author"</span><span class="p">:</span> <span class="s2">"Michael Herman &lt;michael@mherman.org&gt;"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"license"</span><span class="p">:</span> <span class="s2">"MIT"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"dependencies"</span><span class="p">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"body-parser"</span><span class="p">:</span> <span class="s2">"^1.10.2"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"chai"</span><span class="p">:</span> <span class="s2">"~1.8.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"connect-flash"</span><span class="p">:</span> <span class="s2">"^0.1.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"cookie-parser"</span><span class="p">:</span> <span class="s2">"^1.3.3"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"debug"</span><span class="p">:</span> <span class="s2">"^2.1.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"express"</span><span class="p">:</span> <span class="s2">"^4.11.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"express-session"</span><span class="p">:</span> <span class="s2">"^1.10.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"jade"</span><span class="p">:</span> <span class="s2">"^1.9.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"mocha"</span><span class="p">:</span> <span class="s2">"~1.14.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"mongoose"</span><span class="p">:</span> <span class="s2">"^4.4.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"morgan"</span><span class="p">:</span> <span class="s2">"^1.5.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"passport"</span><span class="p">:</span> <span class="s2">"^0.2.1"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"passport-local"</span><span class="p">:</span> <span class="s2">"^1.0.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"passport-local-mongoose"</span><span class="p">:</span> <span class="s2">"^1.0.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"serve-favicon"</span><span class="p">:</span> <span class="s2">"^2.2.0"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"should"</span><span class="p">:</span> <span class="s2">"~2.1.0"</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"><span class="p">}</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now install the dependencies:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span><span class="nb">cd </span>express-local-express4 </span><span class="line"><span class="nv">$ </span>npm install </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Sanity Check</h3> 
+       <p>Let’s test our setup by running the app:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>node ./bin/www </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Navigate to <a href="http://localhost:3000/">http://localhost:3000/</a> in your browser and you should see the “Welcome to Express” text staring back.</p> 
+       <h3>Setup MongoDB</h3> 
+       <p>Install:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>npm install -g mongodb </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Then, in a new terminal window, start the MongoDB daemon:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>sudo mongod </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Edit <em>app.js</em></h2> 
+       <h3>Update the Requirements</h3> 
+       <p>Add the following requirements:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">LocalStrategy</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-local'</span><span class="p">).</span><span class="nx">Strategy</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3>Update <em>app.js</em></h3> 
+       <p>Update all of <em>app.js</em> with the following code (check the comments for a brief explanation):</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+<span class="line-number">68</span>
+<span class="line-number">69</span>
+<span class="line-number">70</span>
+<span class="line-number">71</span>
+<span class="line-number">72</span>
+<span class="line-number">73</span>
+<span class="line-number">74</span>
+<span class="line-number">75</span>
+<span class="line-number">76</span>
+<span class="line-number">77</span>
+<span class="line-number">78</span>
+<span class="line-number">79</span>
+<span class="line-number">80</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="c1">// dependencies</span> </span><span class="line"><span class="kd">var</span> <span class="nx">express</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'express'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">favicon</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'serve-favicon'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">logger</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'morgan'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">cookieParser</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'cookie-parser'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">bodyParser</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'body-parser'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">LocalStrategy</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-local'</span><span class="p">).</span><span class="nx">Strategy</span><span class="p">;</span> </span><span class="line"> </span><span class="line"><span class="kd">var</span> <span class="nx">routes</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./routes/index'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">users</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./routes/users'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="kd">var</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">express</span><span class="p">();</span> </span><span class="line"> </span><span class="line"><span class="c1">// view engine setup</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">'views'</span><span class="p">,</span> <span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="s1">'views'</span><span class="p">));</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">'view engine'</span><span class="p">,</span> <span class="s1">'jade'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="c1">// uncomment after placing your favicon in /public</span> </span><span class="line"><span class="c1">//app.use(favicon(__dirname + '/public/favicon.ico'));</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">logger</span><span class="p">(</span><span class="s1">'dev'</span><span class="p">));</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">bodyParser</span><span class="p">.</span><span class="nx">json</span><span class="p">());</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">bodyParser</span><span class="p">.</span><span class="nx">urlencoded</span><span class="p">({</span> <span class="nx">extended</span><span class="o">:</span> <span class="kc">false</span> <span class="p">}));</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">cookieParser</span><span class="p">());</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">require</span><span class="p">(</span><span class="s1">'express-session'</span><span class="p">)({</span> </span><span class="line"> <span class="nx">secret</span><span class="o">:</span> <span class="s1">'keyboard cat'</span><span class="p">,</span> </span><span class="line"> <span class="nx">resave</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> </span><span class="line"> <span class="nx">saveUninitialized</span><span class="o">:</span> <span class="kc">false</span> </span><span class="line"><span class="p">}));</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">passport</span><span class="p">.</span><span class="nx">initialize</span><span class="p">());</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">passport</span><span class="p">.</span><span class="nx">session</span><span class="p">());</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="kr">static</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span> <span class="s1">'public'</span><span class="p">)));</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="nx">routes</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="c1">// passport config</span> </span><span class="line"><span class="kd">var</span> <span class="nx">Account</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'./models/account'</span><span class="p">);</span> </span><span class="line"><span class="nx">passport</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="k">new</span> <span class="nx">LocalStrategy</span><span class="p">(</span><span class="nx">Account</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">()));</span> </span><span class="line"><span class="nx">passport</span><span class="p">.</span><span class="nx">serializeUser</span><span class="p">(</span><span class="nx">Account</span><span class="p">.</span><span class="nx">serializeUser</span><span class="p">());</span> </span><span class="line"><span class="nx">passport</span><span class="p">.</span><span class="nx">deserializeUser</span><span class="p">(</span><span class="nx">Account</span><span class="p">.</span><span class="nx">deserializeUser</span><span class="p">());</span> </span><span class="line"> </span><span class="line"><span class="c1">// mongoose</span> </span><span class="line"><span class="nx">mongoose</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'mongodb://localhost/passport_local_mongoose_express4'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="c1">// catch 404 and forward to error handler</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">err</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">'Not Found'</span><span class="p">);</span> </span><span class="line"> <span class="nx">err</span><span class="p">.</span><span class="nx">status</span> <span class="o">=</span> <span class="mi">404</span><span class="p">;</span> </span><span class="line"> <span class="nx">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="c1">// error handlers</span> </span><span class="line"> </span><span class="line"><span class="c1">// development error handler</span> </span><span class="line"><span class="c1">// will print stacktrace</span> </span><span class="line"><span class="k">if</span> <span class="p">(</span><span class="nx">app</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'env'</span><span class="p">)</span> <span class="o">===</span> <span class="s1">'development'</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="nx">err</span><span class="p">.</span><span class="nx">status</span> <span class="o">||</span> <span class="mi">500</span><span class="p">);</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'error'</span><span class="p">,</span> <span class="p">{</span> </span><span class="line"> <span class="nx">message</span><span class="o">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span><span class="p">,</span> </span><span class="line"> <span class="nx">error</span><span class="o">:</span> <span class="nx">err</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"><span class="p">}</span> </span><span class="line"> </span><span class="line"><span class="c1">// production error handler</span> </span><span class="line"><span class="c1">// no stacktraces leaked to user</span> </span><span class="line"><span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="nx">err</span><span class="p">.</span><span class="nx">status</span> <span class="o">||</span> <span class="mi">500</span><span class="p">);</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'error'</span><span class="p">,</span> <span class="p">{</span> </span><span class="line"> <span class="nx">message</span><span class="o">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span><span class="p">,</span> </span><span class="line"> <span class="nx">error</span><span class="o">:</span> <span class="p">{}</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">app</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Mongoose</h2> 
+       <p>Let’s get the Mongoose up and running. Add a new file called <em>account.js</em> to a new directory called “models” with the following code:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">Schema</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">Schema</span><span class="p">;</span> </span><span class="line"><span class="kd">var</span> <span class="nx">passportLocalMongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport-local-mongoose'</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="kd">var</span> <span class="nx">Account</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Schema</span><span class="p">({</span> </span><span class="line"> <span class="nx">username</span><span class="o">:</span> <span class="nb">String</span><span class="p">,</span> </span><span class="line"> <span class="nx">password</span><span class="o">:</span> <span class="nb">String</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">Account</span><span class="p">.</span><span class="nx">plugin</span><span class="p">(</span><span class="nx">passportLocalMongoose</span><span class="p">);</span> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">model</span><span class="p">(</span><span class="s1">'Account'</span><span class="p">,</span> <span class="nx">Account</span><span class="p">);</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>You may be wondering about password security, specifically salting/hashing the password. Fortunately, the <a href="https://github.com/saintedlama/passport-local-mongoose">passport-local-mongoose</a> package automatically takes care of salting and hashing the password for us. More on this further down.</p> 
+       <h3>Sanity Check</h3> 
+       <p>Again, test the app:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>node ./bin/www </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Make sure you still see the same “Welcome to Express” text.</p> 
+       <h2>Add Routes</h2> 
+       <p>Within the “routes” folder, add the following code to the <em>index.js</em> file:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">express</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'express'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">passport</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'passport'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">Account</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'../models/account'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">router</span> <span class="o">=</span> <span class="nx">express</span><span class="p">.</span><span class="nx">Router</span><span class="p">();</span> </span><span class="line"> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'index'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">user</span> <span class="o">:</span> <span class="nx">req</span><span class="p">.</span><span class="nx">user</span> <span class="p">});</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/register'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'register'</span><span class="p">,</span> <span class="p">{</span> <span class="p">});</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/register'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">Account</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="k">new</span> <span class="nx">Account</span><span class="p">({</span> <span class="nx">username</span> <span class="o">:</span> <span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">username</span> <span class="p">}),</span> <span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">password</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">account</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'register'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">account</span> <span class="o">:</span> <span class="nx">account</span> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"> <span class="nx">passport</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'local'</span><span class="p">)(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/login'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'login'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">user</span> <span class="o">:</span> <span class="nx">req</span><span class="p">.</span><span class="nx">user</span> <span class="p">});</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/login'</span><span class="p">,</span> <span class="nx">passport</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'local'</span><span class="p">),</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/logout'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">req</span><span class="p">.</span><span class="nx">logout</span><span class="p">();</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/ping'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">){</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mi">200</span><span class="p">).</span><span class="nx">send</span><span class="p">(</span><span class="s2">"pong!"</span><span class="p">);</span> </span><span class="line"><span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">router</span><span class="p">;</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Test</h2> 
+       <p>Fire up the server. Navigate to <a href="http://localhost:3000/ping">http://localhost:3000/ping</a>. Make sure you do not get any errors and that you see the word “pong!”.</p> 
+       <h2>Views</h2> 
+       <h3><em>layout.jade</em></h3> 
+       <p>Update:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">doctype</span> <span class="nx">html</span> </span><span class="line"><span class="nx">html</span> </span><span class="line"> <span class="nx">head</span> </span><span class="line"> <span class="nx">title</span><span class="o">=</span> <span class="nx">title</span> </span><span class="line"> <span class="nx">meta</span><span class="p">(</span><span class="nx">name</span><span class="o">=</span><span class="s1">'viewport'</span><span class="p">,</span> <span class="nx">content</span><span class="o">=</span><span class="s1">'width=device-width, initial-scale=1.0'</span><span class="p">)</span> </span><span class="line"> <span class="nx">link</span><span class="p">(</span><span class="nx">href</span><span class="o">=</span><span class="s1">'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css'</span><span class="p">,</span> <span class="nx">rel</span><span class="o">=</span><span class="s1">'stylesheet'</span><span class="p">,</span> <span class="nx">media</span><span class="o">=</span><span class="s1">'screen'</span><span class="p">)</span> </span><span class="line"> <span class="nx">link</span><span class="p">(</span><span class="nx">rel</span><span class="o">=</span><span class="s1">'stylesheet'</span><span class="p">,</span> <span class="nx">href</span><span class="o">=</span><span class="s1">'/stylesheets/style.css'</span><span class="p">)</span> </span><span class="line"> <span class="nx">body</span> </span><span class="line"> <span class="nx">block</span> <span class="nx">content</span> </span><span class="line"> </span><span class="line"> <span class="nx">script</span><span class="p">(</span><span class="nx">src</span><span class="o">=</span><span class="s1">'http://code.jquery.com/jquery.js'</span><span class="p">)</span> </span><span class="line"> <span class="nx">script</span><span class="p">(</span><span class="nx">src</span><span class="o">=</span><span class="s1">'http://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js'</span><span class="p">)</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3><em>index.jade</em></h3> 
+       <p>Update:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td>
+            <td class="code"><pre><code class="jade"><span class="line"><span class="nt">extends</span> layout </span><span class="line"> </span><span class="line"><span class="nt">block</span> content </span><span class="line"> <span class="nt">if</span> (!user) </span><span class="line"> <span class="nt">a</span>(<span class="na">href=</span><span class="s">"/login"</span>) Login </span><span class="line"> <span class="nt">br</span> </span><span class="line"> <span class="nt">a</span>(<span class="na">href=</span><span class="s">"/register"</span>) Register </span><span class="line"> <span class="nt">if</span> (user) </span><span class="line"> <span class="nt">p</span> You are currently logged in as <span class="si">#{</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="si">}</span> </span><span class="line"> <span class="nt">a</span>(<span class="na">href=</span><span class="s">"/logout"</span>) Logout </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3><em>login.jade</em></h3> 
+       <p>Add a new file called <em>login.jade</em> to the views:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td>
+            <td class="code"><pre><code class="jade"><span class="line"><span class="nt">extends</span> layout </span><span class="line"> </span><span class="line"><span class="nt">block</span> content </span><span class="line"> <span class="nc">.container</span> </span><span class="line"> <span class="nt">h1</span> Login Page </span><span class="line"> <span class="nt">p</span><span class="nc">.lead</span> Say something worthwhile here. </span><span class="line"> <span class="nt">br</span> </span><span class="line"> <span class="nt">form</span>(<span class="na">role=</span><span class="s">'form'</span><span class="err">,</span> <span class="na">action=</span><span class="s">"/login"</span><span class="err">,</span><span class="na">method=</span><span class="s">"post"</span><span class="err">,</span> <span class="na">style=</span><span class="s">'max-width: 300px;'</span>) </span><span class="line"> <span class="nc">.form-group</span> </span><span class="line"> <span class="nt">input</span><span class="nc">.form-control</span>(<span class="na">type=</span><span class="s">'text'</span><span class="err">,</span> <span class="na">name=</span><span class="s">"username"</span><span class="err">,</span> <span class="na">placeholder=</span><span class="s">'Enter Username'</span>) </span><span class="line"> <span class="nc">.form-group</span> </span><span class="line"> <span class="nt">input</span><span class="nc">.form-control</span>(<span class="na">type=</span><span class="s">'password'</span><span class="err">,</span> <span class="na">name=</span><span class="s">"password"</span><span class="err">,</span> <span class="na">placeholder=</span><span class="s">'Password'</span>) </span><span class="line"> <span class="nt">button</span><span class="nc">.btn.btn-default</span>(<span class="na">type=</span><span class="s">'submit'</span>) Submit </span><span class="line"> <span class="err">&amp;</span><span class="nt">nbsp</span>; </span><span class="line"> <span class="nt">a</span>(<span class="na">href=</span><span class="s">'/'</span>) </span><span class="line"> <span class="nt">button</span><span class="nc">.btn.btn-primary</span>(<span class="na">type=</span><span class="s">"button"</span>) Cancel </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h3><em>register.jade</em></h3> 
+       <p>Add another file called <em>register.jade</em> to the views:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kr">extends</span> <span class="nx">layout</span> </span><span class="line"> </span><span class="line"><span class="nx">block</span> <span class="nx">content</span> </span><span class="line"> <span class="p">.</span><span class="nx">container</span> </span><span class="line"> <span class="nx">h1</span> <span class="nx">Register</span> <span class="nx">Page</span> </span><span class="line"> <span class="nx">p</span><span class="p">.</span><span class="nx">lead</span> <span class="nx">Say</span> <span class="nx">something</span> <span class="nx">worthwhile</span> <span class="nx">here</span><span class="p">.</span> </span><span class="line"> <span class="nx">br</span> </span><span class="line"> <span class="nx">form</span><span class="p">(</span><span class="nx">role</span><span class="o">=</span><span class="s1">'form'</span><span class="p">,</span> <span class="nx">action</span><span class="o">=</span><span class="s2">"/register"</span><span class="p">,</span><span class="nx">method</span><span class="o">=</span><span class="s2">"post"</span><span class="p">,</span> <span class="nx">style</span><span class="o">=</span><span class="s1">'max-width: 300px;'</span><span class="p">)</span> </span><span class="line"> <span class="p">.</span><span class="nx">form</span><span class="o">-</span><span class="nx">group</span> </span><span class="line"> <span class="nx">input</span><span class="p">.</span><span class="nx">form</span><span class="o">-</span><span class="nx">control</span><span class="p">(</span><span class="nx">type</span><span class="o">=</span><span class="s1">'text'</span><span class="p">,</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"username"</span><span class="p">,</span> <span class="nx">placeholder</span><span class="o">=</span><span class="s1">'Enter Username'</span><span class="p">)</span> </span><span class="line"> <span class="p">.</span><span class="nx">form</span><span class="o">-</span><span class="nx">group</span> </span><span class="line"> <span class="nx">input</span><span class="p">.</span><span class="nx">form</span><span class="o">-</span><span class="nx">control</span><span class="p">(</span><span class="nx">type</span><span class="o">=</span><span class="s1">'password'</span><span class="p">,</span> <span class="nx">name</span><span class="o">=</span><span class="s2">"password"</span><span class="p">,</span> <span class="nx">placeholder</span><span class="o">=</span><span class="s1">'Password'</span><span class="p">)</span> </span><span class="line"> <span class="nx">button</span><span class="p">.</span><span class="nx">btn</span><span class="p">.</span><span class="nx">btn</span><span class="o">-</span><span class="k">default</span><span class="p">(</span><span class="nx">type</span><span class="o">=</span><span class="s1">'submit'</span><span class="p">)</span> <span class="nx">Submit</span> </span><span class="line"> <span class="o">&amp;</span><span class="nx">nbsp</span><span class="p">;</span> </span><span class="line"> <span class="nx">a</span><span class="p">(</span><span class="nx">href</span><span class="o">=</span><span class="s1">'/'</span><span class="p">)</span> </span><span class="line"> <span class="nx">button</span><span class="p">.</span><span class="nx">btn</span><span class="p">.</span><span class="nx">btn</span><span class="o">-</span><span class="nx">primary</span><span class="p">(</span><span class="nx">type</span><span class="o">=</span><span class="s2">"button"</span><span class="p">)</span> <span class="nx">Cancel</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <h2>Test Redux</h2> 
+       <p>Fire up the server and test! Register, and then login.</p> 
+       <p>Remember how I said that we’d look at salting and hashing a password again? Well, let’s check our Mongo database to ensure that it’s working.</p> 
+       <p>When I tested the user registration, I used “michael” for both my username and password.</p> 
+       <p>Let’s see what this looks like in the database:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td>
+            <td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>mongo </span><span class="line">MongoDB shell version: 2.4.6 </span><span class="line">connecting to: <span class="nb">test</span> </span><span class="line">&gt; use passport_local_mongoose_express4 </span><span class="line">switched to db passport_local_mongoose_express4 </span><span class="line">&gt; db.accounts.find<span class="o">()</span> </span><span class="line"><span class="o">{</span> <span class="s2">"salt"</span> : <span class="s2">"9ffd63f2bcce58bf79691cacfaae678f690dd73ef778445bf79f97c41934189b"</span>, <span class="s2">"hash"</span> : <span class="s2">"17eabe62d459acdb4f3d8eaab7369a1e989c6150e231d1e87a7cf1c31dfc7eafc0616732a6db8f08c413dcbec06c95d512cef55503a1fe9a7ed5dc15ecf5cf67c114af5a659c79bb47039082a3af933e1c32dd2519b8be11596a775e1d262fd53437927e0fd948b76e738f342904a598e6c533445351c9b3d629aa118adfbe0646a80539e816c06248e353b1787dbd8c646a2ed018bbf5e58fb6a6cc1f32c6ea61b3e52230cfdf75a9f4b7ba20b3d3ae3b86f5816f5df9c48f9d1bb4a9c42e30bf646c3810d050847c1905e5a95f53c81078090e42ba58799187a61b047376def48fb640a4f48eca4c7f35610eafc2c770e61172b11c7e98c36281983de56414fa95e0708c9a6458a903baaf3818a3e4675b39418b358f51f45aca792e606f692e0a7d3667d111d00d0f521257d3486cbcff250dc7d9859ab80f9d56a3d272fb0ebb2e7dd969c0749361153c6bde62ad50b3d47233424034b959c78225db000cc1416aa0d555016f1b666d2da709e69c5030ee39753597a1d06ec0a4e001e22bff37947c1b993794d21667dc6c65e4116dd5ca216a161aa9026063e0b12e1165ffa5c827a6803df6765766cc55bcca122cd4d9f572353a988f90200ffc4a610d9eca83df01d6f30af78f9ec476fc974bc1d3a5fd2759a56486795bd7d993462a8d2f9b9c42d3197cd7b9855f17eaac4073a4d843d56b5c9a75b86cc1bb8b27ec"</span>, <span class="s2">"username"</span> : <span class="s2">"michael"</span>, <span class="s2">"_id"</span> : ObjectId<span class="o">(</span><span class="s2">"54c7bbbfaf54064909921a36"</span><span class="o">)</span>, <span class="s2">"__v"</span> : <span class="m">0</span> <span class="o">}</span> </span><span class="line">&gt; </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>So, you can see that we have a document with five keys:</p> 
+       <ul> 
+        <li><code>username</code> is as we expected - “michael”</li> 
+        <li><code>_id</code> pertains to the unique id associated with that document.</li> 
+        <li><code>__v</code> is the <a href="http://mongoosejs.com/docs/guide.html#versionKey">version #</a> for that specific documents.</li> 
+        <li>Finally, instead of a password key we have both a salt and a hash key. For more on how these are generated, please refer to the <a href="https://github.com/saintedlama/passport-local-mongoose#hash-algorithm">passport-local-mongoose</a> documentation.</li> 
+       </ul> 
+       <h2>Unit/Integration tests</h2> 
+       <p>First, update the <code>scripts</code> object in <em>package.json</em>:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class="json"><span class="line"><span class="s2">"scripts"</span><span class="err">:</span> <span class="p">{</span> </span><span class="line"> <span class="nt">"start"</span><span class="p">:</span> <span class="s2">"node ./bin/www"</span><span class="p">,</span> </span><span class="line"> <span class="nt">"test"</span><span class="p">:</span> <span class="s2">"make test"</span> </span><span class="line"> <span class="p">}</span><span class="err">,</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now add a Makefile to the root and include the following code:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class="json"><span class="line"><span class="err">test:</span> </span><span class="line"> <span class="err">@./node_modules/.bin/mocha</span> </span><span class="line"> </span><span class="line"><span class="err">.PHONY:</span> <span class="err">test</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <blockquote>
+        <p>Take note of the spacing on the second line. This <strong>must</strong> be a tab or you will see an error.</p>
+       </blockquote> 
+       <p>Create a new folder called “test”, and then run <code>make test</code> from the command line. If all is well, you should see - <code>0 passing (1ms)</code>. Now we just need to add some tests…</p> 
+       <h3>Add tests</h3> 
+       <p>Add a new file called <em>test.user.js</em> to the “test folder:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="kd">var</span> <span class="nx">should</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">"should"</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">mongoose</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">'mongoose'</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">Account</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s2">"../models/account.js"</span><span class="p">);</span> </span><span class="line"><span class="kd">var</span> <span class="nx">db</span><span class="p">;</span> </span><span class="line"> </span><span class="line"><span class="nx">describe</span><span class="p">(</span><span class="s1">'Account'</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> </span><span class="line"> <span class="nx">before</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">db</span> <span class="o">=</span> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'mongodb://localhost/test'</span><span class="p">);</span> </span><span class="line"> <span class="nx">done</span><span class="p">();</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="nx">after</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">mongoose</span><span class="p">.</span><span class="nx">connection</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span> </span><span class="line"> <span class="nx">done</span><span class="p">();</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="nx">beforeEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="kd">var</span> <span class="nx">account</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Account</span><span class="p">({</span> </span><span class="line"> <span class="nx">username</span><span class="o">:</span> <span class="s1">'12345'</span><span class="p">,</span> </span><span class="line"> <span class="nx">password</span><span class="o">:</span> <span class="s1">'testy'</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="nx">account</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'error'</span> <span class="o">+</span> <span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="p">);</span> </span><span class="line"> <span class="k">else</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'no error'</span><span class="p">);</span> </span><span class="line"> <span class="nx">done</span><span class="p">();</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="nx">it</span><span class="p">(</span><span class="s1">'find a user by username'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">Account</span><span class="p">.</span><span class="nx">findOne</span><span class="p">({</span> <span class="nx">username</span><span class="o">:</span> <span class="s1">'12345'</span> <span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">account</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">account</span><span class="p">.</span><span class="nx">username</span><span class="p">.</span><span class="nx">should</span><span class="p">.</span><span class="nx">eql</span><span class="p">(</span><span class="s1">'12345'</span><span class="p">);</span> </span><span class="line"> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">" username: "</span><span class="p">,</span> <span class="nx">account</span><span class="p">.</span><span class="nx">username</span><span class="p">);</span> </span><span class="line"> <span class="nx">done</span><span class="p">();</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"> <span class="nx">afterEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">done</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">Account</span><span class="p">.</span><span class="nx">remove</span><span class="p">({},</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="nx">done</span><span class="p">();</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> </span><span class="line"><span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Now run <code>make tests</code>. You should see that it passed - <code>1 passing (43ms)</code>.</p> 
+       <h2>Error handling</h2> 
+       <p>Right now we have some poorly handled errors that are confusing to the end user. For example, try to register a name that already exists, or login with a username that doesn’t exist. This can and <em>should</em> be handled better.</p> 
+       <p>First, update the <code>/register</code> route so an error is thrown:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td>
+            <td class="code"><pre><code class="javascript"><span class="line"><span class="nx">router</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s1">'/register'</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">next</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="nx">Account</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="k">new</span> <span class="nx">Account</span><span class="p">({</span> <span class="nx">username</span> <span class="o">:</span> <span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">username</span> <span class="p">}),</span> <span class="nx">req</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">password</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">account</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="s1">'register'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">error</span> <span class="o">:</span> <span class="nx">err</span><span class="p">.</span><span class="nx">message</span> <span class="p">});</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> </span><span class="line"> <span class="nx">passport</span><span class="p">.</span><span class="nx">authenticate</span><span class="p">(</span><span class="s1">'local'</span><span class="p">)(</span><span class="nx">req</span><span class="p">,</span> <span class="nx">res</span><span class="p">,</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> </span><span class="line"> <span class="nx">req</span><span class="p">.</span><span class="nx">session</span><span class="p">.</span><span class="nx">save</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> </span><span class="line"> <span class="k">return</span> <span class="nx">next</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span> </span><span class="line"> <span class="p">}</span> </span><span class="line"> <span class="nx">res</span><span class="p">.</span><span class="nx">redirect</span><span class="p">(</span><span class="s1">'/'</span><span class="p">);</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"> <span class="p">});</span> </span><span class="line"><span class="p">});</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Then add the following code to the <em>layout.jade</em> template, just below the <code>body</code> tag:</p> 
+       <figure class="code">
+        <figcaption>
+         <span></span>
+        </figcaption>
+        <div class="highlight">
+         <table>
+          <tbody>
+           <tr>
+            <td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td>
+            <td class="code"><pre><code class="jade"><span class="line"><span class="nt">if</span> (error &amp;&amp; error.length &gt; 0) </span><span class="line"> <span class="nt">br</span> </span><span class="line"> <span class="nt">h4</span><span class="nc">.error-msg</span><span class="p">=</span> <span class="n">error</span> </span><span class="line"> <span class="nt">br</span> </span></code></pre></td>
+           </tr>
+          </tbody>
+         </table>
+        </div>
+       </figure> 
+       <p>Test this out.</p> 
+       <h2>Conclusion</h2> 
+       <p>That’s it. Grab the code from the <a href="https://github.com/mjhea0/passport-local-express4">repository</a>. Cheers!</p> 
+      </div> 
+      <footer> 
+       <p class="meta"> <span class="byline author vcard">Authored by <span class="fn"> Michael Herman </span></span> <time class="entry-date" datetime="2015-01-31T07:07:00-07:00"><span class="date"><span class="date-month">Jan</span> <span class="date-day">31</span><span class="date-suffix">st</span>, <span class="date-year">2015</span></span> <span class="time">7:07 am</span></time> <span class="categories"> <a class="category" href="/blog/categories/node/">node</a> </span> </p> 
+       <div class="sharing"> 
+        <!--   
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://mherman.org/blog/2015/01/31/local-authentication-with-passport-and-express-4/" data-via="" data-counturl="http://mherman.org/blog/2015/01/31/local-authentication-with-passport-and-express-4/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+   --> 
+        <br> 
+        <!-- AddThis Button BEGIN --> 
+        <div class="addthis_toolbox addthis_default_style addthis_32x32_style"> 
+         <a class="addthis_button_preferred_1"></a> 
+         <a class="addthis_button_preferred_2"></a> 
+         <a class="addthis_button_preferred_3"></a> 
+         <a class="addthis_button_preferred_4"></a> 
+         <a class="addthis_button_compact"></a> 
+         <a class="addthis_counter addthis_bubble_style"></a> 
+        </div> 
+        <script type="text/javascript">var addthis_config = {"data_track_addressbar":true};</script> 
+        <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-50e5f1cc35ad077d"></script> 
+        <!-- AddThis Button END --> 
+        <br> 
+       </div> 
+       <p class="meta"> <a class="basic-alignment left" href="/blog/2014/12/31/node-and-mongoose-a-primer/" title="Previous Post: Node, Express, and MongoDB - a primer">« Node, Express, and MongoDB - a primer</a> <a class="basic-alignment right" href="/blog/2015/02/05/sublime-text-for-web-developers/" title="Next Post: Sublime Text for Web Developers">Sublime Text for Web Developers »</a> </p> 
+      </footer> 
+     </article> 
+     <section> 
+      <h1>Comments</h1> 
+      <div id="disqus_thread" aria-live="polite">
+       <noscript>
+        Please enable JavaScript to view the 
+        <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+       </noscript> 
+      </div> 
+     </section> 
+    </div> 
+   </div> 
+  </div> 
+  <footer role="contentinfo">
+   <div> 
+    <span>Copyright © 2017 - Michael Herman</span>
+    <br> 
+    <a href="https://github.com/mjhea0"><i class="fa fa-github-square" style="font-size:2em" aria-hidden="true"></i></a> 
+    <a href="https://twitter.com/mikeherman"><i class="fa fa-twitter-square" style="font-size:2em" aria-hidden="true"></i></a> 
+    <a href="http://www.linkedin.com/pub/michael-herman/3b/a94/4"><i class="fa fa-linkedin-square" style="font-size:2em" aria-hidden="true"></i></a> 
+    <a href="http://www.youtube.com/hermanmu"><i class="fa fa-youtube-square" style="font-size:2em" aria-hidden="true"></i></a> 
+   </div> 
+  </footer> 
+  <script type="text/javascript">
+      var disqus_shortname = 'michaelherman';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://mherman.org/blog/2015/01/31/local-authentication-with-passport-and-express-4/';
+        var disqus_url = 'http://mherman.org/blog/2015/01/31/local-authentication-with-passport-and-express-4/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script> 
+  <div id="fb-root"></div> 
+  <script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id; js.async = true;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script> 
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>   
+ </body>
+</html>

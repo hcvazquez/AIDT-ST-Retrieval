@@ -1,0 +1,935 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+ <head> 
+  <title>Javascript Type-Conversion</title> 
+  <meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1"> 
+  <link href="../../faq.css" rel="stylesheet" type="text/css"> 
+  <link href="../notes.css" rel="stylesheet" type="text/css"> 
+  <style type="text/css">
+td {
+	text-align:center;
+}
+pre.st {
+	background-color:#EEEEFF;
+	margin:0px;
+	padding:0px;
+	text-align:left;
+	border:0px none #EEEEFF;
+}
+caption {
+	font-weight:bold;
+}
+th, td {
+	vertical-align:baseline;
+	background-color:#EEEEFF;
+	color:#000000;
+	white-space:nowrap;
+	padding:2px
+}
+.true {
+	color:#003444;
+	background-color:#E0FFE0;
+}
+.false {
+	color:#003444;
+	background-color:#FFE0E0;
+}
+table {
+	margin:1em 2.5em;
+}
+      </style> 
+ </head> 
+ <body> 
+  <h1>Javascript Type-Conversion</h1> 
+  <div id="faqNav"> 
+   <a href="/faq/">FAQ</a> &gt; 
+   <a href="/faq/notes/">FAQ Notes</a> 
+  </div> 
+  <ul> 
+   <li><a href="#tcInt">Introduction</a></li> 
+   <li><a href="#tcBool">Converting to Boolean</a></li> 
+   <li><a href="#tcString">Converting to String</a></li> 
+   <li><a href="#tcNumber">Converting to Number</a></li> 
+   <li><a href="#tcParse">Parsing to Number</a> 
+    <ul> 
+     <li><a href="#tcParseFl">parseFloat</a></li> 
+     <li><a href="#tcParseIn">parseInt</a></li> 
+     <li><a href="#tcPrIntRx">parseInt with a radix argument</a></li> 
+    </ul> </li> 
+   <li><a href="#tcToInt32">ToInt32</a></li> 
+   <li><a href="#tcUserIn">Converting User Input</a> 
+    <ul> 
+     <li><a href="#tcRegEx">Regular expression examples</a></li> 
+    </ul> </li> 
+  </ul> 
+  <h2 id="tcInt">Introduction</h2> 
+  <p id="tcInt_1"> Javascript (ECMAScript) is a loosely typed language. That does not mean that it has no data types just that the value of a variable or a Javascript object property does not need to have a particular type of value assigned to it, or that it should always hold the same type of value. Javascript also freely type-converts values into a type suitable for (or required by) the context of their use. </p> 
+  <p id="tcInt_2"> Javascript being loosely typed and willing to type-convert still does not save the programmer from needing to think about the actual type of values that they are dealing with. A very common error in browser scripting, for example, is to read the value property of a form control into which the user is expected to type a number and then add that value to another number. Because the value properties of form controls are strings (even if the character sequence they contain represents a number) the attempt to add that string to a value, even if that value happens to be a number, results in the second value being type-converted into a string and concatenated to the end of the first string value from the from control. </p> 
+  <p id="tcInt_3"> That problem arises from the dual nature of the <code>+</code> operator used for both numeric addition and string concatenation. With which the nature of the operation performed is determined by the context, where only if both operands are numbers to start with will the <code>+</code> operator perform addition. Otherwise it converts all of its operands to strings and does concatenation. </p> 
+  <p id="tcInt_4"> The following discussion is illustrated with Javascript generated tables of values resulting from the conversion operations. The headers of those tables display the values as represented in the Javascript source code used rather than their internal representation. So, for example <code>123e-2</code> as a number was the character sequence typed into the source code, the interpreter reads that and generates the number value 1.23 from it for internal use. The various values used for the tests have been chosen to illustrate aspects of type converting, those aspects may not apply to all of the tables presented. However, all of the test values are included in all of the tables (except where no type converting occurs) for full comparison. The bodies of the tables list the results of the various type conversion operations. </p> 
+  <p id="tcInt_5"> If you are accepting/using this page's <span class="initialism" title="Cascading Style Sheet"><abbr title="Cascading Style Sheet">CSS</abbr></span> style suggestions the type of the values at various stages is illustrated by the colour of the text used. The following key shows those type/colour relationships, they are derived from the string values returned by the <code>typeof</code> operator (which returns <code>"object"</code> for the <code>null</code> type when in reality <code>null</code> is distinct from objects). </p> 
+  <table id="tcInt_key"> 
+   <tbody> 
+    <tr>
+     <th>Key</th>
+    </tr> 
+    <tr>
+     <td class="st">string</td>
+    </tr> 
+    <tr>
+     <td class="nm">number</td>
+    </tr> 
+    <tr>
+     <td class="bl">boolean</td>
+    </tr> 
+    <tr>
+     <td class="ob">object</td>
+    </tr> 
+    <tr>
+     <td class="fn" style="text-align:center;">function</td>
+    </tr> 
+    <tr>
+     <td class="ob">null</td>
+    </tr> 
+    <tr>
+     <td class="un">undefined</td>
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcInt_6"> The boolean values of results also have a coloured background to highlight <code>true</code> or <code>false</code>. </p> 
+  <h2 id="tcBool">Converting to Boolean</h2> 
+  <p id="tcBool_1"> When evaluating the expression of an <code>if</code> statement the Javascript interpreter will type-convert the result of that expression to boolean in order to make its decision. Also various operators internally type-convert their operands to boolean in order to determine what action to take. These include the logical operators like AND (<code>&amp;&amp;</code>), OR (<code>||</code>) and NOT (<code>!</code>). The NOT operator type-converts its operand to boolean and if that value is boolean true it returns false and if false it returns true. As the result of a NOT operation is a boolean value that is the inverse of the type-converted true-ness of its operand, two NOT operations together will return a boolean value that is equivalent to the result of type-converting the operand to boolean:- </p> 
+  <pre id="tcBool_ex1">
+var boolValue = !!x;
+</pre> 
+  <p id="tcBool_2"> That technique has been used to generate the following tables. </p> 
+  <p id="tcBool_3"> An alternative method of generating a boolean value that represents the type-converted true-ness of a value is to pass that value to the <code>Boolean</code> constructor called as a function:- </p> 
+  <pre id="tcBool_ex2">
+var boolValue = Boolean(x);
+</pre> 
+  <table> 
+   <caption>
+    Double NOT (!!col) : Numeric Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="nm">-1.6</th> 
+     <th class="nm">-0</th> 
+     <th class="nm">+0</th> 
+     <th class="nm">1</th> 
+     <th class="nm">1.6</th> 
+     <th class="nm">8</th> 
+     <th class="nm">16</th> 
+     <th class="nm">16.8</th> 
+     <th class="nm">123e-2</th> 
+     <th class="nm">-Infinity</th> 
+     <th class="nm">+Infinity</th> 
+     <th class="nm">NaN</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>!!col</th> 
+     <td class="true">true</td> 
+     <td class="false">false</td> 
+     <td class="false">false</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="false">false</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcBool_4"> When numbers are converted to boolean, zero becomes false and all other numbers are true. With the excepting of the special numeric value <code>NaN</code> (Not a Number) which is used when another type is converted to a number but that conversion does not result in a meaningful number. <code>NaN</code> is always false. The values of positive and negative infinity, while not finite numbers, are non-zero numeric values and always type-convert to boolean <code>true</code>. </p> 
+  <table> 
+   <caption>
+    Double NOT (!!col) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>!!col</th> 
+     <td class="false">false</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcBool_5"> Type conversion rules are even simpler for string to boolean conversion as all non-empty strings always become true and empty strings become false. </p> 
+  <table> 
+   <caption>
+    Double NOT (!!col) : Other Values
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="un">undefined</th> 
+     <th class="ob">null</th> 
+     <th class="bl">true</th> 
+     <th class="bl">false</th> 
+     <th class="ob">new Object()</th> 
+     <th class="fn">function(){<br> return;<br>}</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>!!col</th> 
+     <td class="false">false</td> 
+     <td class="false">false</td> 
+     <td class="true">true</td> 
+     <td class="false">false</td> 
+     <td class="true">true</td> 
+     <td class="true">true</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcBool_6"> For the other types, <code>undefined</code> and <code>null</code> are converted to false, boolean values are not converted and objects and functions are always true. </p> 
+  <p id="tcBool_7"> This is the most valuable aspect of type-converting to boolean as it allows a script to distinguish between properties in an environment that may be undefined or may refer to an object. Treating an undefined (or null) value as if it was an object will produce errors. So when there is a doubt (as there usually is where web browsers are concerned) then code can avoid generating errors by wrapping the code that wants to access an object in an <code>if</code> test. Supplying the suspect reference to the object as the expression. The expression will be type converted to boolean and result in <code>false</code> if the object does not exist and <code>true</code> if it does. </p> 
+  <pre id="tcBool_ex3">
+if(document.documentElement){
+    scrollX = document.documentElement.scrollLeft;
+}
+</pre> 
+  <p id="tcBool_8"> The double NOT operation also allows the setting of boolean flags that can be used to indicate the presence of various objects:- </p> 
+  <pre id="tcBool_ex4">
+var hasDocEl = !!document.documentElement;
+...
+if(hasDocEl){
+    scrollX = document.documentElement.scrollLeft;
+}
+</pre> 
+  <h2 id="tcString">Converting to String</h2> 
+  <p id="tcString_1"> As mentioned above, type conversion to a string most often results from the action of the + operator whenever one of its operators in not a number. The easiest way of getting the string that results from type-conversion is to concatenate a value to an empty string. That technique has been used to generate the following tables. </p> 
+  <p id="tcString_2"> An alternative method of converting a value into a string is to pass it as an argument to the <code>String</code> constructor called as a function:- </p> 
+  <pre id="tcString_ex1">
+var stringValue = String(x);
+</pre> 
+  <table> 
+   <caption>
+    type-convert to string ("" + col) : Numeric Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="nm">-1.6</th> 
+     <th class="nm">-0</th> 
+     <th class="nm">+0</th> 
+     <th class="nm">1</th> 
+     <th class="nm">1.6</th> 
+     <th class="nm">8</th> 
+     <th class="nm">16</th> 
+     <th class="nm">16.8</th> 
+     <th class="nm">123e-2</th> 
+     <th class="nm">-Infinity</th> 
+     <th class="nm">+Infinity</th> 
+     <th class="nm">NaN</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>"" + col</th> 
+     <td class="st">-1.6</td> 
+     <td class="st">0</td> 
+     <td class="st">0</td> 
+     <td class="st">1</td> 
+     <td class="st">1.6</td> 
+     <td class="st">8</td> 
+     <td class="st">16</td> 
+     <td class="st">16.8</td> 
+     <td class="st">1.23</td> 
+     <td class="st">-Infinity</td> 
+     <td class="st">Infinity</td> 
+     <td class="st">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcString_3"> Notice that the number generated from the source code <code>123e-2</code> has resulted in the string <code>"1.23"</code> because that is the string representation of the internal number created from the source code. However, Javascript's internal number representations take the form of IEEE double precision floating point numbers and that means that they cannot represent all numbers with precision. The results of mathematical operations may only produce close approximations and when they are converted to strings the string represents the approximation and may be unexpected and undesirable. It is often necessary to use custom functions to generate string representations of numbers in an acceptable format, the type-conversion mechanism is rarely suited to generating numeric output intended for presentation. </p> 
+  <table> 
+   <caption>
+    type-convert to string ("" + col) : Other Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="un">undefined</th> 
+     <th class="ob">null</th> 
+     <th class="bl">true</th> 
+     <th class="bl">false</th> 
+     <th class="ob">new Object()</th> 
+     <th class="fn">function(){<br> return;<br>}</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>"" + col</th> 
+     <td class="st">undefined</td> 
+     <td class="st">null</td> 
+     <td class="st">true</td> 
+     <td class="st">false</td> 
+     <td class="st">[object Object]</td> 
+     <td><pre class="st">function(){
+  return;
+}</pre></td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcString_4"> When objects or functions are type-converted to strings their <code>toString</code> method is called. These default to <code>Object.prototype.toString</code> and <code>Function.prototype.toString</code> but may be overloaded with a function assigned to a "toString" property of the object/function. Type-converting a function to a string does not necessarily result in the function's source code. The behaviour of <code>Function.prototype.toString</code> is implementation depended and varies quite a lot, as do the results from "host objects" and methods (the objects and methods provided by the environment, such as DOM elements). </p> 
+  <h2 id="tcNumber">Converting to Number</h2> 
+  <p id="tcNumber_1"> Converting values to numbers, especially strings to numbers, is an extremely common requirement and many methods can be used. Any mathematical operator except the concatenation/addition operator will force type-conversion. So conversion of a string to a number might entail performing a mathematical operation on the string representation of the number that would not affect the resulting number, such as subtracting zero or multiplying by one. </p> 
+  <pre id="tcNumber_ex1">
+var numValue = stringValue - 0;
+<span class="commentJS">/* or */</span>
+var numValue = stringValue * 1;
+<span class="commentJS">/* or */</span>
+var numValue = stringValue / 1;
+</pre> 
+  <p id="tcNumber_2"> However, the unary <code>+</code> operator also type-converts its operand to a number and because it does not do any additional mathematical operations it is the fastest method for type-converting a string into a number. </p> 
+  <p id="tcNumber_2b"> Incidentally, the unary <code>-</code> (minus) operator also type-converts its operand (if necessary) in addition to subsequently negating its value. </p> 
+  <pre id="tcNumber_ex2">
+var numValue = (+stringValue);
+
+<span class="commentJS">/* The preceding unary + expression has been parenthesised. That is
+   unnecessary but is often felt to make the code easier to comprehend
+   and make it clear which operations are being applied. Especially
+   avoiding confusion with pre and post increment and addition
+   operations. Compare:-
+
+var n = anyNumVar++ + +stringVar + ++anotherNumVar;
+
+  - with - 
+
+var n = (anyNumVar++) + (+stringVar) + (++anotherNumVar);
+                  ^^     ^              ^^
+     (post increment) + (unary plus) + (pre increment)
+*/</span>
+</pre> 
+  <p id="tcNumber_3"> While unary <code>+</code> is the fastest method for converting a string to a number a final method is available that uses the Javascript type-conversion algorithms. The <code>Number</code> constructor can be called with the string value as its argument and its return value is a number representing the result of the type-conversion. </p> 
+  <pre id="tcNumber_ex3">
+var numValue = Number(stringValue);
+</pre> 
+  <p id="tcNumber_4"> The Number constructor is the slowest of the type-converting methods but when speed is not an overriding consideration its use does produce the clearest source code. </p> 
+  <p id="tcNumber_5"> The following tables show the results of type-conversion to a number using the unary <code>+</code> operator. Though all of the preceding alternative method produce the same results as they all use exactly the same algorithm to do the conversion. </p> 
+  <table> 
+   <caption>
+    type-convert to number (+col) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>+col</th> 
+     <td class="nm">0</td> 
+     <td class="nm">-1.6</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1.6</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16.8</td> 
+     <td class="nm">1.23</td> 
+     <td class="nm">10</td> 
+     <td class="nm">16</td> 
+     <td class="nm">255</td> 
+     <td class="nm">-10</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcNumber_6"> The important considerations when converting strings to numbers with the type-converting methods is the results from strings that do not represent numbers. The empty string is converted into the number zero, depending on the application this can be harmless or disastrous, but it is important to be aware that it is going to happen. In other contexts strings that follow the Javascript format for octal number (leading zero) can be problematic but type conversion treats them as base 10 anyway. However, strings that follow the format for hexadecimal numbers (leading <code>0x</code> or <code>0X</code>) are read as hexadecimal. Strings that cannot be read as a number type-convert to <code>NaN</code>, which can be tested for with the <code>isNaN</code> function. Strings representing numbers in an exponential format (<code>"123e-2"</code>) are understood along with leading minus signs. </p> 
+  <table> 
+   <caption>
+    type-convert to number (+col) : Other Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="un">undefined</th> 
+     <th class="ob">null</th> 
+     <th class="bl">true</th> 
+     <th class="bl">false</th> 
+     <th class="ob">new Object()</th> 
+     <th class="fn">function(){<br> return;<br>}</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>+col</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcNumber_7"> Objects and functions always type-convert to <code>NaN</code> numbers, as do <code>undefined</code> values but it is worth noting that <code>null</code> type-converts to zero. Probably because it is being type-converted to boolean first and then to number and, as is clear from the boolean results above, <code>null</code> would become boolean <code>false</code> which would then become numeric zero. There is almost no need to type convert these types of values into numbers. How they convert is only really relevant to a consideration of the accidental result of converting a value that is expected to be a string but actually turns out to be one of these (and/or performing an mathematical operation with one of these as an operand). </p> 
+  <h2 id="tcParse">Parsing to Number</h2> 
+  <p id="tcParse_1"> An alternative method of converting a string into a number is to use one of the global functions designed to parse a string and return a number. The <code>parseFloat</code> function accepts a string argument and returns a floating point number resulting from parsing that string. Non-string arguments are first type-converted to a string as described above. </p> 
+  <p id="tcParse_2"> The string parsing functions read the string character by character until they encounter a character that cannot be part of the number, at which point they stop and return a number based on the characters that they have seen that can be part of the number. This feature of their action can be usefully exploited, for example, given a string representing a <span class="initialism" title="Cascading Style Sheet"><abbr title="Cascading Style Sheet">CSS</abbr></span> length value such as <code>"34.5em"</code> <code>parseFloat</code> would be able to ignore the <code>"em"</code> because those characters cannot be combined with the preceding set to produce a valid number. The returned number would be 34.5, the numeric part of the <span class="initialism" title="Cascading Style Sheet"><abbr title="Cascading Style Sheet">CSS</abbr></span> string stripped of its units. </p> 
+  <h3 id="tcParseFl">parseFloat</h3> 
+  <table> 
+   <caption>
+    parseFloat(col) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseFloat(col)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">-1.6</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1.6</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16.8</td> 
+     <td class="nm">1.23</td> 
+     <td class="nm">10</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">-10</td> 
+     <td class="nm">0</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcParseFl_1"> With <code>parseFloat</code> empty strings return <code>NaN </code> along with strings that cannot be subject to numeric interpretation. The exponential format is understood and the leading zero in the octal format does not hinder the string's interpretation as a decimal number. Hexadecimal strings are interpreted as the number zero because the following <code>"x"</code> cannot be interpreted as part of a number so parsing stops after the leading zero. </p> 
+  <table> 
+   <caption>
+    parseFloat(col) : Other Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="un">undefined</th> 
+     <th class="ob">null</th> 
+     <th class="bl">true</th> 
+     <th class="bl">false</th> 
+     <th class="ob">new Object()</th> 
+     <th class="fn">function(){<br> return;<br>}</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseFloat(col)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcParseFl_2"> Non-string values are first converted into a string that is employed by <code>parseFloat</code>. As that type-conversion to a string would not normally result in a string that could be interpreted as a number the result is <code>NaN</code>. Objects and functions may have custom <code>toString</code> methods that may return strings that could be interpreted as numbers but that would be an unusual requirement. </p> 
+  <h3 id="tcParseIn">parseInt</h3> 
+  <p id="tcParseIn_1"> The <code>parseInt</code> function works in a similar way to <code>parseFloat</code> except that it is trying to interpret its string argument into an integer and as a result recognises fewer character as possible candidates to be part of that number. </p> 
+  <p id="tcParseIn_2"> <code>parseInt</code> is occasionally used as a means of turning a floating point number into an integer. It is very ill suited to that task because if its argument is of numeric type it will first be converted into a string and then parsed as a number, very inefficient. This can produce very wrong results with numbers such as <code>2e-200</code>, for which the next smaller integer is zero, but with which <code>parseInt</code> returns <code>2</code>. Also, because of the number format used by javascript, numbers are often represented by near approximations. So, for example, 1/2 + 1/3 + 1/6 = 0.9999999999999999, which isn't quite one and parseInt would return zero if asked to act on the result of the operation. </p> 
+  <p id="tcParseIn_3"> For rounding numbers to integers one of <code>Math.round</code>, <code>Math.ceil</code> and <code>Math.floor</code> are preferable, and for a desired result that can be expressed as a 32 bit signed integer the bitwise operation described below might also suit. </p> 
+  <table> 
+   <caption>
+    parseInt(col) : Numeric Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="nm">-1.6</th> 
+     <th class="nm">-0</th> 
+     <th class="nm">+0</th> 
+     <th class="nm">1</th> 
+     <th class="nm">1.6</th> 
+     <th class="nm">8</th> 
+     <th class="nm">16</th> 
+     <th class="nm">16.8</th> 
+     <th class="nm">123e-2</th> 
+     <th class="nm">-Infinity</th> 
+     <th class="nm">+Infinity</th> 
+     <th class="nm">NaN</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col)</th> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16</td> 
+     <td class="nm">1</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcParseIn_4"> When it is acting on number the effect of the initial type-conversion of the argument to a string is evident in the results. Note that the value <code>123e-2</code> is internally the number <code>1.23</code> and that type converts into the string <code>"1.23"</code>, so that entry in the table above might look odd but it is correct. </p> 
+  <table> 
+   <caption>
+    parseInt(col) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16</td> 
+     <td class="nm">123</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">255</td> 
+     <td class="nm">-8</td> 
+     <td class="nm">-16</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcParseIn_5"> Strings in octal and hexadecimal number formats do represent integers and <code>parseInt</code> is capable of interpreting them in accordance with the rules for Javascript source code, even when they have leading minus signs. </p> 
+  <table> 
+   <caption>
+    parseInt(col) : Other Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="un">undefined</th> 
+     <th class="ob">null</th> 
+     <th class="bl">true</th> 
+     <th class="bl">false</th> 
+     <th class="ob">new Object()</th> 
+     <th class="fn">function(){<br> return;<br>}</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcParseIn_6"> As <code>parseInt</code> type-converts its non-string arguments to strings it always produces the same results for <code>boolean</code>, <code>null</code>, <code>undefined</code>, object and function arguments as <code>parseFloat</code> (assuming objects and functions do not have custom <code>toString</code> methods). </p> 
+  <h3 id="tcPrIntRx">parseInt with a radix argument</h3> 
+  <p id="tcPrIntRx_1"> It is rarely desirable to allow <code>parseInt</code> to deduce the base in which the number is represented from the string as leading zeros are rarely intended to indicate data in octal format (particularly with user input). To deal with this problem <code>parseInt</code> recognises a second, radix, argument that can be used to specify the base in which the string is to be interpreted. Specifying a second argument of 10 causes <code>parseInt</code> to interpret the strings as only base 10. </p> 
+  <table> 
+   <caption>
+    parseInt(col, 10) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col, 10)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16</td> 
+     <td class="nm">123</td> 
+     <td class="nm">10</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">-10</td> 
+     <td class="nm">0</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcPrIntRx_2"> The string in octal format is now interpreted as base 10 and the hexadecimal strings can now only be zero as parsing has to stop when the <code>"x"</code> is encountered. </p> 
+  <p id="tcPrIntRx_3"> Number bases 2 to 36 can be used with <code>parseInt</code>. The following is base 16. </p> 
+  <table> 
+   <caption>
+    parseInt(col, 16) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col, 16)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">8</td> 
+     <td class="nm">22</td> 
+     <td class="nm">22</td> 
+     <td class="nm">4670</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16</td> 
+     <td class="nm">255</td> 
+     <td class="nm">-16</td> 
+     <td class="nm">-16</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcPrIntRx_4"> The hexadecimal <code>0x</code> format is recognised again with the base 16 interpretation. </p> 
+  <p id="tcPrIntRx_5"> Finally base 3:- </p> 
+  <table> 
+   <caption>
+    parseInt(col, 3) : Numeric Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="nm">-1.6</th> 
+     <th class="nm">-0</th> 
+     <th class="nm">+0</th> 
+     <th class="nm">1</th> 
+     <th class="nm">1.6</th> 
+     <th class="nm">8</th> 
+     <th class="nm">16</th> 
+     <th class="nm">16.8</th> 
+     <th class="nm">123e-2</th> 
+     <th class="nm">-Infinity</th> 
+     <th class="nm">+Infinity</th> 
+     <th class="nm">NaN</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col, 3)</th> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcPrIntRx_6"> The consequences of the type-converting of numeric arguments to strings is evident again. The number <code>8</code> is coming out as <code>NaN</code> because the <code>"8"</code> character cannot be interpreted as base 3, leaving an empty sequence of acceptable characters and producing the same result as an empty string. </p> 
+  <table> 
+   <caption>
+    parseInt(col, 3) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>parseInt(col, 3)</th> 
+     <td class="nm">NaN</td> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">NaN</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">5</td> 
+     <td class="nm">3</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">-3</td> 
+     <td class="nm">0</td> 
+     <td class="nm">NaN</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <h2 id="tcToInt32">ToInt32</h2> 
+  <p id="tcToInt32_1"> <code>ToInt32</code> is an <em>internal</em> function only available to the Javascript implementation and cannot be called directly from scripts in the way that <code>parseInt</code> can. It is a bit unusual to mention it in connection with converting Javascript values to numbers but it can be used in a limited set of circumstances. The bitwise operators such as bitwise OR (<code>|</code>) and bitwise AND (<code>&amp;</code>) operate on numbers so they type-convert their operands to numbers. However, they also only operate on 32 bit signed integers so given the (possibly type-converted) numeric value they call the <em>internal</em> <code>ToInt32</code> function with that number as its argument and use the returned value as their operand. That returned value is always a 32 bit signed integer. </p> 
+  <p id="tcToInt32_2"> The effect can be like <code>parseInt</code> combined with type-converting to numbers. While the result is limited in range to 32 bits, it is <em>always</em> numeric and never <code>NaN</code>, or ± <code>Infinity</code>. </p> 
+  <p id="tcToInt32_3"> As with using mathematical operators in operations that have no effect on the value of any resulting number it is possible to perform a bitwise operation that will not affect the value returned from the call to <code>ToInt32</code>. The tables below were generated using a bitwise OR zero operation. </p> 
+  <table> 
+   <caption>
+     ToInt32 (col|0) : Numeric Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="nm">-1.6</th> 
+     <th class="nm">-0</th> 
+     <th class="nm">+0</th> 
+     <th class="nm">1</th> 
+     <th class="nm">1.6</th> 
+     <th class="nm">8</th> 
+     <th class="nm">16</th> 
+     <th class="nm">16.8</th> 
+     <th class="nm">123e-2</th> 
+     <th class="nm">-Infinity</th> 
+     <th class="nm">+Infinity</th> 
+     <th class="nm">NaN</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>col|0</th> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16</td> 
+     <td class="nm">1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcToInt32_4"> <code>NaN</code> and ±<code>Infinity</code> become zero and floating point values are <em>truncated</em> to integers. </p> 
+  <table> 
+   <caption>
+     ToInt32 (col|0) : String Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="st">""<br>(empty<br>string)</th> 
+     <th class="st">"-1.6"</th> 
+     <th class="st">"0"</th> 
+     <th class="st">"1"</th> 
+     <th class="st">"1.6"</th> 
+     <th class="st">"8"</th> 
+     <th class="st">"16"</th> 
+     <th class="st">"16.8"</th> 
+     <th class="st">"123e-2"</th> 
+     <th class="st">"010"<br>(Octal)</th> 
+     <th class="st">"0x10"<br>(Hex)</th> 
+     <th class="st">"0xFF"<br>(Hex)</th> 
+     <th class="st">"-010"</th> 
+     <th class="st">"-0x10"</th> 
+     <th class="st">"xx"</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>col|0</th> 
+     <td class="nm">0</td> 
+     <td class="nm">-1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">1</td> 
+     <td class="nm">8</td> 
+     <td class="nm">16</td> 
+     <td class="nm">16</td> 
+     <td class="nm">1</td> 
+     <td class="nm">10</td> 
+     <td class="nm">16</td> 
+     <td class="nm">255</td> 
+     <td class="nm">-10</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcToInt32_5"> String values that would type-convert to <code>NaN</code> are returned as zero from <code>ToInt32</code>. </p> 
+  <table> 
+   <caption>
+     ToInt32 (col|0) : Other Values.
+   </caption> 
+   <thead> 
+    <tr> 
+     <th></th> 
+     <th class="un">undefined</th> 
+     <th class="ob">null</th> 
+     <th class="bl">true</th> 
+     <th class="bl">false</th> 
+     <th class="ob">new Object()</th> 
+     <th class="fn">function(){<br> return;<br>}</th> 
+    </tr> 
+   </thead> 
+   <tbody> 
+    <tr> 
+     <th>col|0</th> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">1</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+     <td class="nm">0</td> 
+    </tr> 
+   </tbody> 
+  </table> 
+  <p id="tcToInt32_6"> Even <code>undefined</code>, objects and functions are converted to zero value numbers by this operation. Note though that boolean <code>true</code> is converted to the number 1. </p> 
+  <h2 id="tcUserIn">Converting User Input</h2> 
+  <p id="tcUserIn_1"> Most of the mechanisms for getting input from the user, <code>&lt;input type="text"&gt;</code> and <code>prompt</code> for example, provide their results in the form of strings. If the user is expected to input a number they still might enter anything (at the least they may just make a typo). If the string needs to be converted into a number for later operations one of the methods mentioned above can be chosen based on what best suits the nature of the input expected but some of the results generated with erroneous input may be difficult to detect and handle. </p> 
+  <p id="tcUserIn_2"> Prior to converting a string to a number it may be advantageous to use a Regular Expression to test the contents of the string to ensure that they conform to an acceptable format. That would serve to eliminate some of the string values that may otherwise suffer from the quirks of the string to number converting processes when applied to unexpected string values. </p> 
+  <h3 id="tcRegEx">Regular expression examples</h3> 
+  <pre id="tcRegExEm">
+/^\d+$/                 <span class="commentJS">//All-digit</span>
+/^\s*[-+]?\d+\s*$/      <span class="commentJS">//Unbroken Signed integer &amp; spaces</span>
+/^\d{1,5}$/             <span class="commentJS">//1 to 5 digits</span>
+/^\d+\.\d\d$/           <span class="commentJS">//Money</span>
+/^\d+(\.\d{2})$/        <span class="commentJS">//Money</span>
+/^\d{1,3}(,\d\d\d)*\.\d\d$/  <span class="commentJS">//comma-separated money - 12,432.57</span>
+
+       <span class="commentJS">// optional comma-separated money - 12,432.57 or 12432.57</span>
+/^\d{1,3}(,\d\d\d)*\.\d\d$|^\d+\.\d\d$/
+
+</pre>   
+ </body>
+</html>

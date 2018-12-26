@@ -1,0 +1,677 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+ <head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+  <title>Chapter 8: Modules and Packages for Code Reuse — Jython Book v1.0 documentation</title> 
+  <link rel="stylesheet" href="_static/default.css" type="text/css"> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css"> 
+  <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1.0',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script> 
+  <script type="text/javascript" src="_static/jquery.js"></script> 
+  <script type="text/javascript" src="_static/doctools.js"></script> 
+  <link rel="top" title="Jython Book v1.0 documentation" href="index.html"> 
+  <link rel="next" title="Chapter 9: Scripting With Jython" href="Scripting.html"> 
+  <link rel="prev" title="Chapter 7: &nbsp;Exception Handling and Debugging" href="ExceptionHandlingDebug.html"> 
+ </head> 
+ <body> 
+  <div class="related"> 
+   <h3>Navigation</h3> 
+   <ul> 
+    <li class="right" style="margin-right: 10px"> <a href="genindex.html" title="General Index" accesskey="I">index</a></li> 
+    <li class="right"> <a href="Scripting.html" title="Chapter 9: Scripting With Jython" accesskey="N">next</a> |</li> 
+    <li class="right"> <a href="ExceptionHandlingDebug.html" title="Chapter 7: &nbsp;Exception Handling and Debugging" accesskey="P">previous</a> |</li> 
+    <li><a href="index.html">Jython Book v1.0 documentation</a> »</li> 
+   </ul> 
+  </div> 
+  <div class="document"> 
+   <div class="documentwrapper"> 
+    <div class="bodywrapper"> 
+     <div class="body"> 
+      <div class="section" id="chapter-8-modules-and-packages-for-code-reuse"> 
+       <h1>Chapter 8: Modules and Packages for Code Reuse<a class="headerlink" href="#chapter-8-modules-and-packages-for-code-reuse" title="Permalink to this headline">¶</a></h1> 
+       <p>Up until this chapter, we have been looking at code at the level of the interactive console and simple scripts. This works well for small examples, but when your program gets larger, it becomes necessary to break programs up into smaller units. In Jython, the basic building block for these units in larger programs is the module.</p> 
+       <div class="section" id="imports-for-reuse"> 
+        <h2>Imports for Reuse<a class="headerlink" href="#imports-for-reuse" title="Permalink to this headline">¶</a></h2> 
+        <p>Breaking code up into modules helps to organize large code bases. Modules can be used to logically separate code that belongs together, making programs easier to understand. Modules are helpful for creating libraries that can be imported and used in different applications that share some functionality. Jython’s standard library comes with a large number of modules that can be used in your programs right away.</p> 
+        <div class="section" id="import-basics"> 
+         <h3>Import Basics<a class="headerlink" href="#import-basics" title="Permalink to this headline">¶</a></h3> 
+         <p>The following is a very simple program that we can use to discuss imports.</p> 
+         <div class="section" id="breakfast-py"> 
+          <h4>breakfast.py<a class="headerlink" href="#breakfast-py" title="Permalink to this headline">¶</a></h4> 
+          <div class="highlight-python">
+           <div class="highlight">
+            <pre><span class="kn">import</span> <span class="nn">search.scanner</span> <span class="kn">as</span> <span class="nn">scanner</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="k">class</span> <span class="nc">Spam</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">number</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s">"spam "</span> <span class="o">*</span> <span class="n">number</span>
+
+    <span class="k">def</span> <span class="nf">order_eggs</span><span class="p">():</span>
+        <span class="k">print</span> <span class="s">" and eggs!"</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Spam</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">order</span><span class="p">(</span><span class="mf">3</span><span class="p">)</span>
+    <span class="n">order_eggs</span><span class="p">()</span>
+</pre>
+           </div> 
+          </div> 
+          <p>We’ll start with a couple of definitions. A <strong>namespace</strong> is a logical grouping of unique identifiers. In other words, a namespace is that set of names that can be accessed from a given bit of code in your program. For example, if you open up a Jython prompt and type dir(), the names in the interpreter’s namespace will be displayed.</p> 
+          <div class="highlight-python">
+           <div class="highlight">
+            <pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">()</span>
+
+<span class="go">['__doc__', '__name__']</span>
+</pre>
+           </div> 
+          </div> 
+          <p>The interpreter namespace contains __doc__ and __name__. The __doc__ property contains the top level docstring, which is empty in this case. We’ll get to the __name__ property in a moment. First we need to talk about Jython <strong>modules</strong>. A <strong>module</strong> in Jython is a file containing Python definitions and statements which in turn define a namespace. The module name is the same as the file name with the suffix .py removed, so in our current example the Python file ‘breakfast.py’ defines the module ‘breakfast.’</p> 
+          <p>Now we can talk about the __name__ property. When a module is run directly, as in jython breakfast.py, __name__ will contain ‘__main__’. If a module is imported, __name__ will contain the name of the module, so ‘import breakfast’ results in the breakfast module containing a __name__ of ‘breakfast’. Again from a basic Jython prompt:</p> 
+          <div class="highlight-python">
+           <div class="highlight">
+            <pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">()</span>
+<span class="go">['__doc__', '__name__']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">__name__</span>
+<span class="go">'__main__'</span>
+</pre>
+           </div> 
+          </div> 
+          <p>Let’s see what happens when we import breakfast:</p> 
+          <div class="highlight-python">
+           <div class="highlight">
+            <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">breakfast</span>
+<span class="go">spam spam spam</span>
+<span class="go">and eggs!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">()</span>
+<span class="go">['__doc__', '__name__', 'breakfast']</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">breakfast</span>
+<span class="go">&gt;&gt;&gt;</span>
+</pre>
+           </div> 
+          </div> 
+          <p>Checking the dir() after the import shows that breakfast has been added to the top level namespace. Notice that the act of importing actually executed the code in breakfast.py. This is the expected behavior in Jython. When a module is imported, the statements in that module are actually executed. This includes class and function definitions. It is important to note that this only happens the first time you import a module. Note the last statement where we issue ‘import breakfast’ again, resulting in no output. Most of the time, we wouldn’t want a module to execute print statements when imported. To avoid this, but allow the code to execute when it is called directly, we typically check the __name__ property. If the __name__ property is ‘__main__’, we know that the module was called directly instead of being imported from another module.</p> 
+          <div class="highlight-python">
+           <pre>class Spam(object):
+
+    def order(self, number):
+        print "spam " * number
+
+    def order_eggs():
+        print " and eggs!"
+
+if __name__ == '__main__':
+s = Spam()
+s.order(3)
+order_eggs()</pre> 
+          </div> 
+          <p>Now if we import breakfast (remember to close and reopen the interpreter so that the module is actually reimported!), we will not get the output:</p> 
+          <div class="highlight-python">
+           <div class="highlight">
+            <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">breakfast</span>
+</pre>
+           </div> 
+          </div> 
+          <p>This is because in this case the __name__ property will contain ‘breakfast,’ the name of the module. If we call breakfast.py from the commandline like ‘jython breakfast.py’ we would then get the output again, because breakfast would be executing as __main__:</p> 
+          <div class="highlight-python">
+           <pre>$ jython breakfast.py
+spam spam spam
+and eggs!</pre> 
+          </div> 
+         </div> 
+        </div> 
+        <div class="section" id="the-import-statement"> 
+         <h3>The Import Statement<a class="headerlink" href="#the-import-statement" title="Permalink to this headline">¶</a></h3> 
+         <p>In Java, the Import statement is strictly a compiler directive that must occur at the top of the source file. In Jython, the import statement is an expression that can occur anywhere in the source file, and can even be conditionally executed.</p> 
+         <p>As an example, a common idiom is to attempt to import something that may not be there in a try block, and in the except block define the thing in some other way, or import it from a module that is known to be there.</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="k">try</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="kn">from</span> <span class="nn">blah</span> <span class="kn">import</span> <span class="n">foo</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">"imported normally"</span>
+<span class="gp">... </span><span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="s">"defining foo in except block"</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">foo</span><span class="p">():</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="s">"hello from backup foo"</span>
+<span class="gp">...</span>
+<span class="go">defining foo in except block</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span><span class="p">()</span>
+<span class="go">'hello from backup foo'</span>
+<span class="go">&gt;&gt;&gt;</span>
+</pre>
+          </div> 
+         </div> 
+         <p>If a module named ‘blah’ had existed, the definition of foo would have been taken from there and we would have seen ‘imported normally’ printed out. Because no such module existed, foo was defined in the except block, ‘defining foo in except block’ was printed, and when we called foo, the ‘hello from backup foo’ string was returned.</p> 
+        </div> 
+       </div> 
+       <div class="section" id="an-example-program"> 
+        <h2>An Example Program<a class="headerlink" href="#an-example-program" title="Permalink to this headline">¶</a></h2> 
+        <p>Here is the layout of a contrived but simple program that we will use to describe some aspects of importing in Jython.</p> 
+        <div class="highlight-python">
+         <pre>chapter8/
+        greetings.py
+        greet/
+                __init__.py
+                hello.py
+                people.py</pre> 
+        </div> 
+        <p>This example contains one package: greet, which is a package because it is a directory containing the special __init__.py file. Note that the directory chapter8 itself is not a package because it does not contain an __init__.py. There are three modules in the example program: greetings, greet.hello, and greet.people. The code for this program can be downloaded at <a class="reference external" href="http://kenai.com/projects/jythonbook/sources/jython-book/show/src/chapter8">http://kenai.com/projects/jythonbook/sources/jython-book/show/src/chapter8</a>.</p> 
+        <div class="section" id="greetings-py"> 
+         <h3>greetings.py<a class="headerlink" href="#greetings-py" title="Permalink to this headline">¶</a></h3> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="k">print</span> <span class="s">"in greetings.py"</span>
+<span class="kn">import</span> <span class="nn">greet.hello</span>
+
+<span class="n">g</span> <span class="o">=</span> <span class="n">greet</span><span class="o">.</span><span class="n">hello</span><span class="o">.</span><span class="n">Greeter</span><span class="p">()</span>
+<span class="n">g</span><span class="o">.</span><span class="n">hello_all</span><span class="p">()</span>
+</pre>
+          </div> 
+         </div> 
+        </div> 
+        <div class="section" id="greet-init-py"> 
+         <h3>greet/__init__.py<a class="headerlink" href="#greet-init-py" title="Permalink to this headline">¶</a></h3> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="k">print</span> <span class="s">"in greet/__init__.py"</span>
+</pre>
+          </div> 
+         </div> 
+        </div> 
+        <div class="section" id="greet-hello-py"> 
+         <h3>greet/hello.py<a class="headerlink" href="#greet-hello-py" title="Permalink to this headline">¶</a></h3> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="k">print</span> <span class="s">"in greet/hello.py"</span>
+<span class="kn">import</span> <span class="nn">greet.people</span> <span class="kn">as</span> <span class="nn">people</span>
+
+<span class="k">class</span> <span class="nc">Greeter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">hello_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">people</span><span class="o">.</span><span class="n">names</span><span class="p">:</span>
+            <span class="k">print</span> <span class="s">"hello </span><span class="si">%s</span><span class="s">"</span> <span class="o">%</span> <span class="n">name</span>
+</pre>
+          </div> 
+         </div> 
+        </div> 
+        <div class="section" id="greet-people-py"> 
+         <h3>greet/people.py<a class="headerlink" href="#greet-people-py" title="Permalink to this headline">¶</a></h3> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="k">print</span> <span class="s">"in greet/people.py"</span>
+
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s">"Josh"</span><span class="p">,</span> <span class="s">"Jim"</span><span class="p">,</span> <span class="s">"Victor"</span><span class="p">,</span> <span class="s">"Leo"</span><span class="p">,</span> <span class="s">"Frank"</span><span class="p">]</span>
+</pre>
+          </div> 
+         </div> 
+        </div> 
+        <div class="section" id="trying-out-the-example-code"> 
+         <h3>Trying Out the Example Code<a class="headerlink" href="#trying-out-the-example-code" title="Permalink to this headline">¶</a></h3> 
+         <p>If you run greetings.py in its own directory you get the following output:</p> 
+         <div class="highlight-python">
+          <pre>$ jython greetings.py
+in greetings.py
+in greet/__init__.py
+in greet/hello.py
+in greet/people.py
+hello Josh
+hello Jim
+hello Victor
+hello Leo
+hello Frank</pre> 
+         </div> 
+         <p>There is a print statement at the top of each of the .py files to show the order of execution for the modules. When run, the module greetings is loaded, printing out ‘in greetings.py.’ Next it imports greet.hello:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">import</span> <span class="nn">greet.hello</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Because this is the first time that the greet package has been imported, the code in __init__.py is executed, printing ‘in greet/__init__.py’. Then the greet.hello module is executed, printing out ‘in greet/hello.py.’ The greet.hello module then imports the greet.people module, printing out ‘in greet/people.py.’ Now all of the imports are done, and greetings.py can create a greet.hello.Greeter class and call its hello_all method.</p> 
+        </div> 
+       </div> 
+       <div class="section" id="types-of-import-statements"> 
+        <h2>Types of Import Statements<a class="headerlink" href="#types-of-import-statements" title="Permalink to this headline">¶</a></h2> 
+        <p>The import statement comes in a variety of forms that allow much finer control over how importing brings named values into your current module.</p> 
+        <div class="highlight-python">
+         <div class="highlight">
+          <pre><span class="kn">import</span> <span class="nn">module</span>
+<span class="kn">from</span> <span class="nn">module</span> <span class="kn">import</span> <span class="n">submodule</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">submodule</span>
+</pre>
+         </div> 
+        </div> 
+        <p>We will discuss each of the import statement forms in turn starting with:</p> 
+        <div class="highlight-python">
+         <div class="highlight">
+          <pre><span class="kn">import</span> <span class="nn">module</span>
+</pre>
+         </div> 
+        </div> 
+        <p>This most basic type of import imports a module directly. Unlike Java, this form of import binds the left-most module name, so if you import a nested module like:</p> 
+        <p><strong>import greet.hello</strong></p> 
+        <p>you need to refer to it as ‘greet.hello’ and not just ‘hello’ in your code.</p> 
+        <p><strong>import greet.hello as foo</strong></p> 
+        <p>The ‘as foo’ part of the import allows you to relabel the ‘greet.hello’ module as ‘foo’ to make it more convenient to call. The example program uses this method to relabel ‘greet.hello’ as ‘hello.’ Note that it is not important that ‘hello’ was the name of the subpackage except that it might aid in reading the code. You would also use this technique if the identifier of the thing you wanted to import was already in use in this namespace: if you already had a variable called foo, and you wanted to import something else called foo, you could do import foo as bar.</p> 
+        <div class="section" id="from-import-statements"> 
+         <h3>From Import Statements<a class="headerlink" href="#from-import-statements" title="Permalink to this headline">¶</a></h3> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">module</span> <span class="kn">import</span> <span class="n">name</span>
+</pre>
+          </div> 
+         </div> 
+         <p>This form of import allows you to import modules, classes or functions nested in other modules. This allows you to import code like this:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">greet</span> <span class="kn">import</span> <span class="n">hello</span>
+</pre>
+          </div> 
+         </div> 
+         <p>In this case, it <em>is</em> important that ‘hello’ is actually a submodule of greet. This is not a relabeling but actually gets the submodule named ‘hello’ from the greet namespace. You can also use the from style of import to import all of the names in a module (except for those that start with an underscore) into your current module using a <a href="#id1"><span class="problematic" id="id2">*</span></a>. This form of import is discouraged in the Python community, and is particularly troublesome when importing from Java packages (in some cases it does not work) so you should avoid its use. It looks like this:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">module</span> <span class="kn">import</span> <span class="o">*</span>
+</pre>
+          </div> 
+         </div> 
+         <p>If you are not importing from a Java package, it is sometimes convenient to use this form to pull in everything from another module.</p> 
+        </div> 
+        <div class="section" id="relative-import-statements"> 
+         <h3>Relative Import Statements<a class="headerlink" href="#relative-import-statements" title="Permalink to this headline">¶</a></h3> 
+         <p>A new kind of import introduced in Python 2.5 is the explicit relative import. These import statements use dots to indicate how far back you will walk from the current nesting of modules, with one dot meaning the current module.</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">module</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">module</span>
+<span class="kn">from</span> <span class="nn">.module</span> <span class="kn">import</span> <span class="n">submodule</span>
+<span class="kn">from</span> <span class="nn">..module</span> <span class="kn">import</span> <span class="n">submodule</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Even though this style of importing has just been introduced, its use is discouraged. Explicit relative imports are a reaction to the demand for implicit relative imports. If we had wanted to import the Greeter class out of greet.hello so that it could be instantiated with just Greeter() instead of greet.hello.Greeter we could have imported it like this:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">greet.hello</span> <span class="kn">import</span> <span class="n">Greeter</span>
+</pre>
+          </div> 
+         </div> 
+         <p>If you wanted to import Greeter into the greet.people module, you could get away with:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">hello</span> <span class="kn">import</span> <span class="n">Greeter</span>
+</pre>
+          </div> 
+         </div> 
+         <p>This is a relative import. Because greet.people is a sibling module of greet.hello, the ‘greet’ can be left out. This relative import style is deprecated and should not be used. Some developers like this style so that imports will survive module restructuring, but these relative imports can be error prone because of the possibility of name clashes. There is a new syntax that provides an explicit way to use relative imports, though they too are still discouraged. The previous import statement would look like this:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">from</span> <span class="nn">.hello</span> <span class="kn">import</span> <span class="n">Greeter</span>
+</pre>
+          </div> 
+         </div> 
+        </div> 
+        <div class="section" id="aliasing-import-statements"> 
+         <h3>Aliasing Import Statements<a class="headerlink" href="#aliasing-import-statements" title="Permalink to this headline">¶</a></h3> 
+         <p>Any of the above imports can add an ‘as’ clause to import a module but give it a new name.</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">import</span> <span class="nn">module</span> <span class="kn">as</span> <span class="nn">alias</span>
+<span class="kn">from</span> <span class="nn">module</span> <span class="kn">import</span> <span class="n">submodule</span> <span class="k">as</span> <span class="n">alias</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">submodule</span> <span class="k">as</span> <span class="n">alias</span>
+</pre>
+          </div> 
+         </div> 
+         <p>This gives you enormous flexibility in your imports, so to go back to the greet.hello example, you could issue:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="kn">import</span> <span class="nn">greet.hello</span> <span class="kn">as</span> <span class="nn">foo</span>
+</pre>
+          </div> 
+         </div> 
+         <p>And use foo in place of greet.hello.</p> 
+        </div> 
+        <div class="section" id="hiding-module-names"> 
+         <h3>Hiding Module Names<a class="headerlink" href="#hiding-module-names" title="Permalink to this headline">¶</a></h3> 
+         <p>Typically when a module is imported, all of the names in the module are available to the importing module. There are a couple of ways to hide these names from importing modules. Starting any name with an underscore (_) will document these names as private. The names are still accessible, they are just not imported when you import the names of a module with ‘from module import <a href="#id3"><span class="problematic" id="id4">*</span></a>‘. The second way to hide module names is to define a list named __all__, which should contain only those names that you wish to have your module to expose. As an example here is the value of __all__ at the top of Jython’s OS module:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">"altsep"</span><span class="p">,</span> <span class="s">"curdir"</span><span class="p">,</span> <span class="s">"pardir"</span><span class="p">,</span> <span class="s">"sep"</span><span class="p">,</span> <span class="s">"pathsep"</span><span class="p">,</span>
+               <span class="s">"linesep"</span><span class="p">,</span> <span class="s">"defpath"</span><span class="p">,</span> <span class="s">"name"</span><span class="p">,</span> <span class="s">"path"</span><span class="p">,</span>
+               <span class="s">"SEEK_SET"</span><span class="p">,</span> <span class="s">"SEEK_CUR"</span><span class="p">,</span> <span class="s">"SEEK_END"</span><span class="p">]</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Note that you can add to __all__ inside of a module to expand the exposed names of that module. In fact, the os module in Jython does just this to conditionally expose names based on the operating system that Jython is running on.</p> 
+        </div> 
+       </div> 
+       <div class="section" id="module-search-path-compilation-and-loading"> 
+        <h2>Module Search Path, Compilation, and Loading<a class="headerlink" href="#module-search-path-compilation-and-loading" title="Permalink to this headline">¶</a></h2> 
+        <p>Understanding Jython’s process of locating, compiling, and loading packages and modules is very helpful in getting a deeper understanding of how things really work in Jython.</p> 
+        <div class="section" id="java-import-example"> 
+         <h3>Java Import Example<a class="headerlink" href="#java-import-example" title="Permalink to this headline">¶</a></h3> 
+         <p>We’ll start with a Java class which is on the CLASSPATH when Jython is started:</p> 
+         <div class="highlight-python">
+          <pre>package com.foo;
+public class HelloWorld {
+    public void hello() {
+        System.out.println("Hello World!");
+    }
+    public void hello(String name) {
+        System.out.printf("Hello %s!", name);
+    }
+}</pre> 
+         </div> 
+         <p>Here we manipulate that class from the Jython interactive interpreter:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">com.foo</span> <span class="kn">import</span> <span class="n">HelloWorld</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span> <span class="o">=</span> <span class="n">HelloWorld</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">hello</span><span class="p">()</span>
+<span class="go">Hello World!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">h</span><span class="o">.</span><span class="n">hello</span><span class="p">(</span><span class="s">"frank"</span><span class="p">)</span>
+<span class="go">Hello frank!</span>
+</pre>
+          </div> 
+         </div> 
+         <p>It’s important to note that, because the HelloWorld program is located on the Java CLASSPATH, it did not go through the sys.path process we talked about before. In this case the Java class gets loaded directly by the ClassLoader. Discussions of Java ClassLoaders are beyond the scope of this book. To read more about ClassLoader see execution section of the Java language specification:</p> 
+         <p><a class="reference external" href="http://java.sun.com/docs/books/jls/second_edition/html/execution.doc.html">http://java.sun.com/docs/books/jls/second_edition/html/execution.doc.html</a>.</p> 
+        </div> 
+        <div class="section" id="module-search-path-and-loading"> 
+         <h3>Module Search Path and Loading<a class="headerlink" href="#module-search-path-and-loading" title="Permalink to this headline">¶</a></h3> 
+         <p>Understanding the process of module search and loading is more complicated in Jython than in either CPython or Java, because Jython can search both Java’s CLASSPATH and Python’s path. We’ll start by looking at Python’s path and sys.path. When you issue an import, sys.path defines the path that Jython will use to search for the name you are trying to import. The objects within the sys.path list tell Jython where to search for modules. Most of these objects point to directories, but there are a few special items that can be in sys.path for Jython that are not just pointers to directories. Trying to import a file that does not reside anywhere in the sys.path (and also cannot be found in the CLASSPATH) raises an ImportError exception. Let’s fire up a command line and look at sys.path.</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">path</span>
+<span class="go">['', '/Users/frank/jython/Lib', '__classpath__', '__pyclasspath__/',</span>
+<span class="go">'/Users/frank/jython/Lib/site-packages']</span>
+</pre>
+          </div> 
+         </div> 
+         <p>The first blank entry (‘’) tells Jython to look in the current directory for modules. The second entry points to Jython’s Lib directory that contains the core Jython modules. The third and fourth entries are special markers that we will discuss later, and the last points to the site-packages directory where new libraries can be installed when you issue setuptools directives from Jython (see Appendix A for more about setuptools). The module that gets imported is the first one that is found along this path. Once a module is found, no more searching is done.</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">"/Users/frank/lib/mysql-connector-java-5.1.6.jar"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">com.mysql</span>
+<span class="go">*sys-package-mgr*: processing new jar,</span>
+<span class="go">'/Users/frank/lib/mysql-connector-java-5.1.6.jar'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">com</span><span class="o">.</span><span class="n">mysql</span><span class="p">)</span>
+<span class="go">['__name__', 'jdbc']</span>
+</pre>
+          </div> 
+         </div> 
+         <p>In this example, we added the mysql jar to the sys path, then when we tried to find com.mysql, the jar was scanned. Note that ‘com.mysql’ is a Java package that is found in mysql-connector-java-5.1.6.jar.</p> 
+        </div> 
+       </div> 
+       <div class="section" id="java-package-scanning"> 
+        <h2>Java Package Scanning<a class="headerlink" href="#java-package-scanning" title="Permalink to this headline">¶</a></h2> 
+        <p>Although you can ask the Java SDK to give you a list of all of the packages known to a ClassLoader using:</p> 
+        <div class="highlight-python">
+         <div class="highlight">
+          <pre><span class="n">java</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">ClassLoader</span><span class="c">#getPackages()</span>
+</pre>
+         </div> 
+        </div> 
+        <p>there is no corresponding</p> 
+        <div class="highlight-python">
+         <div class="highlight">
+          <pre><span class="n">java</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">Package</span><span class="c">#getClasses()</span>
+</pre>
+         </div> 
+        </div> 
+        <p>This is unfortunate for Jython, because Jython users expect to be able to introspect the code they use in powerful ways. For example, users expect to be able to call dir() on Java packages to see what they contain:</p> 
+        <div class="highlight-python">
+         <div class="highlight">
+          <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">java.util.zip</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">java</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">zip</span><span class="p">)</span>
+<span class="go">['Adler32', 'CRC32', 'CheckedInputStream', 'CheckedOutputStream',</span>
+<span class="go">'Checksum', 'DataFormatException', 'Deflater',</span>
+<span class="go">'DeflaterOutputStream', 'GZIPInputStream', 'GZIPOutputStream',</span>
+<span class="go">'Inflater', 'InflaterInputStream', 'ZipEntry', 'ZipException',</span>
+<span class="go">'ZipFile', 'ZipInputStream', 'ZipOutputStream', '__name__']</span>
+</pre>
+         </div> 
+        </div> 
+        <p>And the same can be done on Java classes to see what they contain:</p> 
+        <div class="highlight-python">
+         <div class="highlight">
+          <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">java.util.zip</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">java</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">zip</span><span class="o">.</span><span class="n">ZipInputStream</span><span class="p">)</span>
+<span class="go">['__class__', '__delattr__', '__doc__', '__eq__',</span>
+<span class="go">'__getattribute__', '__hash__', '__init__',</span>
+<span class="go">'__ne__', '__new__', '__reduce__',</span>
+<span class="go">'__reduce_ex__', '__repr__', '__setattr__',</span>
+<span class="go">'__str__', 'available', 'class', 'close', 'closeEntry',</span>
+<span class="go">'equals', 'getClass', 'getNextEntry', 'hashCode', 'mark',</span>
+<span class="go">'markSupported', 'nextEntry', 'notify', 'notifyAll', 'read',</span>
+<span class="go">'reset', 'skip', 'toString', 'wait']</span>
+</pre>
+         </div> 
+        </div> 
+        <p>Making this sort of introspection possible in the face of merged namespaces requires some major effort the first time that Jython is started (and when jars or classes are added to Jython’s path at runtime). If you have ever run a new install of Jython before, you will recognize the evidence of this system at work:</p> 
+        <div class="highlight-python">
+         <pre>*sys-package-mgr*: processing new jar, '/Users/frank/jython/jython.jar'
+*sys-package-mgr*: processing new jar, '/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/classes.jar'
+*sys-package-mgr*: processing new jar, '/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/ui.jar'
+*sys-package-mgr*: processing new jar,  '/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Classes/laf.jar'
+...
+*sys-package-mgr*: processing new jar, '/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home/lib/ext/sunjce_provider.jar'
+*sys-package-mgr*: processing new jar, '/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Home/lib/ext/sunpkcs11.jar'</pre> 
+        </div> 
+        <p>This is Jython scanning all of the jar files that it can find to build an internal representation of the package and classes available on your JVM. This has the unfortunate side effect of making the first startup on a new Jython installation painfully slow.</p> 
+        <div class="section" id="how-jython-finds-the-jars-and-classes-to-scan"> 
+         <h3>How Jython Finds the Jars and Classes to Scan<a class="headerlink" href="#how-jython-finds-the-jars-and-classes-to-scan" title="Permalink to this headline">¶</a></h3> 
+         <p>There are two properties that Jython uses to find jars and classes. These settings can be given to Jython using commandline settings or the registry (see Appendix A). The two properties are:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="n">python</span><span class="o">.</span><span class="n">packages</span><span class="o">.</span><span class="n">paths</span>
+<span class="n">python</span><span class="o">.</span><span class="n">packages</span><span class="o">.</span><span class="n">directories</span>
+</pre>
+          </div> 
+         </div> 
+         <p>These properties are comma separated lists of further registry entries that actually contain the values the scanner will use to build its listing. You probably should not change these properties. The properties that get pointed to by these properties are more interesting. The two that potentially make sense to manipulate are:</p> 
+         <div class="highlight-python">
+          <pre>java.class.path
+java.ext.dirs</pre> 
+         </div> 
+         <p>For the java.class.path property, entries are separated as the classpath is separated on the operating system you are on (that is, ‘;’ on Windows and ‘:’ on most other systems). Each of these paths are checked for a .jar or .zip and if they have these suffixes they will be scanned.</p> 
+         <p>For the java.ext.dirs property, entries are separated in the same manner as java.class.path, but these entries represent directories. These directories are searched for any files that end with .jar or .zip, and if any are found they are scanned.</p> 
+         <p>To control the jars that are scanned, you need to set the values for these properties. There are a number of ways to set these property values, see Appendix A for more.</p> 
+         <p>If you only use full class imports, you can skip the package scanning altogether. Set the system property python.cachedir.skip to true or (again) pass in your own postProperties to turn it off.</p> 
+        </div> 
+        <div class="section" id="compilation"> 
+         <h3>Compilation<a class="headerlink" href="#compilation" title="Permalink to this headline">¶</a></h3> 
+         <p>Despite the popular belief that Jython is ‘interpreted, not compiled,’ in reality all Jython code is turned into Java bytecode before execution. This Java bytecode is not always saved to disk, but when you see Jython execute any code, even in an eval or an exec, you can be sure that bytecode is getting fed to the JVM. The sole exception to this that we know of is the experimental pycimport module that we will describe in the section on sys.meta_path below, which interprets CPython bytecodes instead of producing Java bytecodes.</p> 
+        </div> 
+       </div> 
+       <div class="section" id="python-modules-and-packages-versus-java-packages"> 
+        <h2>Python Modules and Packages versus Java Packages<a class="headerlink" href="#python-modules-and-packages-versus-java-packages" title="Permalink to this headline">¶</a></h2> 
+        <p>The basic semantics of importing Python modules and packages versus the semantics of importing Java packages into Jython differ in some important respects that need to be kept carefully in mind.</p> 
+        <div class="section" id="sys-path"> 
+         <h3>sys.path<a class="headerlink" href="#sys-path" title="Permalink to this headline">¶</a></h3> 
+         <p>When Jython tries to import a module, it will look in its sys.path in the manner described in the previous section until it finds one. If the module it finds represents a Python module or package, this import will display a ‘winner take all’ semantic. That is, the first Python module or package that gets imported blocks any other module or package that might subsequently get found on any lookups. This means that if you have a module foo that contains only a name bar early in the sys.path, and then another module also called foo that only contains a name baz, then executing ‘import foo’ will <strong>only</strong> give you foo.bar and not foo.baz.</p> 
+         <p>This differs from the case when Jython is importing Java packages. If you have a Java package org.foo containing bar, and a Java package org.foo containing baz later in the path, executing ‘import org.foo’ will <strong>merge</strong> the two namespaces so that you will get both org.foo.bar and org.foo.baz.</p> 
+         <p>Just as important to keep in mind, if there is a Python module or package of a particular name in your path that conflicts with a Java package in your path this will also have a winner-take-all effect. If the Java package is first in the path, then that name will be bound to the merged Java packages. If the Python module or package wins, no further searching will take place, so the Java packages with the clashing names will never be found.</p> 
+        </div> 
+        <div class="section" id="naming-python-modules-and-packages"> 
+         <h3>Naming Python Modules and Packages<a class="headerlink" href="#naming-python-modules-and-packages" title="Permalink to this headline">¶</a></h3> 
+         <p>Developers coming from Java will often make the mistake of modeling their Jython package structure the same way that they model Java packages. <strong>Do not do this</strong>. The reverse url convention of Java is a great, we would even say a brilliant convention for Java. It works very well indeed in the world of Java where these namespaces are merged. In the Python world however, where modules and packages display the winner-take-all semantic, this is a disastrous way to organize your code.</p> 
+         <p>If you adopt this style for Python, say you are coming from ‘acme.com,’ you would set up a package structure like ‘com.acme.’ If you try to use a library from your vendor xyz that is set up as ‘com.xyz,’ then the first of these on your path will take the ‘com’ namespace, and you will not be able to see the other set of packages.</p> 
+        </div> 
+        <div class="section" id="proper-python-naming"> 
+         <h3>Proper Python Naming<a class="headerlink" href="#proper-python-naming" title="Permalink to this headline">¶</a></h3> 
+         <p>The Python convention is to keep namespaces as shallow as you can, and make your top level namespace reasonably unique, whether it is a module or a package. In the case of acme and company xyz, you might start your package structures with ‘acme’ and ‘xyz’ if you wanted to have these entire codebases under one namespace (not necessarily the right way to go — better to organize by product instead of by organization, as a general rule).</p> 
+         <div class="admonition note"> 
+          <p class="first admonition-title">Note</p> 
+          <p class="last">There are at least two sets of names that are particularly bad choices for naming modules or packages in Jython. The first is any top level domain like org, com, net, us, name. The second is any of the domains that Java the language has reserved for its top level namespaces: java, javax.</p> 
+         </div> 
+        </div> 
+       </div> 
+       <div class="section" id="advanced-import-manipulation"> 
+        <h2>Advanced Import Manipulation<a class="headerlink" href="#advanced-import-manipulation" title="Permalink to this headline">¶</a></h2> 
+        <p>This section describes some advanced tools for dealing with the internal machinery of imports. It is pretty advanced stuff that is rarely needed, but when you need it, you <strong>really</strong> need it.</p> 
+        <div class="section" id="import-hooks"> 
+         <h3>Import Hooks<a class="headerlink" href="#import-hooks" title="Permalink to this headline">¶</a></h3> 
+         <p>To understand the way that Jython imports Java classes you have to understand a bit about the Python import protocol. We won’t get into every detail, for that you would want to look at PEP 302 <a class="reference external" href="http://www.python.org/dev/peps/pep-0302/">http://www.python.org/dev/peps/pep-0302/</a>.</p> 
+         <p>Briefly, we first try any custom importers registered on sys.meta_path. If one of them is capable of importing the requested module, allow that importer to handle it. Next, we try each of the entries on sys.path. For each of these, we find the first hook registered on sys.path_hooks that can handle the path entry. If we find an import hook and it successfully imports the module, we stop. If this did not work, we try the builtin import logic. If that also fails, an ImportError is thrown. So let’s look at Jython’s path_hooks.</p> 
+        </div> 
+        <div class="section" id="sys-path-hooks"> 
+         <h3>sys.path_hooks<a class="headerlink" href="#sys-path-hooks" title="Permalink to this headline">¶</a></h3> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">path_hooks</span>
+<span class="go">[&lt;type 'org.python.core.JavaImporter'&gt;, &lt;type 'zipimport.zipimporter'&gt;,</span>
+<span class="go">&lt;type 'ClasspathPyImporter'&gt;]</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Each of these path_hooks entries specifies a path_hook that will attempt to import special files. JavaImporter, as its name implies, allows the dynamic loading of Java packages and classes that are specified at runtime. For example, if you want to include a jar at runtime you can execute the following code:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">"mysql-connector-java-5.1.6.jar"</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">com.mysql</span>
+<span class="go">*sys-package-mgr*: processing new jar, 'mysqlconnector-java-5.1.6.jar'</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">dir</span><span class="p">(</span><span class="n">com</span><span class="o">.</span><span class="n">mysql</span><span class="p">)</span>
+<span class="go">['__name__', 'jdbc']</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Note how the package scanning gets kicked off when ‘com.mysql’ is imported, as evidenced by the line starting with <em>sys-package-mgr</em>. Upon import, the JavaImporter scanned the new jar and allowed the import to succeed.</p> 
+        </div> 
+        <div class="section" id="sys-meta-path"> 
+         <h3>sys.meta_path<a class="headerlink" href="#sys-meta-path" title="Permalink to this headline">¶</a></h3> 
+         <p>Adding entries to sys.meta_path allows you to add import behaviors that will occur before any other import is attempted, even the default builtin importing behavior. This can be a very powerful tool, allowing you to do all sorts of interesting things. As an example, we will talk about an experimental module that ships with Jython 2.5. That module is pycimport. If you start up Jython and issue</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pycimport</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Jython will start scanning for .pyc files in your path and, if it finds one, it will use the .pyc file to load your module.pyc files. These are the files that CPython produces when it compiles Python source code. So, after you have imported pycimport (which adds a hook to sys.meta_path) then issue:</p> 
+         <div class="highlight-python">
+          <div class="highlight">
+           <pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">foo</span>
+</pre>
+          </div> 
+         </div> 
+         <p>Jython will scan your path for a file named foo.pyc, and if it finds one it will import the foo module using the CPython bytecodes. It does this by creating a special class that defines a find_module method that specifies how to load in a pyc file. This class is then added to the meta search path with the sys.meta_path.insert method. The find_module method calls into other parts of pycimport and looks for .pyc files. If it finds one, it knows how to parse and execute those files and adds the corresponding module to the runtime. Pretty cool, eh?</p> 
+        </div> 
+       </div> 
+       <div class="section" id="summary"> 
+        <h2>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h2> 
+        <p>In this chapter, you have learned how to divide code up into modules to for the purpose of organization and reuse. We have learned how to write modules and packages, and how the Jython system interacts with Java classes and packages. This ends Part I. We have now covered the basics of the Jython language and are now ready to learn how to use Jython.</p> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="sphinxsidebar"> 
+    <div class="sphinxsidebarwrapper"> 
+     <h3><a href="index.html">Table Of Contents</a></h3> 
+     <ul> 
+      <li><a class="reference external" href="#">Chapter 8: Modules and Packages for Code Reuse</a>
+       <ul> 
+        <li><a class="reference external" href="#imports-for-reuse">Imports for Reuse</a>
+         <ul> 
+          <li><a class="reference external" href="#import-basics">Import Basics</a>
+           <ul> 
+            <li><a class="reference external" href="#breakfast-py">breakfast.py</a></li> 
+           </ul> </li> 
+          <li><a class="reference external" href="#the-import-statement">The Import Statement</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#an-example-program">An Example Program</a>
+         <ul> 
+          <li><a class="reference external" href="#greetings-py">greetings.py</a></li> 
+          <li><a class="reference external" href="#greet-init-py">greet/__init__.py</a></li> 
+          <li><a class="reference external" href="#greet-hello-py">greet/hello.py</a></li> 
+          <li><a class="reference external" href="#greet-people-py">greet/people.py</a></li> 
+          <li><a class="reference external" href="#trying-out-the-example-code">Trying Out the Example Code</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#types-of-import-statements">Types of Import Statements</a>
+         <ul> 
+          <li><a class="reference external" href="#from-import-statements">From Import Statements</a></li> 
+          <li><a class="reference external" href="#relative-import-statements">Relative Import Statements</a></li> 
+          <li><a class="reference external" href="#aliasing-import-statements">Aliasing Import Statements</a></li> 
+          <li><a class="reference external" href="#hiding-module-names">Hiding Module Names</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#module-search-path-compilation-and-loading">Module Search Path, Compilation, and Loading</a>
+         <ul> 
+          <li><a class="reference external" href="#java-import-example">Java Import Example</a></li> 
+          <li><a class="reference external" href="#module-search-path-and-loading">Module Search Path and Loading</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#java-package-scanning">Java Package Scanning</a>
+         <ul> 
+          <li><a class="reference external" href="#how-jython-finds-the-jars-and-classes-to-scan">How Jython Finds the Jars and Classes to Scan</a></li> 
+          <li><a class="reference external" href="#compilation">Compilation</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#python-modules-and-packages-versus-java-packages">Python Modules and Packages versus Java Packages</a>
+         <ul> 
+          <li><a class="reference external" href="#sys-path">sys.path</a></li> 
+          <li><a class="reference external" href="#naming-python-modules-and-packages">Naming Python Modules and Packages</a></li> 
+          <li><a class="reference external" href="#proper-python-naming">Proper Python Naming</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#advanced-import-manipulation">Advanced Import Manipulation</a>
+         <ul> 
+          <li><a class="reference external" href="#import-hooks">Import Hooks</a></li> 
+          <li><a class="reference external" href="#sys-path-hooks">sys.path_hooks</a></li> 
+          <li><a class="reference external" href="#sys-meta-path">sys.meta_path</a></li> 
+         </ul> </li> 
+        <li><a class="reference external" href="#summary">Summary</a></li> 
+       </ul> </li> 
+     </ul> 
+     <h4>Previous topic</h4> 
+     <p class="topless"><a href="ExceptionHandlingDebug.html" title="previous chapter">Chapter 7: &nbsp;Exception Handling and Debugging</a></p> 
+     <h4>Next topic</h4> 
+     <p class="topless"><a href="Scripting.html" title="next chapter">Chapter 9: Scripting With Jython</a></p> 
+     <h3>This Page</h3> 
+     <ul class="this-page-menu"> 
+      <li><a href="_sources/ModulesPackages.txt" rel="nofollow">Show Source</a></li> 
+     </ul> 
+     <div id="searchbox" style="display: none"> 
+      <h3>Quick search</h3> 
+      <form class="search" action="search.html" method="get"> 
+       <input type="text" name="q" size="18"> 
+       <input type="submit" value="Go"> 
+       <input type="hidden" name="check_keywords" value="yes"> 
+       <input type="hidden" name="area" value="default"> 
+      </form> 
+      <p class="searchtip" style="font-size: 90%"> Enter search terms or a module, class or function name. </p> 
+     </div> 
+     <script type="text/javascript">$('#searchbox').show(0);</script> 
+    </div> 
+   </div> 
+   <div class="clearer"></div> 
+  </div> 
+  <div class="related"> 
+   <h3>Navigation</h3> 
+   <ul> 
+    <li class="right" style="margin-right: 10px"> <a href="genindex.html" title="General Index">index</a></li> 
+    <li class="right"> <a href="Scripting.html" title="Chapter 9: Scripting With Jython">next</a> |</li> 
+    <li class="right"> <a href="ExceptionHandlingDebug.html" title="Chapter 7: &nbsp;Exception Handling and Debugging">previous</a> |</li> 
+    <li><a href="index.html">Jython Book v1.0 documentation</a> »</li> 
+   </ul> 
+  </div> 
+  <div class="footer">
+    © Copyright 2009,2010, Josh Juneau, Frank Wierzbicki, Jim Baker, Leo Soto, Victor Ng. Created using 
+   <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.5. 
+  </div> 
+  <script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script> 
+  <script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-13131153-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>  
+ </body>
+</html>

@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en-US">
+ <head> 
+  <meta charset="UTF-8"> 
+  <title>Cosine similarity, Pearson correlation, and OLS coefficients | AI and Social Science – Brendan O'Connor</title> 
+  <link rel="profile" href="http://gmpg.org/xfn/11"> 
+  <link rel="stylesheet" type="text/css" media="all" href="http://brenocon.com/blog/wp-content/themes/my_tt/style.css"> 
+  <link rel="pingback" href="http://brenocon.com/blog/xmlrpc.php"> 
+  <link rel="alternate" type="application/rss+xml" title="AI and Social Science - Brendan O'Connor » Feed" href="http://brenocon.com/blog/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="AI and Social Science - Brendan O'Connor » Comments Feed" href="http://brenocon.com/blog/comments/feed/"> 
+  <link rel="alternate" type="application/rss+xml" title="AI and Social Science - Brendan O'Connor » Cosine similarity, Pearson correlation, and OLS coefficients Comments Feed" href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/feed/"> 
+  <script type="text/javascript" src="http://brenocon.com/blog/wp-includes/js/comment-reply.min.js?ver=3.5.2-alpha"></script> 
+  <link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://brenocon.com/blog/xmlrpc.php?rsd"> 
+  <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://brenocon.com/blog/wp-includes/wlwmanifest.xml"> 
+  <link rel="prev" title="I don’t get this web parsing shared task" href="http://brenocon.com/blog/2012/03/i-dont-get-this-web-parsing-shared-task/"> 
+  <link rel="next" title="F-scores, Dice, and Jaccard set similarity" href="http://brenocon.com/blog/2012/04/f-scores-dice-and-jaccard-set-similarity/"> 
+  <link rel="canonical" href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/"> 
+  <link rel="shortlink" href="http://brenocon.com/blog/?p=1199"> 
+  <script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-2438734-2', 'auto');
+ga('send', 'pageview');
+</script> 
+ </head> 
+ <body class="single single-post postid-1199 single-format-standard"> 
+  <div id="wrapper" class="hfeed"> 
+   <div id="header-container"> 
+    <div id="header"> 
+     <div id="masthead"> 
+      <div id="branding" role="banner"> 
+       <div id="site-title"> 
+        <span> <a href="http://brenocon.com/blog/" title="AI and Social Science – Brendan O'Connor" rel="home">AI and Social Science – Brendan O'Connor</a> </span> 
+       </div> 
+       <div id="site-description">
+        cognition, language, social systems; statistics, visualization, computation
+       </div> 
+       <img width="0" height="0"> 
+       <!-- <img src="http://anyall.org/blog_wp_github_v3/wp-content/themes/twentyten_hacked/images/headers/berries.jpg" width="940" height="198" alt="" /> --> 
+      </div>
+      <!-- #branding --> 
+     </div>
+     <!-- #masthead --> 
+    </div>
+    <!-- #header --> 
+   </div> 
+   <!-- #header-container --> 
+   <div id="main"> 
+    <div id="container"> 
+     <div id="content" role="main"> 
+      <div id="nav-above" class="navigation"> 
+       <div class="nav-previous">
+        <a href="http://brenocon.com/blog/2012/03/i-dont-get-this-web-parsing-shared-task/" rel="prev"><span class="meta-nav">?</span> I don’t get this web parsing shared task</a>
+       </div> 
+       <div class="nav-next">
+        <a href="http://brenocon.com/blog/2012/04/f-scores-dice-and-jaccard-set-similarity/" rel="next">F-scores, Dice, and Jaccard set similarity <span class="meta-nav">?</span></a>
+       </div> 
+      </div>
+      <!-- #nav-above --> 
+      <div id="post-1199" class="post-1199 post type-post status-publish format-standard hentry category-uncategorized"> 
+       <h1 class="entry-title">Cosine similarity, Pearson correlation, and OLS coefficients</h1> 
+       <div class="entry-meta"> 
+        <span class="meta-prep meta-prep-author">Posted on</span> 
+        <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/" title="6:01 pm" rel="bookmark"><span class="entry-date">March 13, 2012</span></a> 
+       </div>
+       <!-- .entry-meta --> 
+       <div class="entry-content"> 
+        <p>Cosine similarity, Pearson correlations, and OLS coefficients can all be viewed as variants on the inner product — tweaked in different ways for centering and magnitude (i.e. location and scale, or something like that).</p> 
+        <p>Details:</p> 
+        <p>You have two vectors \(x\) and \(y\) and want to measure similarity between them. A basic similarity function is the <b><a href="http://en.wikipedia.org/wiki/Dot_product">inner product</a></b></p> 
+        <p>\[ Inner(x,y) = \sum_i x_i y_i = \langle x, y \rangle \]</p> 
+        <p>If x tends to be high where y is also high, and low where y is low, the inner product will be high — the vectors are more similar.</p> 
+        <p>The inner product is unbounded. One way to make it bounded between -1 and 1 is to divide by the vectors’ L2 norms, giving the <b><a href="http://en.wikipedia.org/wiki/Cosine_similarity">cosine similarity</a></b></p> 
+        <p>\[ CosSim(x,y) = \frac{\sum_i x_i y_i}{ \sqrt{ \sum_i x_i^2} \sqrt{ \sum_i y_i^2 } }<br> = \frac{ \langle x,y \rangle }{ ||x||\ ||y|| }<br> \]</p> 
+        <p>This is actually bounded between 0 and 1 if x and y are non-negative. Cosine similarity has an interpretation as the cosine of the angle between the two vectors; you can illustrate this for vectors in \(\mathbb{R}^2\) (e.g. <a href="http://nlp.stanford.edu/IR-book/html/htmledition/dot-products-1.html">here</a>). </p> 
+        <p>Cosine similarity is not invariant to shifts. If x was shifted to x+1, the cosine similarity would change. What is invariant, though, is the <b><a href="http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient">Pearson correlation</a></b>. Let \(\bar{x}\) and \(\bar{y}\) be the respective means:</p> 
+        <p>\begin{align}<br> Corr(x,y) &amp;= \frac{ \sum_i (x_i-\bar{x}) (y_i-\bar{y}) }{<br> \sqrt{\sum (x_i-\bar{x})^2} \sqrt{ \sum (y_i-\bar{y})^2 } }<br> \\<br> &amp; = \frac{\langle x-\bar{x},\ y-\bar{y} \rangle}{<br> ||x-\bar{x}||\ ||y-\bar{y}||} \\<br> &amp; = CosSim(x-\bar{x}, y-\bar{y})<br> \end{align}</p> 
+        <p>Correlation is the cosine similarity between centered versions of x and y, again bounded between -1 and 1. People usually talk about cosine similarity in terms of vector angles, but it can be loosely thought of as a correlation, if you think of the vectors as paired samples. Unlike the cosine, the correlation is invariant to both scale and location changes of x and y.</p> 
+        <p>This isn’t the usual way to derive the Pearson correlation; usually it’s presented as a normalized form of the <b><a href="http://en.wikipedia.org/wiki/Covariance">covariance</a></b>, which is a centered average inner product (no normalization)</p> 
+        <p>\[ Cov(x,y) = \frac{\sum (x_i-\bar{x})(y_i-\bar{y}) }{n}<br> = \frac{ \langle x-\bar{x},\ y-\bar{y} \rangle }{n} \]</p> 
+        <p>Finally, these are all related to the coefficient in a <b><a href="http://web.archive.org/web/20111103122217/http://www.edwardtufte.com/tufte/dapp/chapter3.html">one-variable linear regression</a></b>. For the OLS model \(y_i \approx ax_i\) with Gaussian noise, whose MLE is the least-squares problem \(\arg\min_a \sum (y_i – ax_i)^2\), a few lines of calculus shows \(a\) is</p> 
+        <p>\begin{align}<br> OLSCoef(x,y) &amp;= \frac{ \sum x_i y_i }{ \sum x_i^2 }<br> = \frac{ \langle x, y \rangle}{ ||x||^2 }<br> \end{align}</p> 
+        <p>This looks like another normalized inner product. But unlike cosine similarity, we aren’t normalizing by \(y\)’s norm — instead we only use \(x\)’s norm (and use it twice): denominator of \(||x||\ ||y||\) versus \(||x||^2\).</p> 
+        <p>Not normalizing for \(y\) is what you want for the linear regression: if \(y\) was stretched to span a larger range, you would need to increase \(a\) to match, to get your predictions spread out too.</p> 
+        <p>Often it’s desirable to do the OLS model with an intercept term: \(\min_{a,b} \sum (y – ax_i – b)^2\). Then \(a\) is</p> 
+        <p>\begin{align}<br> OLSCoefWithIntercept(x,y) &amp;= \frac<br> { \sum (x_i – \bar{x}) y_i }<br> { \sum (x_i – \bar{x})^2 }<br> = \frac{\langle x-\bar{x},\ y \rangle}{||x-\bar{x}||^2}<br> \\<br> &amp;= OLSCoef(x-\bar{x}, y)<br> \end{align}</p> 
+        <p>It’s different because the intercept term picks up the slack associated with where x’s center is. So OLSCoefWithIntercept is invariant to shifts of x. It’s still different than cosine similarity since it’s still not normalizing at all for y. Though, subtly, it does actually control for shifts of y. This isn’t obvious in the equation, but with a little arithmetic it’s easy to derive that \(<br> \langle x-\bar{x},\ y \rangle = \langle x-\bar{x},\ y+c \rangle \) for any constant \(c\). (There must be a nice geometric interpretation of this.)</p> 
+        <p>Finally, what if x and y are standardized: both centered and normalized to unit standard deviation? The OLS coefficient for that is the same as the Pearson correlation between the original vectors. I’m not sure what this means or if it’s a useful fact, but:</p> 
+        <p>\[ OLSCoef\left(<br> \sqrt{n}\frac{x-\bar{x}}{||x-\bar{x}||},<br> \sqrt{n}\frac{y-\bar{y}}{||y-\bar{y}||} \right) = Corr(x,y) \]</p> 
+        <p>Summarizing: Cosine similarity is normalized inner product. Pearson correlation is centered cosine similarity. A one-variable OLS coefficient is like cosine but with one-sided normalization. With an intercept, it’s centered.</p> 
+        <p>Of course we need a summary table. “Symmetric” means, if you swap the inputs, do you get the same answer. “Invariant to shift in input” means, if you add an arbitrary constant to either input, do you get the same answer.</p> 
+        <table cellpadding="3" border="1" cellspacing="0" align="center"> 
+         <tbody>
+          <tr> 
+           <td>Function </td>
+           <td>Equation </td>
+           <td>Symmetric? </td>
+           <td>Output range </td>
+           <td>Invariant to shift in input?<p></p> </td>
+           <td>Pithy explanation in terms of something else<p></p> </td>
+          </tr>
+          <tr> 
+          </tr>
+          <tr> 
+           <td>Inner(x,y) <p></p> </td>
+           <td> \[ \langle x, y\rangle\]<p></p> </td>
+           <td>Yes </td>
+           <td>\(\mathbb{R}\) </td>
+           <td>No<p></p> </td>
+           <td> </td>
+          </tr>
+          <tr> 
+           <td>CosSim(x,y) </td>
+           <td>\[ \frac{\langle x,y \rangle}{||x||\ ||y||} \]<p></p> </td>
+           <td>Yes <p></p> </td>
+           <td>[-1,1]<br> or [0,1] if inputs non-neg<p></p> </td>
+           <td>No<p></p> </td>
+           <td>normalized inner product<p></p> </td>
+          </tr>
+          <tr> 
+           <td>Corr(x,y) </td>
+           <td>\[ \frac{\langle x-\bar{x},\ y-\bar{y} \rangle }{||x-\bar{x}||\ ||y-\bar{y}||} \]<p></p> </td>
+           <td>Yes </td>
+           <td>[-1,1] </td>
+           <td>Yes<p></p> </td>
+           <td>centered cosine; <i>or</i> normalized covariance<p></p> </td>
+          </tr>
+          <tr> 
+           <td>Cov(x,y) </td>
+           <td> \[ \frac{\langle x-\bar{x},\ y-\bar{y} \rangle}{n} \]<p></p> </td>
+           <td>Yes </td>
+           <td>\(\mathbb{R}\) </td>
+           <td>Yes<p></p> </td>
+           <td>centered inner product<p></p> </td>
+          </tr>
+          <tr> 
+           <td>OLSCoefNoIntcpt(x,y) <p></p> </td>
+           <td>\[\frac{ \langle x, y \rangle}{ ||x||^2 }\]<p></p> </td>
+           <td>No </td>
+           <td>\(\mathbb{R}\) </td>
+           <td>No<p></p> </td>
+           <td>(compare to CosSim)<p></p> </td>
+          </tr>
+          <tr> 
+           <td>OLSCoefWithIntcpt(x,y) <p></p> </td>
+           <td> \[ \frac{\langle x-\bar{x},\ y \rangle}{||x-\bar{x}||^2} \]<p></p> </td>
+           <td>No </td>
+           <td>\(\mathbb{R}\) </td>
+           <td>Yes<p></p> </td>
+           <td> </td>
+          </tr>
+         </tbody>
+        </table> 
+        <p>Are there any implications? I’ve been wondering for a while why cosine similarity tends to be so useful for natural language processing applications. Maybe this has something to do with it. Or not. One implication of all the inner product stuff is computational strategies to make it faster when there’s high-dimensional sparse data — the <a href="http://www.jstatsoft.org/v33/i01">Friedman et al. 2010 glmnet</a> paper talks about this in the context of coordinate descent text regression. I’ve heard <a href="http://www.cs.utexas.edu/~pradeepr/paperz/coord_nips.pdf">Dhillon et al., NIPS 2011</a> applies <a href="http://en.wikipedia.org/wiki/Locality-sensitive_hashing">LSH</a> in a similar setting (but haven’t read it yet). And there’s lots of work using LSH for cosine similarity; e.g. <a href="http://cs.jhu.edu/~vandurme/papers/VanDurmeLallACL10-slides.pdf">van Durme and Lall 2010 [slides]</a>.</p> 
+        <p>Any other cool identities? Any corrections to the above?</p> 
+        <p>References: I use <a href="http://www-stat.stanford.edu/~tibs/ElemStatLearn/">Hastie et al 2009, chapter 3</a> to look up linear regression, but it’s covered in zillions of other places. I linked to a nice chapter in <a href="http://web.archive.org/web/20111103122217/http://www.edwardtufte.com/tufte/dapp/chapter3.html">Tufte’s little 1974 book</a> that he wrote before he went off and did all that visualization stuff. (He calls it “two-variable regression”, but I think “one-variable regression” is a better term. “one-feature” or “one-covariate” might be most accurate.) In my experience, cosine similarity is talked about more often in text processing or machine learning contexts.</p> 
+       </div>
+       <!-- .entry-content --> 
+       <div class="entry-utility">
+         This entry was posted in 
+        <a href="http://brenocon.com/blog/category/uncategorized/" title="View all posts in Uncategorized" rel="category tag">Uncategorized</a>. Bookmark the 
+        <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/" title="Permalink to Cosine similarity, Pearson correlation, and OLS coefficients" rel="bookmark">permalink</a>. 
+       </div>
+       <!-- .entry-utility --> 
+      </div>
+      <!-- #post-## --> 
+      <div id="nav-below" class="navigation"> 
+       <div class="nav-previous">
+        <a href="http://brenocon.com/blog/2012/03/i-dont-get-this-web-parsing-shared-task/" rel="prev"><span class="meta-nav">?</span> I don’t get this web parsing shared task</a>
+       </div> 
+       <div class="nav-next">
+        <a href="http://brenocon.com/blog/2012/04/f-scores-dice-and-jaccard-set-similarity/" rel="next">F-scores, Dice, and Jaccard set similarity <span class="meta-nav">?</span></a>
+       </div> 
+      </div>
+      <!-- #nav-below --> 
+      <div id="comments"> 
+       <h3 id="comments-title">23 Responses to <em>Cosine similarity, Pearson correlation, and OLS coefficients</em></h3> 
+       <ol class="commentlist"> 
+        <li class="comment even thread-even depth-1" id="li-comment-129691"> 
+         <div id="comment-129691"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/965693aaf6fc1a5c24ac8746df8e17a1?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://victor.chahuneau.fr" rel="external nofollow" class="url">Victor Chahuneau</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-129691"> March 15, 2012 at 1:21 am</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>I think your OLSCoefWithIntercept is wrong unless y is centered: the right part of the dot product should be (y-)<br> Then the invariance by translation is obvious…<br> Otherwise you would get &lt;x-, y+c&gt; = &lt;x-,y&gt; + c(n-1)<br> See <a href="http://en.wikipedia.org/wiki/Simple_linear_regression#Fitting_the_regression_line" rel="nofollow">Wikipedia</a> for the equation</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> 
+         <ul class="children"> 
+          <li class="comment odd alt depth-2" id="li-comment-129692"> 
+           <div id="comment-129692"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://1.gravatar.com/avatar/965693aaf6fc1a5c24ac8746df8e17a1?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+             <cite class="fn"><a href="http://victor.chahuneau.fr" rel="external nofollow" class="url">Victor Chahuneau</a></cite> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author .vcard --> 
+            <div class="comment-meta commentmetadata">
+             <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-129692"> March 15, 2012 at 1:24 am</a> 
+            </div>
+            <!-- .comment-meta .commentmetadata --> 
+            <div class="comment-body">
+             <p>… but of course WordPress doesn’t like my brackets…<br> Line 1:$(y-\bar y)$<br> Line 3: $ = + c(n-1)\bar x$</p> 
+            </div> 
+            <div class="reply"> 
+            </div>
+            <!-- .reply --> 
+           </div>
+           <!-- #comment-##  --> </li> 
+         </ul> </li> 
+        <li class="comment byuser comment-author-brendano bypostauthor even thread-odd thread-alt depth-1" id="li-comment-129735"> 
+         <div id="comment-129735"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/fd4b164e15fa2a834d16fb8743ec4f1b?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://brenocon.com" rel="external nofollow" class="url">brendano</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-129735"> March 15, 2012 at 5:05 am</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Nope, you don’t need to center y if you’re centering x. The Wikipedia equation isn’t as correct as Hastie :) I actually didn’t believe this when I was writing the post, but if you write out the arithmetic like I said you can derive it.</p> 
+           <p>Example:</p> 
+           <p>$ R<br> &gt; x=c(1,2,3); y=c(5,6,10)<br> &gt; inner_and_xnorm=function(x,y) sum(x*y) / sum(x**2)<br> &gt; inner_and_xnorm(x-mean(x),y)<br> [1] 2.5<br> &gt; inner_and_xnorm(x-mean(x),y+5)<br> [1] 2.5</p> 
+           <p>… if you don’t center x, then shifting y matters.</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> </li> 
+        <li class="comment odd alt thread-even depth-1" id="li-comment-129911"> 
+         <div id="comment-129911"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/965693aaf6fc1a5c24ac8746df8e17a1?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://victor.chahuneau.fr" rel="external nofollow" class="url">Victor Chahuneau</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-129911"> March 15, 2012 at 4:15 pm</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Oops… I was wrong about the invariance!<br> It turns out that we were both right on the formula for the coefficient… thanks to this same invariance.<br> Here is the full derivation:<br> <a href="http://dl.dropbox.com/u/2803234/ols.pdf" rel="nofollow">http://dl.dropbox.com/u/2803234/ols.pdf</a></p> 
+           <p>Wikipedia &amp; Hastie can be reconciled now…</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> </li> 
+        <li class="comment even thread-odd thread-alt depth-1" id="li-comment-133347"> 
+         <div id="comment-133347"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://0.gravatar.com/avatar/e92ac569643b505ef24bf6de3f533954?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn">Mike</cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-133347"> March 26, 2012 at 8:40 am</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Nice breakdown Brendan.</p> 
+           <p>I’ve been working recently with high-dimensional sparse data. The covariance/correlation matrices can be calculated without losing sparsity after rearranging some terms. </p> 
+           <p><a href="http://stackoverflow.com/a/9626089/1257542" rel="nofollow">http://stackoverflow.com/a/9626089/1257542</a></p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> 
+         <ul class="children"> 
+          <li class="comment odd alt depth-2" id="li-comment-133439"> 
+           <div id="comment-133439"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://0.gravatar.com/avatar/e92ac569643b505ef24bf6de3f533954?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+             <cite class="fn">Mike</cite> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author .vcard --> 
+            <div class="comment-meta commentmetadata">
+             <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-133439"> March 26, 2012 at 12:17 pm</a> 
+            </div>
+            <!-- .comment-meta .commentmetadata --> 
+            <div class="comment-body">
+             <p>for instance, with two sparse vectors, you can get the correlation and covariance without subtracting the means</p> 
+             <p>cov(x,y) = ( inner(x,y) – n mean(x) mean(y)) / (n-1)<br> cor(x,y) = ( inner(x,y) – n mean(x) mean(y)) / (sd(x) sd(y) (n-1))</p> 
+            </div> 
+            <div class="reply"> 
+            </div>
+            <!-- .reply --> 
+           </div>
+           <!-- #comment-##  --> 
+           <ul class="children"> 
+            <li class="comment even depth-3" id="li-comment-133486"> 
+             <div id="comment-133486"> 
+              <div class="comment-author vcard"> 
+               <img alt="" src="http://1.gravatar.com/avatar/fd4b164e15fa2a834d16fb8743ec4f1b?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+               <cite class="fn"><a href="http://brenocon.com" rel="external nofollow" class="url">Brendan O'Connor</a></cite> 
+               <span class="says">says:</span> 
+              </div>
+              <!-- .comment-author .vcard --> 
+              <div class="comment-meta commentmetadata">
+               <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-133486"> March 26, 2012 at 1:18 pm</a> 
+              </div>
+              <!-- .comment-meta .commentmetadata --> 
+              <div class="comment-body">
+               <p>Oh awesome, thanks!</p> 
+              </div> 
+              <div class="reply"> 
+              </div>
+              <!-- .reply --> 
+             </div>
+             <!-- #comment-##  --> </li> 
+           </ul> </li> 
+         </ul> </li> 
+        <li class="comment odd alt thread-even depth-1" id="li-comment-143747"> 
+         <div id="comment-143747"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/382c47ed0c49339969bd0d37ac136c43?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn">Kat</cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-143747"> April 24, 2012 at 11:12 pm</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Hey Brendan! Maybe you are the right person to ask this to – if I want to figure out how similar two sets of paired vectors are (both angle AND magnitude) how would I do that? I originally started by looking at cosine similarity (well, I started them all from 0,0 so I guess now I know it was correlation?) but of course that doesn’t look at magnitude at all. Is there a way that people usually weight direction and magnitude, or is that arbitrary?</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> 
+         <ul class="children"> 
+          <li class="comment even depth-2" id="li-comment-143748"> 
+           <div id="comment-143748"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://1.gravatar.com/avatar/fd4b164e15fa2a834d16fb8743ec4f1b?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+             <cite class="fn"><a href="http://brenocon.com" rel="external nofollow" class="url">Brendan O'Connor</a></cite> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author .vcard --> 
+            <div class="comment-meta commentmetadata">
+             <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-143748"> April 24, 2012 at 11:25 pm</a> 
+            </div>
+            <!-- .comment-meta .commentmetadata --> 
+            <div class="comment-body">
+             <p>Why not inner product?</p> 
+            </div> 
+            <div class="reply"> 
+            </div>
+            <!-- .reply --> 
+           </div>
+           <!-- #comment-##  --> 
+           <ul class="children"> 
+            <li class="comment odd alt depth-3" id="li-comment-143751"> 
+             <div id="comment-143751"> 
+              <div class="comment-author vcard"> 
+               <img alt="" src="http://1.gravatar.com/avatar/382c47ed0c49339969bd0d37ac136c43?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+               <cite class="fn">Kat</cite> 
+               <span class="says">says:</span> 
+              </div>
+              <!-- .comment-author .vcard --> 
+              <div class="comment-meta commentmetadata">
+               <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-143751"> April 24, 2012 at 11:43 pm</a> 
+              </div>
+              <!-- .comment-meta .commentmetadata --> 
+              <div class="comment-body">
+               <p>I would like and to be more similar than and , for example</p> 
+              </div> 
+              <div class="reply"> 
+              </div>
+              <!-- .reply --> 
+             </div>
+             <!-- #comment-##  --> 
+             <ul class="children"> 
+              <li class="comment even depth-4" id="li-comment-143752"> 
+               <div id="comment-143752"> 
+                <div class="comment-author vcard"> 
+                 <img alt="" src="http://1.gravatar.com/avatar/382c47ed0c49339969bd0d37ac136c43?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+                 <cite class="fn">Kat</cite> 
+                 <span class="says">says:</span> 
+                </div>
+                <!-- .comment-author .vcard --> 
+                <div class="comment-meta commentmetadata">
+                 <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-143752"> April 24, 2012 at 11:44 pm</a> 
+                </div>
+                <!-- .comment-meta .commentmetadata --> 
+                <div class="comment-body">
+                 <p>ok no tags this time – 1,1 and 1,1 to be more similar than 1,1 and 5,5</p> 
+                </div> 
+                <div class="reply"> 
+                </div>
+                <!-- .reply --> 
+               </div>
+               <!-- #comment-##  --> </li> 
+             </ul> </li> 
+           </ul> </li> 
+         </ul> </li> 
+        <li class="post pingback"> <p>Pingback: <a href="http://etidhor.wordpress.com/2013/01/04/triangle-problem-finding-height-with-given-area-and-angles/" rel="external nofollow" class="url">Triangle problem – finding height with given area and angles. « Math World – etidhor</a></p> </li> 
+        <li class="comment odd alt thread-odd thread-alt depth-1" id="li-comment-270730"> 
+         <div id="comment-270730"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/5c736be73387b6197ec41a533ec9663e?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://www.designandanalytics.com" rel="external nofollow" class="url">Adam</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-270730"> February 1, 2013 at 5:57 pm</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>This is one of the best technical summary blog posts that I can remember seeing. I’ve just started in NLP and was confused at first seeing cosine appear as the de facto relatedness measure—this really helped me mentally reconcile it with the alternatives. Very interesting and great post.</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> </li> 
+        <li class="comment even thread-even depth-1" id="li-comment-304935"> 
+         <div id="comment-304935"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://0.gravatar.com/avatar/e5d98b48bb89cdd3b53f8aae34798c18?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://people.maths.ox.ac.uk/moorep/" rel="external nofollow" class="url">Paul Moore</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-304935"> March 18, 2013 at 5:14 pm</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>A very helpful discussion – thanks.</p> 
+           <p>Have you seen – ‘Thirteen Ways to Look at the Correlation Coefficient’ by Joseph Lee Rodgers; W. Alan Nicewander, The American Statistician, Vol. 42, No. 1. (Feb., 1988), pp. 59-66. It covers a related discussion.</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> </li> 
+        <li class="comment byuser comment-author-brendano bypostauthor odd alt thread-odd thread-alt depth-1" id="li-comment-304941"> 
+         <div id="comment-304941"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/fd4b164e15fa2a834d16fb8743ec4f1b?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://brenocon.com" rel="external nofollow" class="url">brendano</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-304941"> March 18, 2013 at 5:17 pm</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Great tip — I remember seeing that once but totally forgot about it.</p> 
+           <p>Here’s a link, <a href="http://data.psych.udel.edu/laurenceau/PSYC861Regression%20Spring%202012/READINGS/rodgers-nicewander-1988-r-13-ways.pdf" rel="nofollow">http://data.psych.udel.edu/laurenceau/PSYC861Regression%20Spring%202012/READINGS/rodgers-nicewander-1988-r-13-ways.pdf</a></p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> </li> 
+        <li class="post pingback"> <p>Pingback: <a href="http://brenocon.com/blog/2013/03/correlation-picture/" rel="external nofollow" class="url">Correlation picture | AI and Social Science – Brendan O'Connor</a></p> </li> 
+        <li class="comment even thread-even depth-1" id="li-comment-312261"> 
+         <div id="comment-312261"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://1.gravatar.com/avatar/1c5157ed916def68ae1700b8969ff1a8?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn">Peter</cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-312261"> March 29, 2013 at 3:24 am</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Useful info:</p> 
+           <p>I have a few questions (i am pretty new to that field). You say correlation is invariant of shifts. </p> 
+           <p>i guess you just mean if the x-axis is not 1 2 3 4 but 10 20 30 or 30 20 10.. then it doesn’t change anything.</p> 
+           <p>but you doesn’t mean that if i shift the signal i will get the same correlation right?</p> 
+           <p>ex: [1 2 1 2 1] and [1 2 1 2 1], corr = 1<br> but if i cyclically shift [1 2 1 2 1] and [2 1 2 1 2], corr = -1<br> or if i just shift by padding zeros [1 2 1 2 1 0] and [0 1 2 1 2 1] then corr = -0.0588</p> 
+           <p>Please elaborate on that.</p> 
+           <p>Also could we say that distance correlation (1-correlation) can be considered as norm_1 or norm_2 distance somehow? for example when we want to minimize the squared errors, usually we need to use euclidean distance, but could pearson’s correlation also be used? </p> 
+           <p>Ans last, OLSCoef(x,y) can be considered as scale invariant? is very correlated to cosine similarity which is not scale invariant (Pearson’s correlation is right?). Look at: “Patterns of Temporal Variation in Online Media” and “Fast time-series searching with scaling and shifting”. That confuses me.. but maybe i am missing something.</p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> 
+         <ul class="children"> 
+          <li class="comment odd alt depth-2" id="li-comment-314504"> 
+           <div id="comment-314504"> 
+            <div class="comment-author vcard"> 
+             <img alt="" src="http://1.gravatar.com/avatar/fd4b164e15fa2a834d16fb8743ec4f1b?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+             <cite class="fn"><a href="http://brenocon.com" rel="external nofollow" class="url">Brendan O'Connor</a></cite> 
+             <span class="says">says:</span> 
+            </div>
+            <!-- .comment-author .vcard --> 
+            <div class="comment-meta commentmetadata">
+             <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-314504"> April 1, 2013 at 10:27 pm</a> 
+            </div>
+            <!-- .comment-meta .commentmetadata --> 
+            <div class="comment-body">
+             <p>Hi Peter –</p> 
+             <p>By “invariant to shift in input”, I mean, if you *add* to the input. That is,<br> f(x, y) = f(x+a, y) for any scalar ‘a’.</p> 
+             <p>By “scale invariant”, I mean, if you *multiply* the input by something.</p> 
+             <p>For (1-corr), the problem is negative correlations. I think maximizing the squared correlation is the same thing as minimizing squared error .. that’s why it’s called R^2, the explained variance ratio.</p> 
+             <p>I don’t understand your question about OLSCoef and have not seen the papers you’re talking about.</p> 
+            </div> 
+            <div class="reply"> 
+            </div>
+            <!-- .reply --> 
+           </div>
+           <!-- #comment-##  --> </li> 
+         </ul> </li> 
+        <li class="post pingback"> <p>Pingback: <a href="http://subsubalgorithm.wordpress.com/2013/12/07/machine-learning-literary-genres-from-19th-century-seafaring-horror-and-western-novels/" rel="external nofollow" class="url">Machine learning literary genres from 19th century seafaring, horror and western novels | Sub-Sub Algorithm</a></p> </li> 
+        <li class="post pingback"> <p>Pingback: <a href="http://subsubroutine.wordpress.com/2013/12/08/machine-learning-literary-genres-from-19th-century-seafaring-horror-and-western-novels/" rel="external nofollow" class="url">Machine learning literary genres from 19th century seafaring, horror and western novels | Sub-Subroutine</a></p> </li> 
+        <li class="comment even thread-odd thread-alt depth-1" id="li-comment-758397"> 
+         <div id="comment-758397"> 
+          <div class="comment-author vcard"> 
+           <img alt="" src="http://0.gravatar.com/avatar/4259fc571b7b0caa247f4149f0d3d902?s=40&amp;d=identicon&amp;r=R" class="avatar avatar-40 photo" height="40" width="40"> 
+           <cite class="fn"><a href="http://www.crunchmagic.com" rel="external nofollow" class="url">Waylon Flinn</a></cite> 
+           <span class="says">says:</span> 
+          </div>
+          <!-- .comment-author .vcard --> 
+          <div class="comment-meta commentmetadata">
+           <a href="http://brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/#comment-758397"> December 11, 2013 at 4:51 am</a> 
+          </div>
+          <!-- .comment-meta .commentmetadata --> 
+          <div class="comment-body">
+           <p>Wonderful post. The more I investigate it the more it looks like every relatedness measure around is just a different normalization of the inner product.<br> Similar analyses reveal that Lift, Jaccard Index and even the standard Euclidean metric can be viewed as different corrections to the dot product. It’s not a viewpoint I’ve seen a lot of. It was this post that started my investigation of this phenomenon. For that, I’m grateful to you.</p> 
+           <p>The fact that the basic dot product can be seen to underlie all these similarity measures turns out to be convenient. If you stack all the vectors in your space on top of each other to create a matrix, you can produce all the inner products simply by multiplying the matrix by it’s transpose. Furthermore, the extra ingredient in every similarity measure I’ve looked at so far involves the magnitudes (or squared magnitudes) of the individual vectors. These drop out of this matrix multiplication as well. Just extract the diagonal.</p> 
+           <p>Because of it’s exceptional utility, I’ve dubbed the symmetric matrix that results from this product the base similarity matrix. I haven’t been able to find many other references which formulate these metrics in terms of this matrix, or the inner product as you’ve done. Known mathematics is both broad and deep, so it seems likely that I’m stumbling upon something that’s already been investigated.</p> 
+           <p>Do you know of other work that explores this underlying structure of similarity measures? Is the construction of this base similarity matrix a standard technique in the calculation of these measures? Does it have a common name?</p> 
+           <p>Thanks again for sharing your explorations of this topic.</p> 
+           <p>P.S. Here’s the other reference I’ve found that does similar work:<br> <a href="http://arxiv.org/pdf/1308.3740.pdf" rel="nofollow">http://arxiv.org/pdf/1308.3740.pdf</a></p> 
+          </div> 
+          <div class="reply"> 
+          </div>
+          <!-- .reply --> 
+         </div>
+         <!-- #comment-##  --> </li> 
+        <li class="post pingback"> <p>Pingback: <a href="http://qandasys.info/building-the-connection-between-cosine-similarity-and-correlation-in-r/" rel="external nofollow" class="url">Building the connection between cosine similarity and correlation in R | Question and Answer</a></p> </li> 
+        <li class="post pingback"> <p>Pingback: <a href="http://www.cserzs.com/similarity-measure" rel="external nofollow" class="url">????? - CSer??</a></p> </li> 
+       </ol> 
+      </div>
+      <!-- #comments --> 
+     </div>
+     <!-- #content --> 
+    </div>
+    <!-- #container --> 
+    <div id="primary" class="widget-area" role="complementary"> 
+     <ul class="xoxo"> 
+      <li id="text-3" class="widget-container widget_text"><h3 class="widget-title">About</h3> 
+       <div class="textwidget">
+        <p>This is a blog on artificial intelligence and "Social Science++", with an emphasis on computation and statistics. My website is <a href="http://brenocon.com/">brenocon.com</a>.</p> 
+       </div> </li>
+      <li id="text-4" class="widget-container widget_text"><h3 class="widget-title">Blogroll</h3> 
+       <div class="textwidget">
+        <ul> 
+         <li><a href="http://nlpers.blogspot.com/">NLPers (Daume)</a> </li>
+         <li><a href="http://hunch.net/">ML Theory (Langford)</a> </li>
+         <li><a href="http://andrewgelman.com/">SMCISS (~Gelman)</a> </li>
+         <li><a href="http://normaldeviate.wordpress.com/">Normal Deviate (Wasserman)</a> </li>
+         <li><a href="http://lingpipe-blog.com/">LingPipe (~Carpenter)</a> </li>
+         <li><a href="http://cscs.umich.edu/~crshalizi/weblog/">Three-Toed Sloth (Shalizi)</a> </li>
+         <li><a href="http://blog.smola.org/">Smola</a> </li>
+         <li><a href="http://www.r-bloggers.com/">R-Bloggers</a> </li>
+         <li><a href="http://fivethirtyeight.blogs.nytimes.com/">FiveThirtyEight</a> </li>
+         <li><a href="http://marginalrevolution.com/">Marginal Revolution</a> </li>
+        </ul>
+       </div> </li>
+      <li id="search-3" class="widget-container widget_search"><h3 class="widget-title">Blog Search</h3>
+       <form role="search" method="get" id="searchform" action="http://brenocon.com/blog/"> 
+        <div>
+         <label class="screen-reader-text" for="s">Search for:</label> 
+         <input type="text" value="" name="s" id="s"> 
+         <input type="submit" id="searchsubmit" value="Search"> 
+        </div> 
+       </form></li> 
+      <li class="widget-container"> <h3 class="widget-title"><a href="/blog/archives/">Archives</a></h3> </li>
+     </ul> 
+    </div>
+    <!-- #primary .widget-area --> 
+   </div>
+   <!-- #main --> 
+   <div id="footer" role="contentinfo"> 
+    <div id="colophon"> 
+     <div id="site-info"> 
+      <a href="http://brenocon.com/blog/" title="AI and Social Science – Brendan O'Connor" rel="home"> AI and Social Science – Brendan O'Connor </a> 
+     </div>
+     <!-- #site-info --> 
+     <div id="site-generator"> 
+      <a href="http://wordpress.org/" title="Semantic Personal Publishing Platform" rel="generator"> Proudly powered by WordPress. </a> 
+     </div>
+     <!-- #site-generator --> 
+    </div>
+    <!-- #colophon --> 
+   </div>
+   <!-- #footer --> 
+  </div>
+  <!-- #wrapper --> 
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML"></script> 
+  <!-- MathJax Latex Plugin installed -->   
+  <!-- Dynamic page generated in 0.075 seconds. --> 
+  <!-- File not cached! Super Cache Couldn't write to: wp-content/cache/supercache/brenocon.com/blog/2012/03/cosine-similarity-pearson-correlation-and-ols-coefficients/142357029559d394a8316214.34484187.tmp --> 
+ </body>
+</html>

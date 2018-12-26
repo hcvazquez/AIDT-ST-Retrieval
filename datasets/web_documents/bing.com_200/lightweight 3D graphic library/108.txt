@@ -1,0 +1,314 @@
+<!doctype html>
+<html>
+ <head> 
+  <meta charset="utf-8"> 
+  <title>javagraphics</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+  <link rel="stylesheet" type="text/css" href="/~ray/styles/default.css"> 
+  <link rel="stylesheet" type="text/css" href="/~ray/styles/prettify.css"> 
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto"> 
+  <script src="/~ray/scripts/prettify.js"></script> 
+ </head> 
+ <body class="coursenotes"> 
+  <script>onload = function () {prettyPrint();}</script> 
+  <div class="container"> 
+   <div class="innercontent"> 
+    <h1>Basic Java Graphics</h1> 
+    <div class="abstract">
+     The Java platform has dozens of classes for graphics programming. Graphics programming requires an understanding of components, event handling, and painting, among other things.
+    </div> 
+    <h2>A First Graphics Application</h2> 
+    <p>Here is a little canvas you can sketch on, with a little <code>main</code> method so it can be run as an application:</p> 
+    <div class="filename">
+     <span>TrivialSketcher.java</span>
+    </div>
+    <pre class="prettyprint">package edu.lmu.cs.graphics;
+
+import java.awt.BorderLayout;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+/**
+ * This is an extremely scaled-down sketching canvas; with it you
+ * can only scribble thin black lines.  For simplicity the window
+ * contents are never refreshed when they are uncovered.
+ */
+public class TrivialSketcher extends JPanel {
+
+    /**
+     * Keeps track of the last point to draw the next line from.
+     */
+    private Point lastPoint;
+
+    /**
+     * Constructs a panel, registering listeners for the mouse.
+     */
+    public TrivialSketcher() {
+        // When the mouse button goes down, set the current point
+        // to the location at which the mouse was pressed.
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                lastPoint = new Point(e.getX(), e.getY());
+            }
+        });
+
+        // When the mouse is dragged, draw a line from the old point
+        // to the new point and update the value of lastPoint to hold
+        // the new current point.
+        addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                Graphics g = getGraphics();
+                g.drawLine(lastPoint.x, lastPoint.y, e.getX(), e.getY());
+                lastPoint = new Point(e.getX(), e.getY());
+                g.dispose();
+            }
+        });
+    }
+
+    /**
+     * A tester method that embeds the panel in a frame so you can
+     * run it as an application.
+     */
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Simple Sketching Program");
+        frame.getContentPane().add(new TrivialSketcher(), BorderLayout.CENTER);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(400, 300);
+        frame.setVisible(true);
+    }
+}</pre> 
+    <p>The method <code>main()</code> is only included for testing the class, and would in practice be put in a separate class and distributed separately.</p> 
+    <p>Screenshot:</p> 
+    <p><img src="/~ray/images/trivialsketcher.png " alt="trivialsketcher.png"></p> 
+    <p>One problem with our simple sketcher is that the contents of the canvas are not persistent. If you minimize then restore the canvas, you will not see what you have drawn. That's because whenever all or part of a graphics component gets uncovered and needs to be refreshed, the component's <code>update()</code> method is called. The method <code>Canvas.update()</code> clears the component, then calls <code>paint()</code>, which eventually calls <code>paintComponent()</code> if the component is a Swing Component.</p> 
+    <p>To make the contents of a Swing component persistent, override <code>paintComponent()</code>, as in this example:</p> 
+    <div class="filename">
+     <span>DoNotEnterSign.java</span>
+    </div>
+    <pre class="prettyprint">package edu.lmu.cs.graphics;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Point;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+/**
+ * A panel maintaining a picture of a do not enter sign.
+ */
+ public class DoNotEnterSign extends JPanel {
+
+    /**
+     * Called by the runtime system whenever the panel needs painting.
+     * TODO: This code has too many literals sprinkled about.
+     */
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        Point center = new Point(getWidth() / 2, getHeight() / 2);
+        int radius = Math.min(getWidth() / 2, getHeight() / 2) - 5;
+        int innerRadius = (int)(radius * 0.9);
+
+        g.setColor(Color.WHITE);
+        g.fillOval(center.x - radius, center.y - radius,
+                   radius * 2, radius * 2);
+        g.setColor(Color.RED);
+        g.fillOval(center.x - innerRadius, center.y - innerRadius,
+                   innerRadius * 2, innerRadius * 2);
+        g.setColor(Color.WHITE);
+        int barWidth = (int)(innerRadius * 1.4);
+        int barHeight = (int)(innerRadius * 0.35);
+        g.fillRect(center.x - barWidth/2, center.y - barHeight/2,
+                   barWidth, barHeight);
+    }
+
+    /**
+     * A tester method that embeds the panel in a frame so you can "run"
+     * it as an application.  Because we have nothing better to do, we
+     * show off a bit of color manipulation.
+     */
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("A simple graphics program");
+        frame.setSize(400, 300);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JPanel panel = new DoNotEnterSign();
+        panel.setBackground(Color.GREEN.darker());
+        frame.getContentPane().add(panel, BorderLayout.CENTER);
+        frame.setVisible(true);
+    }
+}
+</pre> 
+    <h2>Graphical User Interfaces</h2> 
+    <p>Here is a program with a text area and a couple of buttons.</p> 
+    <div class="filename">
+     <span>Capitalizer.java</span>
+    </div>
+    <pre class="prettyprint">package edu.lmu.cs.graphics;
+
+import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
+/**
+ * A trivial GUI application for capitalizing strings.
+ * You get to type in strings into a textarea and press
+ * buttons to make the string all lowercase or all uppercase.
+ */
+@SuppressWarnings("serial")
+public class Capitalizer {
+
+     public static void main(String[] args) {
+        String initialText = "\u00bfHablas espa\u00f1ol o ingl\u00e9s?";
+        final JTextArea area = new JTextArea(initialText, 8, 50);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(new JButton(new AbstractAction("To Lower Case") {
+            public void actionPerformed(ActionEvent e) {
+                area.setText(area.getText().toLowerCase());
+            }
+        }));
+        buttonPanel.add(new JButton(new AbstractAction("To Upper Case") {
+            public void actionPerformed(ActionEvent e) {
+                area.setText(area.getText().toUpperCase());
+            }
+        }));
+
+        JFrame frame = new JFrame("Capitalizer");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.getContentPane().add(new JScrollPane(area), BorderLayout.CENTER);
+        frame.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        frame.pack();
+        frame.setVisible(true);
+    }
+}
+</pre> 
+    <p>Screenshot:</p> 
+    <p><img src="/~ray/images/capitalizer.png " alt="capitalizer.png"></p> 
+    <p>Here is a program that reacts every time you modify text in a text area.</p> 
+    <div class="filename">
+     <span>Changer.java</span>
+    </div>
+    <pre class="prettyprint">package edu.lmu.cs.graphics;
+
+import java.awt.BorderLayout;
+import java.awt.Color;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.Document;
+
+/**
+ * A silly little application that lets you type in an amount of
+ * cents in a textfield and see a report of how to make that amount
+ * with the fewest number of pennies, dimes, nickels and quarters.
+ */
+public class Changer extends JFrame {
+    private JTextField amountField = new JTextField(12);
+    private Document amountText = amountField.getDocument();
+    private JTextArea report = new JTextArea(8, 40);
+
+    /**
+     * Constructs a Changer, laying out the frame and registering
+     * listeners
+     */
+    public Changer() {
+
+        // Lay out the components in the window.
+        JPanel topPanel = new JPanel();
+        topPanel.add(new JLabel("Amount:"));
+        topPanel.add(amountField);
+        getContentPane().add(topPanel, BorderLayout.NORTH);
+        getContentPane().add(new JScrollPane(report), BorderLayout.CENTER);
+
+        // Set some properties of the frame and its components
+        setBackground(Color.LIGHT_GRAY);
+        report.setEditable(false);
+
+        // Ensure the text changes in response to button presses.
+        amountText.addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                updateReport();
+            }
+            public void insertUpdate(DocumentEvent e) {
+                updateReport();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                updateReport();
+            }
+        });
+    }
+
+    /**
+     * Writes the correct amount of coins in the report window.
+     */
+    void updateReport() {
+        try {
+            int amount = Integer.parseInt(
+                    amountText.getText(0, amountText.getLength()));
+            report.setText("To make " + amount + " cents, use\n");
+            report.append(amount / 25 + " quarters\n");
+            amount %= 25;
+            report.append(amount / 10 + " dimes\n");
+            amount %= 10;
+            report.append(amount / 5 + " nickels\n");
+            amount %= 5;
+            report.append(amount + " pennies\n");
+        } catch (NumberFormatException e) {
+            report.setText("Not an integer or out of range");
+        } catch (Exception e) {
+            report.setText(e.toString());
+        }
+    }
+
+    /**
+     * Runs a changer as an application.
+     */
+    public static void main(String[] args) {
+        JFrame frame = new Changer();
+        frame.setTitle("Changer");
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}</pre> 
+    <p>Screenshot:</p> 
+    <p><img src="/~ray/images/changer.png " alt="changer.png"></p> 
+    <h2>Java2D</h2> 
+    <h2>Java3D</h2> 
+    <h2>Using OpenGL with Java</h2> 
+   </div> 
+  </div> 
+  <script>
+      var title = document.getElementsByTagName("h1")[0];
+      if (title) document.title = title.innerHTML;
+      var abstract = document.querySelector(".abstract");
+      if (abstract) {
+        var contentsDiv = document.createElement('div');
+        contentsDiv.setAttribute('id', 'contents');
+        var s = Array.from(document.getElementsByTagName("h2")).map(el => el.textContent);
+        contentsDiv.innerHTML = '<div>CONTENTS</b></div><div>' + s.join(' • ') + '</div>';
+        abstract.parentNode.insertBefore(contentsDiv, abstract.nextSibling);
+      }
+    </script>   
+ </body>
+</html>

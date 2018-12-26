@@ -1,0 +1,358 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head> 
+  <meta name="generator" content="HTML Tidy for Mac OS X (vers 31 October 2006 - Apple Inc. build 15.6), see www.w3.org"> 
+  <title>Credit Card Validator</title> 
+  <meta http-equiv="Content-Type" content="text/html; charset=us-ascii"> 
+  <link rel="stylesheet" type="text/css" href="../styles.css"> 
+  <script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+</script> 
+  <script type="text/javascript">
+    _uacct = "UA-977430-1";
+      urchinTracker();
+  </script> 
+  <style type="text/css">
+<!--
+  fieldset {display: inline;}
+  legend {font-style: italic; text-align: left;}
+  input.non-button {padding: 0; margin: 0; border: none; background: none; border-bottom: blue 1px solid; color: blue;}
+  input.validate {font-size: 16pt;}
+  input.user-input {font-size: 14pt;}
+  input.validated {font-size: 14pt; color: #063;}
+  -->
+  </style> 
+  <script language="JavaScript" type="text/javascript">
+<!--
+  // prototype for credit card issuers
+  function Issuer(name, panPrefixPattern, panLengthPattern, logoFilename)
+  {
+  this.name = name;
+  this.panPrefixPattern = panPrefixPattern;
+  this.panLengthPattern = panLengthPattern;
+  this.logoFilename = logoFilename;
+  }
+
+  // checks if the provided card number have the valid prefix and length for the issuer
+  Issuer.prototype.check = function(pan)
+  {
+  return (new RegExp("^" + this.panPrefixPattern).test(pan))
+          && (new RegExp(this.panLengthPattern).test(pan.length));
+  }
+
+  // create issuer validation rules table
+  var issuersTable = new Array();
+  issuersTable[1] = new Issuer("Visa", "4", "13|16", "logo_visa.gif");
+  issuersTable[2] = new Issuer("MasterCard", "5[1-5]", "16", "logo_mastercard.gif");
+  issuersTable[3] = new Issuer("American Express", "3(4|7)", "15", "logo_amex.gif");
+  issuersTable[4] = new Issuer("Diners Club", "3(0[0-5]|(6|8))", "14", "logo_diners.gif");
+  issuersTable[5] = new Issuer("BankCard", "56(10|022[1-5])", "16", "logo_bankcard.gif");
+  issuersTable[6] = new Issuer("Discover", "6(011|5)", "16", "logo_discover.gif");
+  issuersTable[7] = new Issuer("JCB", "35", "16", "logo_jcb.gif");
+
+  // returns issuer for given pan
+  function getIssuer(pan)
+  {
+  for (var i in issuersTable)
+  {
+    if (issuersTable[i].check(pan))
+    {
+      return issuersTable[i];
+    }
+  }
+  return null;
+  }
+
+  // test for valid card number
+  function isLuhn(pan)
+  {
+  var testResult = false;
+  if (pan.length == 0)
+  {
+    return false;
+  }
+  var numericRegExp = /^\d*$/;
+  if (numericRegExp.test(pan) && (pan.length > 12))
+  {
+    var charCodeForZero = "0".charCodeAt(0);
+    var sum = 0;
+    var tmp = 0;
+    var j = 0;
+    for (var i=pan.length-1; i>=0; --i)
+    {
+      tmp = pan.charCodeAt(i) - charCodeForZero;
+      if (j & 1)
+      {
+        if ((tmp <<= 1) > 9)
+        {
+          tmp -= 10;
+          sum++;
+        }
+      }
+      j++;
+      sum += tmp;
+    }
+    testResult = ((sum % 10) == 0);
+  }
+  return testResult;
+  }
+
+  // Returns a new string with non-numeric and non-letter characters from the passed-in string removed.
+  function stripNonAlphanumericChars(str)
+  {
+  return str.replace(/[^0-9A-Za-z]/g, "");
+  }
+
+  // validates card number and displays issuer if number is valid
+  function validateInput(evt)
+  {
+  var pan = stripNonAlphanumericChars(document.test.card_number.value);
+  var result = null;
+  // first test if valid luhn
+  if (isLuhn(pan))
+  {
+    // next get issuer (card type)
+    result = getIssuer(pan);
+  }
+  // display issuer name and logo, if applicable
+  if (result)
+  {
+    document.test.result.value = result.name;
+    displayLogo(result.logoFilename, result.name);
+  }
+  else
+  {
+    document.test.result.value = "Invalid or incomplete";
+    displayLogo("transparent_pixel.gif", document.test.result.value);
+  }
+  return true;
+  }
+
+  // updates the logo display
+  function displayLogo(logoFilename, title)
+  {
+  var logoObject = document.getElementById("card_logo");
+  if (logoObject)
+  {
+    logoObject.src = logoFilename;
+    logoObject.title = title;
+  }
+  }
+
+  // array containing test card numbers
+  var exampleCardNumbers = new Array(
+  "4242 4242 4242 4242",  // Visa
+  "5105-1051-0510-5100",  // MasterCard
+  "34 0000 0000 0000 9",  // American Express
+  "38:5200:0002:3237",    // Diners Club
+  "6011-1111-1111-1117",  // Discover
+  "3530 1113 3330 0000",  // JCB
+  "5610 5910 8101 8250",  // BankCard
+  "42 222-222-222/22"     // Visa
+  );
+
+  // populates the input field with an example value and triggers the converter
+  function populateCardNumberAndValidate(card_number)
+  {
+  document.test.card_number.value = card_number;
+  validateInput(null);
+  }
+
+  // populates the main example button with the value provided
+  function populateExampleButton(card_number)
+  {
+  document.test.example.value = card_number;
+  }
+
+  // runs when page has loaded
+  function initialise()
+  {
+  var card_number = "4 2222 2222 2222";
+  populateExampleButton(card_number);
+  // See if url contains a query string
+  if (document.location.search.length > 1)
+  {
+    document.test.card_number.value = unescape(document.location.search.substr(1));
+    validateInput(null);
+  }
+  else
+  {
+    populateCardNumberAndValidate(card_number);
+  }
+  }
+  // -->
+  </script> 
+ </head> 
+ <body onload="initialise();"> 
+  <table width="100%" align="left" border="0" cellspacing="0" cellpadding="0" style="padding-bottom:6px;"> 
+   <tbody>
+    <tr> 
+     <td rowspan="3" class="top-left-cell">&nbsp;</td> 
+     <td colspan="2" class="banner-cell" valign="bottom"> 
+      <div class="banner"> 
+       <a id="pageHeading" name="top" title="Go to home page" href="../index.html"></a> 
+      </div> </td> 
+    </tr> 
+    <tr> 
+     <td colspan="2" class="tabline-cell" valign="bottom"> 
+      <div id="tabs"> 
+       <ul> 
+        <li id="item_home"><a title="Bruno Andrighetto: Home page" href="../index.html">B!?</a></li> 
+        <li id="item_programming"><a title="Programming: Both a hobby and a profession" href="../Coding/index.html" class="selected">Programming</a></li> 
+        <li id="item_writing"><a title="Writing: Various things I've written for humans to read" href="../TechPapers/index.html">Writing</a></li> 
+        <li id="item_favourites"><a title="Favourite Things: music, film, novels, etc." href="../Favourites/index.html">Favourites</a></li> 
+        <li id="item_other"><a title="Miscellany: assorted other things" href="../Other/index.html">Miscellany</a></li> 
+       </ul> 
+      </div> </td> 
+    </tr> 
+    <tr> 
+     <td class="tabline2-cell" valign="bottom"> 
+      <div id="tabs2"> 
+       <ul id="local-nav"> 
+        <li><a title="JavaScript" href="../JavaScript/index.html" class="selected">JavaScript</a></li> 
+        <li><a title="iPhone Web Apps" href="../Mobile/index.html">iPhone Web Apps</a></li> 
+        <li><a title="The Palindrome Project" href="../Coding/PalindromeProject.html">The Palindrome Project</a></li> 
+        <li><a title="Java" href="../Java/index.html">Java</a></li> 
+        <li><a title="Flash" href="../Flash/index.html">Flash</a></li> 
+        <li><a title="Director" href="../Director/index.html">Director</a></li> 
+       </ul> 
+      </div> </td> 
+     <td class="right-edge-cell">&nbsp;</td> 
+    </tr> 
+    <tr> 
+     <td id="toc" valign="top"> <p title="Subsection Contents" class="subsection_heading">subsection contents</p> 
+      <ul id="level-2-nav"> 
+       <li><a title="A clone of Minesweeper using JavaScript" href="MineSweeper.html">Mine Sweeper</a></li> 
+       <li><a title="Use this application to design 'fill patterns' &#x2014; think Atari ST and (pre System 7) Apple Macintosh" href="FillPatternEditor.html">Fill Pattern Editor</a></li> 
+       <li><a title="Demonstrates a way of scrolling text in a web page. When the end of the message is reached, it's repeated" href="BigTextScroller.html">Big Text Scroller</a></li> 
+       <li><a title="Uses the proposed CSS3 marquee property (currently this version only works with Safari and Chrome)" href="BigTextScroller2.html">Big Text Scroller 2</a></li> 
+       <li><a title="An implementation of the classic '15 Puzzle'. The object is to arrange the numbered tiles in order by sliding them around. A timer keeps track of how long it takes to solve the puzzle." href="SlidingTilePuzzle.html">Sliding Tile Puzzle</a></li> 
+       <li><a title="A variation of 'Concentration', or 'Pairs'. The object is to turn over cards (two at a time) to find matching pairs. A timer keeps track of how long it takes to find all the pairs." href="CardMatchingGame.html">Card Matching Game</a></li> 
+       <li><a title="Calculates some basic statistics for a series of data values" href="SimpleStats.html">Simple Stats</a></li> 
+       <li><a title="Calculates the depreciation expense and generates a depreciation schedule for an asset" href="DepreciationCalculator.html">Depreciation Calculator</a></li> 
+       <li><a title="Hierarchical Select Lists demo, using the hierarchy of the Australian and New Zealand Standard Industrial Classification (ANZSIC)" href="ANZSICSelector.html">ANZSIC Selector</a></li> 
+       <li><a title="Generates links to the ten most recent posts on three of my Blogger blogs" href="RecentBlogPosts.html">Recent Blog Posts</a></li> 
+       <li><a title="Checks the validity and type of a credit card number" href="CreditCardValidator.html">Credit Card Validator</a></li> 
+       <li><a title="Generates random links to posts on three of my Blogger blogs" href="RandomBlogPosts.html">Random Blog Posts</a></li> 
+       <li><a title="Displays anagrams of my name, randomly selected from a predefined list" href="RandomBannergram.html">Random Banner-gram</a></li> 
+       <li><a title="Search multiple libraries using a single form to enter criteria (Title, Author and Subject)" href="MultiLibrarySearchTool.html">Multi-Library Search Tool</a></li> 
+       <li><a title="Expanded version, with more libraries and modified user interface" href="MultiLibrarySearchToolX.html">Multi-Library Search Tool (Expanded)</a></li> 
+       <li><a title="Converts a coordinate from Degrees, Minutes, Seconds (with direction) to Decimal degrees" href="DegreesMinutesSeconds.html">Degrees Minutes Seconds to Decimal Degrees Converter</a></li> 
+       <li><a title="An example using the <canvas> tag, with JavaScript and web form interaction" href="SGrapherCanvas.html">S-Grapher/&lt;canvas&gt;</a></li> 
+       <li><a title="An example using the VectorGraphics Library, with JavaScript and web form interaction" href="SGrapherPureJS.html">S-Grapher/VectorGraphics</a></li> 
+       <li><a title="Use this application to work out your &quot;Star Wars&quot; name" href="StarWarsNameGen.html">Star Wars Name Generator</a></li> 
+       <li><a title="This little JavaScript application let's you type in a phrase and then analyzes it to see if it is a palindrome" href="Palindrome.html">Palindrome Tester</a></li> 
+       <li><a title="This JavaScript application uses a random number generator to pick numbers for lotto or bingo" href="Lotto.html">Lotto Numbers Selector</a></li> 
+       <li><a title="This little JavaScript application displays the current date and time. The display is updated every second" href="DateAndTime.html">Date and Time</a></li> 
+       <li><a title="This little JavaScript application demonstrates how to set up hierarchical select lists (menus)" href="HierSelects.html">Hierarchical Select Lists</a></li> 
+       <li><a title="This little JavaScript application demonstrates how to generate a simple bar chart. This version works by setting the width and bgcolor attributes of table cells" href="ChartTest3.html">Bar Chart Test</a></li> 
+       <li><a title="This little JavaScript application demonstrates how to generate a simple bar chart. This version works by setting the width attribute of a pixel image" href="ChartTest2.html">Bar Chart Test (Alt)</a></li> 
+       <li><a title="This little JavaScript application tries to detect various browser settings" href="BrowserDetector.html">Browser Detector</a></li> 
+       <li><a title="This JavaScript application uses an internal data structure to notify of the next upcoming birthday" href="BirthdayNotice.html">Birthday Notice</a></li> 
+       <li><a title="This little JavaScript application demonstrates how to use layers to simulate a resizable selection frame or grabber" href="SelectionFrame.html">Selection Frame Demo</a></li> 
+       <li><a title="This little JavaScript application checks if there are too many red pixels in your cache files" href="RedPixelTest.html">Red Pixel Test</a></li> 
+       <li><a title="Provides some of the functionality of Netscape's JavaScript Console for other browsers" href="JavaScriptConsole.html">Pseudo JavaScript Console</a></li> 
+      </ul> </td> 
+     <td valign="top" class="content-cell"> 
+      <div id="the_content"> 
+       <h3>Credit Card Validator</h3> 
+       <p>This little JavaScript application checks the validity and type of a credit card number. Just use the form below to enter a card number. If a card logo appears, then the card number is valid and the card type could be determined from the number.</p> 
+       <p>Supported card types: Visa, MasterCard, American Express, Diners Club, BankCard, Discover and JCB.</p> 
+       <p>Tested with Safari, Firefox and Opera on Mac OS X. According to <a href="http://browsershots.org/" target="_blank">Browsershots</a>, the page loads and appears to work with Internet Explorer (versions 5.5 to 8.0), Firefox, Opera and Safari on Windows.</p> 
+       <form name="test" method="get" onreset="populateCardNumberAndValidate('');" onsubmit="validateInput(); return false;"> 
+        <table bgcolor="gainsboro" border="4" cellpadding="10"> 
+         <tbody>
+          <tr> 
+           <td> 
+            <table border="0" cellpadding="5"> 
+             <tbody>
+              <tr> 
+               <td colspan="3">Please enter a credit card number to test (e.g. <input name="example" type="button" class="non-button" onclick="populateCardNumberAndValidate(this.value);">):</td> 
+              </tr> 
+              <tr valign="middle"> 
+               <td> 
+                <fieldset> 
+                 <legend>Card Number</legend> 
+                 <input name="card_number" id="card_number" type="text" size="24" maxlength="24" class="user-input" onkeyup="validateInput(event);"> 
+                </fieldset> </td> 
+               <td><input name="validate" title="validate (should happen automatically, but just in case...)" type="button" value="&#x2192;" class="validate" onclick="validateInput(event);"></td> 
+               <td> 
+                <fieldset> 
+                 <legend>Card Type/Issuer</legend> 
+                 <input name="result" type="hidden" size="21" maxlength="21" class="validated" readonly> 
+                 <img id="card_logo" src="transparent_pixel.gif" title="" width="60" height="38" hspace="30" valign="bottom"> 
+                </fieldset> </td> 
+              </tr> 
+              <tr> 
+               <td colspan="3" align="center"><input name="clear" type="reset" value="clear"></td> 
+              </tr> 
+             </tbody>
+            </table> </td> 
+          </tr> 
+         </tbody>
+        </table> 
+       </form> 
+       <h4>Examples</h4> 
+       <p>Click on the test credit card numbers below to see the validator in action:</p> 
+       <ul id="examples_list"> 
+        <!-- will be populated by some JavaScript below --> 
+       </ul> 
+       <h4>Notes</h4> 
+       <ul> 
+        <li>The validator checks the card number as you type.</li> 
+        <li>If you can't make out the issuer from the logo, hover over it with your mouse and read the tooltip.</li> 
+        <li>Any non-alphanumeric characters can act as a separator or delimiter, including spaces.</li> 
+        <li>Card numbers can be passed to the page via the url, e.g. <a href="CreditCardValidator.html?5105%201051%200510%205100">CreditCardValidator.html?5105 1051 0510 5100</a> .</li> 
+       </ul> 
+       <h4>Resources</h4> 
+       <ul> 
+        <li><a href="http://en.wikipedia.org/wiki/Credit_card_numbers" target="_blank">[Wikipedia] Credit card numbers</a> - has a list of Card Issuers and their prefixes</li> 
+        <li><a href="http://en.wikipedia.org/wiki/Luhn_algorithm" target="_blank">[Wikipedia] Luhn algorithm</a> - checksum formula used to validate card numbers</li> 
+        <li><a href="http://www.unixwiz.net/ndos-shame.html" target="_blank">"No Dashes Or Spaces" Hall of Shame</a> - why you should let users enter spaces and dashes</li> 
+        <li><a href="http://www.paypal.com/en_US/vhelp/paypalmanager_help/credit_card_numbers.htm" target="_blank">[PayPal] Test Card Numbers</a></li> 
+       </ul>
+       <script language="JavaScript" type="text/javascript">
+<!--
+          // Build list of examples
+          var ul = document.getElementById("examples_list");
+          for (var i in exampleCardNumbers)
+          {
+          var li = document.createElement("li");
+          var exampleLink = document.createElement("a");
+          exampleLink.href = "javascript:populateCardNumberAndValidate('"+exampleCardNumbers[i]+"');";
+          exampleLink.appendChild(document.createTextNode(exampleCardNumbers[i]));
+          li.appendChild(exampleLink);
+          ul.appendChild(li);
+          }
+          // -->
+          </script> 
+       <div class="breadcrumbs"> 
+        <hr size="1"> 
+        <a href="../index.html" class="hyperlink">Home</a>&nbsp;&nbsp;&gt;&nbsp; 
+        <a href="../Coding/index.html" class="hyperlink">Programming</a>&nbsp;&nbsp;&gt;&nbsp; 
+        <a href="index.html" class="hyperlink">JavaScriptorium</a>&nbsp;&nbsp;&gt;&nbsp; 
+        <span class="page-name">Credit Card Validator</span> 
+        <hr size="1"> 
+       </div> 
+      </div>
+      <!-- the_content:end --> </td> 
+     <td class="right-edge-cell">&nbsp;</td> 
+    </tr> 
+    <tr> 
+     <td class="bottom-cell bottom-left-cell">&nbsp;</td> 
+     <td class="footer-cell"> 
+      <ul class="footer-menu"> 
+       <li><a title="Overview of the whole site" href="../Site/sitemap.html">Site Map</a></li> 
+       <li><a title="Copyright (Creative Commons) details" href="../Site/copyright.html">Copyright</a></li> 
+       <li><a title="How this site is put together" href="../Site/colophon.html">Colophon</a></li>
+       <!-- <li>Related Sites</li> --> 
+       <li><a title="Contact the site author by e-mail" href="../Site/contact.html">Contact</a></li> 
+      </ul> 
+      <div class="footer-copyright"> 
+       <span class="copyleft"><a title="Copyright (Creative Commons) details" href="../Site/copyright.html">Copyright &copy; 2012,</a> <a title="Contact the site author by e-mail" href="../Site/contact.html">Bruno Andrighetto</a></span> 
+      </div> </td> 
+     <td class="bottom-cell bottom-right-cell">&nbsp;</td> 
+    </tr> 
+   </tbody>
+  </table>   
+ </body>
+</html>
